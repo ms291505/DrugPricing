@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17.2
+    container_name: dev-pgsql-drug
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: drug_dev
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

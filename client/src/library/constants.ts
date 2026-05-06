@@ -1,0 +1,9 @@
+export const MIN_DATE = new Date(2025, 0, 31);
+export const MAX_DATE = new Date(2026, 0, 31);
+export const MIN_NDC_DESCRIPTION_LENGTH = 5;
+export const MIN_NDC_LENGTH = 5;
+export const DRUG_FILTER_SELECT_LABEL = "Drug";
+export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
+export const DATA_GRID_PAGE_SIZES = [5, 10, 25];
+export const NDC_NDC_DESCRIPTION_DELIMITER = " - ";
+export const DEFAULT_CHART_HEIGHT = 400;

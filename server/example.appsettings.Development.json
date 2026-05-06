@@ -1,0 +1,12 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "DevClientHost": "",
+  "ConnectionStrings": {
+    "Default": "Host=localhost;Port=YOUR_PORT;Database=YOUR_DB_NAME;Username=YOUR_USERNAME;Password=YOUR_PASSWORD;Include Error Detail=True"
+  }
+}

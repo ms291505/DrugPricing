@@ -1,0 +1,256 @@
+# =============================================================================
+# MACOS
+# =============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+
+# =============================================================================
+# EDITORS & IDES
+# =============================================================================
+
+# Neovim / LazyVim
+.nvimrc
+.nvim/
+*.swp
+*.swo
+*~
+Session.vim
+.neoconf.json
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
+
+# JetBrains (Rider, PyCharm, WebStorm)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.whl
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Ruff / linting
+.ruff_cache/
+
+# PDM / Poetry / pipenv
+.pdm.toml
+.pdm-python
+.pdm-build/
+poetry.lock
+Pipfile.lock
+
+# pyenv
+.python-version
+
+
+# =============================================================================
+# REACT / VITE (NODE)
+# =============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Vite
+*.local
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Cache
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.turbo/
+
+# =============================================================================
+# DOTNET
+# =============================================================================
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!**/packages/repositories.config
+*.packages.lock.json
+NuGet.config
+
+# MSBuild / Roslyn
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.binlog
+
+# ASP.NET
+AppData/
+PublishProfiles/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# dotnet tools
+.config/dotnet-tools.json
+
+# Coverage & test results
+TestResults/
+*.trx
+*.coveragexml
+
+# Secrets & certs
+*.pfx
+*.p12
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+
+# =============================================================================
+# GENERAL / MONOREPO
+# =============================================================================
+
+# Environment & secrets
+.env*
+!.env.example
+*.pem
+*.key
+*.cert
