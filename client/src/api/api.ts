@@ -1,6 +1,6 @@
 import type { UpResponse } from "./types";
 
-const API_URL: string = "http://localhost:5250/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const createApiPath = (segment: string = "") => {
   if (segment == "") return `${API_URL}/`;
