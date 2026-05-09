@@ -60,7 +60,7 @@ public class NadacRepository : INadacRepository
     }
 
     if (!string.IsNullOrWhiteSpace(ndc))
-      query = query.Where(p => p.Ndc == ndc);
+      query = query.Where(p => EF.Functions.ILike(p.Ndc, $"%{ndc}%"));
 
     var nadacPrices = await query
       .Join(_db.NadacPrices, drug => drug.Ndc, price => price.Ndc, (drug, price) => price)

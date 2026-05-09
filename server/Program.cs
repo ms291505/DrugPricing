@@ -81,6 +81,7 @@ api.MapGet("/up", () => TypedResults.Ok(new { up = true }));
 
 api.MapNadacEndpoints();
 api.MapFdaProductEndpoints();
+api.MapAppInitEndpoints();
 
 // Run
 

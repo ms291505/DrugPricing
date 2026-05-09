@@ -17,6 +17,6 @@ public class DrugPackageConfiguration : IEntityTypeConfiguration<DrugPackage>
 
     e.HasIndex(p => p.NdcDescriptionLower).HasMethod("GIN").HasOperators("gin_trgm_ops");
 
-    e.HasIndex(p => p.Ndc).IsUnique();
+    e.HasIndex(p => p.NdcDescriptionLower).HasMethod("GIN").HasOperators("gin_trgm_ops");
   }
 }
