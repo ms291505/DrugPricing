@@ -81,3 +81,36 @@ export type NadacSearchParams = {
   minDate: string;
   maxDate: string;
 };
+
+export type FdaPackageDetail = {
+  id: number,
+  ndcPackageCode: string,
+  packageDescription: string,
+  startMarketingDate: Date,
+  endMarketingDate?: Date,
+  samplePackage: boolean,
+  ndcPackageCodeStripped: string,
+  nadacPrices: NadacPrice[]
+}
+
+export type FdaProductDetail = {
+  id: number,
+  productId: string,
+  productNdc: string,
+  productTypeName: string,
+  proprietaryName: string,
+  proprietaryNameSuffix?: string,
+  nonProprietaryName: string[],
+  dosageFormName: string,
+  routeName: string[],
+  startMarketingDate: Date,
+  endMarketingDate?: Date,
+  marketingCategoryName: string,
+  labelerName: string,
+  substanceName: string[],
+  strengthNumber: string[],
+  pharmClasses: string[],
+  deaSchedule?: string,
+  listingRecordCertifiedThrough?: Date,
+  fdaPackageDetails: FdaPackageDetail[]
+}
