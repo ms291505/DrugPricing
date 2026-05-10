@@ -28,7 +28,10 @@ builder.Services.AddCors(options =>
     policy =>
     {
       policy
-        .WithOrigins("https://client-production-c6ff.up.railway.app")
+        .WithOrigins(
+          "https://client-production-c6ff.up.railway.app",
+          "https://drugpricing.replicator.icu"
+        )
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials();
