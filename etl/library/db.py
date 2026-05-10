@@ -5,11 +5,18 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
-connection_string = os.environ.get("DATABASE_URL", "")
+is_prod = os.environ.get("IS_PROD", "0")
+
+if is_prod == "1":
+    connection_string = os.environ.get("PROD_DATABASE_URL", "")
+else:
+    connection_string = os.environ.get("DATABASE_URL", "")
+
 
 def main():
     connection = get_connection()
     test_connection(connection)
+
 
 def get_connection():
     if connection_string == "":
@@ -21,6 +28,7 @@ def get_connection():
     except psycopg.OperationalError as e:
         print(f"\nFailed to connect to database: {e}\n")
         sys.exit()
+
 
 def test_connection(connection: psycopg.Connection):
     with connection as conn:

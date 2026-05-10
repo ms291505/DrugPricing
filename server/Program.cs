@@ -23,6 +23,21 @@ builder.Services.AddCors(options =>
   );
 });
 
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy(
+    "AllowFrontend",
+    policy =>
+    {
+      policy
+        .WithOrigins("https://client-production-c6ff.up.railway.app")
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
+    }
+  );
+});
+
 // Memory Cache
 
 builder.Services.AddMemoryCache();
@@ -37,7 +52,15 @@ builder.Services.AddDbContext<DrugPricingContext>(options =>
   }
   else
   {
-    throw new NotImplementedException();
+    var host = Environment.GetEnvironmentVariable("PGHOST");
+    var port = Environment.GetEnvironmentVariable("PGPORT");
+    var db = Environment.GetEnvironmentVariable("PGDATABASE");
+    var user = Environment.GetEnvironmentVariable("PGUSER");
+    var pass = Environment.GetEnvironmentVariable("PGPASSWORD");
+
+    var connectionString =
+      $"Host={host};Port={port};Database={db};Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true";
+    options.UseNpgsql(connectionString);
   }
 });
 
@@ -69,6 +92,10 @@ if (app.Environment.IsDevelopment())
   app.UseCors("AllowViteDev");
   app.UseSwagger();
   app.UseSwaggerUI();
+}
+else
+{
+  app.UseCors("AllowFrontend");
 }
 
 // Map Endpoints
