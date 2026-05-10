@@ -6,9 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var devClientHost =
-  builder.Configuration["DevClientHost"]
-  ?? throw new Exception("devClientHost not defined in confiuration file.");
+var devClientHost = builder.Configuration["DevClientHost"] ?? "";
 
 // Cors
 
@@ -89,6 +87,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+  if (devClientHost == "")
+    throw new Exception("decClientHost was not provided for development environment.");
   app.UseCors("AllowViteDev");
   app.UseSwagger();
   app.UseSwaggerUI();
