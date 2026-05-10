@@ -4,9 +4,14 @@ from nadac.parse_nadac import parse_nadac
 from nadac.get_loaded_as_of_dates import get_loaded_as_of_dates
 import pandas as pd
 from nadac.update_drug_package import update_drug_package
+from dotenv import load_dotenv
+import os
 
 
-def main(report_mm_dd_yyyy: str = "12-25-2024", filter_before_insert: bool = False):
+def main(report_mm_dd_yyyy: str = "05-13-2026", filter_before_insert: bool = True):
+    load_dotenv()
+    if os.environ.get("FILTER_NADAC_FIRST", "1") == "0":
+        filter_before_insert = False
 
     URL = (
         "https://download.medicaid.gov/data/nadac-national-average-drug-acquisition-cost-"
@@ -46,7 +51,7 @@ def main(report_mm_dd_yyyy: str = "12-25-2024", filter_before_insert: bool = Fal
             update_drug_package()
             return
 
-        nadac_prices = parse_nadac(nadac_data)
+        nadac_prices = parse_nadac(fresh_nadac_data)
 
     load_nadac(nadac_prices)
     update_drug_package()
