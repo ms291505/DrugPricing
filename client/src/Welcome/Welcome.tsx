@@ -72,6 +72,11 @@ export default function Welcome() {
               and try to come up with a better integreation of the data sources, if possible. For now on the backend, it's a simple join from FdaPackage to NadacPrice.
             </p>
           </ol>
+          <Divider />
+          <Typography variant="h6">Attributions</Typography>
+          <p>The medicine icon is a free resouce from Flaticon, and is available here:
+            <a href="https://www.flaticon.com/free-icons/medicine" title="medicine icons">Medicine icons created by Freepik - Flaticon</a>
+          </p>
         </Typography>
       </Container>
     </>
