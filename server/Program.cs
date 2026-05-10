@@ -88,7 +88,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
   if (devClientHost == "")
-    throw new Exception("decClientHost was not provided for development environment.");
+    throw new Exception("devClientHost was not provided for development environment.");
   app.UseCors("AllowViteDev");
   app.UseSwagger();
   app.UseSwaggerUI();
