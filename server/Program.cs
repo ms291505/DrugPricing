@@ -112,4 +112,10 @@ api.MapAppInitEndpoints();
 
 // Run
 
+using (var scope = app.Services.CreateScope())
+{
+  var db = scope.ServiceProvider.GetRequiredService<DrugPricingContext>();
+  db.Database.Migrate();
+}
+
 app.Run();
