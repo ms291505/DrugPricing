@@ -3,7 +3,7 @@ import type { DrugSummary, NadacPrice } from "../types";
 import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../library/nadacPriceToDrugSummary";
 import { formatDollar } from "../library/formatDollar";
-import { DEFAULT_CHART_HEIGHT } from "../library/constants";
+import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../library/constants";
 
 type Props = {
   nadacPrices: NadacPrice[],
@@ -36,7 +36,8 @@ export default function BarViz({ nadacPrices }: Props) {
         }}
         formatter={formatDollar}
         contentStyle={{
-          backgroundColor: theme.palette.background.paper
+          backgroundColor: theme.palette.background.paper,
+          fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
         }}
       />
       <Bar

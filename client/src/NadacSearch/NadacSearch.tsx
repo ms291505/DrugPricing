@@ -7,7 +7,8 @@ import React, { useState, useEffect } from "react";
 import { MAX_DATE, MIN_DATE, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../library/constants.ts";
 import { useSearchContext } from "../Context/SearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
-import { useNadacSearch } from "../hooks/useNadacSearch.ts"
+import { useNadacSearch } from "../hooks/useNadacSearch.ts";
+import useMobile from "../hooks/useMobile.ts"
 
 export default function NadacSearch() {
   const formatDateValue = (date: Date) => date.toISOString().split("T")[0];
@@ -48,7 +49,7 @@ export default function NadacSearch() {
     const value = e.target.value.replace(/\D/g, "");
     setNdc(value);
   }
-
+  const isMobile = useMobile();
   return (<>
     <Box sx={{
       display: "flex",
@@ -61,8 +62,9 @@ export default function NadacSearch() {
         aria-label="Nadac search form"
         sx={{
           display: "flex",
-          gap: 2,
-          paddingY: 2,
+          flexDirection: { xs: "column", md: "row" },
+          gap: { xs: 1, md: 2 },
+          padding: 2,
           width: "100%",
           justifyContent: "center"
         }}
@@ -72,6 +74,7 @@ export default function NadacSearch() {
         }}
       >
         <TextField
+          size={isMobile ? "small" : "medium"}
           type="text"
           id="ndcDescription"
           name="ndcDescription"
@@ -80,6 +83,7 @@ export default function NadacSearch() {
           onChange={handleNdcDescriptionChange}
         />
         <TextField
+          size={isMobile ? "small" : "medium"}
           type="text"
           id="ndc"
           name="ndc"
@@ -87,28 +91,36 @@ export default function NadacSearch() {
           value={ndc}
           onChange={handleNdcChange}
         />
-        <TextField
-          type="date"
-          id="minDate"
-          name="minDate"
-          label="Start Date"
-          value={minDate}
-          onChange={(e) => setMinDate(e.target.value)}
-        />
-        <TextField
-          type="date"
-          id="maxDate"
-          name="maxDate"
-          label="End Date"
-          value={maxDate}
-          onChange={(e) => setMaxDate(e.target.value)}
-        />
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1
+          }}>
+          <TextField
+            size={isMobile ? "small" : "medium"}
+            type="date"
+            id="minDate"
+            name="minDate"
+            label="Start Date"
+            value={minDate}
+            onChange={(e) => setMinDate(e.target.value)}
+          />
+          <TextField
+            size={isMobile ? "small" : "medium"}
+            type="date"
+            id="maxDate"
+            name="maxDate"
+            label="End Date"
+            value={maxDate}
+            onChange={(e) => setMaxDate(e.target.value)}
+          />
+        </Box>
         <Button
           type="submit"
           disabled={!isValidSearch || nadacSearchQuery.isLoading}
           variant="contained"
           sx={{
-            width: 100,
+            width: { xs: "100%", md: 100 },
           }}
         >
           {nadacSearchQuery.isLoading

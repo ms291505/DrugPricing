@@ -7,3 +7,4 @@ export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
 export const DATA_GRID_PAGE_SIZES = [5, 10, 25];
 export const NDC_NDC_DESCRIPTION_DELIMITER = " - ";
 export const DEFAULT_CHART_HEIGHT = 400;
+export const DEFAULT_TOOLTIP_FONT_SIZE = 12;

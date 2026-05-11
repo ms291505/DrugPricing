@@ -13,12 +13,12 @@ export default function DrugPricingBar() {
       {import.meta.env.DEV && (
         <Portal container={document.body}>
           <Box sx={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             right: 16,
             zIndex: (theme) => theme.zIndex.appBar + 1,
-            color: 'error.main',
-            pointerEvents: 'none'
+            color: "error.main",
+            pointerEvents: "none"
           }}>
             <Typography>DEV</Typography>
           </Box>
@@ -26,18 +26,18 @@ export default function DrugPricingBar() {
       )}
       <AppBar>
         <Toolbar sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          alignItems: "center",
           py: { xs: 1, md: 0 },
-          position: 'relative'
+          position: "relative"
         }}>
-          <Typography variant="h3" sx={{ display: { xs: 'none', md: 'block' } }}>drugPricing</Typography>
+          <Typography variant="h3" sx={{ display: { xs: "none", md: "block" } }}>drugPricing</Typography>
           <Box sx={{
-            display: 'flex',
-            position: { xs: 'static', md: 'absolute' },
-            left: { md: '50%' },
-            transform: { md: 'translateX(-50%)' }
+            display: "flex",
+            position: { xs: "static", md: "absolute" },
+            left: { md: "50%" },
+            transform: { md: "translateX(-50%)" }
           }}>
             <NavButton to="/">HOME</NavButton>
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />

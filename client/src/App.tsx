@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import Welcome from "./Welcome/Welcome";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
+import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
 
 const queryClient = new QueryClient();
 
@@ -20,23 +21,25 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
-          <Container maxWidth="xl" >
-            <Routes>
-              <Route element={<DrugPricingBar />}>
-                <Route path="/" element={
-                  <Welcome />
-                } />
-                <Route path="/nadac-search" element={
-                  <SearchContextProvider>
-                    <NadacSearch />
-                  </SearchContextProvider>
-                } />
-                <Route path="/fda-search" element={
-                  <FdaSearch />
-                } />
-              </Route>
-            </Routes>
-          </Container>
+          <FdaSearchContextProvider>
+            <Container maxWidth="xl" >
+              <Routes>
+                <Route element={<DrugPricingBar />}>
+                  <Route path="/" element={
+                    <Welcome />
+                  } />
+                  <Route path="/nadac-search" element={
+                    <SearchContextProvider>
+                      <NadacSearch />
+                    </SearchContextProvider>
+                  } />
+                  <Route path="/fda-search" element={
+                    <FdaSearch />
+                  } />
+                </Route>
+              </Routes>
+            </Container>
+          </FdaSearchContextProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>

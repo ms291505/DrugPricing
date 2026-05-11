@@ -1,6 +1,6 @@
 import { type NadacPrice } from "../types.ts";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, type RenderableText, type TooltipValueType } from "recharts";
-import { DEFAULT_CHART_HEIGHT, NDC_NDC_DESCRIPTION_DELIMITER } from "../library/constants.ts";
+import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, NDC_NDC_DESCRIPTION_DELIMITER } from "../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
 
 type Props = {
@@ -59,7 +59,8 @@ export default function LineViz({ nadacPrices }: Props) {
         labelFormatter={(ts) => new Date(ts as number).toLocaleDateString()}
         formatter={formatDollar}
         contentStyle={{
-          backgroundColor: theme.palette.background.paper
+          backgroundColor: theme.palette.background.paper,
+          fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
         }}
       />
       {ndcs.map((ndc, i) => (

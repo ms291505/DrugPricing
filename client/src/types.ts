@@ -82,6 +82,10 @@ export type NadacSearchParams = {
   maxDate: string;
 };
 
+export type FdaSearchParams = {
+  propreitaryName: string;
+};
+
 export type FdaPackageDetail = {
   id: number,
   ndcPackageCode: string,
