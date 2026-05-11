@@ -1,4 +1,4 @@
-import type { NadacPrice } from "../types";
+import type { NadacPrice, FdaProductDetail } from "../types";
 
 export type UpResponse = {
   up: boolean
@@ -85,9 +85,19 @@ export type NadacSearchResponse = {
   notices: Array<string>
 }
 
+// TODO: Move to src/types.ts
 export type NadacSearchResult = {
 
   prices: Array<NadacPrice>;
   predicates: Array<NadacSearchPredicate>,
   notices: Array<string>
+}
+
+export type FdaProductSearchResponse = {
+  data: Array<FdaProductDetail>
+}
+
+// TODO: Move to src/types.ts
+export type FdaProductSearchResult = {
+  products: Array<FdaProductDetail>
 }
