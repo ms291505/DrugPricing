@@ -113,6 +113,7 @@ export type FdaProductDetail = {
   labelerName: string,
   substanceName: string[],
   strengthNumber: string[],
+  strengthUnit: string[],
   pharmClasses: string[],
   deaSchedule?: string,
   listingRecordCertifiedThrough?: Date,

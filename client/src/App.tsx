@@ -5,7 +5,7 @@ import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from "./theme";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import Welcome from "./Welcome/Welcome";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
@@ -36,6 +36,7 @@ export default function App() {
                   <Route path="/fda-search" element={
                     <FdaSearch />
                   } />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Route>
               </Routes>
             </Container>
