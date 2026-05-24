@@ -1,11 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import type { FdaProductDetail, FdaSearchParams } from "../types";
+import React, { createContext, useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import type { FdaProductDetail, FdaResultFilter, FdaSearchParams } from "../types";
+
 
 type FdaSearchContextType = {
   fdaData: Array<FdaProductDetail>;
-  setFdaData: React.Dispatch<React.SetStateAction<Array<FdaProductDetail>>>;
+  setFdaData: Dispatch<SetStateAction<Array<FdaProductDetail>>>;
   fdaSearchParams: FdaSearchParams | null;
-  setFdaSearchParams: React.Dispatch<React.SetStateAction<FdaSearchParams | null>>;
+  setFdaSearchParams: Dispatch<SetStateAction<FdaSearchParams | null>>;
+  fdaResultFilter: FdaResultFilter;
+  setFdaResultFilter: Dispatch<SetStateAction<FdaResultFilter>>;
 }
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
@@ -13,12 +16,15 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   setFdaData: () => { },
   fdaSearchParams: null,
   setFdaSearchParams: () => { },
+  fdaResultFilter: { dosageForms: [] },
+  setFdaResultFilter: () => { },
 });
 
 
 export const FdaSearchContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [fdaData, setFdaData] = useState<Array<FdaProductDetail>>([]);
   const [fdaSearchParams, setFdaSearchParams] = useState<FdaSearchParams | null>(null)
+  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>({ dosageForms: [] });
 
   useEffect(() => {
     console.log(fdaData);
@@ -30,6 +36,8 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
       setFdaData,
       fdaSearchParams,
       setFdaSearchParams,
+      fdaResultFilter,
+      setFdaResultFilter,
     }}>
       {children}
     </FdaSearchContext.Provider>

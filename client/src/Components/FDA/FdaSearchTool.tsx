@@ -3,7 +3,7 @@ import Box from "@mui/material/Box"
 import TextField from "@mui/material/TextField"
 import useMobile from "../../hooks/useMobile"
 import { Button, CircularProgress } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
@@ -12,18 +12,14 @@ export default function FdaSearchTool() {
 
   const [proprietaryName, setProprietaryName] = useState<string>("");
 
-  const { setFdaSearchParams, setFdaData } = useFdaSearchContext();
+  const { setFdaSearchParams } = useFdaSearchContext();
 
   const isMobile = useMobile();
+
+
+  const fdaSearch = useFdaSearch();
+
   const isValidSearch = proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
-
-  const fdaSearchQuery = useFdaSearch();
-
-  useEffect(() => {
-    if (fdaSearchQuery.data?.products) {
-      setFdaData(fdaSearchQuery.data.products);
-    }
-  }, [fdaSearchQuery.data, setFdaData]);
 
   const handleSearch = () => {
     setFdaSearchParams({
@@ -66,12 +62,12 @@ export default function FdaSearchTool() {
         <Button
           type="submit"
           variant="contained"
-          disabled={!isValidSearch || fdaSearchQuery.isLoading}
+          disabled={!isValidSearch || fdaSearch.isLoading}
           sx={{
             width: { xs: "100%", md: 100 },
           }}
         >
-          {fdaSearchQuery.isLoading
+          {fdaSearch.isLoading
             ? <CircularProgress aria-label="Loading..." />
             : "Search"
           }

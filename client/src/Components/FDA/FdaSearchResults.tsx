@@ -1,14 +1,14 @@
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-grid";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import type { FdaProductDetail } from "../../types";
+import { applyFdaResultFilter, type FdaProductDetail } from "../../types";
+import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
 export default function FdaSearchResults() {
-
-  // const { fdaData } = useFdaSearchContext();
-
+  const { fdaResultFilter } = useFdaSearchContext();
   const fdaSearch = useFdaSearch();
-
+  const data = fdaSearch.data ?? { products: [] };
+  const rows = applyFdaResultFilter(data, fdaResultFilter).products;
   const columns: GridColDef<FdaProductDetail>[] = [
     {
       field: "productNdc",
@@ -66,7 +66,7 @@ export default function FdaSearchResults() {
   return (<>
     <DataGrid
       sx={{ border: 0 }}
-      rows={fdaSearch.data?.products}
+      rows={rows}
       columns={columns}
       loading={fdaSearch.isLoading}
       initialState={initialState}

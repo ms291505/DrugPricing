@@ -1,3 +1,4 @@
+import type { FdaProductSearchResult } from "./api/types";
 
 export type NadacPrice = {
   id: number,
@@ -118,4 +119,21 @@ export type FdaProductDetail = {
   deaSchedule?: string,
   listingRecordCertifiedThrough?: Date,
   fdaPackageDetails: FdaPackageDetail[]
+}
+
+export type ResultSelect = ((data: FdaProductSearchResult) => FdaProductSearchResult) | undefined;
+
+export type FdaResultFilter = {
+  dosageForms: string[],
+}
+
+export function applyFdaResultFilter(
+  data: FdaProductSearchResult,
+  filter: FdaResultFilter
+): FdaProductSearchResult {
+  return ({
+    ...data,
+    products: data.products.filter(p =>
+      filter.dosageForms.includes(p.dosageFormName)),
+  })
 }
