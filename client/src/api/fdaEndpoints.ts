@@ -18,7 +18,12 @@ export const getFdaSearchResults = async (
 
   const body = await response.json() as unknown as FdaProductSearchResponse;
 
+  const products = body.data.map(p => ({
+    ...p,
+    routeName: p.routeName.length === 0 ? ["N/A"] : p.routeName,
+  }))
+
   return (
-    { products: body.data }
+    { products: products }
   );
 }

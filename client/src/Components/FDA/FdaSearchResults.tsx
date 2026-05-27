@@ -1,7 +1,7 @@
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-grid";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { applyFdaResultFilter, type FdaProductDetail } from "../../types";
+import { applyFdaResultFilter, isFdaProductOtc, type FdaProductDetail } from "../../types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
 export default function FdaSearchResults() {
@@ -28,7 +28,8 @@ export default function FdaSearchResults() {
     },
     {
       field: "dosageFormName",
-      headerName: "Form"
+      headerName: "Form",
+      valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
     },
     {
       field: "routeName",
@@ -50,9 +51,10 @@ export default function FdaSearchResults() {
     {
       field: "productTypeName",
       headerName: "OTC Drug",
-      valueGetter: (_, product) => (product.productTypeName.toLowerCase() === "human otc drug" ? "Yes" : "No")
-
-    }
+      valueGetter: (_, product) => (
+        isFdaProductOtc(product.productTypeName) ? "Yes" : "No"
+      )
+    },
   ]
 
   const initialState: GridInitialState = {

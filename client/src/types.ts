@@ -121,19 +121,40 @@ export type FdaProductDetail = {
   fdaPackageDetails: FdaPackageDetail[]
 }
 
+export function isFdaProductOtc(productTypeName: string) {
+  return productTypeName.toLocaleLowerCase() === "human otc drug";
+}
+
 export type ResultSelect = ((data: FdaProductSearchResult) => FdaProductSearchResult) | undefined;
 
 export type FdaResultFilter = {
   dosageForms: string[],
+  routes: string[],
+  includeOtc: boolean | null,
+}
+
+export function createFdaResultFilter(): FdaResultFilter {
+  return ({
+    dosageForms: [],
+    routes: [],
+    includeOtc: null,
+  })
 }
 
 export function applyFdaResultFilter(
   data: FdaProductSearchResult,
   filter: FdaResultFilter
 ): FdaProductSearchResult {
-  return ({
+  return {
     ...data,
     products: data.products.filter(p =>
-      filter.dosageForms.includes(p.dosageFormName)),
-  })
+      filter.dosageForms.includes(p.dosageFormName) &&
+      p.routeName.some(r => filter.routes.includes(r)) &&
+      (
+        filter.includeOtc
+          ? true
+          : isFdaProductOtc(p.productTypeName) === false
+      )
+    ),
+  }
 }

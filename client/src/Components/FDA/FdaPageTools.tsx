@@ -1,25 +1,39 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
-import { useEffect, useMemo } from "react";
+import { Typography, Box, Select, MenuItem, FormControl, InputLabel, Checkbox, FormGroup, FormControlLabel } from "@mui/material";
+import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
+import { isFdaProductOtc } from "../../types";
 
 export default function FdaPageTools() {
 
-  // const { setSelect } = useFdaSearchContext();
+  const { fdaResultFilter, setFdaResultFilter } = useFdaSearchContext();
 
   const { data } = useFdaSearch();
 
-  const { fdaResultFilter, setFdaResultFilter } = useFdaSearchContext();
+  const resultsHaveOtcProducts = useMemo(() =>
+    (data?.products.some(p => isFdaProductOtc(p.productTypeName)) ?? false),
+    [data]
+  )
+
+  const disabledOrEmpty = !resultsHaveOtcProducts;
 
   const dosageForms = useMemo(
     () => [...new Set(data?.products.map(p => p.dosageFormName) ?? [])],
-    [data]);
+    [data]
+  );
+
+  const routes = useMemo(
+    () => [...new Set(data?.products.flatMap(p => p.routeName) ?? [])],
+    [data]
+  );
+
   useEffect(() => {
-    if (dosageForms.length > 0) {
-      setFdaResultFilter({ dosageForms });
+    if (dosageForms.length + routes.length > 0) {
+      setFdaResultFilter(prev => ({ ...prev, dosageForms: dosageForms, routes: routes, includeOtc: resultsHaveOtcProducts }));
     }
-  }, [dosageForms, setFdaResultFilter])
+
+  }, [dosageForms, routes, resultsHaveOtcProducts, setFdaResultFilter])
 
   return (
     <Paper
@@ -38,7 +52,7 @@ export default function FdaPageTools() {
       <Box component="section" id="page-filters" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Typography variant="subtitle2">Page Filters</Typography>
         <FormControl fullWidth>
-          <InputLabel id="drug-filter-select-label">Dosage Forms</InputLabel>
+          <InputLabel id="drug-filter-dosage-form-select-label">Dosage Forms</InputLabel>
           <Select
             label={"Dosage Forms"}
             id="drug-filter"
@@ -51,7 +65,7 @@ export default function FdaPageTools() {
                 ? e.target.value.split(",")
                 : e.target.value;
 
-              setFdaResultFilter({ dosageForms: newDosageForms })
+              setFdaResultFilter(prev => ({ ...prev, dosageForms: newDosageForms }))
             }}
           >
             {
@@ -63,6 +77,46 @@ export default function FdaPageTools() {
             }
           </Select>
         </FormControl>
+        <FormControl fullWidth>
+          <InputLabel id="drug-filter-routes-select-label">Routes</InputLabel>
+          <Select
+            label={"Routes"}
+            id="drug-filter-routes"
+            name="drug-filter-routes"
+            multiple
+            disabled={routes.length === 0}
+            value={fdaResultFilter.routes}
+            onChange={(e) => {
+              const newRoutes = typeof e.target.value === "string"
+                ? e.target.value.split(",")
+                : e.target.value;
+
+              setFdaResultFilter(prev => ({ ...prev, routes: newRoutes }))
+            }}
+          >
+            {
+              routes.map(route => {
+                return (
+                  <MenuItem id={route} key={route} value={route}>{route.replace(",", ":")}</MenuItem>
+                )
+              })
+            }
+          </Select>
+        </FormControl>
+        <Box>
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox aria-label="Include OTC Products" checked={fdaResultFilter.includeOtc === true && !disabledOrEmpty} disabled={disabledOrEmpty}
+                  onClick={() => {
+                    setFdaResultFilter(prev => ({ ...prev, includeOtc: !prev.includeOtc }))
+                  }}
+                />
+              }
+              label="Include OTC Products"
+            />
+          </FormGroup>
+        </Box>
       </Box>
     </Paper>
   )
