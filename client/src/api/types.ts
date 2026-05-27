@@ -94,10 +94,7 @@ export type NadacSearchResult = {
 }
 
 export type FdaProductSearchResponse = {
-  data: Array<FdaProductDetail>
+  data: FdaProductDetail[]
 }
 
 // TODO: Move to src/types.ts
-export type FdaProductSearchResult = {
-  products: Array<FdaProductDetail>
-}

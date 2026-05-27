@@ -1,9 +1,10 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Select, MenuItem, FormControl, InputLabel, Checkbox, FormGroup, FormControlLabel } from "@mui/material";
+import { Typography, Box, Checkbox, FormGroup, FormControlLabel } from "@mui/material";
 import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc } from "../../types";
+import SelectFilter from "./SelectFilter";
 
 export default function FdaPageTools() {
 
@@ -28,20 +29,31 @@ export default function FdaPageTools() {
     [data]
   );
 
+  const lablers = useMemo(
+    () => [...new Set(data?.products.map(p => p.labelerName) ?? [])],
+    [data]
+  )
+
   useEffect(() => {
     if (dosageForms.length + routes.length > 0) {
-      setFdaResultFilter(prev => ({ ...prev, dosageForms: dosageForms, routes: routes, includeOtc: resultsHaveOtcProducts }));
+      setFdaResultFilter(prev => ({
+        ...prev,
+        dosageForms: dosageForms,
+        routes: routes,
+        includeOtc: resultsHaveOtcProducts,
+        labelers: lablers,
+      }));
     }
 
-  }, [dosageForms, routes, resultsHaveOtcProducts, setFdaResultFilter])
+  }, [dosageForms, routes, resultsHaveOtcProducts, lablers, setFdaResultFilter])
 
   return (
     <Paper
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 1,
-        p: 1
+        gap: 2,
+        p: 2
       }}
       component="section"
       id="page-tools"
@@ -49,61 +61,28 @@ export default function FdaPageTools() {
       <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
         <Typography variant="h6">Page Tools</Typography>
       </Paper>
-      <Box component="section" id="page-filters" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box component="section" id="page-filters" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Typography variant="subtitle2">Page Filters</Typography>
-        <FormControl fullWidth>
-          <InputLabel id="drug-filter-dosage-form-select-label">Dosage Forms</InputLabel>
-          <Select
-            label={"Dosage Forms"}
-            id="drug-filter"
-            name="drug-filter"
-            multiple
-            disabled={dosageForms.length === 0}
-            value={fdaResultFilter.dosageForms}
-            onChange={(e) => {
-              const newDosageForms = typeof e.target.value === "string"
-                ? e.target.value.split(",")
-                : e.target.value;
-
-              setFdaResultFilter(prev => ({ ...prev, dosageForms: newDosageForms }))
-            }}
-          >
-            {
-              dosageForms.map(dosageForm => {
-                return (
-                  <MenuItem id={dosageForm} key={dosageForm} value={dosageForm}>{dosageForm.replace(",", ":")}</MenuItem>
-                )
-              })
-            }
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel id="drug-filter-routes-select-label">Routes</InputLabel>
-          <Select
-            label={"Routes"}
-            id="drug-filter-routes"
-            name="drug-filter-routes"
-            multiple
-            disabled={routes.length === 0}
-            value={fdaResultFilter.routes}
-            onChange={(e) => {
-              const newRoutes = typeof e.target.value === "string"
-                ? e.target.value.split(",")
-                : e.target.value;
-
-              setFdaResultFilter(prev => ({ ...prev, routes: newRoutes }))
-            }}
-          >
-            {
-              routes.map(route => {
-                return (
-                  <MenuItem id={route} key={route} value={route}>{route.replace(",", ":")}</MenuItem>
-                )
-              })
-            }
-          </Select>
-        </FormControl>
-        <Box>
+        <SelectFilter
+          filterKey="dosageForms"
+          possibleValues={dosageForms}
+          label="Dosage Forms"
+        />
+        <SelectFilter
+          filterKey="routes"
+          possibleValues={routes}
+          label="Routes"
+        />
+        <SelectFilter
+          filterKey="labelers"
+          possibleValues={lablers}
+          label="Lablers"
+        />
+        <Box
+          sx={{
+            px: 1
+          }}
+        >
           <FormGroup>
             <FormControlLabel
               control={

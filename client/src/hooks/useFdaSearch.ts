@@ -1,7 +1,7 @@
 import { getFdaSearchResults } from "../api/fdaEndpoints";
 import { useFdaSearchContext } from "../Context/FdaSearchContext";
 import { useQuery } from "@tanstack/react-query";
-import type { FdaProductSearchResult } from "../api/types";
+import type { FdaProductSearchResult } from "../types";
 
 export default function useFdaSearch<TData = FdaProductSearchResult>(
   select?: (data: FdaProductSearchResult) => TData

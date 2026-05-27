@@ -24,9 +24,7 @@ export const isApiUp = async (): Promise<UpResponse> => {
   if (response.ok) {
     const upResponse = await response.json() as unknown as UpResponse;
     return upResponse;
-  }
-
-  return ({ up: false } as UpResponse);
+  } else { return ({ up: false } as UpResponse); }
 }
 
 export const parseErrorMessage = async (response: Response): Promise<string> => {

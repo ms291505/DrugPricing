@@ -1,5 +1,3 @@
-import type { FdaProductSearchResult } from "./api/types";
-
 export type NadacPrice = {
   id: number,
   ndc: string,
@@ -121,6 +119,10 @@ export type FdaProductDetail = {
   fdaPackageDetails: FdaPackageDetail[]
 }
 
+export type FdaProductSearchResult = {
+  products: FdaProductDetail[]
+}
+
 export function isFdaProductOtc(productTypeName: string) {
   return productTypeName.toLocaleLowerCase() === "human otc drug";
 }
@@ -131,6 +133,7 @@ export type FdaResultFilter = {
   dosageForms: string[],
   routes: string[],
   includeOtc: boolean | null,
+  labelers: string[],
 }
 
 export function createFdaResultFilter(): FdaResultFilter {
@@ -138,6 +141,7 @@ export function createFdaResultFilter(): FdaResultFilter {
     dosageForms: [],
     routes: [],
     includeOtc: null,
+    labelers: []
   })
 }
 
@@ -154,7 +158,8 @@ export function applyFdaResultFilter(
         filter.includeOtc
           ? true
           : isFdaProductOtc(p.productTypeName) === false
-      )
+      ) &&
+      filter.labelers.includes(p.labelerName)
     ),
   }
 }
