@@ -136,6 +136,8 @@ export type FdaResultFilter = {
   labelers: string[],
 }
 
+export type FdaResultDetailLevel = "product" | "package";
+
 export function createFdaResultFilter(): FdaResultFilter {
   return ({
     dosageForms: [],

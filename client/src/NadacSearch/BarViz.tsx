@@ -4,6 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../library/nadacPriceToDrugSummary";
 import { formatDollar } from "../library/formatDollar";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../library/constants";
+import BarVizToolTipLabel from "./BarVizToolTipLabel";
 
 type Props = {
   nadacPrices: NadacPrice[],
@@ -30,9 +31,9 @@ export default function BarViz({ nadacPrices }: Props) {
       />
       <Tooltip
         labelFormatter={(ndc) => {
-          const drug = drugSummaries.find((drug) => drug.ndc == ndc);
-          if (!drug) return ndc as string;
-          return drug?.ndcDescription;
+          const drugSummary = drugSummaries.find((drug) => drug.ndc == ndc);
+          if (!drugSummary) return ndc as string;
+          return (<BarVizToolTipLabel drugSummary={drugSummary} />);
         }}
         formatter={formatDollar}
         contentStyle={{
