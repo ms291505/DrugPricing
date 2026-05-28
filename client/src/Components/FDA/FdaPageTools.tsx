@@ -68,6 +68,15 @@ export default function FdaPageTools() {
       <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
         <Typography variant="h6">Page Tools</Typography>
       </Paper>
+      <Box
+        component="section"
+        id="page-options"
+        sx={pageToolsSectionSxProps}
+      >
+        <Typography variant="subtitle2">Options</Typography>
+        <SelectDetailLevel />
+      </Box>
+      <Divider />
       <Box component="section" id="page-filters" sx={pageToolsSectionSxProps}>
         <Typography variant="subtitle2">Filters</Typography>
         <SelectFilter
@@ -102,15 +111,6 @@ export default function FdaPageTools() {
               label="Include OTC Products"
             />
           </FormGroup>
-        </Box>
-        <Divider />
-        <Box
-          component="section"
-          id="page-options"
-          sx={pageToolsSectionSxProps}
-        >
-          <Typography variant="subtitle2">Options</Typography>
-          <SelectDetailLevel />
         </Box>
       </Box>
     </Paper>
