@@ -61,6 +61,13 @@ export default function FdaProductTable() {
         isFdaProductOtc(product.productTypeName) ? "Yes" : "No"
       )
     },
+    {
+      field: "packageCount",
+      headerName: "Packages",
+      valueGetter: (_, product) => (
+        product.fdaPackageDetails.length
+      )
+    }
   ]
 
   const initialState: GridInitialState = {

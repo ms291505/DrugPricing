@@ -134,6 +134,7 @@ export type FdaResultFilter = {
   routes: string[],
   includeOtc: boolean | null,
   labelers: string[],
+  includeSamplePackages: boolean | null,
 }
 
 export type FdaResultDetailLevel = "product" | "package";
@@ -143,7 +144,8 @@ export function createFdaResultFilter(): FdaResultFilter {
     dosageForms: [],
     routes: [],
     includeOtc: null,
-    labelers: []
+    labelers: [],
+    includeSamplePackages: null
   })
 }
 
@@ -153,15 +155,23 @@ export function applyFdaResultFilter(
 ): FdaProductSearchResult {
   return {
     ...data,
-    products: data.products.filter(p =>
-      filter.dosageForms.includes(p.dosageFormName) &&
-      p.routeName.some(r => filter.routes.includes(r)) &&
-      (
-        filter.includeOtc
+    products: data.products
+      .filter(p =>
+        filter.dosageForms.includes(p.dosageFormName) &&
+        p.routeName.some(r => filter.routes.includes(r)) &&
+        (filter.includeOtc
           ? true
-          : isFdaProductOtc(p.productTypeName) === false
-      ) &&
-      filter.labelers.includes(p.labelerName)
-    ),
-  }
+          : isFdaProductOtc(p.productTypeName) === false) &&
+        (filter.includeSamplePackages
+          ? true
+          : p.fdaPackageDetails.some(pkg => pkg.samplePackage === false)) &&
+        filter.labelers.includes(p.labelerName)
+      )
+      .map(p => ({
+        ...p,
+        fdaPackageDetails: filter.includeSamplePackages
+          ? p.fdaPackageDetails
+          : p.fdaPackageDetails.filter(pkg => pkg.samplePackage === false),
+      })),
+  };
 }

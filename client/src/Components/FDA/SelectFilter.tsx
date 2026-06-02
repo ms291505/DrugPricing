@@ -1,5 +1,5 @@
 import { Select, MenuItem, FormControl, InputLabel, } from "@mui/material";
-import { FILTER_SELECT_DELIMITER } from "../../library/constants";
+import { CONSTANT, FILTER_SELECT_DELIMITER } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
 type Props = {
@@ -25,13 +25,22 @@ export default function SelectFilter({ filterKey, possibleValues, label }: Props
         disabled={possibleValues.length === 0}
         value={fdaResultFilter[filterKey]}
         onChange={(e) => {
-          const newValue = typeof e.target.value === "string"
+          let newValue = typeof e.target.value === "string"
             ? e.target.value.split(FILTER_SELECT_DELIMITER)
             : e.target.value;
+
+          if (newValue.includes(CONSTANT.selectAllUuid)) {
+            newValue = possibleValues;
+          }
+          if (newValue.includes(CONSTANT.selectNoneUuid)) {
+            newValue = [];
+          }
 
           setFdaResultFilter(prev => ({ ...prev, [filterKey]: newValue }))
         }}
       >
+        <MenuItem value={CONSTANT.selectAllUuid}>Select all</MenuItem>
+        <MenuItem value={CONSTANT.selectNoneUuid}>Select none</MenuItem>
         {
           possibleValues.map(value => {
             return (

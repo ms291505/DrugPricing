@@ -28,7 +28,7 @@ export default function FdaPackageTable() {
       valueGetter: (_, fdaPackage) => (
         data.products.find(product => product.fdaPackageDetails.find(p => p.id === fdaPackage.id))?.proprietaryName
       ),
-      maxWidth: 150,
+      width: 150,
     },
     {
       field: "generic name",

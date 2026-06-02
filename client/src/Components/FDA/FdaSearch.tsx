@@ -1,4 +1,4 @@
-import { Box, Grid, Paper } from "@mui/material";
+import { Box, Button, Grid, Paper, Typography } from "@mui/material";
 import FdaSearchTool from "./FdaSearchTool";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
@@ -51,7 +51,7 @@ export default function FdaSearch() {
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 2
+            gap: 2,
           }}
         >
           <Paper
@@ -59,19 +59,30 @@ export default function FdaSearch() {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              p: 2
+              p: 2,
             }}
             component="section"
           >
             <FdaSearchResults />
           </Paper>
-          <Paper sx={{
-            p: 1
-          }}>
-            <BarViz
-              nadacPrices={nadacPrices}
-            />
-          </Paper>
+          {nadacPrices.length > 0
+            ?
+            <Paper sx={{
+              p: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}>
+              <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
+                <Typography variant="h6">Average Price by Product</Typography>
+                <Button>Press</Button>
+              </Paper>
+              <BarViz
+                nadacPrices={nadacPrices}
+              />
+            </Paper>
+            : null
+          }
         </Grid>
 
       </Grid>

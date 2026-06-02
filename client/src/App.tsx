@@ -21,7 +21,7 @@ export default function App() {
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
           <FdaSearchContextProvider>
-            <Container maxWidth="xl" >
+            <Container maxWidth="xl" sx={{ pb: 2 }}>
               <Routes>
                 <Route element={<DrugPricingBar />}>
                   <Route path="/" element={

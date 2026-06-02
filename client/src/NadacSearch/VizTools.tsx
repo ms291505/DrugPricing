@@ -9,7 +9,7 @@ import FormControl from "@mui/material/FormControl";
 import Paper from "@mui/material/Paper"
 import Divider from "@mui/material/Divider"
 import Button from "@mui/material/Button"
-import { DRUG_FILTER_SELECT_LABEL } from "../library/constants";
+import { CONSTANT } from "../library/constants";
 import type { LineChart } from "../types";
 
 export default function VizTools() {
@@ -46,9 +46,9 @@ export default function VizTools() {
       <Typography variant="subtitle2">Page Filters</Typography>
       <Box sx={{ display: "flex" }}>
         <FormControl fullWidth>
-          <InputLabel id="drug-filter-select-label">{DRUG_FILTER_SELECT_LABEL}</InputLabel>
+          <InputLabel id="drug-filter-select-label">{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
           <Select
-            label={DRUG_FILTER_SELECT_LABEL}
+            label={CONSTANT.label.ndcDescriptionNadacSearchFilter}
             id="drug-filter"
             name="drug-filter"
             multiple

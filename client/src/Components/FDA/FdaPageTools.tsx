@@ -1,11 +1,12 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider } from "@mui/material";
+import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip } from "@mui/material";
 import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc } from "../../types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
+import { CONSTANT, } from "../../library/constants";
 
 export default function FdaPageTools() {
 
@@ -18,20 +19,27 @@ export default function FdaPageTools() {
     [data]
   )
 
-  const disabledOrEmpty = !resultsHaveOtcProducts;
+  const disabledOrEmptyOtc = !resultsHaveOtcProducts;
+
+  const resultsHaveSamplePackages = useMemo(() =>
+    (data?.products.some(p => p.fdaPackageDetails.some(pack => pack.samplePackage === true)) ?? false),
+    [data]
+  )
+
+  const disabledOrEmptySample = !resultsHaveSamplePackages;
 
   const dosageForms = useMemo(
-    () => [...new Set(data?.products.map(p => p.dosageFormName) ?? [])],
+    () => [...new Set(data?.products.map(p => p.dosageFormName).sort() ?? [])],
     [data]
   );
 
   const routes = useMemo(
-    () => [...new Set(data?.products.flatMap(p => p.routeName) ?? [])],
+    () => [...new Set(data?.products.flatMap(p => p.routeName).sort() ?? [])],
     [data]
   );
 
   const lablers = useMemo(
-    () => [...new Set(data?.products.map(p => p.labelerName) ?? [])],
+    () => [...new Set(data?.products.map(p => p.labelerName).sort() ?? [])],
     [data]
   )
 
@@ -43,10 +51,11 @@ export default function FdaPageTools() {
         routes: routes,
         includeOtc: resultsHaveOtcProducts,
         labelers: lablers,
+        includeSamplePackages: resultsHaveSamplePackages,
       }));
     }
 
-  }, [dosageForms, routes, resultsHaveOtcProducts, lablers, setFdaResultFilter])
+  }, [dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
 
   const pageToolsSectionSxProps: SxProps<Theme> = {
     display: "flex",
@@ -94,24 +103,62 @@ export default function FdaPageTools() {
           possibleValues={lablers}
           label="Lablers"
         />
-        <Box
+        <FormGroup
           sx={{
             px: 1
           }}
         >
-          <FormGroup>
+          <Tooltip describeChild title={disabledOrEmptyOtc ? "No OTC products in results." : null} placement="right" arrow
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, -50],
+                    },
+                  },
+                ],
+              },
+            }}
+          >
             <FormControlLabel
               control={
-                <Checkbox aria-label="Include OTC Products" checked={fdaResultFilter.includeOtc === true && !disabledOrEmpty} disabled={disabledOrEmpty}
-                  onClick={() => {
+                <Checkbox checked={fdaResultFilter.includeOtc === true && !disabledOrEmptyOtc} disabled={disabledOrEmptyOtc}
+                  onChange={() => {
                     setFdaResultFilter(prev => ({ ...prev, includeOtc: !prev.includeOtc }))
                   }}
                 />
               }
-              label="Include OTC Products"
+              label={CONSTANT.label.includeOtcFilter}
             />
-          </FormGroup>
-        </Box>
+          </Tooltip>
+          <Tooltip describeChild title={disabledOrEmptySample ? "No sample packages in results." : null} placement="right" arrow
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, -50],
+                    },
+                  },
+                ],
+              },
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox checked={fdaResultFilter.includeSamplePackages === true && !disabledOrEmptySample} disabled={disabledOrEmptySample}
+                  onChange={() => {
+                    setFdaResultFilter(prev => ({ ...prev, includeSamplePackages: !prev.includeSamplePackages }))
+                  }}
+                />
+              }
+              label="Include Sample Packages"
+            />
+          </Tooltip>
+        </FormGroup>
       </Box>
     </Paper>
   )
