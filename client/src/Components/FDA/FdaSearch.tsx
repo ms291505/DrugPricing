@@ -3,7 +3,7 @@ import FdaSearchTool from "./FdaSearchTool";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../../NadacSearch/BarViz";
-import { applyFdaResultFilter, type NadacPrice } from "../../types";
+import { applyFdaResultFilter, resultDetailLevelToLabel, type NadacPrice } from "../../types";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
@@ -74,8 +74,12 @@ export default function FdaSearch() {
               gap: 2,
             }}>
               <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
-                <Typography variant="h6">Average Price by Product</Typography>
-                <Button>Press</Button>
+                <Box sx={{ display: "flex", alignItems: "center", width: "100%", position: "relative" }}>
+                  <Typography variant="h6" sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+                    {"Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel)}
+                  </Typography>
+                  <Button sx={{ marginLeft: "auto" }}>Press</Button>
+                </Box>
               </Paper>
               <BarViz
                 nadacPrices={nadacPrices}

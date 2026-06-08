@@ -139,6 +139,15 @@ export type FdaResultFilter = {
 
 export type FdaResultDetailLevel = "product" | "package";
 
+export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
+  switch (level) {
+    case "product":
+      return "Product";
+    case "package":
+      return "Package";
+  }
+}
+
 export function createFdaResultFilter(): FdaResultFilter {
   return ({
     dosageForms: [],

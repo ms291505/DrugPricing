@@ -10,12 +10,12 @@ import useFdaSearch from "../../hooks/useFdaSearch";
 
 export default function FdaSearchTool() {
 
-  const [proprietaryName, setProprietaryName] = useState<string>("");
+  const { setFdaSearchParams, fdaSearchParams } = useFdaSearchContext();
 
-  const { setFdaSearchParams } = useFdaSearchContext();
+  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.propreitaryName ?? "");
+
 
   const isMobile = useMobile();
-
 
   const fdaSearch = useFdaSearch();
 
