@@ -74,8 +74,9 @@ export default function Welcome() {
           </ol>
           <Divider />
           <Typography variant="h6">Attributions</Typography>
-          <p>The medicine icon is a free resouce from Flaticon, and is available here:
+          <p>The medicine and bar graph icons are a free resouce from Flaticon, and are available here:
             <a href="https://www.flaticon.com/free-icons/medicine" title="medicine icons">Medicine icons created by Freepik - Flaticon</a>
+            <a href="https://www.flaticon.com/free-icons/graph" title="graph icons">Graph icons created by Bamicon - Flaticon</a>
           </p>
         </Typography>
       </Container>
