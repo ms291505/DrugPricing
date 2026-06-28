@@ -5,7 +5,7 @@ import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import { DRUG_FILTER_SELECT_LABEL } from "../library/constants";
+import { CONSTANT } from "../library/constants";
 import { useState } from "react";
 import { useSearchContext } from "../Context/SearchContext.tsx";
 
@@ -45,7 +45,7 @@ export default function CreateChart({ drugs, onCancel }: Props) {
         width: "100%"
       }}>
       <FormControl fullWidth>
-        <InputLabel id="chart-drug-select-label">{DRUG_FILTER_SELECT_LABEL}</InputLabel>
+        <InputLabel id="chart-drug-select-label">{CONSTANT.label.drugFilterSelect}</InputLabel>
         <Select
           multiple
           label="Drugs"
