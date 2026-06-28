@@ -28,6 +28,11 @@ export default function FdaPageTools() {
 
   const disabledOrEmptySample = !resultsHaveSamplePackages;
 
+  const productNdcs = useMemo(
+    () => [...new Set(data?.products.map(p => p.productNdc).sort() ?? [])],
+    [data]
+  )
+
   const dosageForms = useMemo(
     () => [...new Set(data?.products.map(p => p.dosageFormName).sort() ?? [])],
     [data]
@@ -47,6 +52,7 @@ export default function FdaPageTools() {
     if (dosageForms.length + routes.length > 0) {
       setFdaResultFilter(prev => ({
         ...prev,
+        productNdcs: productNdcs,
         dosageForms: dosageForms,
         routes: routes,
         includeOtc: resultsHaveOtcProducts,
@@ -55,7 +61,7 @@ export default function FdaPageTools() {
       }));
     }
 
-  }, [dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
+  }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
 
   const pageToolsSectionSxProps: SxProps<Theme> = {
     display: "flex",
@@ -88,6 +94,11 @@ export default function FdaPageTools() {
       <Divider />
       <Box component="section" id="page-filters" sx={pageToolsSectionSxProps}>
         <Typography variant="subtitle2">Filters</Typography>
+        <SelectFilter
+          filterKey="productNdcs"
+          possibleValues={productNdcs}
+          label="Product NDCs"
+        />
         <SelectFilter
           filterKey="dosageForms"
           possibleValues={dosageForms}

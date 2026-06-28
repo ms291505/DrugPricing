@@ -3,7 +3,7 @@ import { CONSTANT, FILTER_SELECT_DELIMITER } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
 type Props = {
-  filterKey: "routes" | "labelers" | "dosageForms",
+  filterKey: "routes" | "labelers" | "dosageForms" | "productNdcs",
   possibleValues: string[],
   label: string,
 }

@@ -21,7 +21,7 @@ public static class FdaProductEndpoints
     [FromServices] FdaProductService fdaProductService
   )
   {
-    if (!fdaProductService.ValidateProprietaryNameSearch(proprietaryName))
+    if (!fdaProductService.ValidateProprietyNameSearch(proprietaryName))
       return TypedResults.BadRequest(new { message = NoSearchParamsErrorMessage });
 
     var result = await fdaProductService.ListSearchResultsAsync(proprietaryName);

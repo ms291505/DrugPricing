@@ -130,6 +130,7 @@ export function isFdaProductOtc(productTypeName: string) {
 export type ResultSelect = ((data: FdaProductSearchResult) => FdaProductSearchResult) | undefined;
 
 export type FdaResultFilter = {
+  productNdcs: string[],
   dosageForms: string[],
   routes: string[],
   includeOtc: boolean | null,
@@ -137,19 +138,9 @@ export type FdaResultFilter = {
   includeSamplePackages: boolean | null,
 }
 
-export type FdaResultDetailLevel = "product" | "package";
-
-export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
-  switch (level) {
-    case "product":
-      return "Product";
-    case "package":
-      return "Package";
-  }
-}
-
 export function createFdaResultFilter(): FdaResultFilter {
   return ({
+    productNdcs: [],
     dosageForms: [],
     routes: [],
     includeOtc: null,
@@ -166,6 +157,7 @@ export function applyFdaResultFilter(
     ...data,
     products: data.products
       .filter(p =>
+        filter.productNdcs.includes(p.productNdc) &&
         filter.dosageForms.includes(p.dosageFormName) &&
         p.routeName.some(r => filter.routes.includes(r)) &&
         (filter.includeOtc
@@ -183,4 +175,15 @@ export function applyFdaResultFilter(
           : p.fdaPackageDetails.filter(pkg => pkg.samplePackage === false),
       })),
   };
+}
+
+export type FdaResultDetailLevel = "product" | "package";
+
+export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
+  switch (level) {
+    case "product":
+      return "Product";
+    case "package":
+      return "Package";
+  }
 }

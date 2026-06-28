@@ -67,12 +67,13 @@ export default function FdaSearch() {
           </Paper>
           {nadacPrices.length > 0
             ?
-            <Paper sx={{
-              p: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}>
+            <Paper
+              sx={{
+                p: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}>
               <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
                 <Box sx={{ display: "flex", alignItems: "center", width: "100%", position: "relative" }}>
                   <Typography variant="h6" sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
@@ -85,7 +86,26 @@ export default function FdaSearch() {
                 nadacPrices={nadacPrices}
               />
             </Paper>
-            : null
+            : <Paper component="div"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                p: 2
+              }}>
+              <Box
+                sx={{
+                  backgroundColor: "lightgray",
+                  width: "fit-content",
+                  height: "300px",
+                  borderRadius: "12px"
+                }}
+              >
+                <img src="/graph.png" alt="Bar graph icon"
+                  style={{ height: "100%", objectFit: "contain" }}
+                />
+              </Box>
+            </Paper>
           }
         </Grid>
 

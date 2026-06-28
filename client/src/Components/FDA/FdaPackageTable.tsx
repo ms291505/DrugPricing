@@ -5,6 +5,14 @@ import { applyFdaResultFilter, type FdaPackageDetail } from "../../types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { Typography, Paper } from "@mui/material";
 
+type FdaPackageResultInfo = FdaPackageDetail &
+{
+  productNdc: string,
+  dosageFormName: string,
+  routeName: string[],
+  labelerName: string,
+}
+
 export default function FdaPackageTable() {
 
   const { fdaResultFilter } = useFdaSearchContext();
@@ -13,14 +21,27 @@ export default function FdaPackageTable() {
 
   const data = fdaSearch.data ?? { products: [] };
 
-  const rows = applyFdaResultFilter(data, fdaResultFilter)
-    .products.flatMap(product => product.fdaPackageDetails);
+  const rows: FdaPackageResultInfo[] = applyFdaResultFilter(data, fdaResultFilter)
+    .products.flatMap(product =>
+      product.fdaPackageDetails.map(fdaPackage =>
+      ({
+        ...fdaPackage,
+        productNdc: product.productNdc,
+        dosageFormName: product.dosageFormName,
+        routeName: [...product.routeName],
+        labelerName: product.labelerName,
+      }))
+    );
 
-  const columns: GridColDef<FdaPackageDetail>[] = [
+  const columns: GridColDef<FdaPackageResultInfo>[] = [
+    {
+      field: "productNdc",
+      headerName: "Product NDC"
+    },
     {
       field: "ndcPackageCode",
       headerName: "Package NDC",
-      width: 150
+      valueGetter: (_, fdaPackage) => (fdaPackage.ndcPackageCode.split("-")[2]),
     },
     {
       field: "brand name",
@@ -50,7 +71,22 @@ export default function FdaPackageTable() {
       field: "packageDescription",
       headerName: "Package Description",
       width: 250,
-    }
+    },
+    {
+      field: "dosageFormName",
+      headerName: "Form",
+      valueGetter: (_, p) => (p.dosageFormName.replace(", ", ": "))
+    },
+    {
+      field: "routeName",
+      headerName: "Route",
+      valueGetter: (_, p) => (p.routeName.join(", "))
+    },
+    {
+      field: "labelerName",
+      headerName: "Labeler",
+      width: 150
+    },
   ];
 
   const initialState: GridInitialState = {
@@ -74,6 +110,7 @@ export default function FdaPackageTable() {
         loading={fdaSearch.isLoading}
         initialState={initialState}
         pageSizeOptions={DATA_GRID_PAGE_SIZES}
+        getRowId={r => r.id}
       />
     </>
   )

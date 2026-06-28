@@ -60,7 +60,7 @@ builder.Services.AddDbContext<DrugPricingContext>(options =>
     var pass = Environment.GetEnvironmentVariable("PGPASSWORD");
 
     var connectionString =
-      $"Host={host};Port={port};Database={db};Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true";
+      $"Host={host};Port={port};Database={db};Username={user};Password={pass};SSL Mode=Prefer;Trust Server Certificate=true";
     options.UseNpgsql(connectionString);
   }
 });

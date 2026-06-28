@@ -40,6 +40,9 @@ export default function BarViz({ nadacPrices }: Props) {
           backgroundColor: theme.palette.background.paper,
           fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
         }}
+        cursor={{
+          fill: theme.palette.background.paper
+        }}
       />
       <Bar
         dataKey="averagePrice"

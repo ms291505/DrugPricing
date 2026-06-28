@@ -12,9 +12,14 @@ public class FdaProductService
     _fdaProductRepo = fdaProductRepo;
   }
 
-  public bool ValidateProprietaryNameSearch(string proprietaryName)
+  public bool ValidateProprietyNameSearch(string? proprietaryName)
   {
-    return (proprietaryName.Length >= MIN_PROPRIETARY_NAME_LENGTH);
+    return (proprietaryName?.Length >= MIN_PROPRIETARY_NAME_LENGTH);
+  }
+
+  public bool ValidateNonProprietyNameSearch(string? nonProprietaryName)
+  {
+    return (nonProprietaryName?.Length >= MIN_PROPRIETARY_NAME_LENGTH);
   }
 
   public async Task<FdaProductSearchResult> ListSearchResultsAsync(string proprietaryName)
