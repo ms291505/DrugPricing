@@ -6,10 +6,16 @@ import pandas as pd
 from nadac.update_drug_package import update_drug_package
 from dotenv import load_dotenv
 import os
+import sys
 
 
-def main(report_mm_dd_yyyy: str = "05-13-2026", filter_before_insert: bool = True):
+def main(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
     load_dotenv()
+
+    if not report_mm_dd_yyyy:
+        print("No report date provided.")
+        return
+
     if os.environ.get("FILTER_NADAC_FIRST", "1") == "0":
         filter_before_insert = False
 
@@ -58,4 +64,12 @@ def main(report_mm_dd_yyyy: str = "05-13-2026", filter_before_insert: bool = Tru
 
 
 if __name__ == "__main__":
-    main()
+    load_dotenv()
+    file_dates = os.getenv("FILE_DATES", "").split(",")
+    if not file_dates:
+        print("No dates provided in .env file, now exiting...")
+        sys.exit()
+    print(file_dates)
+    for date in file_dates:
+        print(date)
+        main(report_mm_dd_yyyy=date)
