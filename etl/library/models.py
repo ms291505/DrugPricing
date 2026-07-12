@@ -114,10 +114,16 @@ class FdaPackage(BaseModel):
             else pd.to_datetime(row["ENDMARKETINGDATE"]).date(),
             ndc_exclude_flag=row["NDC_EXCLUDE_FLAG"].strip(),
             sample_package=row["SAMPLE_PACKAGE"] == "Y",
-            ndc_package_code_stripped=row["NDCPACKAGECODE"]
-            .replace("-", "")
-            .lstrip("0"),
+            ndc_package_code_stripped=cls.normalize_to_match_nadac(
+                row["NDCPACKAGECODE"]
+            ),
         )
+
+    @staticmethod
+    def normalize_to_match_nadac(ndc_package_code: str) -> str:
+        labeler, product, package = ndc_package_code.split("-")
+        padded = labeler.zfill(5) + product.zfill(4) + package.zfill(2)
+        return padded.lstrip("0")
 
 
 class FdaProduct(BaseModel):
