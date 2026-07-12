@@ -1,0 +1,32 @@
+name: Deploy to Pi
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build client
+        working-directory: ./client
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy client
+        run: |
+          rsync -av --delete ./client/dist/ /var/www/DrugPricing/
+
+      - name: Build server
+        working-directory: ./server
+        run: /home/ghrunner/.dotnet/dotnet publish -c Release -o publish
+
+      - name: Deploy server
+        run: |
+          rsync -av --exclude='appsettings.json' ./server/publish/ /home/ghrunner/apps/drugpricing/
+
+      - name: Restart service
+        run: sudo systemctl restart drugpricing
