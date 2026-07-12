@@ -13,6 +13,7 @@ jobs:
       - name: Build client
         working-directory: ./client
         run: |
+          cp /home/ghrunner/config/drugpricing-client/.env.production .env.production
           npm install
           npm run build
 
