@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Paper, Typography } from "@mui/material";
+import { Box, Grid, Paper, Typography } from "@mui/material";
 import FdaSearchTool from "./FdaSearchTool";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
@@ -79,7 +79,9 @@ export default function FdaSearch() {
                   <Typography variant="h6" sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
                     {"Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel)}
                   </Typography>
+                  {/*
                   <Button sx={{ marginLeft: "auto" }}>Press</Button>
+                  */}
                 </Box>
               </Paper>
               <BarViz

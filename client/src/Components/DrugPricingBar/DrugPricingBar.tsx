@@ -39,7 +39,7 @@ export default function DrugPricingBar() {
             left: { md: "50%" },
             transform: { md: "translateX(-50%)" }
           }}>
-            <NavButton to="/">HOME</NavButton>
+            <NavButton to="/">ABOUT</NavButton>
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/nadac-search">NADAC</NavButton>
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
