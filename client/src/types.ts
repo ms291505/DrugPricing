@@ -187,3 +187,13 @@ export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
       return "Package";
   }
 }
+
+export type LayoutMode = "single" | "split-2" | "split-4";
+
+export type TabType = "fda" | "nadac";
+
+export type WorkspaceTab = {
+  id: string;
+  type: TabType;
+  title?: string;
+}

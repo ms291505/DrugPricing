@@ -6,7 +6,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from "./theme";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import Welcome from "./Welcome/Welcome";
+import About from "./About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
@@ -25,7 +25,7 @@ export default function App() {
               <Routes>
                 <Route element={<DrugPricingBar />}>
                   <Route path="/" element={
-                    <Welcome />
+                    <About />
                   } />
                   <Route path="/nadac-search" element={
                     <SearchContextProvider>

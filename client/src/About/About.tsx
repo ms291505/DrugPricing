@@ -2,23 +2,21 @@ import Typography from "@mui/material/Typography"
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 
-export default function Welcome() {
+export default function About() {
 
   return (
     <>
-
-      <Typography variant="h1">Welcome.</Typography>
-      <Divider sx={{ mb: 2 }} />
       <Container maxWidth="lg">
         <Typography variant="body1">
           <Typography variant="h3">About</Typography>
+          <Divider sx={{ mb: 2 }} />
           <p>
             This demo website showcases some skills that I've developed over the last few years specific to full stack webapp development and deployment.
             The website is a tool for users to search and chart drug pricing data over time. I chose NADAC because it is easily available,
             extensive, and covers about 5 years, allowing for some interesting visualizations.
             <ol>
               <li>Python, JavaScript (TypeScript), and C#</li>
-              <li>React, including some popular related libraries:</li>
+              <li>React, including some popular libraries:</li>
               <ul>
                 <li>Material UI</li>
                 <li>Tanstack Query</li>
@@ -40,6 +38,9 @@ export default function Welcome() {
                   <li>
                     Creating a process that's easy to manage using to download data from publicly available APIs, filter and validate records, and insert fresh data into a database.
                   </li>
+                  <li>
+                    Currently, I run the transformations on my developer machine and then write to the production database from there. Eventually, I'd like to set up a weekly cron job to update the NADAC data each week.
+                  </li>
                 </ul>
               </li>
             </ol>
@@ -47,10 +48,10 @@ export default function Welcome() {
           <p>
             These skills are all "self-taught" through a combination of official tutorials found in documentation, other tutorials on YouTube, and a handful of books (especially "Eloquent JavaScript").
             I've attempted to follow SOLID principles, but I by no means claim to be an expert. I try to create things that make sense to me two weeks later, and the SOLID principles have added structure to these attempts.
-            I use AI tools to generate some code for this project (e.g., "create python classes based on these C# classes") and when I am stuck on an issue I can't figure out with the docs.
           </p>
 
           <Typography variant="h3">Ideas & Challenges</Typography>
+          <Divider sx={{ mb: 2 }} />
           <p>There were some key points in this project that I'd like to use to explain my thought process in designing this tool.</p>
           <ol>
             <Typography variant="h5"><li>Optimizing the NDC Description Search</li></Typography>
@@ -69,7 +70,8 @@ export default function Welcome() {
               gaps are found in OTC drugs, but I did not want to force a foreign key contraint between NADAC and FDA data. In short, I want users to be able to search
               all of the NADAC data, not just packages that match the FDA database. As a result I currently have two separate sets of tools: one for searching the relatively barebones
               NADAC data, and a another for more detailed searching and filtering of the FDA data with all relevant pricing. In the future, I'd like to dig into these gaps more
-              and try to come up with a better integreation of the data sources, if possible. For now on the backend, it's a simple join from FdaPackage to NadacPrice.
+              and try to come up with a better integreation of the data sources, if possible. For now on the backend, it's a simple join from FdaPackage to NadacPrice whenever
+              the FDA search returns results. I did have to standardize the Package NDCs from the FDA data data to match the format in the NADAC data.
             </p>
           </ol>
           <Divider />
