@@ -1,13 +1,13 @@
-import type { Drug, LineChart } from "../types.ts";
+import type { Drug, LineChart } from "../../types.ts";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box"
 import Button from "@mui/material/Button"
 import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
-import { CONSTANT } from "../library/constants";
+import { CONSTANT } from "../../library/constants";
 import { useState } from "react";
-import { useSearchContext } from "../Context/SearchContext.tsx";
+import { useSearchContext } from "../../Context/SearchContext.tsx";
 
 type Props = {
   drugs: Drug[],

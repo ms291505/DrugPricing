@@ -1,6 +1,6 @@
-import { type NadacPrice } from "../types.ts";
+import { type NadacPrice } from "../../types.ts";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, type RenderableText, type TooltipValueType } from "recharts";
-import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, NDC_NDC_DESCRIPTION_DELIMITER } from "../library/constants.ts";
+import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
 
 type Props = {

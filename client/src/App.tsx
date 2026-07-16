@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import NadacSearch from "./NadacSearch/NadacSearch";
+import NadacSearch from "./Components/NadacSearch/NadacSearch";
 import { SearchContextProvider } from "./Context/SearchContext";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from "./theme";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
-import About from "./About/About";
+import About from "./Components/About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";

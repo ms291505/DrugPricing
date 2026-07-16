@@ -1,4 +1,4 @@
-import type { DrugSummary } from "../types.ts";
+import type { DrugSummary } from "../../types.ts";
 
 type Props = {
   drugSummary: DrugSummary

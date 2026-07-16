@@ -1,7 +1,7 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useSearchContext } from "../Context/SearchContext";
+import { useSearchContext } from "../../Context/SearchContext";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
@@ -9,8 +9,8 @@ import FormControl from "@mui/material/FormControl";
 import Paper from "@mui/material/Paper"
 import Divider from "@mui/material/Divider"
 import Button from "@mui/material/Button"
-import { CONSTANT } from "../library/constants";
-import type { LineChart } from "../types";
+import { CONSTANT } from "../../library/constants";
+import type { LineChart } from "../../types";
 
 export default function VizTools() {
   const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData, setCharts } = useSearchContext();

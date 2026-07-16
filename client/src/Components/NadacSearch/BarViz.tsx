@@ -1,9 +1,9 @@
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts";
-import type { DrugSummary, NadacPrice } from "../types";
+import type { DrugSummary, NadacPrice } from "../../types";
 import { useTheme } from "@mui/material/styles";
-import nadacPriceToDrugSummary from "../library/nadacPriceToDrugSummary";
-import { formatDollar } from "../library/formatDollar";
-import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../library/constants";
+import nadacPriceToDrugSummary from "../../library/nadacPriceToDrugSummary";
+import { formatDollar } from "../../library/formatDollar";
+import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../../library/constants";
 import BarVizToolTipLabel from "./BarVizToolTipLabel";
 
 type Props = {
