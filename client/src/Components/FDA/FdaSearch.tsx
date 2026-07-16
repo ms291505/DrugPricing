@@ -2,7 +2,7 @@ import { Box, Grid, Paper, Typography } from "@mui/material";
 import FdaSearchTool from "./FdaSearchTool";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
-import BarViz from "../../NadacSearch/BarViz";
+import BarViz from "../NadacSearch/BarViz";
 import { applyFdaResultFilter, resultDetailLevelToLabel, type NadacPrice } from "../../types";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
