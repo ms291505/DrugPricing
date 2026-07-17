@@ -10,6 +10,8 @@ import About from "./Components/About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
+import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
+import Workspace from "./Components/Workspace/Workspace";
 
 const queryClient = new QueryClient();
 
@@ -21,24 +23,29 @@ export default function App() {
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
           <FdaSearchContextProvider>
-            <Container maxWidth="xl" sx={{ pb: 2 }}>
-              <Routes>
-                <Route element={<DrugPricingBar />}>
-                  <Route path="/" element={
-                    <About />
-                  } />
-                  <Route path="/nadac-search" element={
-                    <SearchContextProvider>
-                      <NadacSearch />
-                    </SearchContextProvider>
-                  } />
-                  <Route path="/fda-search" element={
-                    <FdaSearch />
-                  } />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Route>
-              </Routes>
-            </Container>
+            <WorkspaceContextProvider>
+              <Container maxWidth="xl" sx={{ pb: 2 }}>
+                <Routes>
+                  <Route element={<DrugPricingBar />}>
+                    <Route path="/" element={
+                      <About />
+                    } />
+                    <Route path="/nadac-search" element={
+                      <SearchContextProvider>
+                        <NadacSearch />
+                      </SearchContextProvider>
+                    } />
+                    <Route path="/fda-search" element={
+                      <FdaSearch />
+                    } />
+                    <Route path="/workspace" element={
+                      <Workspace />
+                    } />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Route>
+                </Routes>
+              </Container>
+            </WorkspaceContextProvider>
           </FdaSearchContextProvider>
         </QueryClientProvider>
       </ThemeProvider>
