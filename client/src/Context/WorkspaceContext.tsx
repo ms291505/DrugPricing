@@ -1,4 +1,4 @@
-import React, { createContext, useState, type Dispatch, type SetStateAction } from "react";
+import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
 import type { LayoutMode, TabType, WorkspaceTab } from "../library/types";
 
 type WorkspaceContextType = {
@@ -60,4 +60,8 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       {children}
     </WorkspaceContext.Provider>
   );
+}
+
+export const useWorkspaceContext = () => {
+  return useContext(WorkspaceContext);
 }
