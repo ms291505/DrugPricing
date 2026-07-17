@@ -1,5 +1,5 @@
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts";
-import type { DrugSummary, NadacPrice } from "../../types";
+import type { DrugSummary, NadacPrice } from "../../library/types";
 import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../../library/nadacPriceToDrugSummary";
 import { formatDollar } from "../../library/formatDollar";

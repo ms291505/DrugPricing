@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type FdaSearchParams } from "../types";
+import { createFdaResultFilter, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type FdaSearchParams } from "../library/types";
 
 
 export type FdaSearchContextType = {

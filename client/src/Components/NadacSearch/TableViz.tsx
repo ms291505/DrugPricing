@@ -1,5 +1,5 @@
 import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-grid";
-import { summarizeNadacPrices, type DrugSummary, type NadacPrice } from "../../types";
+import { summarizeNadacPrices, type DrugSummary, type NadacPrice } from "../../library/types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { useSearchContext } from "../../Context/SearchContext";
 import { formatDollar } from "../../library/formatDollar";

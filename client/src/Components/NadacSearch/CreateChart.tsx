@@ -1,4 +1,4 @@
-import type { Drug, LineChart } from "../../types.ts";
+import type { Drug, LineChart } from "../../library/types.ts";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box"

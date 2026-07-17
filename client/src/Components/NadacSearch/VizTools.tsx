@@ -10,7 +10,7 @@ import Paper from "@mui/material/Paper"
 import Divider from "@mui/material/Divider"
 import Button from "@mui/material/Button"
 import { CONSTANT } from "../../library/constants";
-import type { LineChart } from "../../types";
+import type { LineChart } from "../../library/types";
 
 export default function VizTools() {
   const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData, setCharts } = useSearchContext();

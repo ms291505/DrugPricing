@@ -1,5 +1,5 @@
 import { LineChart } from "@mui/x-charts";
-import type { NadacPrice } from "../../types";
+import type { NadacPrice } from "../../library/types";
 import { DEFAULT_CHART_HEIGHT, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants";
 
 type Props = {

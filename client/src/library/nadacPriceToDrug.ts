@@ -1,4 +1,4 @@
-import type { NadacPrice, Drug } from "../types.ts"
+import type { NadacPrice, Drug } from "./types.ts"
 
 export default function nadacPriceToDrug(nadacPrices: NadacPrice[]): Drug[] {
   const ndcs = [...new Set(nadacPrices.map(price => (price.ndc)))];

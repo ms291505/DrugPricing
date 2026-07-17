@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import type { NadacPrice, LineChart, BarChart, NadacSearchParams } from "../types";
+import type { NadacPrice, LineChart, BarChart, NadacSearchParams } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
 type SearchContextType = {

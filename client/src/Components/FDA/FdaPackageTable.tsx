@@ -1,7 +1,7 @@
 import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-grid";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { applyFdaResultFilter, type FdaPackageDetail } from "../../types";
+import { applyFdaResultFilter, type FdaPackageDetail } from "../../library/types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { Typography, Paper } from "@mui/material";
 

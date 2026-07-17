@@ -3,7 +3,7 @@ import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, t
 import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { isFdaProductOtc } from "../../types";
+import { isFdaProductOtc } from "../../library/types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";

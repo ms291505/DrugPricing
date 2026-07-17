@@ -1,4 +1,4 @@
-import type { NadacPrice, FdaProductDetail } from "../types";
+import type { NadacPrice, FdaProductDetail } from "../library/types";
 
 export type UpResponse = {
   up: boolean

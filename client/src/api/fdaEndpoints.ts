@@ -1,7 +1,7 @@
-import type { FdaProductDetail } from "../types";
+import type { FdaProductDetail } from "../library/types";
 import { createApiPath, parseErrorMessage } from "./api";
 import type { FdaProductSearchResponse, } from "./types";
-import type { FdaProductSearchResult } from "../types";
+import type { FdaProductSearchResult } from "../library/types";
 
 export const getFdaSearchResults = async (
   proprietaryName: string

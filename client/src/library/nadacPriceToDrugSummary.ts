@@ -1,4 +1,4 @@
-import type { DrugSummary, NadacPrice } from "../types";
+import type { DrugSummary, NadacPrice } from "./types";
 
 export default function nadacPriceToDrugSummary(nadacPrices: NadacPrice[]): DrugSummary[] {
   return Object.entries(

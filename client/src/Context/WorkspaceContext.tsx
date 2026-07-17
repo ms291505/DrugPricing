@@ -1,5 +1,5 @@
 import React, { createContext, useState, type Dispatch, type SetStateAction } from "react";
-import type { LayoutMode, TabType, WorkspaceTab } from "../types";
+import type { LayoutMode, TabType, WorkspaceTab } from "../library/types";
 
 type WorkspaceContextType = {
   tabs: Array<WorkspaceTab>;

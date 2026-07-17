@@ -1,5 +1,5 @@
 import { DEFAULT_CHART_HEIGHT } from "../../library/constants"
-import type { NadacPrice, DrugSummary } from "../../types"
+import type { NadacPrice, DrugSummary } from "../../library/types"
 import { BarChart } from "@mui/x-charts/BarChart"
 
 type Props =
