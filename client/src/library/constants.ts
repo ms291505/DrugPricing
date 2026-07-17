@@ -18,4 +18,5 @@ export const CONSTANT = {
   selectAllUuid: "c3fb0b4c-317d-4492-947c-3b1e76a7c86f",
   selectNoneUuid: "23147a8f-f376-45a3-973f-b3620d8a69bd",
   staleTime: 1000 * 60 * 10,
+  drawerWidth: 240,
 }

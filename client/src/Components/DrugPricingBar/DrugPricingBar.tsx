@@ -24,13 +24,15 @@ export default function DrugPricingBar() {
           </Box>
         </Portal>
       )}
-      <AppBar>
+      <AppBar
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <Toolbar sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
           alignItems: "center",
           py: { xs: 1, md: 0 },
-          position: "relative"
+          position: "relative",
         }}>
           <Typography variant="h3" sx={{ display: { xs: "none", md: "block" } }}>DrugPricing</Typography>
           <Box sx={{

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import type { LayoutMode, TabType, WorkspaceTab } from "../library/types";
+import { defaultTitleFor, type LayoutMode, type TabType, type WorkspaceTab } from "../library/types";
 
 type WorkspaceContextType = {
   tabs: Array<WorkspaceTab>;
@@ -34,7 +34,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     {
       id: id,
       type: tabType,
-      title: title ?? "New Tab",
+      title: title ?? defaultTitleFor(tabType),
     }
     setTabs(prev => [...prev, newTab]);
     return id;
