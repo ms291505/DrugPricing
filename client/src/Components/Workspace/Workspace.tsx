@@ -5,10 +5,18 @@ import WorkspaceDrawer from "./WorkspaceDrawer";
 
 export default function Workspace() {
   const { tabs, paneAssignment } = useWorkspaceContext();
-  return (<Box display="flex">
-    <WorkspaceDrawer />
-    <Box>
-      {tabs.map(tab => <TabInstance key={tab.id} visible={paneAssignment.includes(tab.id)} workspaceTab={tab} />)}
+  return (
+    <Box
+      sx={{
+        display: "flex",
+      }}
+    >
+      <WorkspaceDrawer />
+      {
+        tabs.map(tab =>
+          <TabInstance key={tab.id} visible={paneAssignment.includes(tab.id)} workspaceTab={tab} />
+        )
+      }
     </Box>
-  </Box>)
+  )
 }
