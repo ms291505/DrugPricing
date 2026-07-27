@@ -10,6 +10,10 @@ type WorkspaceContextType = {
   setLayoutMode: Dispatch<SetStateAction<LayoutMode>>;
   paneAssignment: Array<string | null>;
   setPaneAssigment: Dispatch<SetStateAction<Array<string | null>>>;
+  mobileDrawerIsOpen: boolean
+  setMobileDrawerIsOpen: Dispatch<SetStateAction<boolean>>;
+  mobileDrawerIsClosing: boolean
+  setMobileDrawerIsClosing: Dispatch<SetStateAction<boolean>>;
 };
 
 export const WorkspaceContext = createContext<WorkspaceContextType>({
@@ -21,11 +25,17 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   setLayoutMode: () => { },
   paneAssignment: [null],
   setPaneAssigment: () => { },
+  mobileDrawerIsOpen: false,
+  setMobileDrawerIsOpen: () => { },
+  mobileDrawerIsClosing: false,
+  setMobileDrawerIsClosing: () => { },
 });
 
 export const WorkspaceContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [tabs, setTabs] = useState<Array<WorkspaceTab>>([]);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
+  const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
+  const [mobileDrawerIsClosing, setMobileDrawerIsClosing] = useState(false);
   const [paneAssignment, setPaneAssigment] = useState<Array<string | null>>([null]);
 
   const addTab = (tabType: TabType, title?: string) => {
@@ -55,7 +65,11 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       layoutMode,
       setLayoutMode,
       paneAssignment,
-      setPaneAssigment
+      setPaneAssigment,
+      mobileDrawerIsClosing,
+      mobileDrawerIsOpen,
+      setMobileDrawerIsClosing,
+      setMobileDrawerIsOpen,
     }}>
       {children}
     </WorkspaceContext.Provider>

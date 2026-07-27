@@ -85,7 +85,7 @@ export type NadacSearchResponse = {
   notices: Array<string>
 }
 
-// TODO: Move to src/types.ts
+// TODO: Move to src/library/types.ts
 export type NadacSearchResult = {
 
   prices: Array<NadacPrice>;
@@ -96,5 +96,3 @@ export type NadacSearchResult = {
 export type FdaProductSearchResponse = {
   data: FdaProductDetail[]
 }
-
-// TODO: Move to src/types.ts

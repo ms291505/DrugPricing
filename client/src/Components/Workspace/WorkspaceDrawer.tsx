@@ -1,38 +1,43 @@
-import { Box, Button, Drawer, Toolbar } from "@mui/material";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
+import { Drawer, } from "@mui/material";
 import { CONSTANT } from "../../library/constants.ts";
-import DrawerTab from "./DrawerTab.tsx";
-import { useState } from "react";
+import DrawerContent from "./DrawerContent.tsx";
+import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
 
 export default function WorkspaceDrawer() {
-  const { tabs, addTab } = useWorkspaceContext()
-
-  const onClick = () => addTab("fda");
+  const { setMobileDrawerIsClosing, mobileDrawerIsOpen, setMobileDrawerIsOpen } = useWorkspaceContext();
 
   const { drawerWidth } = CONSTANT;
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
   const handleDrawerClose = () => {
-    setIsClosing(true);
-    setMobileOpen(false);
+    setMobileDrawerIsClosing(true);
+    setMobileDrawerIsOpen(false);
   };
 
   const handleDrawerTransitionEnd = () => {
-    setIsClosing(false);
+    setMobileDrawerIsClosing(false);
   };
 
-  const handleDrawerToggle = () => {
-    if (!isClosing) {
-      setMobileOpen(!mobileOpen);
-    }
-  };
 
   return (
     <>
-      {/* Mobile Version */}
-
+      <Drawer
+        variant="temporary"
+        open={mobileDrawerIsOpen}
+        onTransitionEnd={handleDrawerTransitionEnd}
+        onClose={handleDrawerClose}
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+        }}
+        slotProps={{
+          root: {
+            keepMounted: true, // Better open performance on mobile.
+          },
+        }}
+      >
+        <DrawerContent />
+      </Drawer>
 
       {/* Desktop Version */}
       <Drawer variant="permanent" open={true}
@@ -43,36 +48,7 @@ export default function WorkspaceDrawer() {
           [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
         }}
       >
-        <Toolbar />
-        <Box
-          sx={{
-            overflow: "auto",
-            p: 1,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1
-            }}
-          >
-            {tabs.map(t => <DrawerTab key={t.id} tab={t}>{t.title}</DrawerTab>)}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center"
-              }}
-            >
-              <Button
-                onClick={onClick}
-              >
-                Add Tab
-              </Button>
-            </Box>
-          </Box>
-        </Box>
+        <DrawerContent />
       </Drawer>
     </>
   )

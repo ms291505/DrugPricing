@@ -19,4 +19,5 @@ export const CONSTANT = {
   selectNoneUuid: "23147a8f-f376-45a3-973f-b3620d8a69bd",
   staleTime: 1000 * 60 * 10,
   drawerWidth: 240,
+  opacity: 0.6,
 }

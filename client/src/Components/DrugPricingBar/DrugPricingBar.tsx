@@ -25,7 +25,7 @@ export default function DrugPricingBar() {
         </Portal>
       )}
       <AppBar
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, display: { xs: "none", md: "block" } }}
       >
         <Toolbar sx={{
           display: "flex",

@@ -224,3 +224,12 @@ export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
 
 export const defaultTitleFor = (tabType: TabType) => tabTypeRegistry[tabType].defaultTitle;
 
+export type MobileDrawer = {
+  isOpen: boolean,
+  isClosing: boolean,
+}
+
+export const initialMobileDrawer: MobileDrawer = {
+  isOpen: false,
+  isClosing: false,
+}

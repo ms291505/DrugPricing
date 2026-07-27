@@ -38,16 +38,17 @@ export default function FdaSearch() {
     <Box sx={{
       display: "flex",
       flexDirection: "column",
-      gap: 1
+      gap: 1,
+      minWidth: 0,
     }}>
       <FdaSearchTool />
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 3 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FdaPageTools />
         </Grid>
         <Grid
           component="div"
-          size={{ xs: 12, sm: 9 }}
+          size={{ xs: 12, md: 9 }}
           sx={{
             display: "flex",
             flexDirection: "column",

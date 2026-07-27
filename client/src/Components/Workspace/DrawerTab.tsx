@@ -8,9 +8,8 @@ import { useState } from "react";
 
 type Props = {
   tab: WorkspaceTab,
-  children: React.ReactNode,
 }
-export default function DrawerTab({ tab, children }: Props) {
+export default function DrawerTab({ tab, }: Props) {
   const tabId = tab.id;
 
   const { paneAssignment, setPaneAssigment } = useWorkspaceContext();
@@ -48,14 +47,19 @@ export default function DrawerTab({ tab, children }: Props) {
         sx={{
           display: "flex",
           alignItems: "center",
-          width: "100%"
+          width: "100%",
         }}
       >
         <Box
-          flexGrow={1}
-          textAlign="left"
+          sx={{
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            textAlign: "left",
+            flexGrow: 1
+          }}
         >
-          {children}
+          {tab.title}
         </Box>
         <IconButton
           className="tab-menu-icon"
