@@ -3,11 +3,15 @@ import { Box, Button, Toolbar } from "@mui/material";
 import DrawerTab from "./DrawerTab.tsx";
 
 export default function DrawerContent() {
-  const { tabs, addTab, setPaneAssigment } = useWorkspaceContext();
+  const { tabs, addTab, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
 
   const onClick = () => {
-    const newTabId = addTab("fda");
+    const newTabId = addTab("new");
     setPaneAssigment([newTabId]);
+    if (mobileDrawerIsOpen) {
+      setMobileDrawerIsClosing(true);
+      setMobileDrawerIsOpen(false);
+    }
   }
 
   return (

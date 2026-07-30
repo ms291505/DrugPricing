@@ -1,5 +1,6 @@
 import FdaSearch from "../Components/FDA/FdaSearch";
 import NadacSearch from "../Components/NadacSearch/NadacSearch";
+import TabCreator from "../Components/Workspace/TabCreator";
 import { FdaSearchContextProvider } from "../Context/FdaSearchContext";
 import { SearchContextProvider } from "../Context/SearchContext";
 
@@ -195,7 +196,7 @@ export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
 
 export type LayoutMode = "single" | "split-2" | "split-4";
 
-export type TabType = "fda" | "nadac";
+export type TabType = "fda" | "nadac" | "new";
 
 export type WorkspaceTab = {
   id: string;
@@ -220,6 +221,11 @@ export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
     Content: NadacSearch,
     defaultTitle: "New NADAC Search",
   },
+  new: {
+    Provider: FdaSearchContextProvider,
+    Content: TabCreator,
+    defaultTitle: "New Tab",
+  }
 };
 
 export const defaultTitleFor = (tabType: TabType) => tabTypeRegistry[tabType].defaultTitle;

@@ -49,13 +49,16 @@ export default function NadacSearch() {
     const value = e.target.value.replace(/\D/g, "");
     setNdc(value);
   }
+
   const isMobile = useMobile();
+
   return (<>
     <Box sx={{
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: 1
+      gap: 1,
+      minWidth: 0,
     }}>
       <Paper
         component="form"

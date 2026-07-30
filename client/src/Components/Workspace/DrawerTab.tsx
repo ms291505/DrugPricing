@@ -12,8 +12,15 @@ type Props = {
 export default function DrawerTab({ tab, }: Props) {
   const tabId = tab.id;
 
-  const { paneAssignment, setPaneAssigment } = useWorkspaceContext();
+  const { paneAssignment, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
   const selected = paneAssignment.includes(tabId);
+  const handleTabClick = () => {
+    setPaneAssigment([tab.id]);
+    if (mobileDrawerIsOpen) {
+      setMobileDrawerIsClosing(true);
+      setMobileDrawerIsOpen(false);
+    }
+  }
 
   const buttonId = `${tabId}-button`;
   const menuId = `${tabId}-menu`;
@@ -29,7 +36,7 @@ export default function DrawerTab({ tab, }: Props) {
   return (<>
     <ButtonBase
       component="div"
-      onClick={() => setPaneAssigment([tab.id])}
+      onClick={handleTabClick}
       sx={{
         pl: 1,
         justifyContent: "flex-start",
@@ -69,7 +76,6 @@ export default function DrawerTab({ tab, }: Props) {
             borderRadius: 1,
           }}
           onClick={(e) => {
-            e.stopPropagation();
             handleClick(e);
           }}
         >

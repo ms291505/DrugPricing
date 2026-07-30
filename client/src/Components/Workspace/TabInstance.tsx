@@ -1,9 +1,10 @@
 import { tabTypeRegistry, type WorkspaceTab } from "../../library/types.ts";
 import { Box, Fab, Menu, MenuItem, MenuList, Divider } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import { CONSTANT } from "../../library/constants.ts";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
 import { theme } from "../../theme.ts";
+import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 
 type Props = {
   workspaceTab: WorkspaceTab,
@@ -11,9 +12,15 @@ type Props = {
 }
 
 export default function TabInstance({ workspaceTab, visible }: Props) {
+  const { setId } = useTabInstanceContext();
+  useEffect(() =>
+    setId(workspaceTab.id)
+    , [setId, workspaceTab.id]);
+
   const { Provider, Content } = tabTypeRegistry[workspaceTab.type];
   const { opacity } = CONSTANT;
   const { tabs, setPaneAssigment } = useWorkspaceContext();
+
 
   const paneTitle = tabs.find(t => t.id === workspaceTab.id)?.title ?? "Workspace";
 
@@ -22,6 +29,7 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
   const tabMenuId = `${id}-menu`;
   const [tabMenuAnchorEl, setTabMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const tabMenuOpen = Boolean(tabMenuAnchorEl);
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setTabMenuAnchorEl(event.currentTarget);
   };
@@ -42,12 +50,14 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
     })
   }
 
+
   return (
     <>
       <Box
         sx={{
           display: visible ? "flex" : "none",
           minWidth: 0,
+          width: "100%"
         }}>
         <Provider>
           <Content />

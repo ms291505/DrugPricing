@@ -6,6 +6,7 @@ type WorkspaceContextType = {
   addTab: (type: TabType, title?: string) => string;
   removeTab: (id: string) => void;
   renameTab: (id: string, title: string) => void;
+  changeTabType: (id: string, type: TabType) => void;
   layoutMode: LayoutMode;
   setLayoutMode: Dispatch<SetStateAction<LayoutMode>>;
   paneAssignment: Array<string | null>;
@@ -21,6 +22,7 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   addTab: () => "",
   removeTab: () => { },
   renameTab: () => { },
+  changeTabType: () => { },
   layoutMode: "single",
   setLayoutMode: () => { },
   paneAssignment: [null],
@@ -55,6 +57,13 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const renameTab = (id: string, title: string) => {
     setTabs(prev => prev.map(t => (t.id === id ? { ...t, title } : t)));
   };
+  const changeTabType = (id: string, type: TabType) => {
+    setTabs(prev => prev.map(
+      t => (
+        t.id === id
+          ? { id: t.id, title: defaultTitleFor(type), type: type }
+          : t)));
+  }
 
   return (
     <WorkspaceContext.Provider value={{
@@ -62,6 +71,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       addTab,
       removeTab,
       renameTab,
+      changeTabType,
       layoutMode,
       setLayoutMode,
       paneAssignment,
