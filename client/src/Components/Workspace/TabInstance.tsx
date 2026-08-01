@@ -1,6 +1,6 @@
 import { tabTypeRegistry, type WorkspaceTab } from "../../library/types.ts";
-import { Box, Fab, Menu, MenuItem, MenuList, Divider } from "@mui/material";
-import React, { useEffect } from "react";
+import { Box, Fab, Menu, MenuItem, MenuList, TextField, } from "@mui/material";
+import { useEffect, useId, useRef, useState } from "react";
 import { CONSTANT } from "../../library/constants.ts";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
 import { theme } from "../../theme.ts";
@@ -19,26 +19,38 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
 
   const { Provider, Content } = tabTypeRegistry[workspaceTab.type];
   const { opacity } = CONSTANT;
-  const { tabs, setPaneAssigment } = useWorkspaceContext();
+  const { tabs, setPaneAssigment, renameTab } = useWorkspaceContext();
 
 
   const paneTitle = tabs.find(t => t.id === workspaceTab.id)?.title ?? "Workspace";
 
-  const id = React.useId();
+  const id = useId();
   const fabId = `${id}-button`;
   const tabMenuId = `${id}-menu`;
-  const [tabMenuAnchorEl, setTabMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [tabMenuAnchorEl, setTabMenuAnchorEl] = useState<null | HTMLElement>(null);
   const tabMenuOpen = Boolean(tabMenuAnchorEl);
+
+  const [renameActive, setRenameActive] = useState(false);
+  const [newName, setNewName] = useState(workspaceTab.title);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (renameActive && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [renameActive])
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setTabMenuAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handleCloseTabConextMenu = () => {
     setTabMenuAnchorEl(null);
   };
 
-  const onClickClose = () => {
-    handleClose();
+  const handleCloseTab = () => {
+    handleCloseTabConextMenu();
     setPaneAssigment(prev => {
       const newAssignment = prev.map(
         p => p !== workspaceTab.id
@@ -50,6 +62,10 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
     })
   }
 
+  const handleRename = () => {
+    handleCloseTabConextMenu();
+    setRenameActive(true);
+  }
 
   return (
     <>
@@ -76,18 +92,63 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
           background: `rgba(255, 255, 255,${tabMenuOpen ? 1 : opacity})`,
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
-          width: 180
+          width: 180,
         }}
-        onClick={tabMenuOpen ? handleClose : handleClick}
+        onClick={tabMenuOpen ? handleCloseTabConextMenu : handleClick}
+        disabled={renameActive}
       >
-        {paneTitle}
+        {!renameActive
+          ? <Box
+            component="span"
+            sx={{
+              display: "block",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {paneTitle}
+          </Box>
+
+          : null
+        }
       </Fab>
+
+      {!renameActive
+        ? null
+        : <TextField value={newName}
+          onChange={(e) => {
+            setNewName(e.target.value);
+          }}
+          onBlur={() => {
+            renameTab(workspaceTab.id, newName);
+            setRenameActive(false);
+          }}
+          variant="standard"
+          sx={{
+
+            position: "fixed",
+            top: 16,
+            left: "50%",
+            transform: "translateX(-50%)",
+            height: 40,
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            width: 180 * .8,
+            borderRadius: "16px 16px 16px 16px",
+            zIndex: theme.zIndex.fab + 1,
+          }}
+          inputRef={inputRef}
+        />
+
+      }
+
 
       <Menu
         id={tabMenuId}
         anchorEl={tabMenuAnchorEl}
         open={tabMenuOpen}
-        onClose={handleClose}
+        onClose={handleCloseTabConextMenu}
         slotProps={{
           list: {
             'aria-labelledby': fabId,
@@ -113,11 +174,10 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
           zIndex: theme.zIndex.fab - 1,
         }}
       >
-        <MenuList dense>
-          <MenuItem onClick={handleClose}>Rename</MenuItem>
-          <MenuItem onClick={onClickClose}>Close</MenuItem>
-          <Divider />
-          <MenuItem onClick={handleClose}>About</MenuItem>
+        <MenuList >
+          <MenuItem onClick={handleRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
+          <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
+          <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>About</MenuItem>
         </MenuList>
       </Menu>
     </>
