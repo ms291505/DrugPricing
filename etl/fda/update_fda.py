@@ -5,11 +5,14 @@ from fda.load_fda_products import load_fda_products
 from fda.fetch_fda import fetch_fda
 from library.db import get_connection, test_connection
 
+URL = "https://www.accessdata.fda.gov/cder/ndctext.zip"
 
-def main():
-    URL = "https://www.accessdata.fda.gov/cder/ndctext.zip"
 
-    test_connection(get_connection())
+def update_fda():
+
+    db = get_connection()
+
+    test_connection(db)
 
     products_data, packages_data = fetch_fda(URL)
 
@@ -28,4 +31,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    update_fda()

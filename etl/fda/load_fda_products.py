@@ -42,28 +42,30 @@ def load_fda_products(records: list[FdaProduct]) -> int:
                     ) FROM STDIN
                 """) as copy:
                     for record in records:
-                        copy.write_row((
-                            record.product_id,
-                            record.product_ndc,
-                            record.product_type_name,
-                            record.proprietary_name,
-                            record.proprietary_name_suffix,
-                            record.non_proprietary_name,
-                            record.dosage_form_name,
-                            record.route_name,
-                            record.start_marketing_date,
-                            record.end_marketing_date,
-                            record.marketing_category_name,
-                            record.application_number,
-                            record.labeler_name,
-                            record.substance_name,
-                            record.strength_number,
-                            record.strength_unit,
-                            record.pharm_classes,
-                            record.dea_schedule,
-                            record.listing_record_certified_through,
-                            record.loaded_at
-                        ))
+                        copy.write_row(
+                            (
+                                record.product_id,
+                                record.product_ndc,
+                                record.product_type_name,
+                                record.proprietary_name,
+                                record.proprietary_name_suffix,
+                                record.non_proprietary_name,
+                                record.dosage_form_name,
+                                record.route_name,
+                                record.start_marketing_date,
+                                record.end_marketing_date,
+                                record.marketing_category_name,
+                                record.application_number,
+                                record.labeler_name,
+                                record.substance_name,
+                                record.strength_number,
+                                record.strength_unit,
+                                record.pharm_classes,
+                                record.dea_schedule,
+                                record.listing_record_certified_through,
+                                record.loaded_at,
+                            )
+                        )
                 cur.execute("""
                     INSERT INTO "FdaProducts" (
                         "ProductId",

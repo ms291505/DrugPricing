@@ -1,8 +1,15 @@
 from datetime import date, datetime, timezone
 from enum import Enum
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 import pandas as pd
+
+
+class Environment(BaseModel):
+    mode: str
+    nadac_file_dates: list[str]
+    nadac_filter_before_insert: bool
+    database_url: SecretStr
 
 
 class NadacPricingUnit(str, Enum):

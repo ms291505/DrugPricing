@@ -1,5 +1,11 @@
 # ETL
 
+## Instructions
+
+### NADAC
+
+1. Update the `.env` file.
+
 ## Notes
 
 - I was able to update the NADAC data as early as 6:17 AM on a Wednesday. For scheduling, the first attempt could be pretty early in the morning with a retry every 30 minutes?

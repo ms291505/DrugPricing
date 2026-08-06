@@ -1,21 +1,8 @@
 import psycopg
-import os
 import sys
-from dotenv import load_dotenv
 from datetime import datetime
 
-load_dotenv()
-is_prod = os.environ.get("IS_PROD", "0")
-
-if is_prod == "1":
-    print("Using Production DB.")
-    connection_string = os.environ.get("PROD_DATABASE_URL", "")
-elif is_prod == "2":
-    print("Using self-hosted DB.")
-    connection_string = os.environ.get("SH_DATABASE_URL", "")
-else:
-    print("Using Dev DB.")
-    connection_string = os.environ.get("DATABASE_URL", "")
+from config import get_env
 
 
 def main():
@@ -24,6 +11,8 @@ def main():
 
 
 def get_connection():
+    env = get_env()
+    connection_string = env.database_url.get_secret_value()
     if connection_string == "":
         print("\nConnection string not present in environment. Exiting program...\n")
         sys.exit()
