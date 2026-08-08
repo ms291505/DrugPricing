@@ -22,10 +22,10 @@ def main():
 
     updating_fda = get_update_decision("fda")
 
+    updating_nadac = get_update_decision("nadac")
+
     if updating_fda:
         update_fda()
-
-    updating_nadac = get_update_decision("nadac")
 
     if updating_nadac:
         update_nadac_for_dates(env.nadac_file_dates)
