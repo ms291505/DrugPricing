@@ -5,7 +5,7 @@ import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from "./theme";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import About from "./Components/About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
@@ -17,7 +17,6 @@ import OnBoarding from "./Components/OnBoarding/OnBoarding";
 const queryClient = new QueryClient();
 
 export default function App() {
-
   return (
     <BrowserRouter>
       <ThemeProvider theme={theme}>
@@ -25,35 +24,38 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <FdaSearchContextProvider>
             <WorkspaceContextProvider>
-              <Container maxWidth="xl" sx={{ pb: 2 }}>
-                <Routes>
-                  <Route element={<DrugPricingBar />}>
-                    <Route path="/about" element={
-                      <About />
-                    } />
-                    <Route path="/nadac-search" element={
-                      <SearchContextProvider>
-                        <NadacSearch />
-                      </SearchContextProvider>
-                    } />
-                    <Route path="/fda-search" element={
-                      <FdaSearch />
-                    } />
-                    <Route path="/workspace" element={
-                      <Workspace />
-                    } />
-                    <Route path="/welcome" element={
-                      <OnBoarding />
-                    } />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Route>
-                </Routes>
-              </Container>
+              <AppShell />
             </WorkspaceContextProvider>
           </FdaSearchContextProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>
-  )
+  );
 }
 
+function AppShell() {
+  const location = useLocation();
+  const isWorkspaceActive = location.pathname.startsWith('/workspace');
+
+  return (
+    <Container maxWidth="xl" sx={{ pb: 2 }}>
+      <div style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
+        <Workspace />
+      </div>
+
+      {!isWorkspaceActive && (
+        <Routes>
+          <Route element={<DrugPricingBar />}>
+            <Route path="/about" element={<About />} />
+            <Route path="/nadac-search" element={
+              <SearchContextProvider><NadacSearch /></SearchContextProvider>
+            } />
+            <Route path="/fda-search" element={<FdaSearch />} />
+            <Route path="/welcome" element={<OnBoarding />} />
+            <Route path="*" element={<Navigate to="/welcome" replace />} />
+          </Route>
+        </Routes>
+      )}
+    </Container>
+  );
+}
