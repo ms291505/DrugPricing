@@ -12,6 +12,7 @@ import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import Workspace from "./Components/Workspace/Workspace";
+import OnBoarding from "./Components/OnBoarding/OnBoarding";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,7 @@ export default function App() {
               <Container maxWidth="xl" sx={{ pb: 2 }}>
                 <Routes>
                   <Route element={<DrugPricingBar />}>
-                    <Route path="/" element={
+                    <Route path="/about" element={
                       <About />
                     } />
                     <Route path="/nadac-search" element={
@@ -40,6 +41,9 @@ export default function App() {
                     } />
                     <Route path="/workspace" element={
                       <Workspace />
+                    } />
+                    <Route path="/welcome" element={
+                      <OnBoarding />
                     } />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>

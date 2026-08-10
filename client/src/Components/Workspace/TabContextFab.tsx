@@ -10,7 +10,7 @@ export default function TabContextFab() {
 
   const { opacity } = CONSTANT;
 
-  const { tabs, setPaneAssigment, renameTab } = useWorkspaceContext();
+  const { tabs, setPaneAssigment, renameTab, removeTab } = useWorkspaceContext();
   const { id } = useTabInstanceContext();
 
   const uuid = useId();
@@ -47,7 +47,7 @@ export default function TabContextFab() {
     setTabMenuAnchorEl(null);
   };
 
-  const handleCloseTab = () => {
+  const handleMinimizeTab = () => {
     handleCloseTabConextMenu();
     setPaneAssigment(prev => {
       const newAssignment = prev.map(
@@ -57,6 +57,11 @@ export default function TabContextFab() {
       );
       return newAssignment;
     })
+  }
+
+  const handleCloseTab = () => {
+    handleCloseTabConextMenu();
+    removeTab(id);
   }
 
   const handleClickRename = () => {
@@ -161,6 +166,7 @@ export default function TabContextFab() {
     >
       <MenuList >
         <MenuItem onClick={handleClickRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
+        <MenuItem onClick={handleMinimizeTab} sx={{ justifyContent: "center" }}>Minimize Tab</MenuItem>
         <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
         <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>About</MenuItem>
       </MenuList>

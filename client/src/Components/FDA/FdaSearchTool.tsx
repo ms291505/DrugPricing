@@ -33,6 +33,8 @@ export default function FdaSearchTool() {
       flexDirection: "column",
       alignItems: "center",
       gap: 1,
+      flexGrow: 1,
+      width: "100%"
     }}>
       <Paper
         component="form"

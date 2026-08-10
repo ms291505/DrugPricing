@@ -3,7 +3,7 @@ import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-gr
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { applyFdaResultFilter, isFdaProductOtc, type FdaProductDetail } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { Typography, Paper } from "@mui/material";
+import { Typography, Paper, } from "@mui/material";
 
 export default function FdaProductTable() {
 
@@ -78,17 +78,19 @@ export default function FdaProductTable() {
     },
   }
 
-  return (<>
-    <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
-      <Typography variant="h6">Products</Typography>
-    </Paper>
-    <DataGrid
-      sx={{ border: 0 }}
-      rows={rows}
-      columns={columns}
-      loading={fdaSearch.isLoading}
-      initialState={initialState}
-      pageSizeOptions={DATA_GRID_PAGE_SIZES}
-    />
-  </>)
+  return (
+    <>
+      <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
+        <Typography variant="h6">Products</Typography>
+      </Paper>
+      <DataGrid
+        sx={{ border: 0 }}
+        rows={rows}
+        columns={columns}
+        loading={fdaSearch.isLoading}
+        initialState={initialState}
+        pageSizeOptions={DATA_GRID_PAGE_SIZES}
+      />
+    </>
+  )
 }

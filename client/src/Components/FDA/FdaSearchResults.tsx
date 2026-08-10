@@ -15,5 +15,6 @@ export default function FdaSearchResults() {
             ? <FdaPackageTable />
             : null
       }
-    </>)
+    </>
+  )
 }

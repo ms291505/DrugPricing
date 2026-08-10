@@ -51,12 +51,30 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setTabs(prev => [...prev, newTab]);
     return id;
   }
+
   const removeTab = (id: string) => {
+    const getReplacementPane = () => {
+      const idx = tabs.findIndex(tab => tab.id === id);
+      const replacementIdx = idx < (tabs.length - 1) ? idx + 1 : idx - 1;
+      return replacementIdx < 0 ? null : tabs[replacementIdx].id;
+    }
+
+    setPaneAssigment(prev => (
+      prev.map(
+        pane => (
+          pane === id
+            ? getReplacementPane()
+            : pane
+        )
+      )));
+
     setTabs(prev => prev.filter(t => t.id !== id));
   };
+
   const renameTab = (id: string, title: string) => {
     setTabs(prev => prev.map(t => (t.id === id ? { ...t, title } : t)));
   };
+
   const changeTabType = (id: string, type: TabType) => {
     setTabs(prev => prev.map(
       t => (

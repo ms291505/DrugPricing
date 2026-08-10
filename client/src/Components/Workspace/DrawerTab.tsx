@@ -9,11 +9,13 @@ import { useState } from "react";
 type Props = {
   tab: WorkspaceTab,
 }
+
 export default function DrawerTab({ tab, }: Props) {
   const tabId = tab.id;
 
   const { paneAssignment, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
   const selected = paneAssignment.includes(tabId);
+
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
     if (mobileDrawerIsOpen) {
@@ -38,6 +40,7 @@ export default function DrawerTab({ tab, }: Props) {
       component="div"
       onClick={handleTabClick}
       sx={{
+        cursor: "pointer",
         pl: 1,
         justifyContent: "flex-start",
         color: "text.primary",
