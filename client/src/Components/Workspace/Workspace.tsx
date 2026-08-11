@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Toolbar } from "@mui/material";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
@@ -8,6 +8,7 @@ import { TabInstanceContextProvider, } from "../../Context/TabInstanceContext";
 export default function Workspace() {
   const { tabs, paneAssignment } = useWorkspaceContext();
   return (<>
+    <Toolbar />
     <MobileDrawerFab />
     <Box
       sx={{

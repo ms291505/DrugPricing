@@ -3,7 +3,7 @@ import NadacSearch from "./Components/NadacSearch/NadacSearch";
 import { SearchContextProvider } from "./Context/SearchContext";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
+import { Box, CssBaseline } from "@mui/material";
 import { theme } from "./theme";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import About from "./Components/About/About";
@@ -39,9 +39,9 @@ function AppShell() {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 2 }}>
-      <div style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
+      <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
         <Workspace />
-      </div>
+      </Box>
 
       {!isWorkspaceActive && (
         <Routes>

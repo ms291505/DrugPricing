@@ -8,7 +8,7 @@ import { CONSTANT } from "../../library/constants.ts";
 
 export default function TabContextFab() {
 
-  const { opacity } = CONSTANT;
+  const { opacity, drawerWidth } = CONSTANT;
 
   const { tabs, setPaneAssigment, renameTab, removeTab } = useWorkspaceContext();
   const { id } = useTabInstanceContext();
@@ -76,7 +76,7 @@ export default function TabContextFab() {
       sx={{
         position: "fixed",
         top: 16,
-        left: "50%",
+        left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
         transform: "translateX(-50%)",
         height: 40,
         background: `rgba(255, 255, 255,${tabMenuOpen ? 1 : opacity})`,
@@ -121,7 +121,7 @@ export default function TabContextFab() {
         sx={{
           position: "fixed",
           top: 16,
-          left: "50%",
+          left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
           transform: "translateX(-50%)",
           height: 40,
           backdropFilter: "blur(10px)",
