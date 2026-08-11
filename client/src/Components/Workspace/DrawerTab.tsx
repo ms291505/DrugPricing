@@ -45,11 +45,13 @@ export default function DrawerTab({ tab, }: Props) {
         justifyContent: "flex-start",
         color: "text.primary",
         backgroundColor: selected ? "action.selected" : "transparent",
-        "&:hover": {
-          backgroundColor: selected ? "action.selected" : "action.hover",
-        },
-        "&:hover .tab-menu-icon": {
-          opacity: 1,
+        "@media (hover: hover)": {
+          "&:hover": {
+            backgroundColor: selected ? "action.selected" : "action.hover",
+          },
+          "&:hover .tab-menu-icon": {
+            opacity: 1,
+          },
         },
       }}
     >
