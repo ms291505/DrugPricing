@@ -34,11 +34,21 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
 });
 
 export const WorkspaceContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [tabs, setTabs] = useState<Array<WorkspaceTab>>([]);
+  function createNewTab() {
+    const newId = crypto.randomUUID();
+    const newTab: WorkspaceTab = {
+      id: newId,
+      type: "new",
+      title: "DrugPricing",
+    }
+
+    return newTab;
+  }
+  const [tabs, setTabs] = useState<Array<WorkspaceTab>>([createNewTab()]);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
   const [mobileDrawerIsClosing, setMobileDrawerIsClosing] = useState(false);
-  const [paneAssignment, setPaneAssigment] = useState<Array<string | null>>([null]);
+  const [paneAssignment, setPaneAssigment] = useState<Array<string | null>>([tabs[0].id ?? null]);
 
   const addTab = (tabType: TabType, title?: string) => {
     const id = crypto.randomUUID();
