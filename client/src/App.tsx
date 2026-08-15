@@ -52,7 +52,7 @@ function AppShell() {
             } />
             <Route path="/fda-search" element={<FdaSearch />} />
             <Route path="/welcome" element={<OnBoarding />} />
-            <Route path="*" element={<Navigate to="/welcome" replace />} />
+            <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Route>
         </Routes>
       )}
