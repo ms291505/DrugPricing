@@ -5,10 +5,13 @@ import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { CONSTANT } from "../../library/constants.ts";
+import useScrolled from "../../hooks/useScrolled.ts";
 
 export default function TabContextFab() {
 
   const { opacity, drawerWidth } = CONSTANT;
+
+  const scrolled = useScrolled();
 
   const { tabs, setPaneAssigment, renameTab, removeTab } = useWorkspaceContext();
   const { id } = useTabInstanceContext();
@@ -69,6 +72,7 @@ export default function TabContextFab() {
     setRenameActive(true);
   }
 
+
   return (<>
     <Fab
       variant="extended"
@@ -79,7 +83,7 @@ export default function TabContextFab() {
         left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
         transform: "translateX(-50%)",
         height: 40,
-        background: `rgba(255, 255, 255,${tabMenuOpen ? 1 : opacity})`,
+        background: `rgba(205, 205, 205,${tabMenuOpen ? 1 : scrolled ? opacity : 1})`,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         width: 180,
