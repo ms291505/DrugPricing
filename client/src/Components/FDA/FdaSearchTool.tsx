@@ -7,13 +7,19 @@ import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
+import { useWorkspaceContext } from "../../Context/WorkspaceContext";
+import { useTabInstanceContext } from "../../Context/TabInstanceContext";
+import { defaultTitleFor } from "../../library/types";
 
 export default function FdaSearchTool() {
 
   const { setFdaSearchParams, fdaSearchParams } = useFdaSearchContext();
 
-  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.propreitaryName ?? "");
+  const { renameTab, findTab } = useWorkspaceContext();
 
+  const { id } = useTabInstanceContext();
+
+  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.propreitaryName ?? "");
 
   const isMobile = useMobile();
 
@@ -21,7 +27,16 @@ export default function FdaSearchTool() {
 
   const isValidSearch = proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
 
+  const tab = findTab(id);
+
+  const canChangeName = tab
+    ? tab.title === defaultTitleFor(tab?.type)
+    : false;
+
   const handleSearch = () => {
+
+    if (canChangeName) renameTab(id, proprietaryName.toUpperCase());
+
     setFdaSearchParams({
       propreitaryName: proprietaryName,
     });

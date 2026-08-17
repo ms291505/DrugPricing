@@ -1,11 +1,12 @@
-
-import { Box, Grid, Paper, Typography } from "@mui/material";
+import { Box, Grid, Paper, } from "@mui/material";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../NadacSearch/BarViz";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { applyFdaResultFilter, resultDetailLevelToLabel, type NadacPrice } from "../../library/types";
+import { resultDetailLevelToLabel, type FdaResultDetailLevel } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
+import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
+import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 
 type Props = {
   visible?: boolean
@@ -14,28 +15,15 @@ type Props = {
 export default function FdaExplorer({ visible = true }: Props) {
   const { data } = useFdaSearch();
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
-  const nadacPrices: NadacPrice[] =
-    data
-      ? applyFdaResultFilter(data, fdaResultFilter)
-        .products.flatMap(fdaProduct => fdaProduct
-          .fdaPackageDetails.flatMap(fdaPackage => (
-            fdaPackage.nadacPrices.flatMap(price => {
-              if (fdaResultDetailLevel === "product")
-                return {
-                  ...price,
-                  ndc: fdaProduct.productNdc,
-                  ndcDescription: fdaProduct.proprietaryName
-                }
-              else if (fdaResultDetailLevel === "package")
-                return {
-                  ...price,
-                  ndc: fdaPackage.ndcPackageCode,
-                  ndcDescription: fdaPackage.packageDescription
-                }
-              else return price;
-            })
-          )))
-      : [];
+  const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
+
+  const resultTableTitleMap: Record<FdaResultDetailLevel, string> = {
+    product: "Products",
+    package: "Packages"
+  }
+
+  const graphTitle = "Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel);
+
   return (
     <Grid container spacing={2} display={visible ? "flex" : "none"} minHeight={0}>
       <Grid size={{ xs: 12, md: 3 }}>
@@ -50,40 +38,18 @@ export default function FdaExplorer({ visible = true }: Props) {
           gap: 2,
         }}
       >
-        <Paper
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            p: 2,
-          }}
-          component="section"
-        >
+        <ExplorerGridItem title={resultTableTitleMap[fdaResultDetailLevel]}>
           <FdaSearchResults />
-        </Paper>
+        </ExplorerGridItem>
         {nadacPrices.length > 0
           ?
-          <Paper
-            sx={{
-              p: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}>
-            <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                <Typography variant="h6">
-                  {"Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel)}
-                </Typography>
-                {/*
-                  <Button sx={{ marginLeft: "auto" }}>Press</Button>
-                  */}
-              </Box>
-            </Paper>
+          <ExplorerGridItem
+            title={graphTitle}
+          >
             <BarViz
               nadacPrices={nadacPrices}
             />
-          </Paper>
+          </ExplorerGridItem>
           : <Paper component="div"
             sx={{
               display: "flex",

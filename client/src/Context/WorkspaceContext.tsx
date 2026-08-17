@@ -15,6 +15,7 @@ type WorkspaceContextType = {
   setMobileDrawerIsOpen: Dispatch<SetStateAction<boolean>>;
   mobileDrawerIsClosing: boolean
   setMobileDrawerIsClosing: Dispatch<SetStateAction<boolean>>;
+  findTab: (id: string) => WorkspaceTab | undefined;
 };
 
 export const WorkspaceContext = createContext<WorkspaceContextType>({
@@ -31,6 +32,7 @@ export const WorkspaceContext = createContext<WorkspaceContextType>({
   setMobileDrawerIsOpen: () => { },
   mobileDrawerIsClosing: false,
   setMobileDrawerIsClosing: () => { },
+  findTab: () => undefined,
 });
 
 export const WorkspaceContextProvider = ({ children }: { children: React.ReactNode }) => {
@@ -39,7 +41,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     const newTab: WorkspaceTab = {
       id: newId,
       type: "new",
-      title: "DrugPricing",
+      title: defaultTitleFor("new"),
     }
 
     return newTab;
@@ -93,6 +95,11 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
           : t)));
   }
 
+  const findTab = (id: string) => {
+    const tab = tabs.find(t => t.id === id);
+    return tab;
+  }
+
   return (
     <WorkspaceContext.Provider value={{
       tabs,
@@ -108,6 +115,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       mobileDrawerIsOpen,
       setMobileDrawerIsClosing,
       setMobileDrawerIsOpen,
+      findTab,
     }}>
       {children}
     </WorkspaceContext.Provider>

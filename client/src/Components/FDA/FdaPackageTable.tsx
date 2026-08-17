@@ -3,7 +3,7 @@ import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { applyFdaResultFilter, type FdaPackageDetail } from "../../library/types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
-import { Typography, Paper } from "@mui/material";
+import { Paper } from "@mui/material";
 
 type FdaPackageResultInfo = FdaPackageDetail &
 {
@@ -99,10 +99,7 @@ export default function FdaPackageTable() {
 
 
   return (
-    <>
-      <Paper sx={{ p: 1, display: "flex", flexDirection: "column", alignItems: "center" }} elevation={3} component="div">
-        <Typography variant="h6">Packages</Typography>
-      </Paper>
+    <Paper elevation={3}>
       <DataGrid
         sx={{ border: 0 }}
         rows={rows}
@@ -112,6 +109,6 @@ export default function FdaPackageTable() {
         pageSizeOptions={DATA_GRID_PAGE_SIZES}
         getRowId={r => r.id}
       />
-    </>
+    </Paper>
   )
 }

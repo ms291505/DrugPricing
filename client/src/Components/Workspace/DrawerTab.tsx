@@ -1,10 +1,11 @@
 import { useWorkspaceContext } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
-import { Box, IconButton, ButtonBase } from "@mui/material";
+import { Box, IconButton, ButtonBase, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from "react";
+import SearchTypeChip from "../SearchTypeChip";
 
 type Props = {
   tab: WorkspaceTab,
@@ -42,6 +43,7 @@ export default function DrawerTab({ tab, }: Props) {
       sx={{
         cursor: "pointer",
         pl: 1,
+        gap: 1,
         justifyContent: "flex-start",
         color: "text.primary",
         backgroundColor: selected ? "action.selected" : "transparent",
@@ -55,6 +57,7 @@ export default function DrawerTab({ tab, }: Props) {
         },
       }}
     >
+      <SearchTypeChip tabType={tab.type} />
       <Box
         sx={{
           display: "flex",
@@ -76,11 +79,12 @@ export default function DrawerTab({ tab, }: Props) {
         <IconButton
           className="tab-menu-icon"
           sx={{
-            opacity: 0,
+            opacity: mobileDrawerIsOpen ? 1 : 0,
             transition: "opacity 0.15s",
             borderRadius: 1,
           }}
           onClick={(e) => {
+            e.stopPropagation();
             handleClick(e);
           }}
         >

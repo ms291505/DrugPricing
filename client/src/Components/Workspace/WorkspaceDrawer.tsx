@@ -8,7 +8,6 @@ export default function WorkspaceDrawer() {
 
   const { drawerWidth } = CONSTANT;
 
-
   const handleDrawerClose = () => {
     setMobileDrawerIsClosing(true);
     setMobileDrawerIsOpen(false);
@@ -17,7 +16,6 @@ export default function WorkspaceDrawer() {
   const handleDrawerTransitionEnd = () => {
     setMobileDrawerIsClosing(false);
   };
-
 
   return (
     <>
@@ -34,13 +32,16 @@ export default function WorkspaceDrawer() {
           root: {
             keepMounted: true, // Better open performance on mobile.
           },
+          paper: { elevation: 0 }
         }}
       >
         <DrawerContent />
       </Drawer>
 
       {/* Desktop Version */}
-      <Drawer variant="permanent" open={true}
+      <Drawer
+        variant="permanent"
+        open={true}
         sx={{
           display: { xs: "none", md: "block" },
           width: drawerWidth,

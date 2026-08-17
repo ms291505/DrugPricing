@@ -20,4 +20,5 @@ export const CONSTANT = {
   staleTime: 1000 * 60 * 10,
   drawerWidth: 240,
   opacity: 0.6,
+  tabContextFabHeight: 220,
 }

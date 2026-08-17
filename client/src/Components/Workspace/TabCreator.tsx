@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, } from "@mui/material";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 
@@ -18,7 +18,7 @@ export default function TabCreator() {
         alignItems: "center",
         minWidth: 0,
         width: "100%",
-        pt: "10%",
+        mt: "10%",
       }}
     >
       <Typography

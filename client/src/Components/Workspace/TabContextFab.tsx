@@ -9,7 +9,7 @@ import useScrolled from "../../hooks/useScrolled.ts";
 
 export default function TabContextFab() {
 
-  const { opacity, drawerWidth } = CONSTANT;
+  const { opacity, drawerWidth, tabContextFabHeight } = CONSTANT;
 
   const scrolled = useScrolled();
 
@@ -72,6 +72,7 @@ export default function TabContextFab() {
     setRenameActive(true);
   }
 
+  const closeTabDisabled = tabs.length === 1;
 
   return (<>
     <Fab
@@ -86,7 +87,7 @@ export default function TabContextFab() {
         background: `rgba(205, 205, 205,${tabMenuOpen ? 1 : scrolled ? opacity : 1})`,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
-        width: 180,
+        width: tabContextFabHeight,
       }}
       onClick={tabMenuOpen ? handleCloseTabConextMenu : handleClick}
       disabled={renameActive}
@@ -130,7 +131,7 @@ export default function TabContextFab() {
           height: 40,
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
-          width: 180 * .8,
+          width: tabContextFabHeight * .8,
           borderRadius: "16px 16px 16px 16px",
           zIndex: theme.zIndex.fab + 1,
         }}
@@ -171,8 +172,8 @@ export default function TabContextFab() {
       <MenuList >
         <MenuItem onClick={handleClickRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
         <MenuItem onClick={handleMinimizeTab} sx={{ justifyContent: "center" }}>Minimize Tab</MenuItem>
-        <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
-        <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>About</MenuItem>
+        <MenuItem disabled={closeTabDisabled} onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
+        <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>New Tab</MenuItem>
       </MenuList>
     </Menu>
 
