@@ -28,10 +28,13 @@ export default function ExplorerGridItem({ children, title }: Props) {
             }}>
               {title}
             </Typography>
-            <IconButton sx={{ marginLeft: "auto" }}
+            <IconButton
+              sx={{ marginLeft: "auto" }}
               onClick={handleCollapse}
+              size="small"
             >
               <KeyboardArrowDownIcon
+                fontSize="small"
                 sx={{
                   transform: !collapse ? "rotate(180deg)" : "rotate(0deg)",
                   transition: (theme) =>

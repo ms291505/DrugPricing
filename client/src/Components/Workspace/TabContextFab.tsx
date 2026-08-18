@@ -160,7 +160,7 @@ export default function TabContextFab() {
       sx={{
         '& .MuiPaper-root': {
 
-          width: 180,
+          width: tabContextFabHeight,
           bgcolor: theme.palette.primary.dark,
           pt: 2,
           borderRadius: "4px 4px 16px 16px",

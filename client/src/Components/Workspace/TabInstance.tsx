@@ -10,12 +10,16 @@ type Props = {
 }
 
 export default function TabInstance({ workspaceTab, visible }: Props) {
+
   const { setId } = useTabInstanceContext();
+
   useEffect(() =>
     setId(workspaceTab.id)
     , [setId, workspaceTab.id]);
 
   const { Provider, Content } = tabTypeRegistry[workspaceTab.type];
+
+  const showTabContextFab = visible && workspaceTab.type !== "new" ? true : false;
 
   return (
     <>
@@ -31,7 +35,7 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
       </Box>
 
       {
-        visible
+        showTabContextFab
           ? <TabContextFab />
           : null
       }

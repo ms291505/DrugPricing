@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from "@mui/material";
-import EliquisTable from "./ElquisTable";
+import EliquisTable from "./EliquisTable";
 
 export default function OnBoarding() {
 
