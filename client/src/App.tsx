@@ -11,8 +11,10 @@ import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
+import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import Workspace from "./Components/Workspace/Workspace";
 import OnBoarding from "./Components/OnBoarding/OnBoarding";
+import GlobalModal from "./Components/GlobalModal/GlobalModal";
 
 const queryClient = new QueryClient();
 
@@ -22,11 +24,12 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
-          <FdaSearchContextProvider>
+          <GlobalModalContextProvider>
+
             <WorkspaceContextProvider>
               <AppShell />
             </WorkspaceContextProvider>
-          </FdaSearchContextProvider>
+          </GlobalModalContextProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>
@@ -42,6 +45,7 @@ function AppShell() {
       <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
         <Workspace />
       </Box>
+      <GlobalModal />
 
       {!isWorkspaceActive && (
         <Routes>
@@ -50,7 +54,8 @@ function AppShell() {
             <Route path="/nadac-search" element={
               <SearchContextProvider><NadacSearch /></SearchContextProvider>
             } />
-            <Route path="/fda-search" element={<FdaSearch />} />
+            <Route path="/fda-search" element=
+              {<FdaSearchContextProvider><FdaSearch /></FdaSearchContextProvider>} />
             <Route path="/welcome" element={<OnBoarding />} />
             <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Route>

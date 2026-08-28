@@ -22,3 +22,6 @@ export const CONSTANT = {
   opacity: 0.6,
   tabContextFabHeight: 220,
 }
+
+export const MAX_GLOBAL_MODAL_HEIGHT = 500;
+export const MAX_GLOBAL_MODAL_WIDTH = 700;

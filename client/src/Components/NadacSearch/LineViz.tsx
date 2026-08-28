@@ -4,7 +4,7 @@ import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, NDC_NDC_DESCRIPTION_DE
 import { useTheme } from "@mui/material/styles";
 
 type Props = {
-  nadacPrices: Array<NadacPrice>;
+  nadacPrices: NadacPrice[];
   border?: boolean;
 };
 

@@ -1,4 +1,4 @@
-import type { NadacPrice, FdaProductDetail } from "../library/types";
+import type { NadacPrice, FdaProductDetail, } from "../library/types";
 
 export type UpResponse = {
   up: boolean
@@ -85,7 +85,6 @@ export type NadacSearchResponse = {
   notices: Array<string>
 }
 
-// TODO: Move to src/library/types.ts
 export type NadacSearchResult = {
 
   prices: Array<NadacPrice>;
@@ -93,6 +92,84 @@ export type NadacSearchResult = {
   notices: Array<string>
 }
 
+type FdaPackageDetailResponse = {
+  id: number,
+  ndcPackageCode: string,
+  packageDescription: string,
+  startMarketingDate: string,
+  endMarketingDate?: string,
+  samplePackage: boolean,
+  ndcPackageCodeStripped: string,
+  nadacPrices: NadacPriceResponse[]
+}
+
+type FdaProductDetailResponse = {
+  id: number,
+  productId: string,
+  productNdc: string,
+  productTypeName: string,
+  proprietaryName: string,
+  proprietaryNameSuffix?: string,
+  nonProprietaryName: string[],
+  dosageFormName: string,
+  routeName: string[],
+  startMarketingDate: string,
+  endMarketingDate?: string,
+  marketingCategoryName: string,
+  labelerName: string,
+  substanceName: string[],
+  strengthNumber: string[],
+  strengthUnit: string[],
+  pharmClasses: string[],
+  deaSchedule?: string,
+  listingRecordCertifiedThrough?: string,
+  fdaPackageDetails: FdaPackageDetailResponse[]
+}
+
 export type FdaProductSearchResponse = {
-  data: FdaProductDetail[]
+  data: FdaProductDetailResponse[]
+}
+
+const mapFdaPackageResponse = (response: FdaPackageDetailResponse) => (
+  {
+    id: response.id,
+    ndcPackageCode: response.ndcPackageCode,
+    packageDescription: response.packageDescription,
+    startMarketingDate: new Date(response.startMarketingDate),
+    endMarketingDate: response.endMarketingDate ? new Date(response.endMarketingDate) : undefined,
+    samplePackage: response.samplePackage,
+    ndcPackageCodeStripped: response.ndcPackageCodeStripped,
+    nadacPrices: response.nadacPrices.flatMap(p => (mapNadacPriceResponse(p)))
+  }
+)
+
+const handleDateOrUndefined = (d: string | undefined) => {
+  return d ? new Date(d) : undefined
+}
+
+export const mapFdaProductSearchResponse = (product: FdaProductDetailResponse) => {
+  const result: FdaProductDetail = {
+    id: product.id,
+    productId: product.productId,
+    productNdc: product.productNdc,
+    productTypeName: product.productTypeName,
+    proprietaryName: product.proprietaryName,
+    proprietaryNameSuffix: product.proprietaryNameSuffix,
+    nonProprietaryName: product.nonProprietaryName.flatMap(n => (n)),
+    dosageFormName: product.dosageFormName,
+    routeName: product.routeName.flatMap(r => (r)),
+    startMarketingDate: new Date(product.startMarketingDate),
+    endMarketingDate: handleDateOrUndefined(product.endMarketingDate),
+    marketingCategoryName: product.marketingCategoryName,
+    labelerName: product.labelerName,
+    substanceName: product.substanceName.flatMap(s => (s)),
+    strengthNumber: product.strengthNumber.flatMap(s => (s)),
+    strengthUnit: product.strengthUnit.flatMap(s => (s)),
+    pharmClasses: product.pharmClasses.flatMap(p => (p)),
+    deaSchedule: product.deaSchedule,
+    listingRecordCertifiedThrough: handleDateOrUndefined(product.listingRecordCertifiedThrough),
+    fdaPackageDetails: product.fdaPackageDetails.flatMap(p => (mapFdaPackageResponse(p)))
+  }
+
+  return result;
 }

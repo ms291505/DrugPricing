@@ -1,6 +1,6 @@
 import type { FdaProductDetail } from "../library/types";
 import { createApiPath, parseErrorMessage } from "./api";
-import type { FdaProductSearchResponse, } from "./types";
+import { mapFdaProductSearchResponse, type FdaProductSearchResponse, } from "./types";
 import type { FdaProductSearchResult } from "../library/types";
 
 export const getFdaSearchResults = async (
@@ -21,7 +21,7 @@ export const getFdaSearchResults = async (
   const body = await response.json() as unknown as FdaProductSearchResponse;
 
   const products: FdaProductDetail[] = body.data.map(p => ({
-    ...p,
+    ...mapFdaProductSearchResponse(p),
     routeName: p.routeName.length === 0 ? ["N/A"] : p.routeName,
     dosageFormName: !p.dosageFormName ? "N/A" : p.dosageFormName,
   }))

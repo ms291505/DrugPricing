@@ -11,6 +11,7 @@ export default function fdaSearchResulsToNadacPrices(
         .products.flatMap(fdaProduct => fdaProduct
           .fdaPackageDetails.flatMap(fdaPackage => (
             fdaPackage.nadacPrices.flatMap(price => {
+              console.log(price);
               if (fdaResultDetailLevel === "product")
                 return {
                   ...price,
