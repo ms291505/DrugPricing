@@ -23,6 +23,14 @@ export type NadacPrice = {
   createdAt: Date
 };
 
+export type NadacPriceChange = {
+  packageNdc: string,
+  startDate: Date,
+  endDate: Date,
+  difference: number,
+  percentage: number,
+}
+
 export type DrugSummary = {
   ndc: string,
   ndcDescription: string,
@@ -127,6 +135,13 @@ export type FdaProductDetail = {
 
 export type FdaProductSearchResult = {
   products: FdaProductDetail[]
+}
+
+export type FdaProductPriceChange = {
+  productNdc: string,
+  packageNdc: string,
+  packageNdcStripped: string,
+  priceChange: NadacPriceChange,
 }
 
 export function isFdaProductOtc(productTypeName: string) {

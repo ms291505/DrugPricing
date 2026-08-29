@@ -3,11 +3,12 @@ import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../NadacSearch/BarViz";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { resultDetailLevelToLabel, type FdaResultDetailLevel } from "../../library/types";
+import { resultDetailLevelToLabel, type FdaResultDetailLevel, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../NadacSearch/LineViz";
+import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
 
 type Props = {
   visible?: boolean
@@ -17,6 +18,9 @@ export default function FdaExplorer({ visible = true }: Props) {
   const { data } = useFdaSearch();
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
+  const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
+  const productPriceChanges = flagNadacPriceChangeForFdaProducts(data?.products ?? []);
+
 
   const resultTableTitleMap: Record<FdaResultDetailLevel, string> = {
     product: "Products",
@@ -65,6 +69,18 @@ export default function FdaExplorer({ visible = true }: Props) {
             </ExplorerGridItem>
           </Grid>
           : null
+      }
+      {
+        productPriceChanges.map(change => {
+          const prices = getAllPricesForFlaggedPackages(change, packageNadacPrices);
+          return (
+            <Grid size={{ xs: 12, md: 6 }} key={change.packageNdc + change.priceChange.startDate.toDateString()}>
+              <ExplorerGridItem title={"Significant Prices Change for " + change.packageNdc}>
+                <LineViz nadacPrices={prices} />
+              </ExplorerGridItem>
+            </Grid>
+          )
+        })
       }
     </Grid>
   )
