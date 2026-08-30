@@ -1,7 +1,8 @@
 import { type NadacPrice } from "../../library/types.ts";
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, type RenderableText, type TooltipValueType } from "recharts";
-import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, } from "recharts";
+import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
+import { formatDollar } from "../../library/formatDollar.ts";
 
 type Props = {
   nadacPrices: NadacPrice[];
@@ -22,14 +23,7 @@ export default function LineViz({ nadacPrices }: Props) {
   ).sort((a, b) => (a.asOfDate as number) - (b.asOfDate as number));
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
-  const colors = ["#8884d8", "#82ca9d", "#ff7300", "#d84848"];
-
-  const formatDollar = (value: RenderableText | TooltipValueType): string => {
-    const number = Number(value);
-    const formattedPrice = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(number);
-
-    return formattedPrice;
-  }
+  const colors = LINE_VIZ_COLORS;
 
   const dataSeriesName = (ndc: string): string => {
     const ndcDescription = nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";

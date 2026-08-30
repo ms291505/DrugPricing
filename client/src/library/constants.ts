@@ -25,3 +25,4 @@ export const CONSTANT = {
 
 export const MAX_GLOBAL_MODAL_HEIGHT = 500;
 export const MAX_GLOBAL_MODAL_WIDTH = 700;
+export const LINE_VIZ_COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#d84848"];
