@@ -2,7 +2,7 @@ import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-gr
 import { summarizeNadacPrices, type DrugSummary, type NadacPrice } from "../../library/types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { useSearchContext } from "../../Context/SearchContext";
-import { formatDollar } from "../../library/formatDollar";
+import { dollarFormatter } from "../../library/dollarFormatter";
 
 type Props = {
   nadacPrices: NadacPrice[],
@@ -28,7 +28,7 @@ export default function TableViz({ nadacPrices, loading = false }: Props) {
     {
       field: "averagePrice",
       headerName: "Avg Price",
-      valueFormatter: formatDollar
+      valueFormatter: dollarFormatter
     },
     {
       field: "pricingUnit",
@@ -37,12 +37,12 @@ export default function TableViz({ nadacPrices, loading = false }: Props) {
     {
       field: "minPrice",
       headerName: "Min Price",
-      valueFormatter: formatDollar
+      valueFormatter: dollarFormatter
     },
     {
       field: "maxPrice",
       headerName: "Max Price",
-      valueFormatter: formatDollar
+      valueFormatter: dollarFormatter
     },
   ]
 

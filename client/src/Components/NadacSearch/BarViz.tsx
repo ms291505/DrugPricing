@@ -2,7 +2,7 @@ import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts";
 import type { DrugSummary, NadacPrice } from "../../library/types";
 import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../../library/nadacPriceToDrugSummary";
-import { formatDollar } from "../../library/formatDollar";
+import { dollarFormatter } from "../../library/dollarFormatter";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../../library/constants";
 import BarVizToolTipLabel from "./BarVizToolTipLabel";
 
@@ -35,7 +35,7 @@ export default function BarViz({ nadacPrices }: Props) {
           if (!drugSummary) return ndc as string;
           return (<BarVizToolTipLabel drugSummary={drugSummary} />);
         }}
-        formatter={formatDollar}
+        formatter={dollarFormatter}
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
           fontSize: DEFAULT_TOOLTIP_FONT_SIZE,

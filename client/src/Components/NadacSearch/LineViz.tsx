@@ -1,29 +1,37 @@
-import { type NadacPrice } from "../../library/types.ts";
+import { type NadacPrice, type NdcColorMap } from "../../library/types.ts";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, } from "recharts";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
-import { formatDollar } from "../../library/formatDollar.ts";
+import { dollarFormatter } from "../../library/dollarFormatter.ts";
+import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
+import { createLineVizData } from "../../library/createLineVizData.ts";
 
 type Props = {
   nadacPrices: NadacPrice[];
   border?: boolean;
+  lineColors?: string[];
+  syncNdcColorsInContext?: boolean;
 };
 
-export default function LineViz({ nadacPrices }: Props) {
+export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, syncNdcColorsInContext = false }: Props) {
 
   const theme = useTheme();
 
-  const vizData = Object.values(
-    nadacPrices.reduce<Record<number, Record<string, unknown>>>((acc, { asOfDate, ndc, nadacPerUnit }) => {
-      const key = asOfDate.getTime();
-      acc[key] = acc[key] || { asOfDate: key };
-      acc[key][ndc] = nadacPerUnit;
-      return acc;
-    }, {})
-  ).sort((a, b) => (a.asOfDate as number) - (b.asOfDate as number));
+  const { ndcColorMap, setNdcColorMap } = useTabInstanceContext();
+
+  const vizData = createLineVizData(nadacPrices);
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
-  const colors = LINE_VIZ_COLORS;
+
+  if (syncNdcColorsInContext) {
+    const newMap: NdcColorMap = Object.fromEntries(
+      ndcs.map((ndc, i) => [ndc, lineColors[i % lineColors.length]])
+    );
+
+    setNdcColorMap(newMap);
+  }
+
+  const getNdcColor = (ndc: string, ndcColorMap: NdcColorMap | null) => (ndcColorMap ? ndcColorMap?.[ndc] : undefined);
 
   const dataSeriesName = (ndc: string): string => {
     const ndcDescription = nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
@@ -51,7 +59,7 @@ export default function LineViz({ nadacPrices }: Props) {
       />
       <Tooltip
         labelFormatter={(ts) => new Date(ts as number).toLocaleDateString()}
-        formatter={formatDollar}
+        formatter={dollarFormatter}
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
           fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
@@ -61,7 +69,7 @@ export default function LineViz({ nadacPrices }: Props) {
         <Line
           key={ndc}
           dataKey={ndc}
-          stroke={colors[i % colors.length]}
+          stroke={getNdcColor(ndc, ndcColorMap) ?? lineColors[i % lineColors.length]}
           type="monotone"
           dot={false}
           connectNulls={false}

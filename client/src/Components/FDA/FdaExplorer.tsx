@@ -3,12 +3,14 @@ import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../NadacSearch/BarViz";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { resultDetailLevelToLabel, type FdaResultDetailLevel, } from "../../library/types";
+import { applyFdaResultFilter, resultDetailLevelToLabel, type FdaResultDetailLevel, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../NadacSearch/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
+import * as PriceFlagger from "../../library/flagNadacPriceChange";
+import { LINE_VIZ_COLORS } from "../../library/constants";
 
 type Props = {
   visible?: boolean
@@ -19,7 +21,10 @@ export default function FdaExplorer({ visible = true }: Props) {
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
   const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
-  const productPriceChanges = flagNadacPriceChangeForFdaProducts(data?.products ?? []);
+
+  const searchResult = data ?? { products: [] };
+
+  const productPriceChanges = flagNadacPriceChangeForFdaProducts(applyFdaResultFilter(searchResult, fdaResultFilter).products);
 
 
   const resultTableTitleMap: Record<FdaResultDetailLevel, string> = {
@@ -71,12 +76,12 @@ export default function FdaExplorer({ visible = true }: Props) {
           : null
       }
       {
-        productPriceChanges.map(change => {
+        productPriceChanges.map((change, i) => {
           const prices = getAllPricesForFlaggedPackages(change, packageNadacPrices);
           return (
             <Grid size={{ xs: 12, md: 6 }} key={change.packageNdc + change.priceChange.startDate.toDateString()}>
-              <ExplorerGridItem title={"Significant Prices Change for " + change.packageNdc}>
-                <LineViz nadacPrices={prices} />
+              <ExplorerGridItem title={PriceFlagger.percentageChangeToString(change.priceChange.percentage) + " Price Change for " + change.packageNdc}>
+                <LineViz nadacPrices={prices} lineColors={[LINE_VIZ_COLORS[i % LINE_VIZ_COLORS.length]]} />
               </ExplorerGridItem>
             </Grid>
           )

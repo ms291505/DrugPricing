@@ -69,7 +69,7 @@ export const summarizeNadacPrices = (nadacPrices: NadacPrice[]) => {
   return drugSummaries;
 }
 
-export type Drug = {
+export type DrugDescription = {
   ndc: string,
   ndcDescription: string
 }
@@ -254,3 +254,5 @@ export const initialMobileDrawer: MobileDrawer = {
   isOpen: false,
   isClosing: false,
 }
+
+export type NdcColorMap = Record<string, string>;
