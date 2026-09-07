@@ -2,6 +2,8 @@ namespace DrugPricing.Constants;
 
 public static class CacheKeys
 {
+  public const string DosageFormNames = "dosage-form-names";
+  public const string RouteNames = "route-names";
   public const string NadacAsOfDates = "nadac-as-of-dates";
   public const string NadacWeightLoss = "nadac-weight-loss";
   public const string NadacCancer = "nadac-cancer";

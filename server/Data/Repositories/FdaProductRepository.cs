@@ -1,4 +1,5 @@
 using DrugPricing.Constants;
+using DrugPricing.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -13,6 +14,36 @@ public class FdaProductRepository : IFdaProductRepository
   {
     _db = db;
     _cache = cache;
+  }
+
+  public async Task<List<string>> ListUniqueDosageFormNamesAsync()
+  {
+    var cacheKey = CacheKeys.DosageFormNames;
+    if (_cache.TryGetValue(cacheKey, out List<string>? cachedResults))
+      return cachedResults!;
+
+    var query = _db.FdaProducts.AsNoTracking();
+
+    var dosageFormNames = await query.Select(p => p.DosageFormName).Distinct().ToListAsync();
+
+    return dosageFormNames;
+  }
+
+  public async Task<List<string>> ListUniqueRouteNamesAsync()
+  {
+    var cacheKey = CacheKeys.DosageFormNames;
+    if (_cache.TryGetValue(cacheKey, out List<string>? cachedResults))
+      return cachedResults!;
+
+    var query = _db.FdaProducts.AsNoTracking();
+
+    var dosageFormNames = await query
+      .SelectMany(p => p.RouteName)
+      .Distinct()
+      .OrderBy(r => r)
+      .ToListAsync();
+
+    return dosageFormNames;
   }
 
   public async Task<List<FdaProductDetail>> ListSearchResultsAsync(
@@ -69,7 +100,119 @@ public class FdaProductRepository : IFdaProductRepository
       })
       .ToListAsync();
 
-    Console.WriteLine(products);
+    return products;
+  }
+
+  public async Task<List<FdaProductDetail>> ListAdvancedSearchResultsAsync(
+    AdvancedFdaSearchRequest request,
+    CancellationToken cancellationToken = default
+  )
+  {
+    var productQuery = _db.FdaProducts.AsNoTracking();
+
+    if (!string.IsNullOrWhiteSpace(request.ProprietaryName))
+    {
+      productQuery = productQuery.Where(p =>
+        EF.Functions.ILike(p.ProprietaryName, $"%{request.ProprietaryName}%")
+      );
+    }
+
+    if (!string.IsNullOrWhiteSpace(request.NonProprietaryName))
+    {
+      productQuery = productQuery.Where(p =>
+        p.NonProprietaryName.Any(a => EF.Functions.ILike(a, $"%{request.NonProprietaryName}%"))
+      );
+    }
+
+    if (!string.IsNullOrWhiteSpace(request.ProductNdc))
+    {
+      productQuery = productQuery.Where(p =>
+        EF.Functions.ILike(p.ProductNdc, $"%{request.ProductNdc}%")
+      );
+    }
+
+    if (request.DosageFormNames?.Count > 0)
+    {
+      productQuery = productQuery.Where(p => request.DosageFormNames.Contains(p.DosageFormName));
+    }
+
+    if (request.RouteNames?.Count > 0)
+    {
+      productQuery = productQuery.Where(p => p.RouteName.Any(r => request.RouteNames.Contains(r)));
+    }
+
+    if (!string.IsNullOrWhiteSpace(request.LabelerName))
+    {
+      productQuery = productQuery.Where(p =>
+        EF.Functions.ILike(p.LabelerName, $"%{request.LabelerName}%")
+      );
+    }
+
+    // FDA Package Query
+    var packageQuery = _db.FdaPackages.AsNoTracking();
+
+    if (request.IncludeSamplePackages != true)
+    {
+      packageQuery = packageQuery.Where(package => package.SamplePackage != true);
+    }
+
+    var minPriceCount = request.IncludeResultsWNoPrices ? 0 : 1;
+
+    // NADAC Price Query
+    var nadacQuery = _db.NadacPrices.AsNoTracking();
+
+    if (request.PriceAsOfDateStart.HasValue)
+    {
+      nadacQuery = nadacQuery.Where(price => price.AsOfDate >= request.PriceAsOfDateStart);
+    }
+
+    if (request.PriceAsOfDateEnd.HasValue)
+    {
+      nadacQuery = nadacQuery.Where(price => price.AsOfDate >= request.PriceAsOfDateEnd);
+    }
+
+    var products = await productQuery
+      .Select(product => new FdaProductDetail
+      {
+        Id = product.Id,
+        ProductNdc = product.ProductNdc,
+        ProductTypeName = product.ProductTypeName,
+        ProprietaryNameSuffix = product.ProprietaryNameSuffix,
+        NonProprietaryName = product.NonProprietaryName,
+        DosageFormName = product.DosageFormName,
+        RouteName = product.RouteName,
+        StartMarketingDate = product.StartMarketingDate,
+        EndMarketingDate = product.EndMarketingDate,
+        MarketingCategoryName = product.MarketingCategoryName,
+        LabelerName = product.LabelerName,
+        SubstanceName = product.SubstanceName,
+        StrengthNumber = product.StrengthNumber,
+        StrengthUnit = product.StrengthUnit,
+        PharmClasses = product.PharmClasses,
+        DeaSchedule = product.DeaSchedule,
+        ListingRecordCertifiedThrough = product.ListingRecordCertifiedThrough,
+        ProprietaryName = product.ProprietaryName,
+
+        FdaPackageDetails = packageQuery
+          .Where(package => package.ProductId == product.ProductId)
+          .Select(package => new FdaPackageDetail
+          {
+            Id = package.Id,
+            NdcPackageCode = package.NdcPackageCode,
+            NdcPackageCodeStripped = package.NdcPackageCodeStripped,
+            PackageDescription = package.PackageDescription,
+            StartMarketingDate = package.StartMarketingDate,
+            EndMarketingDate = package.EndMarketingDate,
+            SamplePackage = package.SamplePackage,
+
+            NadacPrices = nadacQuery
+              .Where(price => price.Ndc == package.NdcPackageCodeStripped)
+              .ToList(),
+          })
+          .Where(package => package.NadacPrices.Count >= minPriceCount)
+          .ToList(),
+      })
+      .ToListAsync(cancellationToken);
 
     return products;
   }

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using DrugPricing.Data.Repositories;
 
 namespace DrugPricing.Services;
@@ -5,21 +6,30 @@ namespace DrugPricing.Services;
 public class FdaProductService
 {
   private readonly IFdaProductRepository _fdaProductRepo;
-  private const int MIN_PROPRIETARY_NAME_LENGTH = 5;
+  private const int MIN_NAME_LENGTH = 5;
 
   public FdaProductService(IFdaProductRepository fdaProductRepo)
   {
     _fdaProductRepo = fdaProductRepo;
   }
 
-  public bool ValidateProprietyNameSearch(string? proprietaryName)
+  public bool ValidateNameSearch(string? proprietaryName)
   {
-    return (proprietaryName?.Length >= MIN_PROPRIETARY_NAME_LENGTH);
+    return (proprietaryName?.Length >= MIN_NAME_LENGTH);
   }
 
-  public bool ValidateNonProprietyNameSearch(string? nonProprietaryName)
+  public async Task<List<string>> ListUniqueDosageFormNamesAsync()
   {
-    return (nonProprietaryName?.Length >= MIN_PROPRIETARY_NAME_LENGTH);
+    var dosageFromNames = await _fdaProductRepo.ListUniqueDosageFormNamesAsync();
+
+    return (dosageFromNames);
+  }
+
+  public async Task<List<string>> ListUniqueRouteNamesAsync()
+  {
+    var routeNames = await _fdaProductRepo.ListUniqueRouteNamesAsync();
+
+    return (routeNames);
   }
 
   public async Task<FdaProductSearchResult> ListSearchResultsAsync(string proprietaryName)

@@ -1,3 +1,5 @@
+using DrugPricing.Endpoints;
+
 namespace DrugPricing.Data.Repositories;
 
 public interface IFdaProductRepository
@@ -6,4 +8,13 @@ public interface IFdaProductRepository
     string proprietaryName,
     CancellationToken cancellationToken = default
   );
+
+  Task<List<FdaProductDetail>> ListAdvancedSearchResultsAsync(
+    AdvancedFdaSearchRequest request,
+    CancellationToken cancellationToken = default
+  );
+
+  Task<List<string>> ListUniqueDosageFormNamesAsync();
+
+  Task<List<string>> ListUniqueRouteNamesAsync();
 }
