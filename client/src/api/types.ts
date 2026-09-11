@@ -179,8 +179,8 @@ export type AdvancedFdaSearchRequest = {
   // FDA Product
   proprietaryName?: string,
   nonProprietaryName?: string,
-  dosageFormNames: string[],
-  routeNames: string[],
+  dosageFormNames?: string[],
+  routeNames?: string[],
   labelerName?: string,
   productNdc?: string,
 

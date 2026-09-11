@@ -1,4 +1,4 @@
-import { getAdvancedFdaSearchReqults, getFdaSearchResults } from "../api/fdaEndpoints";
+import { getAdvancedFdaSearchReqults, } from "../api/fdaEndpoints";
 import { useFdaSearchContext } from "../Context/FdaSearchContext";
 import { useQuery } from "@tanstack/react-query";
 import type { FdaProductSearchResult } from "../library/types";

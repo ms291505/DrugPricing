@@ -40,6 +40,11 @@ export type DrugSummary = {
   maxPrice: number
 }
 
+export type Drug = {
+  ndc: string,
+  ndcDescription: string,
+}
+
 export const summarizeNadacPrices = (nadacPrices: NadacPrice[]) => {
 
   const drugSummaries: DrugSummary[] = Object.entries(
