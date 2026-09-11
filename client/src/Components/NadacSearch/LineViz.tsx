@@ -1,42 +1,29 @@
-import { type NadacPrice, type NdcColorMap } from "../../library/types.ts";
+import { type NadacPrice, } from "../../library/types.ts";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, } from "recharts";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
 import { dollarFormatter } from "../../library/dollarFormatter.ts";
-import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { createLineVizData } from "../../library/createLineVizData.ts";
 
 type Props = {
   nadacPrices: NadacPrice[];
   border?: boolean;
   lineColors?: string[];
-  syncNdcColorsInContext?: boolean;
 };
 
-export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, syncNdcColorsInContext = false }: Props) {
+export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, }: Props) {
 
   const theme = useTheme();
 
-  const { ndcColorMap, setNdcColorMap } = useTabInstanceContext();
-
-  const vizData = createLineVizData(nadacPrices);
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
-
-  if (syncNdcColorsInContext) {
-    const newMap: NdcColorMap = Object.fromEntries(
-      ndcs.map((ndc, i) => [ndc, lineColors[i % lineColors.length]])
-    );
-
-    setNdcColorMap(newMap);
-  }
-
-  const getNdcColor = (ndc: string, ndcColorMap: NdcColorMap | null) => (ndcColorMap ? ndcColorMap?.[ndc] : undefined);
 
   const dataSeriesName = (ndc: string): string => {
     const ndcDescription = nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
     return ndc + NDC_NDC_DESCRIPTION_DELIMITER + ndcDescription;
   };
+
+  const vizData = createLineVizData(nadacPrices);
 
   return (
     <LineChart data={vizData} style={{ width: "100%", height: DEFAULT_CHART_HEIGHT }} responsive role="img">
@@ -63,13 +50,15 @@ export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, syn
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
           fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
+          maxWidth: 400,
+          whiteSpace: "normal"
         }}
       />
       {ndcs.map((ndc, i) => (
         <Line
           key={ndc}
           dataKey={ndc}
-          stroke={getNdcColor(ndc, ndcColorMap) ?? lineColors[i % lineColors.length]}
+          stroke={lineColors[i % lineColors.length]}
           type="monotone"
           dot={false}
           connectNulls={false}

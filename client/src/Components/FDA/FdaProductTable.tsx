@@ -1,74 +1,21 @@
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
-import { DataGrid, type GridColDef, type GridInitialState } from "@mui/x-data-grid";
+import { DataGrid, type GridInitialState, } from "@mui/x-data-grid";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { applyFdaResultFilter, isFdaProductOtc, type FdaProductDetail } from "../../library/types";
+import { applyFdaResultFilter, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { Paper } from "@mui/material";
+import { FDA_PRODUCT_TABLE_COLUMNS } from "./FdaProductTableColumns";
+
 
 export default function FdaProductTable() {
 
-  const { fdaResultFilter } = useFdaSearchContext();
-
   const fdaSearch = useFdaSearch();
+
+  const { fdaResultFilter } = useFdaSearchContext();
 
   const data = fdaSearch.data ?? { products: [] };
 
   const rows = applyFdaResultFilter(data, fdaResultFilter).products;
-
-  const columns: GridColDef<FdaProductDetail>[] = [
-    {
-      field: "productNdc",
-      headerName: "Product NDC",
-      width: 125
-    },
-    {
-      field: "proprietaryName",
-      headerName: "Brand Name",
-      width: 150
-    },
-    {
-      field: "nonProprietaryName",
-      headerName: "Generic Name",
-      width: 150,
-      valueGetter: (_, product: FdaProductDetail) => (product.nonProprietaryName.join(", "))
-    },
-    {
-      field: "dosageFormName",
-      headerName: "Form",
-      valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
-    },
-    {
-      field: "routeName",
-      headerName: "Route",
-      valueGetter: (_, product) => (product.routeName.join(", "))
-    },
-    {
-      field: "strengthNumber",
-      headerName: "Strength",
-      valueGetter: (_, product) => (
-        product.strengthNumber.map((s, i) => (s + " " + product.strengthUnit[i]))
-      )
-    },
-    {
-      field: "labelerName",
-      headerName: "Labeler",
-      width: 150
-    },
-    {
-      field: "productTypeName",
-      headerName: "OTC Drug",
-      valueGetter: (_, product) => (
-        isFdaProductOtc(product.productTypeName) ? "Yes" : "No"
-      )
-    },
-    {
-      field: "packageCount",
-      headerName: "Packages",
-      valueGetter: (_, product) => (
-        product.fdaPackageDetails.length
-      )
-    }
-  ]
 
   const initialState: GridInitialState = {
     pagination: {
@@ -81,9 +28,24 @@ export default function FdaProductTable() {
   return (
     <Paper elevation={3}>
       <DataGrid
-        sx={{ border: 0 }}
+        sx={{
+          border: 0,
+          '& .MuiDataGrid-row.Mui-selected': {
+            backgroundColor: 'transparent', // remove default blue tint
+          },
+          '& .MuiDataGrid-row.Mui-selected:hover': {
+            backgroundColor: 'action.hover',
+          },
+          '& .row-dimmed': {
+            opacity: 0.5,
+            color: 'text.disabled',
+          },
+          '& .row-dimmed:hover': {
+            opacity: 0.75, // slight lift on hover so it's still interactive-feeling
+          },
+        }}
         rows={rows}
-        columns={columns}
+        columns={FDA_PRODUCT_TABLE_COLUMNS}
         loading={fdaSearch.isLoading}
         initialState={initialState}
         pageSizeOptions={DATA_GRID_PAGE_SIZES}

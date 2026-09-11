@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type FdaSearchParams } from "../library/types";
+import { createFdaResultFilter, type AdvancedFdaSearchParams, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
 
 
 export type FdaSearchContextType = {
   fdaData: Array<FdaProductDetail>;
   setFdaData: Dispatch<SetStateAction<Array<FdaProductDetail>>>;
-  fdaSearchParams: FdaSearchParams | null;
-  setFdaSearchParams: Dispatch<SetStateAction<FdaSearchParams | null>>;
+  fdaSearchParams: AdvancedFdaSearchParams | null;
+  setFdaSearchParams: Dispatch<SetStateAction<AdvancedFdaSearchParams | null>>;
   fdaResultFilter: FdaResultFilter;
   setFdaResultFilter: Dispatch<SetStateAction<FdaResultFilter>>;
   fdaResultDetailLevel: FdaResultDetailLevel
@@ -27,7 +27,7 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
 
 export const FdaSearchContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [fdaData, setFdaData] = useState<Array<FdaProductDetail>>([]);
-  const [fdaSearchParams, setFdaSearchParams] = useState<FdaSearchParams | null>(null)
+  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(null)
   const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>({ ...createFdaResultFilter() });
   const [fdaResultDetailLevel, setFdaResultDetailLevel] = useState<FdaResultDetailLevel>("product");
 

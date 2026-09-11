@@ -1,6 +1,6 @@
 import type { FdaProductDetail } from "../library/types";
 import { createApiPath, parseErrorMessage } from "./api";
-import { mapFdaProductSearchResponse, type FdaProductSearchResponse, } from "./types";
+import { mapFdaProductSearchResponse, type AdvancedFdaSearchRequest, type FdaProductSearchResponse, } from "./types";
 import type { FdaProductSearchResult } from "../library/types";
 
 export const getFdaSearchResults = async (
@@ -8,9 +8,35 @@ export const getFdaSearchResults = async (
 ): Promise<FdaProductSearchResult> => {
   const params = new URLSearchParams();
 
-  params.append("proprietaryName", proprietaryName);
+  params.append("proprietaryName", encodeURIComponent(JSON.stringify(proprietaryName)));
 
   const response = await fetch(createApiPath(`fda-products/search?${params}`), {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response));
+  }
+
+  const body = await response.json() as unknown as FdaProductSearchResponse;
+
+  const products: FdaProductDetail[] = body.data.map(p => ({
+    ...mapFdaProductSearchResponse(p),
+    routeName: p.routeName.length === 0 ? ["N/A"] : p.routeName,
+    dosageFormName: !p.dosageFormName ? "N/A" : p.dosageFormName,
+  }))
+
+  return (
+    { products: products }
+  );
+}
+
+export const getAdvancedFdaSearchReqults = async (
+  request: AdvancedFdaSearchRequest
+): Promise<FdaProductSearchResult> => {
+  const params = new URLSearchParams();
+  params.append("jsonString", JSON.stringify(request));
+  const response = await fetch(createApiPath(`fda-products/advanced-search?${params}`), {
     method: "GET",
   });
 

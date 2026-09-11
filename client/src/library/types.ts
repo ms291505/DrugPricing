@@ -96,8 +96,31 @@ export type NadacSearchParams = {
 };
 
 export type FdaSearchParams = {
-  propreitaryName: string;
+  proprietaryName: string;
 };
+
+export type AdvancedFdaSearchParams = {
+  proprietaryName?: string,
+  nonProprietaryName?: string,
+  dosageFormNames?: string[],
+  routeNames?: string[],
+  labelerName?: string,
+  productNdc?: string,
+
+  // FDA Package
+  includeSamplePackages: boolean,
+
+  // NadacPrice
+  includeResultsWNoPrices: boolean,
+  pricesAsOfDateStart?: string,
+  pricesAsOfDateEnd?: string,
+};
+
+export const validateAdvancedFdaSearchParams = (params: AdvancedFdaSearchParams) => {
+  const candidateParams = [params.nonProprietaryName, params.proprietaryName, params.productNdc];
+  const isValid = candidateParams.some(param => param !== undefined && param.trim() !== "")
+  return isValid;
+}
 
 export type FdaPackageDetail = {
   id: number,

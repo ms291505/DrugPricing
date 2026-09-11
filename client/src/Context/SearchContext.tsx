@@ -49,12 +49,6 @@ export const SearchContextProvider = ({ children }: { children: React.ReactNode 
 
   const [selectedNdcDescriptions, setSelectedNdcDescriptions] = useState(ndcDescriptions);
 
-  // useEffect(() => console.log(data), [data]);
-
-  useEffect(() => {
-    console.log(newChartRows);
-  }, [newChartRows]);
-
   useEffect(() => {
     setSelectedNdcDescriptions(ndcDescriptions);
   }, [ndcDescriptions]);

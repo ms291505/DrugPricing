@@ -173,3 +173,22 @@ export const mapFdaProductSearchResponse = (product: FdaProductDetailResponse) =
 
   return result;
 }
+
+export type AdvancedFdaSearchRequest = {
+
+  // FDA Product
+  proprietaryName?: string,
+  nonProprietaryName?: string,
+  dosageFormNames: string[],
+  routeNames: string[],
+  labelerName?: string,
+  productNdc?: string,
+
+  // FDA Package
+  includeSamplePackages: boolean,
+
+  // NadacPrice
+  includeResultsWNoPrices: boolean,
+  pricesAsOfDateStart?: string,
+  pricesAsOfDateEnd?: string,
+}

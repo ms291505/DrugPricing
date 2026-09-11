@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using DrugPricing.Data.Repositories;
+using DrugPricing.Endpoints;
 
 namespace DrugPricing.Services;
 
@@ -13,9 +14,10 @@ public class FdaProductService
     _fdaProductRepo = fdaProductRepo;
   }
 
-  public bool ValidateNameSearch(string? proprietaryName)
+  public bool ValidateNameSearch(string? name)
   {
-    return (proprietaryName?.Length >= MIN_NAME_LENGTH);
+    Console.WriteLine(name);
+    return (name?.Length >= MIN_NAME_LENGTH);
   }
 
   public async Task<List<string>> ListUniqueDosageFormNamesAsync()
@@ -35,6 +37,17 @@ public class FdaProductService
   public async Task<FdaProductSearchResult> ListSearchResultsAsync(string proprietaryName)
   {
     var data = await _fdaProductRepo.ListSearchResultsAsync(proprietaryName);
+
+    var result = new FdaProductSearchResult { Data = data };
+
+    return result;
+  }
+
+  public async Task<FdaProductSearchResult> ListAdvancedSearchResultsAsync(
+    AdvancedFdaSearchRequest request
+  )
+  {
+    var data = await _fdaProductRepo.ListAdvancedSearchResultsAsync(request);
 
     var result = new FdaProductSearchResult { Data = data };
 

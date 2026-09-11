@@ -9,7 +9,7 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
-import { defaultTitleFor } from "../../library/types";
+import { defaultTitleFor, type AdvancedFdaSearchParams } from "../../library/types";
 
 export default function FdaSearchTool() {
 
@@ -19,7 +19,7 @@ export default function FdaSearchTool() {
 
   const { id } = useTabInstanceContext();
 
-  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.propreitaryName ?? "");
+  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.proprietaryName ?? "");
 
   const isMobile = useMobile();
 
@@ -38,8 +38,8 @@ export default function FdaSearchTool() {
     if (canChangeName) renameTab(id, proprietaryName.toUpperCase());
 
     setFdaSearchParams({
-      propreitaryName: proprietaryName,
-    });
+      proprietaryName: proprietaryName,
+    } as AdvancedFdaSearchParams);
   }
 
   return (

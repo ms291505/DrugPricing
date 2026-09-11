@@ -21,11 +21,11 @@ export default function FdaExplorer({ visible = true }: Props) {
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
   const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
+  console.log(packageNadacPrices);
 
   const searchResult = data ?? { products: [] };
 
   const productPriceChanges = flagNadacPriceChangeForFdaProducts(applyFdaResultFilter(searchResult, fdaResultFilter).products);
-
 
   const resultTableTitleMap: Record<FdaResultDetailLevel, string> = {
     product: "Products",
@@ -66,11 +66,11 @@ export default function FdaExplorer({ visible = true }: Props) {
         }
       </Grid>
       {
-        fdaResultDetailLevel === "package"
+        packageNadacPrices.length > 0
           ?
           <Grid size={12}>
             <ExplorerGridItem title="Package Price Over Time">
-              <LineViz nadacPrices={nadacPrices} />
+              <LineViz nadacPrices={packageNadacPrices} />
             </ExplorerGridItem>
           </Grid>
           : null

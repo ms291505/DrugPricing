@@ -48,6 +48,9 @@ export default function WorkspaceDrawer() {
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
         }}
+        slotProps={{
+          paper: { elevation: 0 }
+        }}
       >
         <DrawerContent />
       </Drawer>

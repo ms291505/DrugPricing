@@ -148,16 +148,6 @@ public class FdaProductRepository : IFdaProductRepository
       );
     }
 
-    // FDA Package Query
-    var packageQuery = _db.FdaPackages.AsNoTracking();
-
-    if (request.IncludeSamplePackages != true)
-    {
-      packageQuery = packageQuery.Where(package => package.SamplePackage != true);
-    }
-
-    var minPriceCount = request.IncludeResultsWNoPrices ? 0 : 1;
-
     // NADAC Price Query
     var nadacQuery = _db.NadacPrices.AsNoTracking();
 
@@ -169,6 +159,21 @@ public class FdaProductRepository : IFdaProductRepository
     if (request.PriceAsOfDateEnd.HasValue)
     {
       nadacQuery = nadacQuery.Where(price => price.AsOfDate >= request.PriceAsOfDateEnd);
+    }
+
+    // FDA Package Query
+    var packageQuery = _db.FdaPackages.AsNoTracking();
+
+    if (request.IncludeSamplePackages != true)
+    {
+      packageQuery = packageQuery.Where(package => package.SamplePackage != true);
+    }
+
+    if (!request.IncludeResultsWNoPrices)
+    {
+      packageQuery = packageQuery.Where(package =>
+        nadacQuery.Any(price => price.Ndc == package.NdcPackageCodeStripped)
+      );
     }
 
     var products = await productQuery
@@ -209,7 +214,6 @@ public class FdaProductRepository : IFdaProductRepository
               .Where(price => price.Ndc == package.NdcPackageCodeStripped)
               .ToList(),
           })
-          .Where(package => package.NadacPrices.Count >= minPriceCount)
           .ToList(),
       })
       .ToListAsync(cancellationToken);
