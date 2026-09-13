@@ -1,7 +1,9 @@
-import { Box, Button, Typography, } from "@mui/material";
+import { Box, Typography, type SxProps, } from "@mui/material";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
-import OnBoarding from "../OnBoarding/OnBoarding";
+import useMobile from "../../hooks/useMobile";
+import type { DescriptionCardProps } from "../TabCreator/DescriptionCard";
+import DescriptionCard from "../TabCreator/DescriptionCard";
 
 export default function TabCreator() {
 
@@ -10,6 +12,44 @@ export default function TabCreator() {
   const { changeTabType } = useWorkspaceContext();
 
   const { id } = useTabInstanceContext();
+
+  const isMobile = useMobile();
+
+  const cards: DescriptionCardProps[] = [
+    {
+      onClick: () => changeTabType(id, "fda"),
+      header: "FDA + NADAC",
+      body: "The FDA's database of drug products currently on the market, including National Average Drug Aquisition Cost data when available.",
+      isMobile: isMobile
+    },
+    {
+      onClick: () => changeTabType(id, "nadac"),
+      header: "NADAC Only",
+      body: "National Average Drug Aquisition Cost data going back to 2022.",
+      isMobile: isMobile
+    }
+  ]
+
+  const boxSx: SxProps =
+    isMobile
+      ? {
+
+        display: "flex",
+        gap: 2,
+        width: "100%",
+        overflowX: "auto",
+        scrollSnapType: "x mandatory",
+        WebkitOverflowScrolling: "touch",
+        px: "10%", // creates the "peek" of adjacent cards at rest
+        py: 1,
+        // hide scrollbar (still scrollable)
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": { display: "none" },
+      }
+      : {
+        display: "flex",
+        gap: 1
+      }
 
   return (
     <Box
@@ -29,14 +69,12 @@ export default function TabCreator() {
         {question}
       </Typography>
       <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-        }}>
-        <Button variant="contained" sx={{ width: 160 }} onClick={() => changeTabType(id, "fda")}>FDA + NADAC</Button>
-        <Button variant="contained" sx={{ width: 160 }} onClick={() => changeTabType(id, "nadac")}>NADAC</Button>
+        sx={boxSx}
+      >
+        {cards.map(card => (
+          <DescriptionCard header={card.header} onClick={card.onClick} body={card.body} isMobile={card.isMobile} key={card.header} />
+        ))}
       </Box>
-      <OnBoarding />
     </Box>
   )
 }

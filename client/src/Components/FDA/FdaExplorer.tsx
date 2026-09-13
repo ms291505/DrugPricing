@@ -21,7 +21,6 @@ export default function FdaExplorer({ visible = true }: Props) {
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
   const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
-  console.log(packageNadacPrices);
 
   const searchResult = data ?? { products: [] };
 
@@ -32,7 +31,8 @@ export default function FdaExplorer({ visible = true }: Props) {
     package: "Packages"
   }
 
-  const graphTitle = "Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel);
+  const barVizTitle = "Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel);
+  const lineVizTitle = resultDetailLevelToLabel(fdaResultDetailLevel) + " Price Over Time";
 
   return (
     <Grid container spacing={2} display={visible ? "flex" : "none"} minHeight={0}>
@@ -56,7 +56,7 @@ export default function FdaExplorer({ visible = true }: Props) {
         {nadacPrices.length > 0
           ?
           <ExplorerGridItem
-            title={graphTitle}
+            title={barVizTitle}
           >
             <BarViz
               nadacPrices={nadacPrices}
@@ -66,11 +66,13 @@ export default function FdaExplorer({ visible = true }: Props) {
         }
       </Grid>
       {
-        packageNadacPrices.length > 0
+        nadacPrices.length > 0
           ?
           <Grid size={12}>
-            <ExplorerGridItem title="Package Price Over Time">
-              <LineViz nadacPrices={packageNadacPrices} />
+            <ExplorerGridItem
+              title={lineVizTitle}
+            >
+              <LineViz nadacPrices={nadacPrices} />
             </ExplorerGridItem>
           </Grid>
           : null
