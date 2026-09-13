@@ -247,6 +247,16 @@ export type WorkspaceTab = {
   title: string;
 }
 
+export function validateTabTitle(newTitle: string, oldTitle?: string) {
+  let isValid = true;
+
+  if (newTitle.trim() === "") isValid = false;
+
+  if (oldTitle && newTitle.trim() === oldTitle) isValid = false;
+
+  return isValid;
+}
+
 export type TabTypeDefinition = {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
   Content: React.ComponentType;

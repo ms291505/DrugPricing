@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { defaultTitleFor, type LayoutMode, type TabType, type WorkspaceTab } from "../library/types";
+import { defaultTitleFor, validateTabTitle, type LayoutMode, type TabType, type WorkspaceTab } from "../library/types";
 
 type WorkspaceContextType = {
   tabs: Array<WorkspaceTab>;
@@ -64,6 +64,11 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     return id;
   }
 
+  const findTab = (id: string) => {
+    const tab = tabs.find(t => t.id === id);
+    return tab;
+  }
+
   const removeTab = (id: string) => {
     const getReplacementPane = () => {
       const idx = tabs.findIndex(tab => tab.id === id);
@@ -83,8 +88,15 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setTabs(prev => prev.filter(t => t.id !== id));
   };
 
-  const renameTab = (id: string, title: string) => {
-    setTabs(prev => prev.map(t => (t.id === id ? { ...t, title } : t)));
+  const renameTab = (id: string, newTitle: string) => {
+    const tab = findTab(id);
+
+    if (!tab) throw new Error("Attempted to rename a tab doesn't exist.");
+
+    const isValid = validateTabTitle(newTitle, tab.title);
+
+    if (isValid)
+      setTabs(prev => prev.map(t => (t.id === id ? { ...t, title: newTitle.trim() } : t)));
   };
 
   const changeTabType = (id: string, type: TabType) => {
@@ -93,11 +105,6 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
         t.id === id
           ? { id: t.id, title: defaultTitleFor(type), type: type }
           : t)));
-  }
-
-  const findTab = (id: string) => {
-    const tab = tabs.find(t => t.id === id);
-    return tab;
   }
 
   return (
