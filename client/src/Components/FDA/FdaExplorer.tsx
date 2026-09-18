@@ -10,7 +10,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../NadacSearch/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
 import * as PriceFlagger from "../../library/flagNadacPriceChange";
-import { LINE_VIZ_COLORS } from "../../library/constants";
+import { CHART_AUTO_ADD_UPPER_THRESHOLD, LINE_VIZ_COLORS } from "../../library/constants";
 
 type Props = {
   visible?: boolean
@@ -53,7 +53,7 @@ export default function FdaExplorer({ visible = true }: Props) {
         <ExplorerGridItem title={resultTableTitleMap[fdaResultDetailLevel]}>
           <FdaSearchResults />
         </ExplorerGridItem>
-        {nadacPrices.length > 0
+        {nadacPrices.length > 0 && nadacPrices.length < CHART_AUTO_ADD_UPPER_THRESHOLD
           ?
           <ExplorerGridItem
             title={barVizTitle}
@@ -66,7 +66,7 @@ export default function FdaExplorer({ visible = true }: Props) {
         }
       </Grid>
       {
-        nadacPrices.length > 0
+        nadacPrices.length > 0 && nadacPrices.length < CHART_AUTO_ADD_UPPER_THRESHOLD
           ?
           <Grid size={12}>
             <ExplorerGridItem
@@ -77,7 +77,8 @@ export default function FdaExplorer({ visible = true }: Props) {
           </Grid>
           : null
       }
-      {
+      {productPriceChanges.length < CHART_AUTO_ADD_UPPER_THRESHOLD
+        ?
         productPriceChanges.map((change, i) => {
           const prices = getAllPricesForFlaggedPackages(change, packageNadacPrices);
           return (
@@ -88,6 +89,7 @@ export default function FdaExplorer({ visible = true }: Props) {
             </Grid>
           )
         })
+        : null
       }
     </Grid>
   )

@@ -7,12 +7,36 @@ import BarViz from "./BarViz";
 import LineViz from "./LineViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
+import { useEffect } from "react";
+import type { BarChart, LineChart, NadacPrice } from "../../library/types";
+import { CHART_AUTO_ADD_UPPER_THRESHOLD } from "../../library/constants";
 
 
 export default function NadacSearchViz() {
 
-  const { vizData, charts } = useSearchContext();
-  const { isLoading } = useNadacSearch();
+  const { charts, setCharts } = useSearchContext();
+  const { data, isLoading } = useNadacSearch();
+
+  function countPackages(prices: NadacPrice[]) {
+    const uniquePackages = new Set(...prices.map(p => p.ndc));
+    return [...uniquePackages].length;
+  }
+
+  useEffect(() => {
+    if (data && countPackages(data.prices) <= CHART_AUTO_ADD_UPPER_THRESHOLD) {
+      const barChart: BarChart = {
+        type: "bar",
+        nadacPrices: data.prices,
+        id: "defaultBar"
+      }
+      const lineChart: LineChart = {
+        type: "line",
+        nadacPrices: data.prices,
+        id: "defaultLine"
+      }
+      setCharts([barChart, lineChart]);
+    }
+  }, [data, setCharts])
 
   return (
     <Box
@@ -29,27 +53,13 @@ export default function NadacSearchViz() {
         </Grid>
         <Grid size={{ xs: 12, sm: 9 }}>
           <Paper sx={{ p: 1 }}>
-            <TableViz nadacPrices={vizData} loading={isLoading} />
+            <TableViz nadacPrices={data?.prices ?? []} loading={isLoading} />
           </Paper>
         </Grid>
       </Grid>
-
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Paper>
-            <BarViz nadacPrices={vizData} />
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Paper>
-            <LineViz nadacPrices={vizData} />
-          </Paper>
-        </Grid>
-      </Grid>
-
       <Grid container spacing={2} justifyContent="center">
         {charts.map((chart) => (
-          <Grid key={chart.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+          <Grid key={chart.id} size={{ xs: 12, sm: 6 }}>
             <Paper>
               {
                 chart.type === "line"

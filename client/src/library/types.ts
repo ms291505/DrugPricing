@@ -138,6 +138,15 @@ export type FdaPackageDetail = {
   nadacPrices: NadacPrice[]
 }
 
+export type FdaPackageResultInfo = FdaPackageDetail &
+{
+  productNdc: string,
+  dosageFormName: string,
+  routeName: string[],
+  labelerName: string,
+}
+
+
 export type FdaProductDetail = {
   id: number,
   productId: string,

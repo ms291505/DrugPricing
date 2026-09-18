@@ -32,7 +32,7 @@ export const FDA_PRODUCT_TABLE_COLUMNS: GridColDef<FdaProductDetail>[] = [
     field: "strengthNumber",
     headerName: "Strength",
     valueGetter: (_, product) => (
-      product.strengthNumber.map((s, i) => (s + " " + product.strengthUnit[i]))
+      product.strengthNumber.map((s, i) => (s + " " + product.strengthUnit[i])).join(", ")
     )
   },
   {
