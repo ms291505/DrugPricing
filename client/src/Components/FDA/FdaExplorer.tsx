@@ -18,7 +18,7 @@ type Props = {
 
 export default function FdaExplorer({ visible = true }: Props) {
   const { data } = useFdaSearch();
-  const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const { fdaResultFilter, fdaResultDetailLevel, charts } = useFdaSearchContext();
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
   const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
 
@@ -90,6 +90,18 @@ export default function FdaExplorer({ visible = true }: Props) {
           )
         })
         : null
+      }
+      {
+        charts.map(chart => {
+          return (
+
+            <Grid size={{ xs: 12, md: 6 }} key={chart.id}>
+              <ExplorerGridItem title="New Chart">
+                <LineViz nadacPrices={chart.nadacPrices} lineColors={LINE_VIZ_COLORS} />
+              </ExplorerGridItem>
+            </Grid>
+          )
+        })
       }
     </Grid>
   )

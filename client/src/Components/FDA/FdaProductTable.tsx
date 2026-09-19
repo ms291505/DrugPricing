@@ -11,7 +11,7 @@ export default function FdaProductTable() {
 
   const fdaSearch = useFdaSearch();
 
-  const { fdaResultFilter } = useFdaSearchContext();
+  const { fdaResultFilter, selectedRows, setSelectedRows } = useFdaSearchContext();
 
   const data = fdaSearch.data ?? { products: [] };
 
@@ -44,11 +44,16 @@ export default function FdaProductTable() {
             opacity: 0.75, // slight lift on hover so it's still interactive-feeling
           },
         }}
+        checkboxSelection
         rows={rows}
         columns={FDA_PRODUCT_TABLE_COLUMNS}
         loading={fdaSearch.isLoading}
         initialState={initialState}
         pageSizeOptions={DATA_GRID_PAGE_SIZES}
+        getRowId={(fdaProduct) => fdaProduct.productNdc}
+        rowSelectionModel={selectedRows}
+        onRowSelectionModelChange={(model) => setSelectedRows(model)}
+        disableRowSelectionExcludeModel
       />
     </Paper>
   )

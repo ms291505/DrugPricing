@@ -1,16 +1,17 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip } from "@mui/material";
+import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, Button } from "@mui/material";
 import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { isFdaProductOtc } from "../../library/types";
+import { isFdaProductOtc, type LineChart } from "../../library/types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";
+import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 
 export default function FdaPageTools() {
 
-  const { fdaResultFilter, setFdaResultFilter, } = useFdaSearchContext();
+  const { fdaResultFilter, setFdaResultFilter, selectedRows, setCharts, fdaResultDetailLevel } = useFdaSearchContext();
 
   const { data } = useFdaSearch();
 
@@ -62,6 +63,23 @@ export default function FdaPageTools() {
     }
 
   }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
+
+  const handleAddChart = () => {
+    const ndcs = [...selectedRows.ids]
+
+    if (fdaResultDetailLevel === "product") {
+      const products = data?.products.filter(product => ndcs.includes(product.productNdc)) ?? [];
+      const chartData = fdaProductsToNadacPrices(products);
+      const id = crypto.randomUUID();
+      const newChart: LineChart = {
+        type: "line",
+        nadacPrices: chartData,
+        id: id,
+      }
+
+      setCharts(prev => [...prev, newChart]);
+    }
+  }
 
   const pageToolsSectionSxProps: SxProps<Theme> = {
     display: "flex",
@@ -170,6 +188,7 @@ export default function FdaPageTools() {
             />
           </Tooltip>
         </FormGroup>
+        <Button disabled={[...selectedRows.ids].length === 0} variant="outlined" onClick={handleAddChart}>Add Chart</Button>
       </Box>
     </Paper>
   )

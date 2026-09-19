@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, type AdvancedFdaSearchParams, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
+import { createFdaResultFilter, type AdvancedFdaSearchParams, type BarChart, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type LineChart, } from "../library/types";
+import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
 
 export type FdaSearchContextType = {
@@ -11,6 +12,10 @@ export type FdaSearchContextType = {
   setFdaResultFilter: Dispatch<SetStateAction<FdaResultFilter>>;
   fdaResultDetailLevel: FdaResultDetailLevel
   setFdaResultDetailLevel: Dispatch<SetStateAction<FdaResultDetailLevel>>;
+  selectedRows: GridRowSelectionModel;
+  setSelectedRows: Dispatch<SetStateAction<GridRowSelectionModel>>;
+  charts: Array<LineChart | BarChart>;
+  setCharts: Dispatch<React.SetStateAction<Array<LineChart | BarChart>>>;
 }
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
@@ -22,6 +27,10 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   setFdaResultFilter: () => { },
   fdaResultDetailLevel: "product",
   setFdaResultDetailLevel: () => { },
+  selectedRows: { type: "include", ids: new Set() },
+  setSelectedRows: () => { },
+  charts: [],
+  setCharts: () => { },
 });
 
 
@@ -30,6 +39,8 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
   const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(null)
   const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>({ ...createFdaResultFilter() });
   const [fdaResultDetailLevel, setFdaResultDetailLevel] = useState<FdaResultDetailLevel>("product");
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+  const [charts, setCharts] = useState<Array<LineChart | BarChart>>([]);
 
   return (
     <FdaSearchContext.Provider value={{
@@ -41,6 +52,10 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
       setFdaResultFilter,
       fdaResultDetailLevel,
       setFdaResultDetailLevel,
+      selectedRows,
+      setSelectedRows,
+      charts,
+      setCharts,
     }}>
       {children}
     </FdaSearchContext.Provider>
