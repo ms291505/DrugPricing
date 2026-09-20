@@ -1,15 +1,19 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, Button } from "@mui/material";
-import { useEffect, useMemo, } from "react";
+import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, Button, } from "@mui/material";
+import { useEffect, useMemo, useState, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { isFdaProductOtc, type LineChart } from "../../library/types";
+import { createChart, isFdaProductOtc, } from "../../library/types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";
 import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SsidChartIcon from '@mui/icons-material/SsidChart';
 
 export default function FdaPageTools() {
+
+  const [addChartToggle, setAddChartToggle] = useState(false);
 
   const { fdaResultFilter, setFdaResultFilter, selectedRows, setCharts, fdaResultDetailLevel } = useFdaSearchContext();
 
@@ -64,21 +68,24 @@ export default function FdaPageTools() {
 
   }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
 
-  const handleAddChart = () => {
+  const addChartButtonText = [...selectedRows.ids].length > 0
+    ? "Add Chart"
+    : "Select Drugs to Add Chart"
+
+  const handleAddChart = (chartType: "line" | "bar") => {
     const ndcs = [...selectedRows.ids]
 
     if (fdaResultDetailLevel === "product") {
       const products = data?.products.filter(product => ndcs.includes(product.productNdc)) ?? [];
       const chartData = fdaProductsToNadacPrices(products);
       const id = crypto.randomUUID();
-      const newChart: LineChart = {
-        type: "line",
-        nadacPrices: chartData,
-        id: id,
-      }
 
-      setCharts(prev => [...prev, newChart]);
+      const newChart = createChart(chartType, chartData, id)
+
+      setCharts((prev) => [...prev, newChart]);
     }
+
+    setAddChartToggle(false);
   }
 
   const pageToolsSectionSxProps: SxProps<Theme> = {
@@ -188,8 +195,20 @@ export default function FdaPageTools() {
             />
           </Tooltip>
         </FormGroup>
-        <Button disabled={[...selectedRows.ids].length === 0} variant="outlined" onClick={handleAddChart}>Add Chart</Button>
+        {addChartToggle
+          ?
+          <Box sx={{
+            display: "flex",
+            gap: 1
+          }}>
+            <Button sx={{ width: "100%" }} variant="contained" onClick={() => handleAddChart("bar")}><BarChartIcon /></Button>
+            <Button sx={{ width: "100%" }} variant="contained" onClick={() => handleAddChart("line")}><SsidChartIcon /></Button>
+          </Box>
+          :
+          <Button disabled={[...selectedRows.ids].length === 0} variant="outlined" onClick={() => setAddChartToggle(true)}>{addChartButtonText}</Button>
+        }
       </Box>
     </Paper>
   )
 }
+

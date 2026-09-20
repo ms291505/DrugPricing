@@ -97,7 +97,13 @@ export default function FdaExplorer({ visible = true }: Props) {
 
             <Grid size={{ xs: 12, md: 6 }} key={chart.id}>
               <ExplorerGridItem title="New Chart">
-                <LineViz nadacPrices={chart.nadacPrices} lineColors={LINE_VIZ_COLORS} />
+                {
+                  chart.type === "line"
+                    ? <LineViz nadacPrices={chart.nadacPrices} lineColors={LINE_VIZ_COLORS} />
+                    : chart.type === "bar"
+                      ? <BarViz nadacPrices={chart.nadacPrices} />
+                      : "Invalid chart type used."
+                }
               </ExplorerGridItem>
             </Grid>
           )
@@ -106,3 +112,4 @@ export default function FdaExplorer({ visible = true }: Props) {
     </Grid>
   )
 }
+

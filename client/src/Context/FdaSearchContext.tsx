@@ -15,7 +15,7 @@ export type FdaSearchContextType = {
   selectedRows: GridRowSelectionModel;
   setSelectedRows: Dispatch<SetStateAction<GridRowSelectionModel>>;
   charts: Array<LineChart | BarChart>;
-  setCharts: Dispatch<React.SetStateAction<Array<LineChart | BarChart>>>;
+  setCharts: Dispatch<SetStateAction<Array<LineChart | BarChart>>>;
 }
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
