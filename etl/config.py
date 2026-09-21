@@ -1,8 +1,8 @@
-import os
 import sys
+import os
+
 from typing import Literal
 from library.models import Environment
-
 from dotenv import load_dotenv
 from pydantic import SecretStr
 
@@ -37,7 +37,7 @@ def get_env_variables(mode: str):
     nadac_filter_before_insert = os.getenv("NADAC_FILTER_BEFORE_INSERT", "1")
 
     raw_dates = os.getenv("NADAC_FILE_DATES", "")
-    nadac_file_dates = raw_dates.split(".") if raw_dates else []
+    nadac_file_dates = raw_dates.split(",") if raw_dates else []
 
     database_url = os.getenv("DATABASE_URL", "")
 
