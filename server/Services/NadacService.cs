@@ -30,13 +30,13 @@ public class NadacService
   {
     var asOfDates = await _nadacRepo.ListAsOfDatesAsync();
 
-    var certainMinDate = asOfDates.LastOrDefault(d => d >= maxDate);
-    if (certainMinDate == default)
+    var certainMaxDate = asOfDates.FirstOrDefault(d => d >= maxDate);
+    if (certainMaxDate == default)
     {
-      certainMinDate = asOfDates.Last();
+      certainMaxDate = asOfDates.Last();
     }
 
-    return certainMinDate;
+    return certainMaxDate;
   }
 
   public async Task<(DateOnly firstDate, DateOnly lastDate)> AsOfDateRangeAsync()
@@ -51,7 +51,7 @@ public class NadacService
     return (ndcDescription.Length >= MIN_NDC_DESCRIPTION_LENGTH);
   }
 
-  public bool ValidateNdcn(string ndc)
+  public bool ValidateNdc(string ndc)
   {
     return (ndc.Length >= MIN_NDC_LENGTH);
   }

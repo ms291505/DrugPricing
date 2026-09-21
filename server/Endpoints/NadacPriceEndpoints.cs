@@ -84,7 +84,7 @@ public static class NadacPriceEndpoints
 
     var certainMinDate = await nadacService.SnapMinSearchDateAsync(request.MinDate);
     if (certainMinDate != request.MinDate)
-      notices.Add("minDate replaced with the first availabile date in data.");
+      notices.Add("minDate snapped to the nearest available as-of date.");
 
     predicates.Add(
       new NadacPriceSearchResponse.Predicate
@@ -96,8 +96,8 @@ public static class NadacPriceEndpoints
     );
 
     var certainMaxDate = await nadacService.SnapMaxSearchDateAsync(request.MaxDate);
-    if (certainMaxDate == default)
-      notices.Add("maxDate replaced with the last available date in the data.");
+    if (certainMaxDate != request.MaxDate)
+      notices.Add("maxDate snapped to the nearest available as-of date.");
 
     predicates.Add(
       new NadacPriceSearchResponse.Predicate
