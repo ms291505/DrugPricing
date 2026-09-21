@@ -14,6 +14,8 @@ public class FdaPackage
   public bool SamplePackage { get; set; }
   public required string NdcPackageCodeStripped { get; set; }
 
+  public DateTime? DelistedAt { get; set; }
+
   public DateTime LoadedAt { get; set; }
 
   public DateTime CreatedAt { get; set; }

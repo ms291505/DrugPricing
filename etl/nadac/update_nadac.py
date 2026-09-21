@@ -1,4 +1,5 @@
 from config import get_env
+from library.db import get_connection, test_connection
 from nadac.fetch_nadac import fetch_nadac
 from nadac.load_nadac import load_nadac
 from nadac.parse_nadac import parse_nadac
@@ -38,27 +39,32 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
 
     nadac_data = nadac_data.rename(columns=COLUMN_MAP)
 
-    if not filter_before_insert:
-        nadac_prices = parse_nadac(nadac_data)
+    with get_connection() as conn:
+        test_connection(conn)
 
-    else:
-        loaded_dates = set(get_loaded_as_of_dates())
+        if not filter_before_insert:
+            nadac_prices = parse_nadac(nadac_data)
 
-        as_of_dates = pd.to_datetime(nadac_data["As of Date"]).dt.date
+        else:
+            loaded_dates = set(get_loaded_as_of_dates(conn))
 
-        fresh_nadac_data = pd.DataFrame(
-            nadac_data[as_of_dates.isin(loaded_dates) == False]
-        )
+            as_of_dates = pd.to_datetime(nadac_data["As of Date"]).dt.date
 
-        if fresh_nadac_data.empty:
-            print("No new records to load.")
-            update_drug_package()
-            return
+            fresh_nadac_data = pd.DataFrame(
+                nadac_data[as_of_dates.isin(loaded_dates) == False]
+            )
 
-        nadac_prices = parse_nadac(fresh_nadac_data)
+            if fresh_nadac_data.empty:
+                print("No new records to load.")
+                update_drug_package(conn)
+                conn.commit()
+                return
 
-    load_nadac(nadac_prices)
-    update_drug_package()
+            nadac_prices = parse_nadac(fresh_nadac_data)
+
+        load_nadac(conn, nadac_prices)
+        update_drug_package(conn)
+        conn.commit()
 
 
 def update_nadac_for_dates(file_dates):

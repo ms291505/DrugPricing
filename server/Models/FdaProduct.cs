@@ -27,6 +27,8 @@ public class FdaProduct
 
   public ICollection<FdaPackage> FdaPackages { get; set; } = [];
 
+  public DateTime? DelistedAt { get; set; }
+
   public DateTime LoadedAt { get; set; }
 
   public DateTime CreatedAt { get; set; }

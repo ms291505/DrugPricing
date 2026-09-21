@@ -106,7 +106,6 @@ class FdaPackage(BaseModel):
     ndc_exclude_flag: NdcExcludeFlag
     sample_package: bool
     ndc_package_code_stripped: str
-    loaded_at: datetime = datetime.now(timezone.utc)
 
     @classmethod
     def from_fda_row(cls, row) -> "FdaPackage":
@@ -154,7 +153,6 @@ class FdaProduct(BaseModel):
     dea_schedule: str | None
     ndc_exclude_flag: NdcExcludeFlag | None
     listing_record_certified_through: date | None
-    loaded_at: datetime = datetime.now(timezone.utc)
 
     @classmethod
     def from_fda_row(cls, row) -> "FdaProduct":

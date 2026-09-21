@@ -6,8 +6,8 @@ from config import get_env
 
 
 def main():
-    connection = get_connection()
-    test_connection(connection)
+    with get_connection() as conn:
+        test_connection(conn)
 
 
 def get_connection():
@@ -24,19 +24,16 @@ def get_connection():
         sys.exit()
 
 
-def test_connection(connection: psycopg.Connection):
-    with connection as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                    SELECT pg_postmaster_start_time();
-                """)
-            result = cur.fetchone()
-            if result:
-                start_time: datetime = result[0]
-                print(f"DB started: {start_time.strftime('%B %d, %Y %I:%M %p UTC')}")
-            else:
-                print("The DB is not up. Now exiting.")
-                sys.exit()
+def test_connection(connection: psycopg.Connection) -> None:
+    with connection.cursor() as cur:
+        cur.execute("""
+                SELECT pg_postmaster_start_time();
+            """)
+        result = cur.fetchone()
+        if not result:
+            raise RuntimeError("Database did not report a postmaster start time.")
+        start_time: datetime = result[0]
+        print(f"DB started: {start_time.strftime('%B %d, %Y %I:%M %p UTC')}")
 
 
 if __name__ == "__main__":

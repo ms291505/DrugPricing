@@ -16,7 +16,6 @@ public class FdaProductService
 
   public bool ValidateNameSearch(string? name)
   {
-    Console.WriteLine(name);
     return (name?.Length >= MIN_NAME_LENGTH);
   }
 

@@ -12,7 +12,7 @@ public class FdaPackageConfiguration : IEntityTypeConfiguration<FdaPackage>
 
     e.HasIndex(p => p.NdcPackageCode).IsUnique();
 
-    e.HasIndex(p => p.ProductId);
+    e.HasIndex(p => p.ProductNdc);
 
     e.HasIndex(e => e.NdcPackageCodeStripped);
   }

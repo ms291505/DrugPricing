@@ -73,6 +73,21 @@ Notes and gotchas:
 
 - Description search uses Postgres trigram similarity (threshold `0.3`). A fresh DB needs
   `CREATE EXTENSION IF NOT EXISTS pg_trgm;`.
+- **`ProductNdc` is the FDA product key**, not `ProductId`. The FDA reissues `ProductId`
+  (`{ProductNdc}_{guid}`) every time a product record changes, so it is a rotating version
+  stamp kept only for traceability. `FdaProducts.ProductNdc` is unique and
+  `FdaPackages.ProductNdc` is the FK — never join or upsert on `ProductId`.
+- `NdcExcludeFlag` is dead weight, not a gap to close. It is carried on both FDA entities
+  and both Pydantic models, but no query filters on it, neither `FdaProductDetail` nor
+  `FdaPackageDetail` exposes it, and the client never mentions it. The ETL populates it for
+  packages and not for products; that asymmetry is harmless. The source files do not
+  meaningfully use the flag either — see the note in `Models/Enums/NdcEcludeFlag.cs`.
+  `Services/FdaPackageSearchResult.cs` is likewise declared and never referenced.
+- **`DelistedAt` is a soft delete.** The FDA load stamps every row it touches with the run
+  timestamp, then delists anything left behind (`etl/fda/tombstone_fda.py`). Rows are never
+  hard-removed, and a row that reappears in a later file is un-delisted by the upsert. Every
+  FDA query in `FdaProductRepository` filters `DelistedAt == null`; nothing is exposed to the
+  client, so new FDA queries must add the filter themselves.
 - Minimum `ndcDescription` search length is 5 (shortest real description as of the
   2026-04-22 data). Mirrored client-side in `client/src/library/constants.ts` — change both.
 - Dev requires `server/appsettings.Development.json` (gitignored); copy
@@ -143,13 +158,29 @@ Interactive entry point: `etl/drug_pricing_etl.py <mode>`, where `<mode>` select
 - `library/models.py` — Pydantic models (`Environment`, `NadacPrice`, FDA models, enums).
   These mirror the C# entities in `server/Models/`; keep the two in sync.
 - `library/db.py` — `psycopg` connection from `DATABASE_URL`, plus `test_connection`.
+  `test_connection` borrows the connection it is given; it must not be used with
+  `with connection as conn:`, which closes the connection in psycopg3.
 - `nadac/` — `update_nadac.py` orchestrates `fetch_nadac` → `parse_nadac` → `load_nadac`,
   then `update_drug_package`. `get_loaded_as_of_dates.py` supports the
   `NADAC_FILTER_BEFORE_INSERT` skip-already-loaded path. `sql/load_nadac.sql` is marked TODO.
 - `fda/` — `update_fda.py` orchestrates `fetch_fda` (the NDC zip) →
-  `parse_fda_products`/`parse_fda_packages` → the matching `load_*` modules. Packages are
-  filtered to products that loaded successfully.
+  `parse_fda_products`/`parse_fda_packages` → the matching `load_*` modules →
+  `tombstone_fda.py`. Packages are filtered to the set of loaded **`product_ndc`** values;
+  filtering on `product_id` would drop packages belonging to a merged-away duplicate row.
 - `tests/` — pytest; only `test_nadac_models.py` exists today. `pytest.ini` sets `pythonpath = .`.
+
+**Connection ownership.** `update_fda` and `update_nadac` own the connection, the run
+timestamp, and the single `commit()` for their path. Every loader and query module takes
+`conn` as a required first parameter, never calls `get_connection()` or `commit()` itself,
+and raises instead of `sys.exit()` so the orchestrator's transaction rolls back. The whole
+FDA load is one transaction.
+
+**FDA duplicate merge.** A single NDC file can carry several rows per `ProductNdc` with
+disjoint package sets, so `load_fda_products.py` collapses each group with
+`DISTINCT ON ("ProductNdc")` ordered by `StartMarketingDate DESC, "ProductId"` — the
+surviving row inherits the union of its group's packages via the `ProductNdc` FK. Groups
+that disagree on dosage form, product type, or ingredients are logged as a warning and
+merged anyway (~11 as of the 2026-09 file; FDA-side data rot, not a code fault).
 
 Env vars (`etl/.env.example`): `DATABASE_URL`, `NADAC_FILTER_BEFORE_INSERT`,
 `NADAC_FILE_DATES` (mm-dd-yyyy list — the comment says commas, `config.py` splits on `.`;
@@ -184,6 +215,8 @@ Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
   changed on both sides.
 - Prefer adding new server logic in `Services/` and new data access in `Data/Repositories/`
   rather than in endpoint handlers.
+- Repository methods that `TryGetValue` must also `_cache.Set` before returning, and must use
+  their own key from `CacheKeys` — a shared key silently serves one list as another.
 - Markdown: `MD013` (line length) is disabled — see `.markdownlint.json`.
 - Never read, echo, or commit `etl/.env*` (except `.env.example`) or
   `server/appsettings.Development.json`; they hold real credentials and are gitignored.
@@ -197,3 +230,7 @@ Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
   smuggles JSON through a query-string parameter.
 - `Console.WriteLine` debug logging in `FdaProductEndpoints`; `console.log` in `api.ts`.
 - No automated tests for the server or client; ETL coverage is one model test.
+- `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to
+  `datetime.now(timezone.utc)` evaluated at **import** time, so a run shares one timestamp by
+  accident. Harmless today because nothing keys off it; the FDA models had the same default
+  removed because tombstoning depends on an explicit per-run timestamp.

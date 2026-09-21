@@ -22,28 +22,30 @@ public class FdaProductRepository : IFdaProductRepository
     if (_cache.TryGetValue(cacheKey, out List<string>? cachedResults))
       return cachedResults!;
 
-    var query = _db.FdaProducts.AsNoTracking();
+    var query = _db.FdaProducts.AsNoTracking().Where(p => p.DelistedAt == null);
 
     var dosageFormNames = await query.Select(p => p.DosageFormName).Distinct().ToListAsync();
 
+    _cache.Set(cacheKey, dosageFormNames, CacheDuration.Default);
     return dosageFormNames;
   }
 
   public async Task<List<string>> ListUniqueRouteNamesAsync()
   {
-    var cacheKey = CacheKeys.DosageFormNames;
+    var cacheKey = CacheKeys.RouteNames;
     if (_cache.TryGetValue(cacheKey, out List<string>? cachedResults))
       return cachedResults!;
 
-    var query = _db.FdaProducts.AsNoTracking();
+    var query = _db.FdaProducts.AsNoTracking().Where(p => p.DelistedAt == null);
 
-    var dosageFormNames = await query
+    var routeNames = await query
       .SelectMany(p => p.RouteName)
       .Distinct()
       .OrderBy(r => r)
       .ToListAsync();
 
-    return dosageFormNames;
+    _cache.Set(cacheKey, routeNames, CacheDuration.Default);
+    return routeNames;
   }
 
   public async Task<List<FdaProductDetail>> ListSearchResultsAsync(
@@ -55,10 +57,9 @@ public class FdaProductRepository : IFdaProductRepository
     if (_cache.TryGetValue(cacheKey, out List<FdaProductDetail>? cachedResults))
       return cachedResults!;
 
-    var query = _db.FdaProducts.AsNoTracking();
-
     var products = await _db
       .FdaProducts.AsNoTracking()
+      .Where(product => product.DelistedAt == null)
       .Where(product => EF.Functions.ILike(product.ProprietaryName, $"%{proprietaryName}%"))
       .Select(product => new FdaProductDetail
       {
@@ -82,7 +83,8 @@ public class FdaProductRepository : IFdaProductRepository
         ProprietaryName = product.ProprietaryName,
 
         FdaPackageDetails = product
-          .FdaPackages.Select(package => new FdaPackageDetail
+          .FdaPackages.Where(package => package.DelistedAt == null)
+          .Select(package => new FdaPackageDetail
           {
             Id = package.Id,
             NdcPackageCode = package.NdcPackageCode,
@@ -100,6 +102,7 @@ public class FdaProductRepository : IFdaProductRepository
       })
       .ToListAsync();
 
+    _cache.Set(cacheKey, products, CacheDuration.Default);
     return products;
   }
 
@@ -108,7 +111,7 @@ public class FdaProductRepository : IFdaProductRepository
     CancellationToken cancellationToken = default
   )
   {
-    var productQuery = _db.FdaProducts.AsNoTracking();
+    var productQuery = _db.FdaProducts.AsNoTracking().Where(p => p.DelistedAt == null);
 
     if (!string.IsNullOrWhiteSpace(request.ProprietaryName))
     {
@@ -158,11 +161,11 @@ public class FdaProductRepository : IFdaProductRepository
 
     if (request.PriceAsOfDateEnd.HasValue)
     {
-      nadacQuery = nadacQuery.Where(price => price.AsOfDate >= request.PriceAsOfDateEnd);
+      nadacQuery = nadacQuery.Where(price => price.AsOfDate <= request.PriceAsOfDateEnd);
     }
 
     // FDA Package Query
-    var packageQuery = _db.FdaPackages.AsNoTracking();
+    var packageQuery = _db.FdaPackages.AsNoTracking().Where(package => package.DelistedAt == null);
 
     if (request.IncludeSamplePackages != true)
     {
@@ -199,7 +202,7 @@ public class FdaProductRepository : IFdaProductRepository
         ProprietaryName = product.ProprietaryName,
 
         FdaPackageDetails = packageQuery
-          .Where(package => package.ProductId == product.ProductId)
+          .Where(package => package.ProductNdc == product.ProductNdc)
           .Select(package => new FdaPackageDetail
           {
             Id = package.Id,
