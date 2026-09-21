@@ -167,7 +167,6 @@ export type FdaPackageResultInfo = FdaPackageDetail &
   labelerName: string,
 }
 
-
 export type FdaProductDetail = {
   id: number,
   productId: string,
