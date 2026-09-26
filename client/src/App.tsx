@@ -12,6 +12,7 @@ import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
+import { Toaster } from "react-hot-toast"
 import Workspace from "./Components/Workspace/Workspace";
 import OnBoarding from "./Components/OnBoarding/OnBoarding";
 import GlobalModal from "./Components/GlobalModal/GlobalModal";
@@ -24,6 +25,9 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
+          <Toaster
+            position="bottom-center"
+          />
           <GlobalModalContextProvider>
 
             <WorkspaceContextProvider>
