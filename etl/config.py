@@ -1,10 +1,11 @@
-import sys
 import os
-
+import sys
 from typing import Literal
-from library.models import Environment
+
 from dotenv import load_dotenv
 from pydantic import SecretStr
+
+from library.models import Environment
 
 _env: Environment | Literal[False] = False
 

@@ -1,6 +1,7 @@
-import psycopg
 import sys
 from datetime import datetime
+
+import psycopg
 
 from config import get_env
 
