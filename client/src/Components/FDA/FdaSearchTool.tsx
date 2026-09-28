@@ -2,30 +2,31 @@ import Paper from "@mui/material/Paper"
 import Box from "@mui/material/Box"
 import TextField from "@mui/material/TextField"
 import useMobile from "../../hooks/useMobile"
-import { Button, CircularProgress } from "@mui/material";
+import { Button, Checkbox, CircularProgress, FormControlLabel } from "@mui/material";
 import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
-import { defaultTitleFor, type AdvancedFdaSearchParams } from "../../library/types";
+import { defaultTitleFor } from "../../library/tabTypeRegistry";
+import { defaultAdvFdaSearchParams } from "../../library/types.ts";
 
 export default function FdaSearchTool() {
 
-  const { setFdaSearchParams, fdaSearchParams } = useFdaSearchContext();
+  const { setFdaSearchParams } = useFdaSearchContext();
 
   const { renameTab, findTab } = useWorkspaceContext();
 
   const { id } = useTabInstanceContext();
 
-  const [proprietaryName, setProprietaryName] = useState<string>(fdaSearchParams?.proprietaryName ?? "");
+  const [draftSearchParams, setDraftSearchParams] = useState(defaultAdvFdaSearchParams);
 
   const isMobile = useMobile();
 
   const fdaSearch = useFdaSearch();
 
-  const isValidSearch = proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
+  const isValidSearch = draftSearchParams.proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
 
   const tab = findTab(id);
 
@@ -35,11 +36,9 @@ export default function FdaSearchTool() {
 
   const handleSearch = () => {
 
-    if (canChangeName) renameTab(id, proprietaryName.toUpperCase());
+    if (canChangeName) renameTab(id, draftSearchParams.proprietaryName.toUpperCase());
 
-    setFdaSearchParams({
-      proprietaryName: proprietaryName,
-    } as AdvancedFdaSearchParams);
+    setFdaSearchParams(draftSearchParams);
   }
 
   return (
@@ -67,28 +66,76 @@ export default function FdaSearchTool() {
           handleSearch();
         }}
       >
-        <TextField
-          size={isMobile ? "small" : "medium"}
-          type="text"
-          id="proprietaryName"
-          name="proprietaryName"
-          label="Brand Name"
-          value={proprietaryName}
-          onChange={(e) => setProprietaryName(e.target.value)}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={!isValidSearch || fdaSearch.isLoading}
+        <Box
           sx={{
-            width: { xs: "100%", md: 100 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1
           }}
         >
-          {fdaSearch.isLoading
-            ? <CircularProgress aria-label="Loading..." />
-            : "Search"
-          }
-        </Button>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1
+            }}
+          >
+            <TextField
+              size={isMobile ? "small" : "medium"}
+              type="text"
+              id="proprietaryName"
+              name="proprietaryName"
+              label="Brand Name"
+              value={draftSearchParams.proprietaryName}
+              onChange={(e) =>
+                setDraftSearchParams(
+                  prev => ({ ...prev, proprietaryName: e.target.value }))
+              }
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!isValidSearch || fdaSearch.isLoading}
+              sx={{
+                width: { xs: "100%", md: 100 },
+              }}
+            >
+              {fdaSearch.isLoading
+                ? <CircularProgress aria-label="Loading..." />
+                : "Search"
+              }
+            </Button>
+          </Box>
+          <Box
+            id="checkbox-container"
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              width: "100%",
+              justifyContent: "center",
+              gap: { xs: 1, md: 2 }
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={draftSearchParams.includeResultsWNoPrices}
+                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeResultsWNoPrices: !prev.includeResultsWNoPrices }))}
+                />
+              }
+              label="Include Results Without Prices"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={draftSearchParams.includeSamplePackages}
+                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeSamplePackages: !prev.includeResultsWNoPrices }))}
+                />
+              }
+              label="Inculde Sample Packages"
+            />
+          </Box>
+        </Box>
 
       </Paper>
     </Box>

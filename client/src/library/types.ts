@@ -1,9 +1,3 @@
-import FdaSearch from "../Components/FDA/FdaSearch";
-import NadacSearch from "../Components/NadacSearch/NadacSearch";
-import TabCreator from "../Components/Workspace/TabCreator";
-import { FdaSearchContextProvider } from "../Context/FdaSearchContext";
-import { SearchContextProvider } from "../Context/SearchContext";
-
 export type NadacPrice = {
   id: number,
   ndc: string,
@@ -126,7 +120,7 @@ export type FdaSearchParams = {
 };
 
 export type AdvancedFdaSearchParams = {
-  proprietaryName?: string,
+  proprietaryName: string,
   nonProprietaryName?: string,
   dosageFormNames?: string[],
   routeNames?: string[],
@@ -146,7 +140,13 @@ export const validateAdvancedFdaSearchParams = (params: AdvancedFdaSearchParams)
   const candidateParams = [params.nonProprietaryName, params.proprietaryName, params.productNdc];
   const isValid = candidateParams.some(param => param !== undefined && param.trim() !== "")
   return isValid;
-}
+};
+
+export const defaultAdvFdaSearchParams: AdvancedFdaSearchParams = {
+  proprietaryName: "",
+  includeResultsWNoPrices: false,
+  includeSamplePackages: false,
+};
 
 export type FdaPackageDetail = {
   id: number,
@@ -285,32 +285,6 @@ export function validateTabTitle(newTitle: string, oldTitle?: string) {
 
   return isValid;
 }
-
-export type TabTypeDefinition = {
-  Provider: React.ComponentType<{ children: React.ReactNode }>;
-  Content: React.ComponentType;
-  defaultTitle: string;
-}
-
-export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
-  fda: {
-    Provider: FdaSearchContextProvider,
-    Content: FdaSearch,
-    defaultTitle: "New FDA Search",
-  },
-  nadac: {
-    Provider: SearchContextProvider,
-    Content: NadacSearch,
-    defaultTitle: "New NADAC Search",
-  },
-  new: {
-    Provider: FdaSearchContextProvider,
-    Content: TabCreator,
-    defaultTitle: "New Tab",
-  }
-};
-
-export const defaultTitleFor = (tabType: TabType) => tabTypeRegistry[tabType].defaultTitle;
 
 export type MobileDrawer = {
   isOpen: boolean,

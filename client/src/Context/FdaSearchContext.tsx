@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, type AdvancedFdaSearchParams, type BarChart, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type LineChart, } from "../library/types";
+import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type BarChart, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type LineChart, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
-
 
 export type FdaSearchContextType = {
   fdaData: Array<FdaProductDetail>;
@@ -21,7 +20,7 @@ export type FdaSearchContextType = {
 export const FdaSearchContext = createContext<FdaSearchContextType>({
   fdaData: [],
   setFdaData: () => { },
-  fdaSearchParams: null,
+  fdaSearchParams: { ...defaultAdvFdaSearchParams },
   setFdaSearchParams: () => { },
   fdaResultFilter: { ...createFdaResultFilter() },
   setFdaResultFilter: () => { },
