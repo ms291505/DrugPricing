@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Deploy ETL
+        run: |
+          rsync -av --delete ./etl/ /home/ghrunner/apps/drugpricing-etl/
+
       - name: Build client
         working-directory: ./client
         run: |
