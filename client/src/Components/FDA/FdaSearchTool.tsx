@@ -129,7 +129,7 @@ export default function FdaSearchTool() {
               control={
                 <Checkbox
                   checked={draftSearchParams.includeSamplePackages}
-                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeSamplePackages: !prev.includeResultsWNoPrices }))}
+                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeSamplePackages: !prev.includeSamplePackages }))}
                 />
               }
               label="Inculde Sample Packages"
