@@ -21,7 +21,9 @@ def parse_fda_products(products: pd.DataFrame):
 
     fda_products = [
         FdaProduct.from_fda_row(row)
-        for _, row in tqdm(products.iterrows(), total=input_length, desc="Parsing")
+        for row in tqdm(
+            products.to_dict("records"), total=input_length, desc="Parsing"
+        )
     ]
 
     return ParseWithCount(

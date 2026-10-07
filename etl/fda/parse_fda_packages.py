@@ -20,7 +20,7 @@ def parse_fda_packages(packages: pd.DataFrame):
     print(f"Parsing {input_length} new FDA Package records...")
     
     fda_packages = [
-        FdaPackage.from_fda_row(row) for _, row in tqdm(packages.iterrows(),
+        FdaPackage.from_fda_row(row) for row in tqdm(packages.to_dict("records"),
         total=input_length,
         desc="Parsing")]
 
