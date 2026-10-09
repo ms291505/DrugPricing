@@ -1,7 +1,9 @@
 from typing import NamedTuple
+
 import pandas as pd
-from library.models import FdaPackage, FdaProduct
 from tqdm import tqdm
+
+from library.models import FdaPackage, FdaProduct
 
 
 class ParseResult(NamedTuple):
