@@ -101,6 +101,14 @@ def test_product_blank_optional_fields():
     assert product.listing_record_certified_through is None
 
 
+@pytest.mark.xfail(
+    reason="pharm_classes is read from ACTIVE_INGRED_UNIT; fix pending", strict=True
+)
+def test_product_pharm_classes_from_pharm_classes_column():
+    product = parse_fda_products(to_frame(PRODUCT_COLUMNS, FULL_PRODUCT)).fda_products[0]
+    assert product.pharm_classes == ["Insulin [CS]", "Insulin [EPC]"]
+
+
 def test_product_wrong_date_format_raises():
     row = {**FULL_PRODUCT, "STARTMARKETINGDATE": "1983-06-27"}
     with pytest.raises(ValueError):

@@ -237,7 +237,8 @@ Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
 - `AdvancedSearchRequest` is bound `[FromBody]` on a `MapGet` route; the FDA equivalent
   smuggles JSON through a query-string parameter.
 - `Console.WriteLine` debug logging in `FdaProductEndpoints`; `console.log` in `api.ts`.
-- No automated tests for the server or client; ETL coverage is one model test.
+- No automated tests for the server or client. ETL has pytest coverage for model parsing
+  and helpers only (see `etl/tests/`); fetch, load, and tombstone are untested.
 - `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to
   `datetime.now(timezone.utc)` evaluated at **import** time, so a run shares one timestamp by
   accident. Harmless today because nothing keys off it; the FDA models had the same default
