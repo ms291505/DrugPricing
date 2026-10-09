@@ -1,5 +1,6 @@
 import pandas as pd
 from library.models import FdaPackage 
+from library.parsing import iter_records
 from tqdm import tqdm
 from typing import NamedTuple
 
@@ -20,7 +21,7 @@ def parse_fda_packages(packages: pd.DataFrame):
     print(f"Parsing {input_length} new FDA Package records...")
     
     fda_packages = [
-        FdaPackage.from_fda_row(row) for row in tqdm(packages.to_dict("records"),
+        FdaPackage.from_fda_row(row) for row in tqdm(iter_records(packages),
         total=input_length,
         desc="Parsing")]
 

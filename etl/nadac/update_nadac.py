@@ -6,6 +6,7 @@ from nadac.parse_nadac import parse_nadac
 from nadac.get_loaded_as_of_dates import get_loaded_as_of_dates
 import pandas as pd
 from nadac.update_drug_package import update_drug_package
+from library.parsing import NADAC_DATE_FORMAT
 from library.timing import timed
 import sys
 
@@ -52,7 +53,9 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
             with timed("NADAC filter loaded as-of dates"):
                 loaded_dates = set(get_loaded_as_of_dates(conn))
 
-                as_of_dates = pd.to_datetime(nadac_data["As of Date"]).dt.date
+                as_of_dates = pd.to_datetime(
+                    nadac_data["As of Date"], format=NADAC_DATE_FORMAT
+                ).dt.date
 
                 fresh_nadac_data = pd.DataFrame(
                     nadac_data[as_of_dates.isin(loaded_dates) == False]
