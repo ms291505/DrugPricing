@@ -157,6 +157,13 @@ Interactive entry point: `etl/drug_pricing_etl.py <mode>`, where `<mode>` select
 - `config.py` — loads `.env.<mode>` into a module-level `Environment` (`init_env`/`get_env`).
 - `library/models.py` — Pydantic models (`Environment`, `NadacPrice`, FDA models, enums).
   These mirror the C# entities in `server/Models/`; keep the two in sync.
+- `library/parsing.py` — row-to-model helpers (`parse_date`, `split_values`, `str_or_none`,
+  `is_missing`, `iter_records`) and the source date formats (`FDA_DATE_FORMAT`,
+  `NADAC_DATE_FORMAT`). Only `None`/NaN counts as missing; any other unexpected value must
+  raise. Never call `pd.to_datetime` on a scalar or use `iterrows()` in a per-row loop —
+  both were the bulk of the old parse time (~40s for FDA on a Mac, minutes on the Pi).
+- `library/timing.py` — `timed(label)` context manager; the orchestrators print
+  `[timing] <stage>: <s>s (ok|failed)` lines for the cron log.
 - `library/db.py` — `psycopg` connection from `DATABASE_URL`, plus `test_connection`.
   `test_connection` borrows the connection it is given; it must not be used with
   `with connection as conn:`, which closes the connection in psycopg3.
@@ -167,7 +174,8 @@ Interactive entry point: `etl/drug_pricing_etl.py <mode>`, where `<mode>` select
   `parse_fda_products`/`parse_fda_packages` → the matching `load_*` modules →
   `tombstone_fda.py`. Packages are filtered to the set of loaded **`product_ndc`** values;
   filtering on `product_id` would drop packages belonging to a merged-away duplicate row.
-- `tests/` — pytest; only `test_nadac_models.py` exists today. `pytest.ini` sets `pythonpath = .`.
+- `tests/` — pytest: `test_nadac_models.py`, `test_fda_models.py`, `test_parsing.py`.
+  `pytest.ini` sets `pythonpath = .`.
 
 **Connection ownership.** `update_fda` and `update_nadac` own the connection, the run
 timestamp, and the single `commit()` for their path. Every loader and query module takes
@@ -183,8 +191,8 @@ that disagree on dosage form, product type, or ingredients are logged as a warni
 merged anyway (~11 as of the 2026-09 file; FDA-side data rot, not a code fault).
 
 Env vars (`etl/.env.example`): `DATABASE_URL`, `NADAC_FILTER_BEFORE_INSERT`,
-`NADAC_FILE_DATES` (mm-dd-yyyy list — the comment says commas, `config.py` splits on `.`;
-that mismatch is a known wart).
+`NADAC_FILE_DATES` (comma-separated mm-dd-yyyy list). Each NADAC file is cumulative
+year to date (~1.2M rows by late year), so keep `NADAC_FILTER_BEFORE_INSERT` on.
 
 Commands (from `etl/`):
 
@@ -229,7 +237,8 @@ Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
 - `AdvancedSearchRequest` is bound `[FromBody]` on a `MapGet` route; the FDA equivalent
   smuggles JSON through a query-string parameter.
 - `Console.WriteLine` debug logging in `FdaProductEndpoints`; `console.log` in `api.ts`.
-- No automated tests for the server or client; ETL coverage is one model test.
+- No automated tests for the server or client. ETL has pytest coverage for model parsing
+  and helpers only (see `etl/tests/`); fetch, load, and tombstone are untested.
 - `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to
   `datetime.now(timezone.utc)` evaluated at **import** time, so a run shares one timestamp by
   accident. Harmless today because nothing keys off it; the FDA models had the same default

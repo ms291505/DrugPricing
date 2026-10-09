@@ -2,8 +2,17 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import Enum
 
-import pandas as pd
 from pydantic import BaseModel, SecretStr
+
+from library.parsing import (
+    FDA_DATE_FORMAT,
+    NADAC_DATE_FORMAT,
+    is_missing,
+    parse_date,
+    split_values,
+    str_or_empty,
+    str_or_none,
+)
 
 
 class Environment(BaseModel):
@@ -56,11 +65,9 @@ class NadacPrice(BaseModel):
             ndc_description=row["NDC Description"],
             ndc=str(row["NDC"]),
             nadac_per_unit=row["NADAC Per Unit"],
-            effective_date=pd.to_datetime(row["Effective Date"]).date(),
+            effective_date=parse_date(row["Effective Date"], NADAC_DATE_FORMAT),
             pricing_unit=row["Pricing Unit"].strip(),
-            pharmacy_type_indicator=""
-            if pd.isna(row["Pharmacy Type Indicator"])
-            else row["Pharmacy Type Indicator"],
+            pharmacy_type_indicator=str_or_empty(row["Pharmacy Type Indicator"]),
             is_otc=row["OTC"] == "Y",
             explanation_code=[
                 NadacExplanationCode(int(code.strip()))
@@ -70,14 +77,12 @@ class NadacPrice(BaseModel):
                 "Classification for Rate Setting"
             ].strip(),
             corresponding_generic_nadac_per_unit=None
-            if pd.isna(row["Corresponding Generic Drug NADAC Per Unit"])
+            if is_missing(row["Corresponding Generic Drug NADAC Per Unit"])
             else row["Corresponding Generic Drug NADAC Per Unit"],
-            corresponding_generic_effective_date=None
-            if pd.isna(row["Corresponding Generic Drug Effective Date"])
-            else pd.to_datetime(
-                row["Corresponding Generic Drug Effective Date"]
-            ).date(),
-            as_of_date=pd.to_datetime(row["As of Date"]).date(),
+            corresponding_generic_effective_date=parse_date(
+                row["Corresponding Generic Drug Effective Date"], NADAC_DATE_FORMAT
+            ),
+            as_of_date=parse_date(row["As of Date"], NADAC_DATE_FORMAT),
         )
 
 
@@ -115,10 +120,10 @@ class FdaPackage(BaseModel):
             product_ndc=row["PRODUCTNDC"],
             ndc_package_code=row["NDCPACKAGECODE"],
             package_description=row["PACKAGEDESCRIPTION"],
-            start_marketing_date=pd.to_datetime(row["STARTMARKETINGDATE"]).date(),
-            end_marketing_date=None
-            if pd.isna(row["ENDMARKETINGDATE"])
-            else pd.to_datetime(row["ENDMARKETINGDATE"]).date(),
+            start_marketing_date=parse_date(
+                row["STARTMARKETINGDATE"], FDA_DATE_FORMAT
+            ),
+            end_marketing_date=parse_date(row["ENDMARKETINGDATE"], FDA_DATE_FORMAT),
             ndc_exclude_flag=row["NDC_EXCLUDE_FLAG"].strip(),
             sample_package=row["SAMPLE_PACKAGE"] == "Y",
             ndc_package_code_stripped=cls.normalize_to_match_nadac(
@@ -161,48 +166,25 @@ class FdaProduct(BaseModel):
             product_id=row["PRODUCTID"],
             product_ndc=row["PRODUCTNDC"],
             product_type_name=row["PRODUCTTYPENAME"],
-            proprietary_name=""
-            if pd.isna(row["PROPRIETARYNAME"])
-            else row["PROPRIETARYNAME"],
-            proprietary_name_suffix=None
-            if pd.isna(row["PROPRIETARYNAMESUFFIX"])
-            else row["PROPRIETARYNAMESUFFIX"],
-            non_proprietary_name=[]
-            if pd.isna(row["NONPROPRIETARYNAME"])
-            else [name.strip() for name in row["NONPROPRIETARYNAME"].split(";")],
+            proprietary_name=str_or_empty(row["PROPRIETARYNAME"]),
+            proprietary_name_suffix=str_or_none(row["PROPRIETARYNAMESUFFIX"]),
+            non_proprietary_name=split_values(row["NONPROPRIETARYNAME"]),
             dosage_form_name=row["DOSAGEFORMNAME"],
-            route_name=[]
-            if pd.isna(row["ROUTENAME"])
-            else [name.strip() for name in row["ROUTENAME"].split(";")],
-            start_marketing_date=pd.to_datetime(row["STARTMARKETINGDATE"]).date(),
-            end_marketing_date=None
-            if pd.isna(row["ENDMARKETINGDATE"])
-            else pd.to_datetime(row["ENDMARKETINGDATE"]).date(),
+            route_name=split_values(row["ROUTENAME"]),
+            start_marketing_date=parse_date(
+                row["STARTMARKETINGDATE"], FDA_DATE_FORMAT
+            ),
+            end_marketing_date=parse_date(row["ENDMARKETINGDATE"], FDA_DATE_FORMAT),
             marketing_category_name=row["MARKETINGCATEGORYNAME"],
-            application_number=None
-            if pd.isna(row["APPLICATIONNUMBER"])
-            else row["APPLICATIONNUMBER"],
+            application_number=str_or_none(row["APPLICATIONNUMBER"]),
             labeler_name=row["LABELERNAME"],
-            substance_name=[]
-            if pd.isna(row["SUBSTANCENAME"])
-            else [name.strip() for name in row["SUBSTANCENAME"].split(";")],
-            strength_number=[]
-            if pd.isna(row["ACTIVE_NUMERATOR_STRENGTH"])
-            else [
-                number.strip() for number in row["ACTIVE_NUMERATOR_STRENGTH"].split(";")
-            ],
-            strength_unit=[]
-            if pd.isna(row["ACTIVE_INGRED_UNIT"])
-            else [unit.strip() for unit in row["ACTIVE_INGRED_UNIT"].split(";")],
-            pharm_classes=[]
-            if pd.isna(row["ACTIVE_INGRED_UNIT"])
-            else [
-                pharm_class.strip()
-                for pharm_class in row["ACTIVE_INGRED_UNIT"].split(";")
-            ],
-            dea_schedule=None if pd.isna(row["DEASCHEDULE"]) else row["DEASCHEDULE"],
+            substance_name=split_values(row["SUBSTANCENAME"]),
+            strength_number=split_values(row["ACTIVE_NUMERATOR_STRENGTH"]),
+            strength_unit=split_values(row["ACTIVE_INGRED_UNIT"]),
+            pharm_classes=split_values(row["ACTIVE_INGRED_UNIT"]),
+            dea_schedule=str_or_none(row["DEASCHEDULE"]),
             ndc_exclude_flag=row["NDC_EXCLUDE_FLAG"].strip(),
-            listing_record_certified_through=None
-            if pd.isna(row["LISTING_RECORD_CERTIFIED_THROUGH"])
-            else pd.to_datetime(row["LISTING_RECORD_CERTIFIED_THROUGH"]).date(),
+            listing_record_certified_through=parse_date(
+                row["LISTING_RECORD_CERTIFIED_THROUGH"], FDA_DATE_FORMAT
+            ),
         )

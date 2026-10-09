@@ -1,5 +1,6 @@
 import pandas as pd
 from library.models import FdaProduct
+from library.parsing import iter_records
 from tqdm import tqdm
 from typing import NamedTuple
 
@@ -21,7 +22,7 @@ def parse_fda_products(products: pd.DataFrame):
 
     fda_products = [
         FdaProduct.from_fda_row(row)
-        for _, row in tqdm(products.iterrows(), total=input_length, desc="Parsing")
+        for row in tqdm(iter_records(products), total=input_length, desc="Parsing")
     ]
 
     return ParseWithCount(

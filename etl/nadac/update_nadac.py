@@ -6,6 +6,8 @@ from nadac.parse_nadac import parse_nadac
 from nadac.get_loaded_as_of_dates import get_loaded_as_of_dates
 import pandas as pd
 from nadac.update_drug_package import update_drug_package
+from library.parsing import NADAC_DATE_FORMAT
+from library.timing import timed
 import sys
 
 
@@ -24,7 +26,8 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
         + ".csv"
     )
 
-    (nadac_data, _) = fetch_nadac(url=URL)
+    with timed("NADAC fetch"):
+        (nadac_data, _) = fetch_nadac(url=URL)
 
     COLUMN_MAP = {
         "NADAC_Per_Unit": "NADAC Per Unit",
@@ -43,16 +46,20 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
         test_connection(conn)
 
         if not filter_before_insert:
-            nadac_prices = parse_nadac(nadac_data)
+            with timed("NADAC parse"):
+                nadac_prices = parse_nadac(nadac_data)
 
         else:
-            loaded_dates = set(get_loaded_as_of_dates(conn))
+            with timed("NADAC filter loaded as-of dates"):
+                loaded_dates = set(get_loaded_as_of_dates(conn))
 
-            as_of_dates = pd.to_datetime(nadac_data["As of Date"]).dt.date
+                as_of_dates = pd.to_datetime(
+                    nadac_data["As of Date"], format=NADAC_DATE_FORMAT
+                ).dt.date
 
-            fresh_nadac_data = pd.DataFrame(
-                nadac_data[as_of_dates.isin(loaded_dates) == False]
-            )
+                fresh_nadac_data = pd.DataFrame(
+                    nadac_data[as_of_dates.isin(loaded_dates) == False]
+                )
 
             if fresh_nadac_data.empty:
                 print("No new records to load.")
@@ -60,11 +67,15 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
                 conn.commit()
                 return
 
-            nadac_prices = parse_nadac(fresh_nadac_data)
+            with timed("NADAC parse"):
+                nadac_prices = parse_nadac(fresh_nadac_data)
 
-        load_nadac(conn, nadac_prices)
-        update_drug_package(conn)
-        conn.commit()
+        with timed("NADAC load"):
+            load_nadac(conn, nadac_prices)
+        with timed("NADAC update drug packages"):
+            update_drug_package(conn)
+        with timed("NADAC commit"):
+            conn.commit()
 
 
 def update_nadac_for_dates(file_dates):
@@ -74,7 +85,8 @@ def update_nadac_for_dates(file_dates):
 
     for date in file_dates:
         print(date)
-        update_nadac(report_mm_dd_yyyy=date)
+        with timed(f"NADAC total {date}"):
+            update_nadac(report_mm_dd_yyyy=date)
 
 
 if __name__ == "__main__":
