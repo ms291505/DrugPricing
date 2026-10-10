@@ -16,7 +16,7 @@ import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 
 export default function FdaPageTools() {
 
-  const { fdaResultFilter, setFdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
+  const { fdaResultFilter, setFdaResultFilter, selectedRows, fdaResultDetailLevel, fdaSearchParams, keepRestoredFilter } = useFdaSearchContext();
 
   const { addItem } = useExplorerItems();
 
@@ -58,8 +58,11 @@ export default function FdaPageTools() {
     [data]
   )
 
+  // New results reset the filter to all of their options, except the first results of a
+  // restored search, which keep the filter saved with that search.
   useEffect(() => {
     if (dosageForms.length + routes.length > 0) {
+      if (keepRestoredFilter(fdaSearchParams)) return;
       setFdaResultFilter(prev => ({
         ...prev,
         productNdcs: productNdcs,
@@ -71,7 +74,7 @@ export default function FdaPageTools() {
       }));
     }
 
-  }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
+  }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter, fdaSearchParams, keepRestoredFilter])
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));

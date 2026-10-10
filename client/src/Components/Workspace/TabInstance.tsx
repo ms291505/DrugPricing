@@ -30,7 +30,7 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
           minWidth: 0,
           width: "100%"
         }}>
-        <Provider>
+        <Provider tabId={workspaceTab.id}>
           <Content />
         </Provider>
       </Box>

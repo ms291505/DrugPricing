@@ -1,18 +1,74 @@
-import React from "react";
-import { FdaSearchContextProvider } from "./FdaSearchContext";
-import { SearchContextProvider } from "./SearchContext";
-import { ExplorerItemsProvider } from "./ExplorerItemsContext";
+import React, { useEffect, useState } from "react";
+import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
+import { SearchContextProvider, useSearchContext } from "./SearchContext";
+import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
+import { loadTabState, saveTabState } from "../library/persist";
 
-// Each search tab gets its own page context plus its own pinned items.
+// Each search tab gets its own page context plus its own pinned items, restored from and saved
+// to storage under the tab's id. Restoring the search params re-runs the search.
 
-export const FdaTabProvider = ({ children }: { children: React.ReactNode }) => (
+type TabProviderProps = { children: React.ReactNode, tabId: string };
+
+export const FdaTabProvider = ({ children, tabId }: TabProviderProps) => {
+  const [saved] = useState(() => loadTabState(tabId, "fda"));
+  return (
+    <FdaSearchContextProvider initial={saved ?? undefined}>
+      <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
+        <SaveFdaTab tabId={tabId} />
+        {children}
+      </ExplorerItemsProvider>
+    </FdaSearchContextProvider>
+  );
+};
+
+export const NadacTabProvider = ({ children, tabId }: TabProviderProps) => {
+  const [saved] = useState(() => loadTabState(tabId, "nadac"));
+  return (
+    <SearchContextProvider initial={saved ?? undefined}>
+      <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
+        <SaveNadacTab tabId={tabId} />
+        {children}
+      </ExplorerItemsProvider>
+    </SearchContextProvider>
+  );
+};
+
+/** A tab that hasn't chosen a search type yet: nothing to restore or save. */
+export const BlankTabProvider = ({ children }: TabProviderProps) => (
   <FdaSearchContextProvider>
     <ExplorerItemsProvider>{children}</ExplorerItemsProvider>
   </FdaSearchContextProvider>
 );
 
-export const NadacTabProvider = ({ children }: { children: React.ReactNode }) => (
-  <SearchContextProvider>
-    <ExplorerItemsProvider>{children}</ExplorerItemsProvider>
-  </SearchContextProvider>
-);
+function SaveFdaTab({ tabId }: { tabId: string }) {
+  const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const { pinnedItems } = useExplorerItems();
+
+  useEffect(() => {
+    saveTabState(tabId, {
+      type: "fda",
+      searchParams: fdaSearchParams,
+      resultFilter: fdaResultFilter,
+      detailLevel: fdaResultDetailLevel,
+      pinnedItems,
+    });
+  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, pinnedItems]);
+
+  return null;
+}
+
+function SaveNadacTab({ tabId }: { tabId: string }) {
+  const { searchParams, excludedNdcDescriptions } = useSearchContext();
+  const { pinnedItems } = useExplorerItems();
+
+  useEffect(() => {
+    saveTabState(tabId, {
+      type: "nadac",
+      searchParams,
+      excludedNdcDescriptions,
+      pinnedItems,
+    });
+  }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems]);
+
+  return null;
+}

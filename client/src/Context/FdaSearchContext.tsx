@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState, type Dispatch, type SetStateAction } from "react";
+import React, { createContext, useCallback, useContext, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
@@ -14,7 +14,18 @@ export type FdaSearchContextType = {
   setFdaResultDetailLevel: (level: FdaResultDetailLevel) => void;
   selectedRows: GridRowSelectionModel;
   setSelectedRows: Dispatch<SetStateAction<GridRowSelectionModel>>;
+  /**
+   * True once, for the first results of a search restored from storage: that search's saved
+   * result filter must survive the reset to "all options" that new results normally get.
+   */
+  keepRestoredFilter: (searchParams: AdvancedFdaSearchParams | null) => boolean;
 }
+
+export type FdaSearchInitialState = {
+  searchParams: AdvancedFdaSearchParams | null,
+  resultFilter: FdaResultFilter,
+  detailLevel: FdaResultDetailLevel,
+};
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
   fdaData: [],
@@ -27,14 +38,28 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
   setSelectedRows: () => { },
+  keepRestoredFilter: () => false,
 });
 
 
-export const FdaSearchContextProvider = ({ children }: { children: React.ReactNode }) => {
+type ProviderProps = {
+  children: React.ReactNode,
+  /** State restored from storage; the search re-runs from `searchParams`. */
+  initial?: FdaSearchInitialState,
+};
+
+export const FdaSearchContextProvider = ({ children, initial }: ProviderProps) => {
   const [fdaData, setFdaData] = useState<Array<FdaProductDetail>>([]);
-  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(null)
-  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>({ ...createFdaResultFilter() });
-  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>("product");
+  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(initial?.searchParams ?? null)
+  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>(initial?.resultFilter ?? { ...createFdaResultFilter() });
+  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
+
+  const restoredFilterFor = useRef(initial?.searchParams ? JSON.stringify(initial.searchParams) : null);
+  const keepRestoredFilter = useCallback((searchParams: AdvancedFdaSearchParams | null) => {
+    const keep = restoredFilterFor.current !== null && restoredFilterFor.current === JSON.stringify(searchParams);
+    restoredFilterFor.current = null;
+    return keep;
+  }, []);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
 
   // Product rows are keyed by product NDC and package rows by package NDC, so a selection
@@ -57,6 +82,7 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
       setFdaResultDetailLevel,
       selectedRows,
       setSelectedRows,
+      keepRestoredFilter,
     }}>
       {children}
     </FdaSearchContext.Provider>

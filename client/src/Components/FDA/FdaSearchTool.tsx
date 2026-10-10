@@ -14,13 +14,14 @@ import { defaultAdvFdaSearchParams } from "../../library/types.ts";
 
 export default function FdaSearchTool() {
 
-  const { setFdaSearchParams } = useFdaSearchContext();
+  const { fdaSearchParams, setFdaSearchParams } = useFdaSearchContext();
 
   const { renameTab, findTab } = useWorkspaceContext();
 
   const { id } = useTabInstanceContext();
 
-  const [draftSearchParams, setDraftSearchParams] = useState(defaultAdvFdaSearchParams);
+  // A restored tab shows the search it re-ran.
+  const [draftSearchParams, setDraftSearchParams] = useState(fdaSearchParams ?? defaultAdvFdaSearchParams);
 
   const isMobile = useMobile();
 

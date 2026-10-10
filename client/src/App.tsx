@@ -9,6 +9,7 @@ import About from "./Components/About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
 import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
+import { STANDALONE_TAB_IDS } from "./library/persist";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { Toaster } from "react-hot-toast"
@@ -55,10 +56,10 @@ function AppShell() {
           <Route element={<DrugPricingBar />}>
             <Route path="/about" element={<About />} />
             <Route path="/nadac-search" element={
-              <NadacTabProvider><NadacSearch /></NadacTabProvider>
+              <NadacTabProvider tabId={STANDALONE_TAB_IDS.nadac}><NadacSearch /></NadacTabProvider>
             } />
             <Route path="/fda-search" element=
-              {<FdaTabProvider><FdaSearch /></FdaTabProvider>} />
+              {<FdaTabProvider tabId={STANDALONE_TAB_IDS.fda}><FdaSearch /></FdaTabProvider>} />
             <Route path="/welcome" element={<OnBoarding />} />
             <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Route>
