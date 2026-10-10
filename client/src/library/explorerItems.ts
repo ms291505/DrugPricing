@@ -1,5 +1,5 @@
 import type { ChartPrice } from "./types";
-import { inWindow, type DateWindow } from "./dates";
+import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**
  * Explorer items are the cards in a search tab's Pinned section. *System* items (the results
@@ -128,7 +128,6 @@ const countNdcs = (series: ChartSeriesSnapshot[]) => new Set(series.map(s => s.n
 
 type NewChartItem = {
   chartType: ChartType,
-  /** Every price of the series to chart, across all dates; `dateWindow` picks the dates shown. */
   prices: ChartPrice[],
   defaultTitle: string,
   origin: ChartOrigin,
@@ -140,9 +139,7 @@ export function createChartItem({ chartType, prices, defaultTitle, origin, dateW
   const series = toChartSeries(prices);
   const resultSeries = toChartSeries(origin.resultPrices);
   const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
-  // The snapshot keeps every date, and the window only picks what is drawn, so a series with
-  // fewer points than in the result lost them to page filters (e.g. an excluded package of a
-  // product), never to the window. That stays true when the window is changed later.
+  // Snapshots keep every date, so missing points come from page filters, never the window.
   const filtered = series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
 
   return {
@@ -185,7 +182,7 @@ export function addedChartTitle(chartType: ChartType, seriesCount: number, serie
 }
 
 /** First and last date the chart has prices for, whatever its window shows. */
-export function chartDataBounds(item: ChartItem): { first: number, last: number } | null {
+export function chartDataBounds(item: ChartItem): DateBounds | null {
   let first = Infinity;
   let last = -Infinity;
   for (const { points } of item.series) {
@@ -198,24 +195,20 @@ export function chartDataBounds(item: ChartItem): { first: number, last: number 
 }
 
 /**
- * The price range per pricing unit across the line charts' visible dates, for "Match scale".
- * Bar charts keep their own scale.
+ * The highest visible price per pricing unit across the line charts, for "Match scale": matched
+ * charts share an axis from 0 to it. Bar charts keep their own scale.
  */
-export function matchedPriceDomains(items: ExplorerItem[]): Map<string, [number, number]> {
-  const domains = new Map<string, [number, number]>();
+export function matchedPriceMax(items: ExplorerItem[]): Map<string, number> {
+  const maxByUnit = new Map<string, number>();
   for (const item of items) {
     if (item.kind !== "chart" || item.chartType !== "line") continue;
     for (const { unit, points } of item.series) {
       for (const [time, price] of points) {
-        if (!inWindow(time, item.dateWindow)) continue;
-        const domain = domains.get(unit);
-        if (!domain) domains.set(unit, [price, price]);
-        else {
-          if (price < domain[0]) domain[0] = price;
-          if (price > domain[1]) domain[1] = price;
+        if (inWindow(time, item.dateWindow) && price > (maxByUnit.get(unit) ?? -Infinity)) {
+          maxByUnit.set(unit, price);
         }
       }
     }
   }
-  return domains;
+  return maxByUnit;
 }

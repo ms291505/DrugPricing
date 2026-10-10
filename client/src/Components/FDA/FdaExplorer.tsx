@@ -14,7 +14,7 @@ import { HALF_WIDTH_GRID_SIZE, LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } f
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import useChartWindow from "../../hooks/useChartWindow";
 import { chartDatesSubtitle } from "../../library/dates";
 import PriceChangeCard from "./PriceChangeCard";
 
@@ -25,8 +25,8 @@ type Props = {
 export default function FdaExplorer({ visible = true }: Props) {
   const { data } = useFdaSearch();
   const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
-  const { chartWindow } = useExplorerItems();
   const origin = useFdaChartOrigin();
+  const { chartWindow } = useChartWindow(origin.resultPrices);
   const packageOrigin = useFdaChartOrigin("package");
   // Derived once per result, filter, and level change, not on every render (e.g. each change
   // of the chart dates).

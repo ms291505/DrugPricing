@@ -15,14 +15,13 @@ import { countSeries } from "../../library/chartSeries";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
-import { dateBounds } from "../../library/dates";
+import useChartWindow from "../../hooks/useChartWindow";
 
 export default function VizTools() {
   const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
-  const { addItem, chartWindow, setChartWindow } = useExplorerItems();
+  const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
-  // The search's own date range bounds what a chart can show.
-  const searchDates = dateBounds(origin.resultPrices);
+  const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...newChartRows.ids].map(String));
@@ -81,7 +80,7 @@ export default function VizTools() {
         </FormControl>
       </Box>
       <Divider />
-      <ChartDatesControl value={chartWindow} onChange={setChartWindow} bounds={searchDates} />
+      <ChartDatesControl value={chartDates} onChange={setChartDates} bounds={bounds} />
       <AddChartControl selectedCount={newChartRows.ids.size} onAdd={handleAddChart} />
     </Paper>
   )

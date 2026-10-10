@@ -16,14 +16,14 @@ type Props = {
   dateWindow?: DateWindow;
   /** A price change to shade and label. */
   changeSpan?: ChartChangeSpan;
-  /** Fixed price-axis range per pricing unit ("Match scale"); units not in it scale to their data. */
-  priceDomains?: Map<string, [number, number]>;
+  /** Price-axis maximum per pricing unit ("Match scale"); units not in it scale to their data. */
+  priceMax?: Map<string, number>;
 };
 
 const AVERAGE_SUFFIX = " (average; shaded band is min–max)";
 
 export default function LineViz({
-  nadacPrices, lineColors = LINE_VIZ_COLORS, dateWindow = FULL_WINDOW, changeSpan, priceDomains,
+  nadacPrices, lineColors = LINE_VIZ_COLORS, dateWindow = FULL_WINDOW, changeSpan, priceMax,
 }: Props) {
   return (
     <UnitSplit
@@ -36,7 +36,7 @@ export default function LineViz({
           lineColors={lineColors}
           dateWindow={dateWindow}
           changeSpan={changeSpan}
-          priceDomain={priceDomains?.get(pricingUnit)}
+          axisMax={priceMax?.get(pricingUnit)}
         />
       )}
     />
@@ -49,10 +49,10 @@ type UnitLineChartProps = {
   lineColors: string[];
   dateWindow: DateWindow;
   changeSpan?: ChartChangeSpan;
-  priceDomain?: [number, number];
+  axisMax?: number;
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, changeSpan, priceDomain }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, changeSpan, axisMax }: UnitLineChartProps) {
 
   const theme = useTheme();
 
@@ -85,7 +85,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, chang
       <YAxis
         width="auto"
         // Matched charts keep the zero baseline unmatched ones get by default.
-        domain={priceDomain ? [0, niceCeiling(priceDomain[1])] : undefined}
+        domain={axisMax === undefined ? undefined : [0, niceCeiling(axisMax)]}
         tickFormatter={(value: number) =>
           value >= 1000 ? `$${(value / 1000).toFixed(1)}K` : `$${value}`
         }
@@ -136,8 +136,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, chang
           dot={false}
           connectNulls={false}
           name={dataSeriesName(ndc)}
-          // No animation: recharts morphs the old line into the new one point by point, so changing
-          // the dates drew made-up prices for a second or more, and re-renders restarted it.
+          // Off: recharts morphs old lines into new ones and draws made-up prices.
           isAnimationActive={false}
         />
       ))}

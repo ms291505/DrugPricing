@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, formatItemSource, matchedPriceDomains, type ChartOrigin, type ExplorerItem,
+  chartDataBounds, createChartItem, formatItemSource, matchedPriceMax, type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
@@ -57,20 +57,20 @@ describe("createChartItem provenance", () => {
   });
 });
 
-describe("matchedPriceDomains", () => {
+describe("matchedPriceMax", () => {
   const lineA = make(packageA1);
   const lineB = make(productB, { start: day("2025-03-01"), end: null });
   const mL = make(series("C", 300, "milliliter"));
   const bar: ExplorerItem = { ...make(series("D", 1000)), chartType: "bar" };
 
-  it("spans the visible prices of line charts per unit, ignoring bar charts", () => {
-    const domains = matchedPriceDomains([lineA, lineB, mL, bar]);
-    expect(domains.get("each")).toEqual([5, 10]);
-    expect(domains.get("milliliter")).toEqual([300, 300]);
+  it("takes the highest visible price of line charts per unit, ignoring bar charts", () => {
+    const maxByUnit = matchedPriceMax([lineA, lineB, mL, bar]);
+    expect(maxByUnit.get("each")).toBe(10);
+    expect(maxByUnit.get("milliliter")).toBe(300);
   });
 
   it("ignores prices outside each chart's window", () => {
     const spike: ExplorerItem = make([...productB, { ...productB[0], nadacPerUnit: 99 }], { start: day("2025-02-01"), end: null });
-    expect(matchedPriceDomains([spike]).get("each")).toEqual([5, 5]);
+    expect(matchedPriceMax([spike]).get("each")).toBe(5);
   });
 });

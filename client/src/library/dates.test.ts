@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDatesSubtitle, clipToWindow, formatDate, formatWindow, fromDateInput, FULL_WINDOW, toDateInput, windowAround,
-  windowEndingAt,
+  addMonths, ALL_DATES, chartDatesSubtitle, clipToWindow, formatDate, formatWindow, fromDateInput, FULL_WINDOW,
+  isValidWindow, resolveChartDates, toDateInput, windowAround, windowEndingAt,
 } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -66,9 +66,46 @@ describe("window builders", () => {
     expect(toDateInput(w.end)).toBe("2026-04-13");
   });
 
+  it("clamps to the end of a shorter month instead of rolling over", () => {
+    expect(toDateInput(addMonths(day("2026-05-31"), -3))).toBe("2026-02-28");
+    expect(toDateInput(addMonths(day("2026-11-30"), 3))).toBe("2027-02-28");
+    expect(toDateInput(addMonths(day("2028-03-31"), -1))).toBe("2028-02-29");
+    expect(toDateInput(windowEndingAt(day("2026-08-31"), 6).start)).toBe("2026-02-28");
+  });
+
   it("counts back from the last date", () => {
     const w = windowEndingAt(day("2026-10-07"), 12);
     expect(toDateInput(w.start)).toBe("2025-10-07");
     expect(toDateInput(w.end)).toBe("2026-10-07");
+  });
+});
+
+describe("isValidWindow", () => {
+  it("rejects only an end before the start", () => {
+    expect(isValidWindow({ start: day("2026-01-02"), end: day("2026-01-01") })).toBe(false);
+    expect(isValidWindow({ start: day("2026-01-01"), end: day("2026-01-01") })).toBe(true);
+    expect(isValidWindow({ start: day("2026-01-02"), end: null })).toBe(true);
+    expect(isValidWindow(FULL_WINDOW)).toBe(true);
+  });
+});
+
+describe("resolveChartDates", () => {
+  const bounds = { first: day("2022-01-05"), last: day("2026-10-07") };
+
+  it("passes fixed dates through", () => {
+    const dateWindow = { start: day("2025-01-01"), end: null };
+    expect(resolveChartDates({ kind: "window", dateWindow }, bounds)).toBe(dateWindow);
+    expect(resolveChartDates(ALL_DATES, null)).toEqual(FULL_WINDOW);
+  });
+
+  it("counts recent months back from the data's last date, so they follow new data", () => {
+    const recent = { kind: "recent" as const, months: 6 };
+    expect(resolveChartDates(recent, bounds)).toEqual({ start: day("2026-04-07"), end: day("2026-10-07") });
+    const nextWeek = { ...bounds, last: day("2026-10-14") };
+    expect(resolveChartDates(recent, nextWeek)).toEqual({ start: day("2026-04-14"), end: day("2026-10-14") });
+  });
+
+  it("shows everything when there is no data to count back from", () => {
+    expect(resolveChartDates({ kind: "recent", months: 6 }, null)).toEqual(FULL_WINDOW);
   });
 });

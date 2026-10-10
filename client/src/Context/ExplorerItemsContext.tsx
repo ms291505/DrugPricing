@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { ExplorerItem } from "../library/explorerItems";
-import { FULL_WINDOW, type DateWindow } from "../library/dates";
+import { ALL_DATES, type ChartDates } from "../library/dates";
 import type { PersistedExplorerState } from "../library/persist";
 
 const HIGHLIGHT_MS = 2000;
@@ -21,9 +21,9 @@ type ExplorerItemsContextType = {
   setAllCollapsed: (collapsed: boolean) => void;
   /** The item just added, briefly, so its card can draw attention to itself. */
   highlight: Highlight | null;
-  /** The Page Tools chart dates: auto charts show them, and new charts start with them. */
-  chartWindow: DateWindow;
-  setChartWindow: (window: DateWindow) => void;
+  /** The Page Tools chart dates. `useChartWindow` resolves them against the current search. */
+  chartDates: ChartDates;
+  setChartDates: (chartDates: ChartDates) => void;
   /** Pinned line charts in the same pricing unit share one price axis. */
   matchScale: boolean;
   setMatchScale: (matchScale: boolean) => void;
@@ -37,8 +37,8 @@ export const ExplorerItemsContext = createContext<ExplorerItemsContextType>({
   moveItem: () => { },
   setAllCollapsed: () => { },
   highlight: null,
-  chartWindow: FULL_WINDOW,
-  setChartWindow: () => { },
+  chartDates: ALL_DATES,
+  setChartDates: () => { },
   matchScale: false,
   setMatchScale: () => { },
 });
@@ -55,7 +55,7 @@ type ProviderProps = {
  */
 export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
   const [pinnedItems, setPinnedItems] = useState<ExplorerItem[]>(initial?.pinnedItems ?? []);
-  const [chartWindow, setChartWindow] = useState<DateWindow>(initial?.chartWindow ?? FULL_WINDOW);
+  const [chartDates, setChartDates] = useState<ChartDates>(initial?.chartDates ?? ALL_DATES);
   const [matchScale, setMatchScale] = useState(initial?.matchScale ?? false);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -92,8 +92,8 @@ export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
 
   const value = useMemo(() => ({
     pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight,
-    chartWindow, setChartWindow, matchScale, setMatchScale,
-  }), [pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartWindow, matchScale]);
+    chartDates, setChartDates, matchScale, setMatchScale,
+  }), [pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartDates, matchScale]);
 
   return (
     <ExplorerItemsContext.Provider value={value}>

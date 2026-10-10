@@ -61,8 +61,8 @@ API surface, all under `/api`:
 
 - `GET /api/up` — liveness.
 - `GET /api/app-init` — NADAC as-of date range, unique dosage form names, route names. The
-  client (`useAppInit`) uses only the date range: NADAC search default dates, date-input limits,
-  and the Page Tools chart-date presets. The name lists are unused as of 2026-10.
+  client (`useAppInit`) uses only the date range, for the NADAC search form's default dates and
+  input limits. The name lists are unused as of 2026-10.
 - `GET /api/nadac-prices/{id}`
 - `GET /api/nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`
 - `GET /api/nadac-prices/advanced-search` — **incomplete**, currently returns an empty `Ok()`.
@@ -129,7 +129,7 @@ There is currently no server test project.
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
 | Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrugSummary.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
-| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), and UI (`useMobile`, `useScrolled`) |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` |
 
@@ -144,7 +144,7 @@ Feature folders under `src/Components/`:
   `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates.
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
-  `PinnedSection`/`PinnedItemCard`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
+  `PinnedSection`/`PinnedItemCard`/`PinnedChartDates`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
   `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
   `TabCreator/`, `ui/` — supporting UI.
@@ -169,15 +169,19 @@ Notes:
     series and stores the dates it shows as `dateWindow` (`DateWindow` in `library/dates.ts`:
     ms, inclusive, a null end is open). The window can be widened later from the card's dates
     chip. `UnitSplit` clips to the window, and `LineViz` stretches the x-axis across the whole window,
-    so a series that starts late shows a gap rather than a shorter axis. The Page Tools "Chart
-    dates" control (`ChartDatesControl`, both pages) sets `chartWindow` in
-    `ExplorerItemsContext`: auto charts show it, and Add Chart and Pin start new items at it. It
-    is not part of `FdaResultFilter` and doesn't touch the results table or price-change
-    flagging, and a new search keeps it.
+    so a series that starts late shows a gap rather than a shorter axis.
+  - The Page Tools "Chart dates" control (`ChartDatesControl`, both pages) sets `chartDates` in
+    `ExplorerItemsContext`: fixed dates, or a **recent** preset ("Last year", "6 months", …)
+    stored as the preset itself, so it follows the data as new weeks load. `useChartWindow`
+    resolves it against the current search result on both pages: presets count back from the
+    result's last date, and the inputs are limited to its range. Auto charts show the resolved
+    window, and Add Chart and Pin start new items at it. Pinned items store fixed dates only,
+    since their data never changes. The setting is not part of `FdaResultFilter`, doesn't touch
+    the results table or price-change flagging, and a new search keeps it.
   - Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the
     change, with the change shaded (`changeSpan`, stored on pinned copies too), and toggle to the
     full history. The Pinned section's "Match scale" switch gives pinned **line** charts in the
-    same pricing unit one price axis (`matchedPriceDomains`), over their visible dates.
+    same pricing unit one price axis from 0 to their highest visible price (`matchedPriceMax`).
   - An item's `source` (its provenance chip) is computed by `createChartItem` from the item's data
     compared with the whole unfiltered search result (`ChartOrigin.resultPrices`, from the
     `use*ChartOrigin` hooks), never from filter state, so it stays true once stored. `filtered`
@@ -270,7 +274,9 @@ npm test         # vitest run
 ```
 
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
-windows, chart item provenance, Match scale domains, and loading saved tab state. They run in
+windows, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
+the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
+because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
 local-time date bug fails them. There are no component tests yet.
 

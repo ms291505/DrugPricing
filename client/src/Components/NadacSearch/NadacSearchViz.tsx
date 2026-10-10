@@ -12,7 +12,7 @@ import PinButton from "../ExplorerGrid/PinButton";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import useChartWindow from "../../hooks/useChartWindow";
 import { chartDatesSubtitle } from "../../library/dates";
 
 const BAR_TITLE = "Average Price by NDC";
@@ -22,7 +22,7 @@ export default function NadacSearchViz() {
 
   const { data, isLoading } = useNadacSearch();
   const origin = useNadacChartOrigin();
-  const { chartWindow } = useExplorerItems();
+  const { chartWindow } = useChartWindow(origin.resultPrices);
   const autoChartSubtitle = chartDatesSubtitle(chartWindow);
 
   // System charts are derived from the current result on every render, like the FDA page's.

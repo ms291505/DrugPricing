@@ -5,7 +5,7 @@ import {
   type NadacSearchParams, type TabType, type WorkspaceTab,
 } from "./types";
 import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
-import { FULL_WINDOW, type DateWindow } from "./dates";
+import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -22,17 +22,18 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
  * `watchOtherWindows`) so it can't overwrite the newer data, and asks the user to reload.
  */
 
-const VERSION = 1;
+export const VERSION = 1;
 const APP_PREFIX = "drugpricing.";
 const PREFIX = `${APP_PREFIX}v${VERSION}`;
 const WORKSPACE_KEY = `${PREFIX}.workspace`;
 const TAB_KEY_PREFIX = `${PREFIX}.tab.`;
-const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
+export const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
 
 /** Tab ids for the standalone /fda-search and /nadac-search pages, which are not workspace tabs. */
 export const STANDALONE_TAB_IDS = { fda: "page-fda", nadac: "page-nadac" } as const;
 
-type Envelope<T> = { version: number, data: T };
+/** How every stored value is wrapped. */
+export type Envelope<T> = { version: number, data: T };
 
 let warnedWriteFailure = false;
 
@@ -101,11 +102,16 @@ const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x 
 
 const isDateWindow = (x: unknown): x is DateWindow => isObject(x) && isTimeOrNull(x.start) && isTimeOrNull(x.end);
 
+const isChartDates = (x: unknown): x is ChartDates =>
+  isObject(x) && (
+    (x.kind === "window" && isDateWindow(x.dateWindow))
+    || (x.kind === "recent" && Number.isInteger(x.months) && (x.months as number) > 0));
+
 const isChangeSpan = (x: unknown): x is ChartChangeSpan =>
   isObject(x) && typeof x.start === "number" && typeof x.end === "number" && isString(x.label);
 
 /** Charts pinned before chart windows existed have no `dateWindow`; they show every date. */
-type StoredExplorerItem = Omit<ChartItem, "dates"> & { dateWindow?: DateWindow };
+type StoredExplorerItem = Omit<ChartItem, "dateWindow"> & { dateWindow?: DateWindow };
 
 const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   isObject(x) && x.kind === "chart" && isString(x.id) && isString(x.defaultTitle)
@@ -207,8 +213,8 @@ export function watchOtherWindows(onConflict: () => void): () => void {
 /** What both search tab types save from `ExplorerItemsContext`. */
 export type PersistedExplorerState = {
   pinnedItems: ExplorerItem[],
-  /** The Page Tools chart dates: the window new charts start with. */
-  chartWindow: DateWindow,
+  /** The Page Tools chart dates. */
+  chartDates: ChartDates,
   /** The Pinned section's "Match scale" toggle. */
   matchScale: boolean,
 };
@@ -237,7 +243,7 @@ type PersistedTab = PersistedFdaTab | PersistedNadacTab;
 function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState {
   return {
     pinnedItems: validItems(raw.pinnedItems),
-    chartWindow: isDateWindow(raw.chartWindow) ? raw.chartWindow : FULL_WINDOW,
+    chartDates: isChartDates(raw.chartDates) ? raw.chartDates : ALL_DATES,
     matchScale: typeof raw.matchScale === "boolean" ? raw.matchScale : false,
   };
 }

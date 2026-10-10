@@ -71,7 +71,6 @@ function UnitBarChart({ nadacPrices, pricingUnit }: UnitBarChartProps) {
         name="Average Price"
         radius={[5, 5, 0, 0]}
         fill={theme.palette.primary.main}
-        // No animation, like LineViz: changes show at once.
         isAnimationActive={false}
       />
     </BarChart>

@@ -1,69 +1,84 @@
 import { useId, useState } from "react";
 import { Box, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import {
-  FULL_WINDOW, fromDateInput, toDateInput, windowEndingAt, type DateWindow,
+  ALL_DATES, fromDateInput, isFullWindow, isValidWindow, resolveChartDates, toDateInput,
+  type ChartDates, type DateBounds, type DateWindow,
 } from "../../library/dates";
 
 type Preset = {
   key: string,
   label: string,
-  dateWindow: DateWindow,
+  chartDates: ChartDates,
 };
 
 type Props = {
-  value: DateWindow,
-  onChange: (value: DateWindow) => void,
-  /** The dates there is data for: the inputs' limits, and where presets count back from. */
-  bounds: { first: number, last: number } | null,
+  value: ChartDates,
+  onChange: (value: ChartDates) => void,
+  /** The dates there is data for: the inputs' limits, and where "recent" presets count back from. */
+  bounds: DateBounds | null,
   /** An extra preset, e.g. the dates around a price change. */
   focusPreset?: { label: string, dateWindow: DateWindow },
   label?: string,
 }
 
 const RECENT_PRESETS = [
-  { key: "12", label: "Last year", months: 12 },
-  { key: "6", label: "6 months", months: 6 },
-  { key: "3", label: "3 months", months: 3 },
+  { months: 12, label: "Last year" },
+  { months: 6, label: "6 months" },
+  { months: 3, label: "3 months" },
 ];
 
 const sameWindow = (a: DateWindow, b: DateWindow) => a.start === b.start && a.end === b.end;
 
+/** Which preset the value is, if any. A fixed window that matches a preset's dates counts too. */
+function activePresetKey(value: ChartDates, presets: Preset[], bounds: DateBounds | null): string | null {
+  if (value.kind === "recent") return `recent-${value.months}`;
+  return presets.find(preset => preset.chartDates.kind === "window"
+    ? sameWindow(preset.chartDates.dateWindow, value.dateWindow)
+    : !isFullWindow(value.dateWindow) && sameWindow(resolveChartDates(preset.chartDates, bounds), value.dateWindow)
+  )?.key ?? null;
+}
+
+const toDraft = (dateWindow: DateWindow) => ({ start: toDateInput(dateWindow.start), end: toDateInput(dateWindow.end) });
+
 /**
  * Picks the dates a chart shows: presets for the common cases, or a start and end date. A blank
- * date is open, so the chart runs to its first or last price. Used by Page Tools on both search
- * pages (the dates new charts start with) and by each pinned chart.
+ * date is open, so the chart runs to its first or last price. "Recent" presets stay presets
+ * (they follow the data); typed dates are fixed. Used by Page Tools on both search pages and by
+ * each pinned chart.
  */
 export default function ChartDatesControl({ value, onChange, bounds, focusPreset, label = "Chart dates" }: Props) {
   const labelId = useId();
 
   const presets: Preset[] = [
-    ...(focusPreset ? [{ key: "focus", ...focusPreset }] : []),
-    { key: "all", label: "All", dateWindow: FULL_WINDOW },
+    ...(focusPreset ? [{ key: "focus", label: focusPreset.label, chartDates: { kind: "window", dateWindow: focusPreset.dateWindow } as const }] : []),
+    { key: "all", label: "All", chartDates: ALL_DATES },
+    // "Recent" needs data to count back from.
     ...(bounds
-      ? RECENT_PRESETS.map(({ months, ...preset }) => ({ ...preset, dateWindow: windowEndingAt(bounds.last, months) }))
+      ? RECENT_PRESETS.map(({ months, label }) => ({ key: `recent-${months}`, label, chartDates: { kind: "recent", months } as const }))
       : []),
   ];
-  const activePreset = presets.find(preset => sameWindow(preset.dateWindow, value))?.key ?? null;
+  const activePreset = activePresetKey(value, presets, bounds);
 
-  // The inputs hold what was typed; only a valid range is passed on. Picking a preset (or any
-  // other change from outside) resets them.
-  const [draft, setDraft] = useState({ start: toDateInput(value.start), end: toDateInput(value.end) });
-  const [draftFor, setDraftFor] = useState(value);
-  if (draftFor !== value) {
-    setDraftFor(value);
-    setDraft({ start: toDateInput(value.start), end: toDateInput(value.end) });
+  // The inputs show the dates the value means for this data, and hold what was typed until it
+  // is a valid range. They reset when those dates change from outside (a preset, new data).
+  const shown = resolveChartDates(value, bounds);
+  const shownKey = `${shown.start}|${shown.end}`;
+  const [draft, setDraft] = useState(() => toDraft(shown));
+  const [draftFor, setDraftFor] = useState(shownKey);
+  if (draftFor !== shownKey) {
+    setDraftFor(shownKey);
+    setDraft(toDraft(shown));
   }
 
-  const start = fromDateInput(draft.start);
-  const end = fromDateInput(draft.end);
-  const endBeforeStart = start !== null && end !== null && end < start;
+  const draftValid = isValidWindow({ start: fromDateInput(draft.start), end: fromDateInput(draft.end) });
 
   const handleDraftChange = (field: "start" | "end", text: string) => {
     const next = { ...draft, [field]: text };
     setDraft(next);
     const nextWindow = { start: fromDateInput(next.start), end: fromDateInput(next.end) };
-    const valid = nextWindow.start === null || nextWindow.end === null || nextWindow.start <= nextWindow.end;
-    if (valid && !sameWindow(nextWindow, value)) onChange(nextWindow);
+    if (isValidWindow(nextWindow) && !sameWindow(nextWindow, shown)) {
+      onChange({ kind: "window", dateWindow: nextWindow });
+    }
   };
 
   const inputBounds = bounds ? { min: toDateInput(bounds.first), max: toDateInput(bounds.last) } : {};
@@ -77,7 +92,7 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
         value={activePreset}
         onChange={(_, key: string | null) => {
           const preset = presets.find(p => p.key === key);
-          if (preset) onChange(preset.dateWindow);
+          if (preset) onChange(preset.chartDates);
         }}
         sx={{ flexWrap: "wrap" }}
       >
@@ -103,8 +118,8 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
           label="To"
           value={draft.end}
           onChange={(e) => handleDraftChange("end", e.target.value)}
-          error={endBeforeStart}
-          helperText={endBeforeStart ? "Before the start date" : undefined}
+          error={!draftValid}
+          helperText={draftValid ? undefined : "Before the start date"}
           slotProps={{ inputLabel: { shrink: true }, htmlInput: inputBounds }}
           sx={{ flex: 1, minWidth: 0 }}
         />

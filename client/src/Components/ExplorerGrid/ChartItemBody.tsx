@@ -6,12 +6,12 @@ import BarViz from "../Charts/BarViz";
 
 type Props = {
   item: ChartItem,
-  /** Shared price axes from "Match scale", per pricing unit. Line charts only. */
-  priceDomains?: Map<string, [number, number]>,
+  /** Price-axis maximum per pricing unit from "Match scale". Line charts only. */
+  priceMax?: Map<string, number>,
 }
 
 /** Draws a pinned chart from its stored snapshot, showing the item's dates. */
-export default function ChartItemBody({ item, priceDomains }: Props) {
+export default function ChartItemBody({ item, priceMax }: Props) {
   const prices = useMemo(() => fromChartSeries(item.series), [item.series]);
 
   switch (item.chartType) {
@@ -22,7 +22,7 @@ export default function ChartItemBody({ item, priceDomains }: Props) {
           lineColors={LINE_VIZ_COLORS}
           dateWindow={item.dateWindow}
           changeSpan={item.changeSpan}
-          priceDomains={priceDomains}
+          priceMax={priceMax}
         />
       );
     case "bar":

@@ -9,7 +9,6 @@ import type { DateWindow } from "../../library/dates";
 type Props = {
   title: string,
   chartType: ChartType,
-  /** Every price of the chart's series; the pinned copy keeps them all and starts at `dateWindow`. */
   prices: ChartPrice[],
   origin: ChartOrigin,
   dateWindow: DateWindow,
