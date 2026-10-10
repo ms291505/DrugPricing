@@ -13,12 +13,12 @@ import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
 import { countSeries } from "../../library/chartSeries";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
-import useNadacItemSource from "../../hooks/useNadacItemSource";
+import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 
 export default function VizTools() {
   const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
   const { addItem } = useExplorerItems();
-  const itemSource = useNadacItemSource();
+  const origin = useNadacChartOrigin();
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...newChartRows.ids].map(String));
@@ -28,8 +28,8 @@ export default function VizTools() {
     addItem(createChartItem({
       chartType,
       prices: chartData,
-      defaultTitle: addedChartTitle(chartType, countSeries(chartData), itemSource.seriesLabel),
-      source: itemSource,
+      defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
+      origin,
     }), { focus: true });
   }
   return (

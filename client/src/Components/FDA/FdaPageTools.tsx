@@ -12,7 +12,7 @@ import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
 import { countSeries } from "../../library/chartSeries";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
-import useFdaItemSource from "../../hooks/useFdaItemSource";
+import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 
 export default function FdaPageTools() {
 
@@ -20,7 +20,7 @@ export default function FdaPageTools() {
 
   const { addItem } = useExplorerItems();
 
-  const itemSource = useFdaItemSource();
+  const origin = useFdaChartOrigin();
 
   const { data } = useFdaSearch();
 
@@ -86,8 +86,8 @@ export default function FdaPageTools() {
     addItem(createChartItem({
       chartType,
       prices: chartData,
-      defaultTitle: addedChartTitle(chartType, countSeries(chartData), itemSource.seriesLabel),
-      source: itemSource,
+      defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
+      origin,
     }), { focus: true });
   }
 

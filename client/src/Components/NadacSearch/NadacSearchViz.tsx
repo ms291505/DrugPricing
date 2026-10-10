@@ -10,7 +10,8 @@ import { shouldAutoChart } from "../../library/chartSeries";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
-import useNadacItemSource from "../../hooks/useNadacItemSource";
+import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
+import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 const BAR_TITLE = "Average Price by NDC";
 const LINE_TITLE = "NDC Price Over Time";
@@ -18,7 +19,7 @@ const LINE_TITLE = "NDC Price Over Time";
 export default function NadacSearchViz() {
 
   const { data, isLoading } = useNadacSearch();
-  const itemSource = useNadacItemSource();
+  const origin = useNadacChartOrigin();
 
   // System charts are derived from the current result on every render, like the FDA page's.
   // User charts live in the tab's pinned items and are not touched by a new search.
@@ -47,18 +48,18 @@ export default function NadacSearchViz() {
       {showAutoCharts
         ?
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
               title={BAR_TITLE}
-              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} source={itemSource} />}
+              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} origin={origin} />}
             >
               <BarViz nadacPrices={prices} />
             </ExplorerGridItem>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
               title={LINE_TITLE}
-              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} source={itemSource} />}
+              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} origin={origin} />}
             >
               <LineViz nadacPrices={prices} />
             </ExplorerGridItem>

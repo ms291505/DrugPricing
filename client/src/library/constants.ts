@@ -30,3 +30,5 @@ export const LINE_VIZ_COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#d84848"];
 export const MAX_AUTO_PRICE_CHANGE_CHARTS = 9;
 /** Auto-added charts are drawn only when they would show this many series (NDCs) or fewer. */
 export const MAX_AUTO_CHART_SERIES = 8;
+/** Grid size of a half-width chart card on both search pages: full width below `md`. */
+export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };

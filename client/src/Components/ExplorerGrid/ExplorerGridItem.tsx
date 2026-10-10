@@ -86,9 +86,11 @@ export default function ExplorerGridItem({
         <IconButton
           onClick={handleCollapse}
           size="small"
+          // The name stays fixed and aria-expanded carries the state (the accordion pattern).
+          // The content unmounts while collapsed, so only point at it when it exists.
           aria-expanded={!collapsed}
-          aria-controls={contentId}
-          aria-label={`${collapsed ? "Expand" : "Collapse"} ${title}`}
+          aria-controls={collapsed ? undefined : contentId}
+          aria-label={title}
         >
           <KeyboardArrowDownIcon
             fontSize="small"

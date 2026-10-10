@@ -10,6 +10,7 @@ import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
+import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   item: ExplorerItem,
@@ -83,7 +84,7 @@ export default function PinnedItemCard({ item, index, count }: Props) {
   );
 
   return (
-    <Grid size={{ xs: 12, md: isFull ? 12 : 6 }} ref={cardRef}>
+    <Grid size={isFull ? 12 : HALF_WIDTH_GRID_SIZE} ref={cardRef}>
       <ExplorerGridItem
         title={title}
         headingLevel={3}
