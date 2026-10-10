@@ -125,6 +125,8 @@ export function createChartItem({ chartType, prices, defaultTitle, origin }: New
   const series = toChartSeries(prices);
   const resultSeries = toChartSeries(origin.resultPrices);
   const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
+  // Assumes the chart carries each series' full date range. Once charts have a date window,
+  // count only result points inside that window, or every windowed chart will read "filtered".
   const filtered = series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
 
   return {
