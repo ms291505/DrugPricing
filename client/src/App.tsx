@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NadacSearch from "./Components/NadacSearch/NadacSearch";
-import { SearchContextProvider } from "./Context/SearchContext";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box, CssBaseline } from "@mui/material";
@@ -9,7 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import About from "./Components/About/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
 import FdaSearch from "./Components/FDA/FdaSearch";
-import { FdaSearchContextProvider } from "./Context/FdaSearchContext";
+import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { Toaster } from "react-hot-toast"
@@ -56,10 +55,10 @@ function AppShell() {
           <Route element={<DrugPricingBar />}>
             <Route path="/about" element={<About />} />
             <Route path="/nadac-search" element={
-              <SearchContextProvider><NadacSearch /></SearchContextProvider>
+              <NadacTabProvider><NadacSearch /></NadacTabProvider>
             } />
             <Route path="/fda-search" element=
-              {<FdaSearchContextProvider><FdaSearch /></FdaSearchContextProvider>} />
+              {<FdaTabProvider><FdaSearch /></FdaTabProvider>} />
             <Route path="/welcome" element={<OnBoarding />} />
             <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Route>

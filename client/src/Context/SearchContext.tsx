@@ -1,6 +1,6 @@
 // TODO: Update to be NadacSearchContext!
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import type { NadacPrice, LineChart, BarChart, NadacSearchParams } from "../library/types";
+import type { NadacPrice, NadacSearchParams } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
 type SearchContextType = {
@@ -11,8 +11,6 @@ type SearchContextType = {
   selectedNdcDescriptions: string[];
   setSelectedNdcDescriptions: React.Dispatch<React.SetStateAction<string[]>>;
   ndcDescriptions: string[];
-  charts: Array<LineChart | BarChart>;
-  setCharts: React.Dispatch<React.SetStateAction<Array<LineChart | BarChart>>>;
   newChartRows: GridRowSelectionModel;
   setNewChartRows: React.Dispatch<React.SetStateAction<GridRowSelectionModel>>;
   searchParams: NadacSearchParams | null;
@@ -27,8 +25,6 @@ export const SearchContext = createContext<SearchContextType>({
   selectedNdcDescriptions: [],
   setSelectedNdcDescriptions: () => { },
   ndcDescriptions: [],
-  charts: [],
-  setCharts: () => { },
   newChartRows: { type: "include", ids: new Set() },
   setNewChartRows: () => { },
   searchParams: null,
@@ -38,7 +34,6 @@ export const SearchContext = createContext<SearchContextType>({
 export const SearchContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
   const [vizData, setVizData] = useState<Array<NadacPrice>>([]);
-  const [charts, setCharts] = useState<Array<LineChart | BarChart>>([]);
   const [newChartRows, setNewChartRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
   const [searchParams, setSearchParams] = useState<NadacSearchParams | null>(null);
 
@@ -62,8 +57,6 @@ export const SearchContextProvider = ({ children }: { children: React.ReactNode 
       selectedNdcDescriptions,
       setSelectedNdcDescriptions,
       ndcDescriptions,
-      charts,
-      setCharts,
       newChartRows,
       setNewChartRows,
       setSearchParams,

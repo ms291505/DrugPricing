@@ -1,28 +1,28 @@
 import { MAX_AUTO_CHART_SERIES } from "./constants";
-import type { NadacPrice } from "./types";
+import type { ChartPrice } from "./types";
 
 /** Number of distinct series (NDCs) a set of prices would draw. */
-export function countSeries(nadacPrices: NadacPrice[]): number {
+export function countSeries(nadacPrices: ChartPrice[]): number {
   return new Set(nadacPrices.map(price => price.ndc)).size;
 }
 
 /** Whether a result should get auto-added charts: at least one series, and not too many to read. */
-export function shouldAutoChart(nadacPrices: NadacPrice[]): boolean {
+export function shouldAutoChart(nadacPrices: ChartPrice[]): boolean {
   const seriesCount = countSeries(nadacPrices);
   return seriesCount > 0 && seriesCount <= MAX_AUTO_CHART_SERIES;
 }
 
 export type PricingUnitGroup = {
   pricingUnit: string,
-  nadacPrices: NadacPrice[],
+  nadacPrices: ChartPrice[],
 };
 
 /**
  * Splits prices by pricing unit so $/each and $/mL never share an axis.
  * Groups keep the order in which each unit first appears.
  */
-export function splitByPricingUnit(nadacPrices: NadacPrice[]): PricingUnitGroup[] {
-  const groups = new Map<string, NadacPrice[]>();
+export function splitByPricingUnit(nadacPrices: ChartPrice[]): PricingUnitGroup[] {
+  const groups = new Map<string, ChartPrice[]>();
   for (const price of nadacPrices) {
     const group = groups.get(price.pricingUnit);
     if (group) group.push(price);

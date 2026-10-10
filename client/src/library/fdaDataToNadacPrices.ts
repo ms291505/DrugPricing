@@ -11,6 +11,22 @@ function createProductDescription(prod: FdaProductDetail): string {
   return ndcDescription.trim();
 }
 
+/** Prices of these products, keyed at the given level: product NDC or package NDC. */
+export function fdaProductsToNadacPrices(
+  products: FdaProductDetail[],
+  fdaResultDetailLevel: FdaResultDetailLevel
+): NadacPrice[] {
+  return products.flatMap(fdaProduct => fdaProduct
+    .fdaPackageDetails.flatMap(fdaPackage => (
+      fdaPackage.nadacPrices.map(price =>
+        fdaResultDetailLevel === "product"
+          ? { ...price, ndc: fdaProduct.productNdc, ndcDescription: createProductDescription(fdaProduct) }
+          : { ...price, ndc: fdaPackage.ndcPackageCode, ndcDescription: fdaPackage.packageDescription }
+      )
+    )));
+}
+
+/** Prices of the search result after the page filters, keyed at the given level. */
 export default function fdaSearchResulsToNadacPrices(
   data: FdaProductSearchResult | undefined,
   fdaResultFilter: FdaResultFilter,
@@ -19,28 +35,7 @@ export default function fdaSearchResulsToNadacPrices(
 
   if (!data) return [];
 
-  const nadacPrices: NadacPrice[] =
-    applyFdaResultFilter(data, fdaResultFilter)
-      .products.flatMap(fdaProduct => fdaProduct
-        .fdaPackageDetails.flatMap(fdaPackage => (
-          fdaPackage.nadacPrices.flatMap(price => {
-            if (fdaResultDetailLevel === "product")
-              return {
-                ...price,
-                ndc: fdaProduct.productNdc,
-                ndcDescription: createProductDescription(fdaProduct)
-              }
-            else if (fdaResultDetailLevel === "package")
-              return {
-                ...price,
-                ndc: fdaPackage.ndcPackageCode,
-                ndcDescription: fdaPackage.packageDescription
-              }
-            else return price;
-          })
-        )));
-
-  return nadacPrices;
+  return fdaProductsToNadacPrices(applyFdaResultFilter(data, fdaResultFilter).products, fdaResultDetailLevel);
 }
 
 export function fdaProductHasNadacPrices(

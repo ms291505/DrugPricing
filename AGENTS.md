@@ -61,7 +61,8 @@ API surface, all under `/api`:
 
 - `GET /api/up` — liveness.
 - `GET /api/app-init` — NADAC as-of date range, unique dosage form names, route names.
-  The client calls this on boot to populate filters.
+  **Not called by the client yet** (as of 2026-10); the chart plan intends to use the as-of
+  range for default date windows.
 - `GET /api/nadac-prices/{id}`
 - `GET /api/nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`
 - `GET /api/nadac-prices/advanced-search` — **incomplete**, currently returns an empty `Ok()`.
@@ -71,8 +72,11 @@ API surface, all under `/api`:
 
 Notes and gotchas:
 
-- Description search uses Postgres trigram similarity (threshold `0.3`). A fresh DB needs
-  `CREATE EXTENSION IF NOT EXISTS pg_trgm;`.
+- NADAC description search (`/nadac-prices/search`) is an `ILIKE '%term%'` contains match on
+  `DrugPackages.NdcDescriptionLower`, joined back to prices. Trigram similarity (threshold
+  `0.3`) is used only by `ListAdvancedSearchResultsAsync`, behind the stubbed `advanced-search`
+  endpoint. A fresh DB still needs `CREATE EXTENSION IF NOT EXISTS pg_trgm;` for the GIN/GiST
+  `*_trgm_ops` indexes created in `InitialCreate`.
 - **`ProductNdc` is the FDA product key**, not `ProductId`. The FDA reissues `ProductId`
   (`{ProductNdc}_{guid}`) every time a product record changes, so it is a rotating version
   stamp kept only for traceability. `FdaProducts.ProductNdc` is unique and
@@ -123,28 +127,48 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
-| React Query hooks | `src/hooks/` — `useNadacSearch.ts`, `useFdaSearch.ts`, plus UI hooks (`useMobile`, `useOnScreen`, `useScrolled`) |
-| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `GlobalModalContext` |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), and UI (`useMobile`, `useOnScreen`, `useScrolled`) |
+| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` |
 
 Feature folders under `src/Components/`:
 
 - `Workspace/` — the primary UI. A tabbed, multi-pane workspace (`WorkspaceContext` owns
-  tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's content by
-  `TabType`, resolved in `src/library/types.ts`.
+  tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
+  content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
+  mounted (`display: none`), so per-tab state survives switching tabs.
 - `NadacSearch/` — NADAC search plus the visualizations shared by both search pages
   (`LineViz`, `BarViz`, `UnitSplit`, `TableViz`, `VizTools`).
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
+- `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
+  `PinnedSection`/`PinnedItemCard`, `PinButton`, `AddChartControl`, `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
-  `ExplorerGrid/`, `TabCreator/`, `ui/` — supporting UI.
+  `TabCreator/`, `ui/` — supporting UI.
 
 Notes:
 
-- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz`, `MuiBarViz` (`@mui/x-charts`), and
-  `CreateChart` are not imported anywhere.
-- **Chart data rules** (both search pages feed charts `NadacPrice[]`):
+- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz` and `MuiBarViz` (`@mui/x-charts`) are
+  not imported anywhere.
+- **Explorer items: system vs. pinned.** A search tab shows two kinds of cards.
+  - *System* items (the results table, auto charts, price-change charts) are derived from the
+    current search on every render and never stored.
+  - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
+    `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never
+    touch them. Don't clear them on search, and don't write system charts into them.
+  - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
+    today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
+    `points: [ms, price][]`), which is plain JSON so it can be persisted. `fromChartSeries` turns
+    it back into `ChartPrice[]` for `LineViz`/`BarViz`.
+  - An item's `source` (its provenance chip) is computed by `createChartItem` from the item's data
+    compared with the whole unfiltered search result (`ChartOrigin.resultPrices`, from the
+    `use*ChartOrigin` hooks), never from filter state, so it stays true once stored. What a
+    series is is stored as `seriesKind` (`"product" | "package" | "ndc"`), not display text;
+    wording comes from one table in `explorerItems.ts`.
+  - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` for page
+    cards, `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+- **Chart data rules** (charts take `ChartPrice[]`, which `NadacPrice` satisfies):
   - A chart series is one `NadacPrice.ndc`. At FDA product level that is the *product* NDC, so
     several packages share a series and can disagree on a date. `createLineVizData` averages
     them per date and keeps their min–max as `rangeKey(ndc)`, which `LineViz` shades. Never
@@ -156,7 +180,8 @@ Notes:
   - FDA table row ids are the NDC that level's chart data uses (product NDC or package NDC),
     which is what Add Chart filters on. `setFdaResultDetailLevel` in `FdaSearchContext`
     clears the selection on every level change.
-- API base URL comes from `VITE_API_URL` (`client/.env.development` → `http://localhost:5250/api`).
+- API base URL comes from `VITE_API_URL`. `client/.env.development` is gitignored; copy
+  `client/.env.example` to it for local dev (`http://localhost:5250/api`).
 - Wire responses are converted to domain types by the `map*` helpers in `src/api/types.ts` —
   date strings become `Date` objects there, not in components.
 - **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`
@@ -169,6 +194,10 @@ Notes:
   tables show what survives the client filters. Rough edges as of 2026-10: sample packages are
   filtered on both layers, and the server excludes them by default, which leaves the client's
   "Include Sample Packages" toggle disabled. The no-price filter exists only on the server.
+- **The NADAC page has no two-layer model yet.** Its Drug page filter narrows only `vizData` in
+  `SearchContext`, and only Add Chart reads `vizData`. The results table and auto charts always
+  show the full result (`data.prices`). Moving it onto a client filter like `FdaResultFilter`
+  is planned NADAC/FDA parity work.
 
 Commands (from `client/`):
 
@@ -241,9 +270,15 @@ scheduled job should start early and retry every 30 minutes.
 ## Deployment
 
 `.github/workflows/deploy.yml` runs on push to `main` on a self-hosted runner (a
-Raspberry Pi). It builds the client and rsyncs `client/dist/` to `/var/www/DrugPricing/`,
-publishes the server with `dotnet publish -c Release`, rsyncs it to the app directory
-(excluding `appsettings.json`), and restarts the `drugpricing` systemd service.
+Raspberry Pi). In order, it:
+
+1. Rsyncs `etl/` to `/home/ghrunner/apps/drugpricing-etl/` with `--delete`: anything in that
+   directory that is not in the checkout is removed on every deploy.
+2. Copies `/home/ghrunner/config/drugpricing-client/.env.production` into `client/`, then
+   builds the client and rsyncs `client/dist/` to `/var/www/DrugPricing/` (also `--delete`).
+3. Publishes the server with `dotnet publish -c Release` and rsyncs it to
+   `/home/ghrunner/apps/drugpricing/`, excluding `appsettings.json`.
+4. Restarts the `drugpricing` systemd service.
 
 Branching: work happens on feature branches that open PRs against `dev`. When `dev` is
 ready to ship, it is merged into `main`; `main` is the deploy branch (a push to it runs
@@ -253,8 +288,10 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
 
 - Keep the three NADAC representations aligned: `server/Models/NadacPrice.cs`,
   `etl/library/models.py`, and `client/src/library/types.ts` + `src/api/types.ts`.
-- Constants duplicated across server and client (min search lengths, date bounds) must be
-  changed on both sides.
+- Minimum search lengths are duplicated across server and client and must be changed on both
+  sides: server `MIN_NDC_DESCRIPTION_LENGTH`/`MIN_NDC_LENGTH` (`NadacService`) and
+  `MIN_NAME_LENGTH` (`FdaProductService`); client `client/src/library/constants.ts`. Date bounds
+  are client-only (`MIN_DATE`/`MAX_DATE` defaults); the server snaps to loaded as-of dates.
 - Prefer adding new server logic in `Services/` and new data access in `Data/Repositories/`
   rather than in endpoint handlers.
 - Repository methods that `TryGetValue` must also `_cache.Set` before returning, and must use
@@ -273,6 +310,10 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
 - `Console.WriteLine` debug logging in `FdaProductEndpoints`; `console.log` in `api.ts`.
 - `flagNadacPriceChange` sorts the `nadacPrices` array it is given in place, which mutates the
   React Query cache's package data. Harmless today (date order is the natural order).
+- `NadacRepository.ListSearchResultsAsync` calls `TryGetValue` but never `_cache.Set`, so NADAC
+  search results are never cached (it breaks the cache rule under Conventions).
+- `NadacService.ValidateNdc` is never called, so the server does not enforce the NDC minimum:
+  `ndc=1` returns 47,072 rows for a one-week window. Only the client enforces it.
 - No automated tests for the server or client. ETL has pytest coverage for model parsing
   and helpers only (see `etl/tests/`); fetch, load, and tombstone are untested.
 - `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to

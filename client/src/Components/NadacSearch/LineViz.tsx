@@ -1,4 +1,4 @@
-import { type NadacPrice, } from "../../library/types.ts";
+import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, } from "recharts";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
@@ -8,7 +8,7 @@ import { pricingUnitLabel } from "../../library/chartSeries.ts";
 import UnitSplit from "./UnitSplit.tsx";
 
 type Props = {
-  nadacPrices: NadacPrice[];
+  nadacPrices: ChartPrice[];
   border?: boolean;
   lineColors?: string[];
 };
@@ -27,7 +27,7 @@ export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, }: 
 }
 
 type UnitLineChartProps = {
-  nadacPrices: NadacPrice[];
+  nadacPrices: ChartPrice[];
   pricingUnit: string;
   lineColors: string[];
 };

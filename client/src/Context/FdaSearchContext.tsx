@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type BarChart, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, type LineChart, } from "../library/types";
+import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
 export type FdaSearchContextType = {
@@ -14,8 +14,6 @@ export type FdaSearchContextType = {
   setFdaResultDetailLevel: (level: FdaResultDetailLevel) => void;
   selectedRows: GridRowSelectionModel;
   setSelectedRows: Dispatch<SetStateAction<GridRowSelectionModel>>;
-  charts: Array<LineChart | BarChart>;
-  setCharts: Dispatch<SetStateAction<Array<LineChart | BarChart>>>;
 }
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
@@ -29,8 +27,6 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
   setSelectedRows: () => { },
-  charts: [],
-  setCharts: () => { },
 });
 
 
@@ -48,7 +44,6 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
     setDetailLevelState(level);
     setSelectedRows({ type: "include", ids: new Set() });
   }, [fdaResultDetailLevel]);
-  const [charts, setCharts] = useState<Array<LineChart | BarChart>>([]);
 
   return (
     <FdaSearchContext.Provider value={{
@@ -62,8 +57,6 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
       setFdaResultDetailLevel,
       selectedRows,
       setSelectedRows,
-      charts,
-      setCharts,
     }}>
       {children}
     </FdaSearchContext.Provider>

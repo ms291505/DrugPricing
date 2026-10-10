@@ -10,8 +10,11 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../NadacSearch/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
 import * as PriceFlagger from "../../library/flagNadacPriceChange";
-import { LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
+import { HALF_WIDTH_GRID_SIZE, LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
 import { shouldAutoChart } from "../../library/chartSeries";
+import PinButton from "../ExplorerGrid/PinButton";
+import PinnedSection from "../ExplorerGrid/PinnedSection";
+import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 
 type Props = {
   visible?: boolean
@@ -19,7 +22,9 @@ type Props = {
 
 export default function FdaExplorer({ visible = true }: Props) {
   const { data } = useFdaSearch();
-  const { fdaResultFilter, fdaResultDetailLevel, charts } = useFdaSearchContext();
+  const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const origin = useFdaChartOrigin();
+  const packageOrigin = useFdaChartOrigin("package");
   const nadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel);
   const packageNadacPrices = fdaSearchResultToNadacPrices(data, fdaResultFilter, "package");
 
@@ -60,6 +65,7 @@ export default function FdaExplorer({ visible = true }: Props) {
           ?
           <ExplorerGridItem
             title={barVizTitle}
+            actions={<PinButton title={barVizTitle} chartType="bar" prices={nadacPrices} origin={origin} />}
           >
             <BarViz
               nadacPrices={nadacPrices}
@@ -74,6 +80,7 @@ export default function FdaExplorer({ visible = true }: Props) {
           <Grid size={12}>
             <ExplorerGridItem
               title={lineVizTitle}
+              actions={<PinButton title={lineVizTitle} chartType="line" prices={nadacPrices} origin={origin} />}
             >
               <LineViz nadacPrices={nadacPrices} />
             </ExplorerGridItem>
@@ -84,9 +91,13 @@ export default function FdaExplorer({ visible = true }: Props) {
         ?
         productPriceChanges.map((change, i) => {
           const prices = getAllPricesForFlaggedPackages(change, packageNadacPrices);
+          const title = PriceFlagger.percentageChangeToString(change.priceChange.percentage) + " Price Change for " + change.packageNdc;
           return (
-            <Grid size={{ xs: 12, md: 6 }} key={change.packageNdc + change.priceChange.startDate.toDateString()}>
-              <ExplorerGridItem title={PriceFlagger.percentageChangeToString(change.priceChange.percentage) + " Price Change for " + change.packageNdc}>
+            <Grid size={HALF_WIDTH_GRID_SIZE} key={change.packageNdc + change.priceChange.startDate.toDateString()}>
+              <ExplorerGridItem
+                title={title}
+                actions={<PinButton title={title} chartType="line" prices={prices} origin={packageOrigin} />}
+              >
                 <LineViz nadacPrices={prices} lineColors={[LINE_VIZ_COLORS[i % LINE_VIZ_COLORS.length]]} />
               </ExplorerGridItem>
             </Grid>
@@ -94,24 +105,9 @@ export default function FdaExplorer({ visible = true }: Props) {
         })
         : null
       }
-      {
-        charts.map(chart => {
-          return (
-
-            <Grid size={{ xs: 12, md: 6 }} key={chart.id}>
-              <ExplorerGridItem title="New Chart">
-                {
-                  chart.type === "line"
-                    ? <LineViz nadacPrices={chart.nadacPrices} lineColors={LINE_VIZ_COLORS} />
-                    : chart.type === "bar"
-                      ? <BarViz nadacPrices={chart.nadacPrices} />
-                      : "Invalid chart type used."
-                }
-              </ExplorerGridItem>
-            </Grid>
-          )
-        })
-      }
+      <Grid size={12}>
+        <PinnedSection />
+      </Grid>
     </Grid>
   )
 }
