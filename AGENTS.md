@@ -156,7 +156,10 @@ Notes:
     current search on every render and never stored.
   - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
     `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never
-    touch them. Don't clear them on search, and don't write system charts into them.
+    touch them. Don't clear them on search, and don't write system charts into them. The
+    Pinned section renders on both pages regardless of search state (on the FDA page it sits in
+    `FdaSearch`, outside the `isSuccess` gate), so pins show while a search is missing,
+    loading, or failing.
   - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
     today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
     `points: [ms, price][]`), which is plain JSON so it can be persisted. `fromChartSeries` turns
