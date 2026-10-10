@@ -1,6 +1,8 @@
 import toast from "react-hot-toast";
-import type {
-  AdvancedFdaSearchParams, FdaResultDetailLevel, FdaResultFilter, LayoutMode, NadacSearchParams, TabType, WorkspaceTab,
+import {
+  createFdaResultFilter,
+  type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, type LayoutMode,
+  type NadacSearchParams, type TabType, type WorkspaceTab,
 } from "./types";
 import type { ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 
@@ -204,24 +206,40 @@ export type PersistedNadacTab = {
 
 type PersistedTab = PersistedFdaTab | PersistedNadacTab;
 
-const isPersistedTab = (x: unknown): x is PersistedTab => {
-  if (!isObject(x)) return false;
-  if (x.type === "fda")
-    return (x.searchParams === null || isFdaSearchParams(x.searchParams))
-      && isFdaResultFilter(x.resultFilter) && isDetailLevel(x.detailLevel);
-  if (x.type === "nadac")
-    return (x.searchParams === null || isNadacSearchParams(x.searchParams))
-      && isStringArray(x.excludedNdcDescriptions);
-  return false;
-};
+/*
+ * Tab state is validated field by field, each with its own default, so one bad field never
+ * costs the user the tab's pinned items. A page filter is kept only alongside a valid search:
+ * on its own it would filter nothing meaningful.
+ */
 
-export function loadTabState<T extends PersistedTab["type"]>(
-  tabId: string,
-  type: T,
-): Extract<PersistedTab, { type: T }> | null {
-  const state = read(tabKey(tabId), isPersistedTab);
-  if (!state || state.type !== type) return null;
-  return { ...state, pinnedItems: validItems(state.pinnedItems) } as Extract<PersistedTab, { type: T }>;
+function readTab(tabId: string, type: PersistedTab["type"]): Record<string, unknown> | null {
+  const raw = read(tabKey(tabId), isObject);
+  return raw && raw.type === type ? raw : null;
+}
+
+export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
+  const raw = readTab(tabId, "fda");
+  if (!raw) return null;
+  const searchParams = isFdaSearchParams(raw.searchParams) ? raw.searchParams : null;
+  return {
+    type: "fda",
+    searchParams,
+    resultFilter: searchParams && isFdaResultFilter(raw.resultFilter) ? raw.resultFilter : createFdaResultFilter(),
+    detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : "product",
+    pinnedItems: validItems(raw.pinnedItems),
+  };
+}
+
+export function loadNadacTabState(tabId: string): PersistedNadacTab | null {
+  const raw = readTab(tabId, "nadac");
+  if (!raw) return null;
+  const searchParams = isNadacSearchParams(raw.searchParams) ? raw.searchParams : null;
+  return {
+    type: "nadac",
+    searchParams,
+    excludedNdcDescriptions: searchParams && isStringArray(raw.excludedNdcDescriptions) ? raw.excludedNdcDescriptions : [],
+    pinnedItems: validItems(raw.pinnedItems),
+  };
 }
 
 export function saveTabState(tabId: string, state: PersistedTab): void {

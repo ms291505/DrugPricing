@@ -209,8 +209,10 @@ Notes:
     `VERSION` when a stored shape changes incompatibly; old data is then ignored, not misread.
     `pruneStoredState` deletes every `drugpricing.` key outside the current version's prefix on
     load, so old snapshots don't keep using quota. Keep that if you change the key scheme.
-  - Every read is validated and falls back to defaults; one malformed pinned item is dropped,
-    not the whole tab. Writes that fail (storage full or blocked) warn once with a toast.
+  - Every read is validated and falls back to defaults. Tab state is validated field by field
+    (`loadFdaTabState`/`loadNadacTabState`), each field with its own default, so a bad field or
+    a malformed pinned item never costs the tab its other pinned items. A page filter is kept
+    only with a valid search. Writes that fail (storage full or blocked) warn once with a toast.
   - Tab providers (`TabProviders.tsx`) load once on mount and save on every change; they get
     `tabId` as a prop from `TabInstance`. The standalone `/fda-search` and `/nadac-search` pages
     persist under `STANDALONE_TAB_IDS`. Blank "new" tabs save nothing.

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
 import { SearchContextProvider, useSearchContext } from "./SearchContext";
 import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
-import { loadTabState, saveTabState } from "../library/persist";
+import { loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
 
 // Each search tab gets its own page context plus its own pinned items, restored from and saved
 // to storage under the tab's id. Restoring the search params re-runs the search.
@@ -15,7 +15,7 @@ type TabProviderProps = {
 };
 
 export const FdaTabProvider = ({ children, tabId, active = true }: TabProviderProps) => {
-  const [saved] = useState(() => loadTabState(tabId, "fda"));
+  const [saved] = useState(() => loadFdaTabState(tabId));
   return (
     <FdaSearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
       <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
@@ -27,7 +27,7 @@ export const FdaTabProvider = ({ children, tabId, active = true }: TabProviderPr
 };
 
 export const NadacTabProvider = ({ children, tabId, active = true }: TabProviderProps) => {
-  const [saved] = useState(() => loadTabState(tabId, "nadac"));
+  const [saved] = useState(() => loadNadacTabState(tabId));
   return (
     <SearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
       <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
