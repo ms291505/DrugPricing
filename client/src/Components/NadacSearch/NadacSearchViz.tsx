@@ -9,8 +9,7 @@ import { useNadacSearch } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
 import { useEffect } from "react";
 import type { BarChart, LineChart } from "../../library/types";
-import { MAX_AUTO_CHART_SERIES } from "../../library/constants";
-import { countSeries } from "../../library/chartSeries";
+import { shouldAutoChart } from "../../library/chartSeries";
 
 
 export default function NadacSearchViz() {
@@ -19,7 +18,7 @@ export default function NadacSearchViz() {
   const { data, isLoading } = useNadacSearch();
 
   useEffect(() => {
-    if (data && countSeries(data.prices) <= MAX_AUTO_CHART_SERIES) {
+    if (data && shouldAutoChart(data.prices)) {
       const barChart: BarChart = {
         type: "bar",
         nadacPrices: data.prices,

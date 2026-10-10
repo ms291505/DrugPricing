@@ -10,8 +10,8 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../NadacSearch/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
 import * as PriceFlagger from "../../library/flagNadacPriceChange";
-import { CHART_AUTO_ADD_UPPER_THRESHOLD, LINE_VIZ_COLORS, MAX_AUTO_CHART_SERIES } from "../../library/constants";
-import { countSeries } from "../../library/chartSeries";
+import { LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
+import { shouldAutoChart } from "../../library/chartSeries";
 
 type Props = {
   visible?: boolean
@@ -32,8 +32,7 @@ export default function FdaExplorer({ visible = true }: Props) {
     package: "Packages"
   }
 
-  const seriesCount = countSeries(nadacPrices);
-  const showAutoCharts = seriesCount > 0 && seriesCount <= MAX_AUTO_CHART_SERIES;
+  const showAutoCharts = shouldAutoChart(nadacPrices);
 
   const barVizTitle = "Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel);
   const lineVizTitle = resultDetailLevelToLabel(fdaResultDetailLevel) + " Price Over Time";
@@ -81,7 +80,7 @@ export default function FdaExplorer({ visible = true }: Props) {
           </Grid>
           : null
       }
-      {productPriceChanges.length < CHART_AUTO_ADD_UPPER_THRESHOLD
+      {productPriceChanges.length <= MAX_AUTO_PRICE_CHANGE_CHARTS
         ?
         productPriceChanges.map((change, i) => {
           const prices = getAllPricesForFlaggedPackages(change, packageNadacPrices);

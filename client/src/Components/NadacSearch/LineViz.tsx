@@ -48,6 +48,10 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
 
   const unit = pricingUnitLabel(pricingUnit);
 
+  // One lookup for both the band and its line, so they always share a color.
+  const seriesIndex = new Map(ndcs.map((ndc, i) => [ndc, i]));
+  const colorFor = (ndc: string) => lineColors[(seriesIndex.get(ndc) ?? 0) % lineColors.length];
+
   return (
     <ComposedChart data={vizData} style={{ width: "100%", height: DEFAULT_CHART_HEIGHT }} responsive role="img">
       {/* <CartesianGrid strokeDasharray="3 3" /> */}
@@ -82,7 +86,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
           key={rangeKey(ndc)}
           dataKey={rangeKey(ndc)}
           stroke="none"
-          fill={lineColors[ndcs.indexOf(ndc) % lineColors.length]}
+          fill={colorFor(ndc)}
           fillOpacity={0.2}
           activeDot={false}
           legendType="none"
@@ -90,11 +94,11 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
           connectNulls={false}
         />
       ))}
-      {ndcs.map((ndc, i) => (
+      {ndcs.map((ndc) => (
         <Line
           key={ndc}
           dataKey={ndc}
-          stroke={lineColors[i % lineColors.length]}
+          stroke={colorFor(ndc)}
           type="monotone"
           dot={false}
           connectNulls={false}
