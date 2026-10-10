@@ -186,7 +186,8 @@ Notes:
   date strings become `Date` objects there, not in components.
 - **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`
   → `/fda-products/advanced-search`) decide what data is loaded. The results-page filters
-  (`FdaResultFilter`, applied by `applyFdaResultFilter` in `src/library/types.ts`) narrow that
+  (`FdaResultFilter`, stored as exclusions and applied by `applyFdaResultFilter` in
+  `src/library/types.ts`) narrow that
   data locally, so users can start with a broad search and hunt through it without hitting the
   server again. The overlap is not a bug to dedupe. Rule of thumb: a filter that limits
   payload belongs on the server, and a filter for hunting through results belongs on the client.
@@ -206,17 +207,26 @@ Notes:
   selection and card collapse state of system cards are not saved.
   - Keys are `drugpricing.v<VERSION>.workspace` and `drugpricing.v<VERSION>.tab.<tabId>`. Bump
     `VERSION` when a stored shape changes incompatibly; old data is then ignored, not misread.
+    `pruneStoredState` deletes every `drugpricing.` key outside the current version's prefix on
+    load, so old snapshots don't keep using quota. Keep that if you change the key scheme.
   - Every read is validated and falls back to defaults; one malformed pinned item is dropped,
     not the whole tab. Writes that fail (storage full or blocked) warn once with a toast.
   - Tab providers (`TabProviders.tsx`) load once on mount and save on every change; they get
     `tabId` as a prop from `TabInstance`. The standalone `/fda-search` and `/nadac-search` pages
     persist under `STANDALONE_TAB_IDS`. Blank "new" tabs save nothing.
+  - A restored tab doesn't run its search until it is first shown: `TabInstance` passes
+    `active` (has been visible) to the provider, which sets `searchEnabled` for `useFdaSearch`/
+    `useNadacSearch`. Pinned items render from snapshots meanwhile.
+  - **Several browser windows:** each window holds its own copy. When another window changes a
+    stored value this window didn't write, `watchOtherWindows` makes this window read-only (no
+    more writes or deletes) and a toast asks the user to reload. Without that, the last window
+    to write would win, and pruning would then delete tabs the other window had added.
   - Closing a tab or changing its type removes its saved state, and load prunes state for tabs
     that are no longer in the workspace.
-  - Anything that resets state when data loads will undo a restore. The FDA result filter is
-    reset to all options when new results arrive, so `FdaSearchContext.keepRestoredFilter`
-    skips that reset once for the restored search. Follow the same pattern (or store state that
-    needs no reset, like the NADAC exclusions) for new restored state.
+  - Anything that resets state when data loads will undo a restore. Store restorable state so
+    it needs no reset: both page filters store *exclusions* (`FdaResultFilter.excluded*`,
+    `excludedNdcDescriptions`), so results that are new since the save still show, and a new
+    search clears the filter explicitly.
 
 Commands (from `client/`):
 
