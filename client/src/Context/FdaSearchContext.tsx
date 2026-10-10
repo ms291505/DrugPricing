@@ -14,7 +14,15 @@ export type FdaSearchContextType = {
   setFdaResultDetailLevel: (level: FdaResultDetailLevel) => void;
   selectedRows: GridRowSelectionModel;
   setSelectedRows: Dispatch<SetStateAction<GridRowSelectionModel>>;
+  /** False while the tab hasn't been shown yet; `useFdaSearch` waits for it. */
+  searchEnabled: boolean;
 }
+
+export type FdaSearchInitialState = {
+  searchParams: AdvancedFdaSearchParams | null,
+  resultFilter: FdaResultFilter,
+  detailLevel: FdaResultDetailLevel,
+};
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
   fdaData: [],
@@ -27,14 +35,23 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
   setSelectedRows: () => { },
+  searchEnabled: true,
 });
 
 
-export const FdaSearchContextProvider = ({ children }: { children: React.ReactNode }) => {
+type ProviderProps = {
+  children: React.ReactNode,
+  /** State restored from storage; the search re-runs from `searchParams`. */
+  initial?: FdaSearchInitialState,
+  searchEnabled?: boolean,
+};
+
+export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [fdaData, setFdaData] = useState<Array<FdaProductDetail>>([]);
-  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(null)
-  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>({ ...createFdaResultFilter() });
-  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>("product");
+  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(initial?.searchParams ?? null)
+  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>(initial?.resultFilter ?? { ...createFdaResultFilter() });
+  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
+
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
 
   // Product rows are keyed by product NDC and package rows by package NDC, so a selection
@@ -57,6 +74,7 @@ export const FdaSearchContextProvider = ({ children }: { children: React.ReactNo
       setFdaResultDetailLevel,
       selectedRows,
       setSelectedRows,
+      searchEnabled,
     }}>
       {children}
     </FdaSearchContext.Provider>

@@ -127,7 +127,7 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
 | Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), and UI (`useMobile`, `useOnScreen`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
@@ -186,7 +186,8 @@ Notes:
   date strings become `Date` objects there, not in components.
 - **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`
   → `/fda-products/advanced-search`) decide what data is loaded. The results-page filters
-  (`FdaResultFilter`, applied by `applyFdaResultFilter` in `src/library/types.ts`) narrow that
+  (`FdaResultFilter`, stored as exclusions and applied by `applyFdaResultFilter` in
+  `src/library/types.ts`) narrow that
   data locally, so users can start with a broad search and hunt through it without hitting the
   server again. The overlap is not a bug to dedupe. Rule of thumb: a filter that limits
   payload belongs on the server, and a filter for hunting through results belongs on the client.
@@ -194,10 +195,40 @@ Notes:
   tables show what survives the client filters. Rough edges as of 2026-10: sample packages are
   filtered on both layers, and the server excludes them by default, which leaves the client's
   "Include Sample Packages" toggle disabled. The no-price filter exists only on the server.
-- **The NADAC page has no two-layer model yet.** Its Drug page filter narrows only `vizData` in
-  `SearchContext`, and only Add Chart reads `vizData`. The results table and auto charts always
-  show the full result (`data.prices`). Moving it onto a client filter like `FdaResultFilter`
-  is planned NADAC/FDA parity work.
+- **The NADAC page has no two-layer model yet.** Its Drug page filter is stored as
+  `excludedNdcDescriptions` in `SearchContext`; the selection and `vizData` are derived from it,
+  and a new search clears it. Only Add Chart reads `vizData`: the results table and auto charts
+  always show the full result (`data.prices`). Moving it onto a client filter like
+  `FdaResultFilter` is planned NADAC/FDA parity work.
+- **Persistence (`library/persist.ts`).** The workspace (tabs, layout, pane assignment) and each
+  search tab's state (FDA: search params, result filter, detail level; NADAC: search params,
+  excluded Drug descriptions; both: pinned items) are saved to `localStorage` and restored on
+  load. A restored tab re-runs its search; pinned items come back from their snapshots. Row
+  selection and card collapse state of system cards are not saved.
+  - Keys are `drugpricing.v<VERSION>.workspace` and `drugpricing.v<VERSION>.tab.<tabId>`. Bump
+    `VERSION` when a stored shape changes incompatibly; old data is then ignored, not misread.
+    `pruneStoredState` deletes every `drugpricing.` key outside the current version's prefix on
+    load, so old snapshots don't keep using quota. Keep that if you change the key scheme.
+  - Every read is validated and falls back to defaults. Tab state is validated field by field
+    (`loadFdaTabState`/`loadNadacTabState`), each field with its own default, so a bad field or
+    a malformed pinned item never costs the tab its other pinned items. A page filter is kept
+    only with a valid search. Writes that fail (storage full or blocked) warn once with a toast.
+  - Tab providers (`TabProviders.tsx`) load once on mount and save on every change; they get
+    `tabId` as a prop from `TabInstance`. The standalone `/fda-search` and `/nadac-search` pages
+    persist under `STANDALONE_TAB_IDS`. Blank "new" tabs save nothing.
+  - A restored tab doesn't run its search until it is first shown: `TabInstance` passes
+    `active` (has been visible) to the provider, which sets `searchEnabled` for `useFdaSearch`/
+    `useNadacSearch`. Pinned items render from snapshots meanwhile.
+  - **Several browser windows:** each window holds its own copy. When another window changes a
+    stored value this window didn't write, `watchOtherWindows` makes this window read-only (no
+    more writes or deletes) and a toast asks the user to reload. Without that, the last window
+    to write would win, and pruning would then delete tabs the other window had added.
+  - Closing a tab or changing its type removes its saved state, and load prunes state for tabs
+    that are no longer in the workspace.
+  - Anything that resets state when data loads will undo a restore. Store restorable state so
+    it needs no reset: both page filters store *exclusions* (`FdaResultFilter.excluded*`,
+    `excludedNdcDescriptions`), so results that are new since the save still show, and a new
+    search clears the filter explicitly.
 
 Commands (from `client/`):
 

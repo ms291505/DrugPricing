@@ -14,11 +14,13 @@ import { toStoredNadacNdc } from "../../library/ndc.ts";
 export default function NadacSearch() {
   const formatDateValue = (date: Date) => date.toISOString().split("T")[0];
 
-  const [ndcDescription, setNdcDescription] = useState("");
-  const [ndc, setNdc] = useState("");
-  const [minDate, setMinDate] = useState(formatDateValue(MIN_DATE));
-  const [maxDate, setMaxDate] = useState(formatDateValue(MAX_DATE));
-  const { setData, setVizData, setSearchParams } = useSearchContext();
+  const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
+
+  // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
+  const [ndcDescription, setNdcDescription] = useState(searchParams?.ndcDescription ?? "");
+  const [ndc, setNdc] = useState(searchParams?.ndc ?? "");
+  const [minDate, setMinDate] = useState(searchParams?.minDate ?? formatDateValue(MIN_DATE));
+  const [maxDate, setMaxDate] = useState(searchParams?.maxDate ?? formatDateValue(MAX_DATE));
 
   // The server matches NDCs in NADAC's stored form, so convert what the user typed
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
@@ -31,9 +33,8 @@ export default function NadacSearch() {
   useEffect(() => {
     if (nadacSearchQuery.data?.prices) {
       setData(nadacSearchQuery.data.prices);
-      setVizData(nadacSearchQuery.data.prices);
     }
-  }, [nadacSearchQuery.data, setData, setVizData]);
+  }, [nadacSearchQuery.data, setData]);
 
   const handleSearch = () => {
     setSearchParams({
@@ -42,6 +43,7 @@ export default function NadacSearch() {
       minDate: minDate,
       maxDate: maxDate
     });
+    clearNdcDescriptionFilter();
   }
 
   const handleNdcDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
