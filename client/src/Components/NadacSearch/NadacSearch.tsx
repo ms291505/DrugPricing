@@ -19,7 +19,11 @@ export default function NadacSearch() {
   const [maxDate, setMaxDate] = useState(formatDateValue(MAX_DATE));
   const { setData, setVizData, setCharts, setSearchParams } = useSearchContext();
 
-  const isValidSearch = ndcDescription.length >= MIN_NDC_DESCRIPTION_LENGTH || ndc.length >= MIN_NDC_LENGTH;
+  // NADAC stores NDCs without leading zeros ("3089321" for 00003-0893-21) and the server
+  // matches on that form, so "00003089321" would find nothing unless the zeros are stripped.
+  const searchNdc = ndc.replace(/^0+/, "");
+
+  const isValidSearch = ndcDescription.length >= MIN_NDC_DESCRIPTION_LENGTH || searchNdc.length >= MIN_NDC_LENGTH;
 
   const nadacSearchQuery = useNadacSearch();
 
@@ -33,7 +37,7 @@ export default function NadacSearch() {
   const handleSearch = () => {
     setSearchParams({
       ndcDescription: ndcDescription,
-      ndc: ndc,
+      ndc: searchNdc,
       minDate: minDate,
       maxDate: maxDate
     });
