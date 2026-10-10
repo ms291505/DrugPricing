@@ -29,11 +29,36 @@ workspace, but they should go away. What removing them touches:
   against creating two tabs (e.g. a ref, or create the tab while reading the initial
   workspace rather than in an effect). Ignore unknown types. Testing restore after a reload then
   happens on that workspace tab, which is closer to real use than the standalone pages were.
+- **Build it as a public link format, not a dev shortcut.** The author wants the same links
+  later for content: a blog post that opens a tab with a search already run, or links from a
+  "popular searches" / "recent movers" list. So:
+  - Let a link carry the search as well as the type, in readable params
+    (`/workspace?new=fda&name=eliquis`, `?new=nadac&ndc=3089321&from=2025-10-07`), not a JSON
+    blob. A blog link should read as what it opens.
+  - Treat the params as a contract. Published links can't be updated, so old params must keep
+    working (add new ones, never repurpose them), like the storage `VERSION` rule.
+  - URL input is untrusted. Validate it with the same per-field validators `persist.ts` uses for
+    saved tab state, and fall back to a blank tab of that type.
+  - Consider focusing an existing tab with the same search instead of adding a duplicate, so
+    following the same link twice doesn't stack up tabs.
 - With only the workspace, `/about` and `/welcome` left, `AppShell`'s "keep the workspace mounted
   but hidden" switch may simplify. Check before changing: it exists so workspace tabs keep their
   state while About is open.
 
 Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
+
+### Future feature to keep in mind: popular searches and recent movers
+
+The author would like to show popular searches or recent price movers, linking each to a
+workspace tab (see the link format above). Two consequences for current structure:
+
+- **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
+  result). A "recent movers" list across all drugs needs it on the server, most likely computed
+  after each NADAC load (ETL or a SQL view) and served by an endpoint. Then client and server
+  must agree on the rule (the 10% threshold, consecutive as-of dates), so give it one written
+  definition before there are two implementations.
+- **"Popular searches" needs search counts,** which nothing records today. That is a server
+  addition, and a privacy decision about what gets logged.
 
 ### Medium (its own small PR)
 
