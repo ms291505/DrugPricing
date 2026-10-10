@@ -53,9 +53,10 @@ public static class NadacPriceEndpoints
       ? cleanDescriptionInput
       : "";
 
+    // Digits only. Not int.TryParse: an 11-digit NDC like 11788003760 overflows int.
     var searchNdc =
       string.IsNullOrWhiteSpace(ndc) ? ""
-      : int.TryParse(ndc, out _) ? ndc
+      : ndc.All(char.IsAsciiDigit) ? ndc
       : "";
 
     if (string.IsNullOrWhiteSpace(searchDescription) && string.IsNullOrWhiteSpace(searchNdc))

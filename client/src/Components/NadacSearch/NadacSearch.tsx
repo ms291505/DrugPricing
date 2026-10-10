@@ -9,6 +9,7 @@ import { useSearchContext } from "../../Context/SearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
+import { toStoredNadacNdc } from "../../library/ndc.ts";
 
 export default function NadacSearch() {
   const formatDateValue = (date: Date) => date.toISOString().split("T")[0];
@@ -19,9 +20,9 @@ export default function NadacSearch() {
   const [maxDate, setMaxDate] = useState(formatDateValue(MAX_DATE));
   const { setData, setVizData, setCharts, setSearchParams } = useSearchContext();
 
-  // NADAC stores NDCs without leading zeros ("3089321" for 00003-0893-21) and the server
-  // matches on that form, so "00003089321" would find nothing unless the zeros are stripped.
-  const searchNdc = ndc.replace(/^0+/, "");
+  // The server matches NDCs in NADAC's stored form, so convert what the user typed
+  // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
+  const searchNdc = toStoredNadacNdc(ndc);
 
   const isValidSearch = ndcDescription.length >= MIN_NDC_DESCRIPTION_LENGTH || searchNdc.length >= MIN_NDC_LENGTH;
 
@@ -50,7 +51,8 @@ export default function NadacSearch() {
   }
 
   const handleNdcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "");
+    // Keep dashes: they say which segment of a 4-4-2, 5-3-2, or 5-4-1 code is short.
+    const value = e.target.value.replace(/[^\d-]/g, "");
     setNdc(value);
   }
 
