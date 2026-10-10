@@ -1,6 +1,7 @@
 import { useSearchContext } from "../Context/SearchContext";
 import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
+import { CONSTANT } from "../library/constants";
 
 export function useNadacSearch() {
   const { searchParams, searchEnabled } = useSearchContext();
@@ -12,6 +13,7 @@ export function useNadacSearch() {
       new Date(searchParams!.minDate),
       new Date(searchParams!.maxDate)
     ),
-    enabled: searchParams !== null && searchEnabled
+    enabled: searchParams !== null && searchEnabled,
+    staleTime: CONSTANT.staleTime,
   });
 }

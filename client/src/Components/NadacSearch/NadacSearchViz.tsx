@@ -2,8 +2,8 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper"
 import Grid from "@mui/material/Grid";
 import TableViz from "./TableViz";
-import BarViz from "./BarViz";
-import LineViz from "./LineViz";
+import BarViz from "../Charts/BarViz";
+import LineViz from "../Charts/LineViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
 import { shouldAutoChart } from "../../library/chartSeries";
@@ -12,6 +12,8 @@ import PinButton from "../ExplorerGrid/PinButton";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
+import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { chartDatesSubtitle } from "../../library/dates";
 
 const BAR_TITLE = "Average Price by NDC";
 const LINE_TITLE = "NDC Price Over Time";
@@ -20,6 +22,8 @@ export default function NadacSearchViz() {
 
   const { data, isLoading } = useNadacSearch();
   const origin = useNadacChartOrigin();
+  const { chartWindow } = useExplorerItems();
+  const autoChartSubtitle = chartDatesSubtitle(chartWindow);
 
   // System charts are derived from the current result on every render, like the FDA page's.
   // User charts live in the tab's pinned items and are not touched by a new search.
@@ -51,17 +55,19 @@ export default function NadacSearchViz() {
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
               title={BAR_TITLE}
-              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} origin={origin} />}
+              subtitle={autoChartSubtitle}
+              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} origin={origin} dateWindow={chartWindow} />}
             >
-              <BarViz nadacPrices={prices} />
+              <BarViz nadacPrices={prices} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
               title={LINE_TITLE}
-              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} origin={origin} />}
+              subtitle={autoChartSubtitle}
+              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} origin={origin} dateWindow={chartWindow} />}
             >
-              <LineViz nadacPrices={prices} />
+              <LineViz nadacPrices={prices} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
         </Grid>

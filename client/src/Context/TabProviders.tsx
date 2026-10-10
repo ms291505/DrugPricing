@@ -18,7 +18,7 @@ export const FdaTabProvider = ({ children, tabId, active = true }: TabProviderPr
   const [saved] = useState(() => loadFdaTabState(tabId));
   return (
     <FdaSearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
-      <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
+      <ExplorerItemsProvider initial={saved ?? undefined}>
         <SaveFdaTab tabId={tabId} />
         {children}
       </ExplorerItemsProvider>
@@ -30,7 +30,7 @@ export const NadacTabProvider = ({ children, tabId, active = true }: TabProvider
   const [saved] = useState(() => loadNadacTabState(tabId));
   return (
     <SearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
-      <ExplorerItemsProvider initialItems={saved?.pinnedItems}>
+      <ExplorerItemsProvider initial={saved ?? undefined}>
         <SaveNadacTab tabId={tabId} />
         {children}
       </ExplorerItemsProvider>
@@ -47,7 +47,7 @@ export const BlankTabProvider = ({ children }: TabProviderProps) => (
 
 function SaveFdaTab({ tabId }: { tabId: string }) {
   const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
-  const { pinnedItems } = useExplorerItems();
+  const { pinnedItems, chartWindow, matchScale } = useExplorerItems();
 
   useEffect(() => {
     saveTabState(tabId, {
@@ -56,15 +56,17 @@ function SaveFdaTab({ tabId }: { tabId: string }) {
       resultFilter: fdaResultFilter,
       detailLevel: fdaResultDetailLevel,
       pinnedItems,
+      chartWindow,
+      matchScale,
     });
-  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, pinnedItems]);
+  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, pinnedItems, chartWindow, matchScale]);
 
   return null;
 }
 
 function SaveNadacTab({ tabId }: { tabId: string }) {
   const { searchParams, excludedNdcDescriptions } = useSearchContext();
-  const { pinnedItems } = useExplorerItems();
+  const { pinnedItems, chartWindow, matchScale } = useExplorerItems();
 
   useEffect(() => {
     saveTabState(tabId, {
@@ -72,8 +74,10 @@ function SaveNadacTab({ tabId }: { tabId: string }) {
       searchParams,
       excludedNdcDescriptions,
       pinnedItems,
+      chartWindow,
+      matchScale,
     });
-  }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems]);
+  }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems, chartWindow, matchScale]);
 
   return null;
 }

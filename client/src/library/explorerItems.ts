@@ -1,4 +1,5 @@
 import type { ChartPrice } from "./types";
+import { inWindow, type DateWindow } from "./dates";
 
 /**
  * Explorer items are the cards in a search tab's Pinned section. *System* items (the results
@@ -72,10 +73,21 @@ export type ChartSeriesSnapshot = {
   points: Array<[number, number]>,
 };
 
+/** A stretch of a chart to shade and label, e.g. the week a price dropped 43%. */
+export type ChartChangeSpan = {
+  start: number,
+  end: number,
+  label: string,
+};
+
 export type ChartItem = ExplorerItemBase & {
   kind: "chart",
   chartType: ChartType,
+  /** Every price of the chart's series, whatever `dateWindow` shows, so the window can widen later. */
   series: ChartSeriesSnapshot[],
+  /** The dates the chart shows. */
+  dateWindow: DateWindow,
+  changeSpan?: ChartChangeSpan,
 };
 
 export type ExplorerItem = ChartItem;
@@ -116,17 +128,21 @@ const countNdcs = (series: ChartSeriesSnapshot[]) => new Set(series.map(s => s.n
 
 type NewChartItem = {
   chartType: ChartType,
+  /** Every price of the series to chart, across all dates; `dateWindow` picks the dates shown. */
   prices: ChartPrice[],
   defaultTitle: string,
   origin: ChartOrigin,
+  dateWindow: DateWindow,
+  changeSpan?: ChartChangeSpan,
 };
 
-export function createChartItem({ chartType, prices, defaultTitle, origin }: NewChartItem): ChartItem {
+export function createChartItem({ chartType, prices, defaultTitle, origin, dateWindow, changeSpan }: NewChartItem): ChartItem {
   const series = toChartSeries(prices);
   const resultSeries = toChartSeries(origin.resultPrices);
   const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
-  // Assumes the chart carries each series' full date range. Once charts have a date window,
-  // count only result points inside that window, or every windowed chart will read "filtered".
+  // The snapshot keeps every date, and the window only picks what is drawn, so a series with
+  // fewer points than in the result lost them to page filters (e.g. an excluded package of a
+  // product), never to the window. That stays true when the window is changed later.
   const filtered = series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
 
   return {
@@ -138,6 +154,8 @@ export function createChartItem({ chartType, prices, defaultTitle, origin }: New
     collapsed: false,
     chartType,
     series,
+    dateWindow,
+    ...(changeSpan && { changeSpan }),
     source: {
       searchLabel: origin.searchLabel,
       seriesKind: origin.seriesKind,
@@ -164,4 +182,40 @@ const CHART_TYPE_LABELS: Record<ChartType, string> = { line: "Line chart", bar: 
 export function addedChartTitle(chartType: ChartType, seriesCount: number, seriesKind: SeriesKind): string {
   const { singular, plural } = SERIES_KIND_LABELS[seriesKind];
   return `${CHART_TYPE_LABELS[chartType]}: ${seriesCount} ${seriesCount === 1 ? singular : plural}`;
+}
+
+/** First and last date the chart has prices for, whatever its window shows. */
+export function chartDataBounds(item: ChartItem): { first: number, last: number } | null {
+  let first = Infinity;
+  let last = -Infinity;
+  for (const { points } of item.series) {
+    for (const [time] of points) {
+      if (time < first) first = time;
+      if (time > last) last = time;
+    }
+  }
+  return first <= last ? { first, last } : null;
+}
+
+/**
+ * The price range per pricing unit across the line charts' visible dates, for "Match scale".
+ * Bar charts keep their own scale.
+ */
+export function matchedPriceDomains(items: ExplorerItem[]): Map<string, [number, number]> {
+  const domains = new Map<string, [number, number]>();
+  for (const item of items) {
+    if (item.kind !== "chart" || item.chartType !== "line") continue;
+    for (const { unit, points } of item.series) {
+      for (const [time, price] of points) {
+        if (!inWindow(time, item.dateWindow)) continue;
+        const domain = domains.get(unit);
+        if (!domain) domains.set(unit, [price, price]);
+        else {
+          if (price < domain[0]) domain[0] = price;
+          if (price > domain[1]) domain[1] = price;
+        }
+      }
+    }
+  }
+  return domains;
 }

@@ -13,12 +13,15 @@ import { addedChartTitle, createChartItem, type ChartType } from "../../library/
 import { countSeries } from "../../library/chartSeries";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
+import useAppInit from "../../hooks/useAppInit";
+import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 
 export default function FdaPageTools() {
 
   const { fdaResultFilter, setFdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
-  const { addItem } = useExplorerItems();
+  const { addItem, chartWindow, setChartWindow } = useExplorerItems();
+  const { data: appInit } = useAppInit();
 
   const origin = useFdaChartOrigin();
 
@@ -73,6 +76,7 @@ export default function FdaPageTools() {
       prices: chartData,
       defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
       origin,
+      dateWindow: chartWindow,
     }), { focus: true });
   }
 
@@ -183,6 +187,10 @@ export default function FdaPageTools() {
             />
           </Tooltip>
         </FormGroup>
+      </Box>
+      <Divider />
+      <Box component="section" id="page-charts" sx={pageToolsSectionSxProps}>
+        <ChartDatesControl value={chartWindow} onChange={setChartWindow} bounds={appInit?.nadacDates ?? null} />
         <AddChartControl selectedCount={selectedRows.ids.size} onAdd={handleAddChart} />
       </Box>
     </Paper>

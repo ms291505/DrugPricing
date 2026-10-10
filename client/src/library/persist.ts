@@ -4,7 +4,8 @@ import {
   type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, type LayoutMode,
   type NadacSearchParams, type TabType, type WorkspaceTab,
 } from "./types";
-import type { ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
+import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
+import { FULL_WINDOW, type DateWindow } from "./dates";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -96,7 +97,17 @@ const isSeriesSnapshot = (x: unknown): x is ChartSeriesSnapshot =>
   isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit) && Array.isArray(x.points)
   && x.points.every(p => Array.isArray(p) && p.length === 2 && typeof p[0] === "number" && typeof p[1] === "number");
 
-const isExplorerItem = (x: unknown): x is ExplorerItem =>
+const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x === "number";
+
+const isDateWindow = (x: unknown): x is DateWindow => isObject(x) && isTimeOrNull(x.start) && isTimeOrNull(x.end);
+
+const isChangeSpan = (x: unknown): x is ChartChangeSpan =>
+  isObject(x) && typeof x.start === "number" && typeof x.end === "number" && isString(x.label);
+
+/** Charts pinned before chart windows existed have no `dateWindow`; they show every date. */
+type StoredExplorerItem = Omit<ChartItem, "dates"> & { dateWindow?: DateWindow };
+
+const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   isObject(x) && x.kind === "chart" && isString(x.id) && isString(x.defaultTitle)
   && (x.title === undefined || isString(x.title)) && typeof x.createdAt === "number"
   && isObject(x.layout) && (x.layout.width === "half" || x.layout.width === "full")
@@ -104,10 +115,14 @@ const isExplorerItem = (x: unknown): x is ExplorerItem =>
   && Array.isArray(x.series) && x.series.every(isSeriesSnapshot)
   && isObject(x.source) && isString(x.source.searchLabel) && isSeriesKind(x.source.seriesKind)
   && typeof x.source.seriesCount === "number" && typeof x.source.resultSeriesCount === "number"
-  && typeof x.source.filtered === "boolean";
+  && typeof x.source.filtered === "boolean"
+  && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
+  && (x.changeSpan === undefined || isChangeSpan(x.changeSpan));
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
-const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x) ? x.filter(isExplorerItem) : [];
+const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
+  ? x.filter(isStoredExplorerItem).map(item => ({ ...item, dateWindow: item.dateWindow ?? FULL_WINDOW }))
+  : [];
 
 const isFdaSearchParams = (x: unknown): x is AdvancedFdaSearchParams =>
   isObject(x) && isString(x.proprietaryName)
@@ -189,20 +204,27 @@ export function watchOtherWindows(onConflict: () => void): () => void {
 
 // --- Search tabs --------------------------------------------------------------------------
 
+/** What both search tab types save from `ExplorerItemsContext`. */
+export type PersistedExplorerState = {
+  pinnedItems: ExplorerItem[],
+  /** The Page Tools chart dates: the window new charts start with. */
+  chartWindow: DateWindow,
+  /** The Pinned section's "Match scale" toggle. */
+  matchScale: boolean,
+};
+
 export type PersistedFdaTab = {
   type: "fda",
   searchParams: AdvancedFdaSearchParams | null,
   resultFilter: FdaResultFilter,
   detailLevel: FdaResultDetailLevel,
-  pinnedItems: ExplorerItem[],
-};
+} & PersistedExplorerState;
 
 export type PersistedNadacTab = {
   type: "nadac",
   searchParams: NadacSearchParams | null,
   excludedNdcDescriptions: string[],
-  pinnedItems: ExplorerItem[],
-};
+} & PersistedExplorerState;
 
 type PersistedTab = PersistedFdaTab | PersistedNadacTab;
 
@@ -211,6 +233,14 @@ type PersistedTab = PersistedFdaTab | PersistedNadacTab;
  * costs the user the tab's pinned items. A page filter is kept only alongside a valid search:
  * on its own it would filter nothing meaningful.
  */
+
+function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState {
+  return {
+    pinnedItems: validItems(raw.pinnedItems),
+    chartWindow: isDateWindow(raw.chartWindow) ? raw.chartWindow : FULL_WINDOW,
+    matchScale: typeof raw.matchScale === "boolean" ? raw.matchScale : false,
+  };
+}
 
 function readTab(tabId: string, type: PersistedTab["type"]): Record<string, unknown> | null {
   const raw = read(tabKey(tabId), isObject);
@@ -226,7 +256,7 @@ export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
     searchParams,
     resultFilter: searchParams && isFdaResultFilter(raw.resultFilter) ? raw.resultFilter : createFdaResultFilter(),
     detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : "product",
-    pinnedItems: validItems(raw.pinnedItems),
+    ...loadExplorerState(raw),
   };
 }
 
@@ -238,7 +268,7 @@ export function loadNadacTabState(tabId: string): PersistedNadacTab | null {
     type: "nadac",
     searchParams,
     excludedNdcDescriptions: searchParams && isStringArray(raw.excludedNdcDescriptions) ? raw.excludedNdcDescriptions : [],
-    pinnedItems: validItems(raw.pinnedItems),
+    ...loadExplorerState(raw),
   };
 }
 

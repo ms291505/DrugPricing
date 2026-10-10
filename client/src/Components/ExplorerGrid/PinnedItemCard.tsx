@@ -1,26 +1,31 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
+import { Box, Button, Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Popover, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import WidthFullIcon from "@mui/icons-material/WidthFull";
 import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
-import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
+import { chartDataBounds, formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
-import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
+import ChartDatesControl from "./ChartDatesControl";
+import { HALF_WIDTH_GRID_SIZE, PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
+import { formatWindow, windowAround } from "../../library/dates";
 
 type Props = {
   item: ExplorerItem,
   index: number,
   count: number,
+  /** Shared price axes from "Match scale", per pricing unit. */
+  priceDomains?: Map<string, [number, number]>,
 }
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function PinnedItemCard({ item, index, count }: Props) {
+export default function PinnedItemCard({ item, index, count, priceDomains }: Props) {
   const { updateItem, removeItem, moveItem, highlight } = useExplorerItems();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
@@ -46,6 +51,17 @@ export default function PinnedItemCard({ item, index, count }: Props) {
     closeMenu();
   };
 
+  // The dates chip opens the date picker; "Change dates" in the menu opens it at the same spot.
+  const datesChipRef = useRef<HTMLDivElement>(null);
+  const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
+  const datesOpen = datesAnchor !== null;
+  const datesDialogId = useId();
+  const dataBounds = chartDataBounds(item);
+  const datesLabel = formatWindow(item.dateWindow, dataBounds);
+  const focusPreset = item.changeSpan
+    ? { label: "Around change", dateWindow: windowAround(item.changeSpan.start, item.changeSpan.end, PRICE_CHANGE_WINDOW_MONTHS) }
+    : undefined;
+
   const actions = (
     <>
       <Tooltip title="Item actions">
@@ -69,6 +85,13 @@ export default function PinnedItemCard({ item, index, count }: Props) {
           <ListItemIcon><ArrowDownwardIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Move down</ListItemText>
         </MenuItem>
+        <MenuItem onClick={() => {
+          setDatesAnchor(datesChipRef.current ?? menuAnchor);
+          closeMenu();
+        }}>
+          <ListItemIcon><EditCalendarIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Change dates</ListItemText>
+        </MenuItem>
         <MenuItem onClick={runAndClose(() => updateItem(item.id, prev => ({
           ...prev, layout: { ...prev.layout, width: isFull ? "half" : "full" },
         })))}>
@@ -90,12 +113,47 @@ export default function PinnedItemCard({ item, index, count }: Props) {
         headingLevel={3}
         headingRef={headingRef}
         highlighted={highlighted}
-        badges={<Chip size="small" variant="outlined" label={formatItemSource(item.source)} />}
+        badges={<>
+          <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          {datesLabel
+            ? <Tooltip title="Change dates">
+              <Chip
+                ref={datesChipRef}
+                size="small"
+                variant="outlined"
+                icon={<EditCalendarIcon />}
+                label={datesLabel}
+                onClick={(e) => setDatesAnchor(e.currentTarget)}
+                aria-haspopup="dialog"
+                aria-controls={datesOpen ? datesDialogId : undefined}
+                aria-expanded={datesOpen}
+              />
+            </Tooltip>
+            : null
+          }
+          <Popover
+            open={datesOpen}
+            anchorEl={datesAnchor}
+            onClose={() => setDatesAnchor(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            slotProps={{ paper: { id: datesDialogId, role: "dialog", "aria-label": `Dates for ${title}`, sx: { p: 2, maxWidth: 360 } } }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <ChartDatesControl
+                value={item.dateWindow}
+                onChange={(dateWindow) => updateItem(item.id, prev => ({ ...prev, dateWindow }))}
+                bounds={dataBounds}
+                focusPreset={focusPreset}
+              />
+              <Button size="small" sx={{ alignSelf: "flex-end" }} onClick={() => setDatesAnchor(null)}>Done</Button>
+            </Box>
+          </Popover>
+        </>}
         actions={actions}
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} /> : null}
+        {item.kind === "chart" ? <ChartItemBody item={item} priceDomains={priceDomains} /> : null}
       </ExplorerGridItem>
     </Grid>
   );

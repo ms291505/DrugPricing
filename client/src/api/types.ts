@@ -192,3 +192,28 @@ export type AdvancedFdaSearchRequest = {
   pricesAsOfDateStart?: string,
   pricesAsOfDateEnd?: string,
 }
+
+export type AppInitResponse = {
+  up: boolean,
+  firstNadacAsOfDate: string,
+  lastNadacAsOfDate: string,
+  routeNames: string[],
+  dosageFormNames: string[],
+}
+
+/** What the app learns about the loaded data at startup. */
+export type AppInit = {
+  /** First and last NADAC as-of dates in the database, as ms (UTC midnight). */
+  nadacDates: { first: number, last: number },
+  routeNames: string[],
+  dosageFormNames: string[],
+}
+
+export const mapAppInitResponse = (response: AppInitResponse): AppInit => ({
+  nadacDates: {
+    first: Date.parse(response.firstNadacAsOfDate),
+    last: Date.parse(response.lastNadacAsOfDate),
+  },
+  routeNames: response.routeNames,
+  dosageFormNames: response.dosageFormNames,
+});

@@ -41,3 +41,13 @@ const PRICING_UNIT_ABBREVIATIONS: Record<string, string> = {
 export function pricingUnitLabel(pricingUnit: string): string {
   return PRICING_UNIT_ABBREVIATIONS[pricingUnit] ?? pricingUnit;
 }
+
+/**
+ * Rounds a price-axis maximum up to a round number (6,745 → 7,000; 9.69 → 10), so a fixed axis
+ * gets even ticks; recharts only rounds axes it sizes itself.
+ */
+export function niceCeiling(value: number): number {
+  if (value <= 0) return 0;
+  const halfStep = 10 ** Math.floor(Math.log10(value)) / 2;
+  return Math.ceil(value / halfStep) * halfStep;
+}

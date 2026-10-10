@@ -4,23 +4,35 @@ import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
 import React, { useState, useEffect } from "react";
-import { MAX_DATE, MIN_DATE, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../../library/constants.ts";
+import { DEFAULT_NADAC_SEARCH_MONTHS, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../../library/constants.ts";
 import { useSearchContext } from "../../Context/SearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
+import useAppInit from "../../hooks/useAppInit.ts";
+import { toDateInput, windowEndingAt } from "../../library/dates.ts";
 
 export default function NadacSearch() {
-  const formatDateValue = (date: Date) => date.toISOString().split("T")[0];
-
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const [ndcDescription, setNdcDescription] = useState(searchParams?.ndcDescription ?? "");
   const [ndc, setNdc] = useState(searchParams?.ndc ?? "");
-  const [minDate, setMinDate] = useState(searchParams?.minDate ?? formatDateValue(MIN_DATE));
-  const [maxDate, setMaxDate] = useState(searchParams?.maxDate ?? formatDateValue(MAX_DATE));
+  // Null until the user picks a date: the default follows the loaded data, which arrives later.
+  const [pickedMinDate, setMinDate] = useState<string | null>(searchParams?.minDate ?? null);
+  const [pickedMaxDate, setMaxDate] = useState<string | null>(searchParams?.maxDate ?? null);
+
+  // Default to the last year of loaded data. Without app-init, end today; the server snaps
+  // both dates to loaded as-of dates.
+  const { data: appInit } = useAppInit();
+  const [today] = useState(() => Date.parse(toDateInput(Date.now())));
+  const defaultDates = windowEndingAt(appInit?.nadacDates.last ?? today, DEFAULT_NADAC_SEARCH_MONTHS);
+  const minDate = pickedMinDate ?? toDateInput(defaultDates.start);
+  const maxDate = pickedMaxDate ?? toDateInput(defaultDates.end);
+  const dateInputBounds = appInit
+    ? { min: toDateInput(appInit.nadacDates.first), max: toDateInput(appInit.nadacDates.last) }
+    : undefined;
 
   // The server matches NDCs in NADAC's stored form, so convert what the user typed
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
@@ -113,7 +125,8 @@ export default function NadacSearch() {
             name="minDate"
             label="Start Date"
             value={minDate}
-            onChange={(e) => setMinDate(e.target.value)}
+            onChange={(e) => setMinDate(e.target.value || null)}
+            slotProps={{ htmlInput: dateInputBounds }}
           />
           <TextField
             size={isMobile ? "small" : "medium"}
@@ -122,7 +135,8 @@ export default function NadacSearch() {
             name="maxDate"
             label="End Date"
             value={maxDate}
-            onChange={(e) => setMaxDate(e.target.value)}
+            onChange={(e) => setMaxDate(e.target.value || null)}
+            slotProps={{ htmlInput: dateInputBounds }}
           />
         </Box>
         <Button

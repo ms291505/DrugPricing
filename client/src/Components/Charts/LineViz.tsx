@@ -1,26 +1,43 @@
 import { type ChartPrice, } from "../../library/types.ts";
-import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, } from "recharts";
+import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceArea, } from "recharts";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { useTheme } from "@mui/material/styles";
 import { dollarFormatter } from "../../library/dollarFormatter.ts";
 import { createLineVizData, rangeKey } from "../../library/createLineVizData.ts";
-import { pricingUnitLabel } from "../../library/chartSeries.ts";
+import { niceCeiling, pricingUnitLabel } from "../../library/chartSeries.ts";
 import UnitSplit from "./UnitSplit.tsx";
+import { formatDate, formatShortDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
+import type { ChartChangeSpan } from "../../library/explorerItems.ts";
 
 type Props = {
   nadacPrices: ChartPrice[];
-  border?: boolean;
   lineColors?: string[];
+  /** The dates to show. The axis spans the whole window, even where there are no prices. */
+  dateWindow?: DateWindow;
+  /** A price change to shade and label. */
+  changeSpan?: ChartChangeSpan;
+  /** Fixed price-axis range per pricing unit ("Match scale"); units not in it scale to their data. */
+  priceDomains?: Map<string, [number, number]>;
 };
 
 const AVERAGE_SUFFIX = " (average; shaded band is min–max)";
 
-export default function LineViz({ nadacPrices, lineColors = LINE_VIZ_COLORS, }: Props) {
+export default function LineViz({
+  nadacPrices, lineColors = LINE_VIZ_COLORS, dateWindow = FULL_WINDOW, changeSpan, priceDomains,
+}: Props) {
   return (
     <UnitSplit
       nadacPrices={nadacPrices}
+      dateWindow={dateWindow}
       renderChart={(unitPrices, pricingUnit) => (
-        <UnitLineChart nadacPrices={unitPrices} pricingUnit={pricingUnit} lineColors={lineColors} />
+        <UnitLineChart
+          nadacPrices={unitPrices}
+          pricingUnit={pricingUnit}
+          lineColors={lineColors}
+          dateWindow={dateWindow}
+          changeSpan={changeSpan}
+          priceDomain={priceDomains?.get(pricingUnit)}
+        />
       )}
     />
   );
@@ -30,9 +47,12 @@ type UnitLineChartProps = {
   nadacPrices: ChartPrice[];
   pricingUnit: string;
   lineColors: string[];
+  dateWindow: DateWindow;
+  changeSpan?: ChartChangeSpan;
+  priceDomain?: [number, number];
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, changeSpan, priceDomain }: UnitLineChartProps) {
 
   const theme = useTheme();
 
@@ -59,11 +79,13 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
         dataKey="asOfDate"
         scale="time"
         type="number"
-        domain={["dataMin", "dataMax"]}
-        tickFormatter={(ts: number) => new Date(ts).toLocaleDateString()}
+        domain={[dateWindow.start ?? "dataMin", dateWindow.end ?? "dataMax"]}
+        tickFormatter={formatShortDate}
       />
       <YAxis
         width="auto"
+        // Matched charts keep the zero baseline unmatched ones get by default.
+        domain={priceDomain ? [0, niceCeiling(priceDomain[1])] : undefined}
         tickFormatter={(value: number) =>
           value >= 1000 ? `$${(value / 1000).toFixed(1)}K` : `$${value}`
         }
@@ -72,7 +94,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
         formatter={(value: string) => value.split(NDC_NDC_DESCRIPTION_DELIMITER)[0]}
       />
       <Tooltip
-        labelFormatter={(ts) => new Date(ts as number).toLocaleDateString()}
+        labelFormatter={(ts) => formatDate(ts as number)}
         formatter={(value) => `${dollarFormatter(value as number)} / ${unit}`}
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
@@ -81,6 +103,16 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
           whiteSpace: "normal"
         }}
       />
+      {changeSpan
+        ? <ReferenceArea
+          x1={changeSpan.start}
+          x2={changeSpan.end}
+          fill={theme.palette.warning.main}
+          fillOpacity={0.25}
+          label={{ value: changeSpan.label, position: "insideTop", fill: theme.palette.text.primary, fontSize: DEFAULT_TOOLTIP_FONT_SIZE }}
+        />
+        : null
+      }
       {ndcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
         <Area
           key={rangeKey(ndc)}
@@ -92,6 +124,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
           legendType="none"
           tooltipType="none"
           connectNulls={false}
+          isAnimationActive={false}
         />
       ))}
       {ndcs.map((ndc) => (
@@ -103,6 +136,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors }: UnitLineChartPr
           dot={false}
           connectNulls={false}
           name={dataSeriesName(ndc)}
+          // No animation: recharts morphs the old line into the new one point by point, so changing
+          // the dates drew made-up prices for a second or more, and re-renders restarted it.
+          isAnimationActive={false}
         />
       ))}
     </ComposedChart>

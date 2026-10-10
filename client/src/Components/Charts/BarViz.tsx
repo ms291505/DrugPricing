@@ -7,16 +7,19 @@ import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../../library/c
 import { pricingUnitLabel } from "../../library/chartSeries";
 import BarVizToolTipLabel from "./BarVizToolTipLabel";
 import UnitSplit from "./UnitSplit";
+import type { DateWindow } from "../../library/dates";
 
 type Props = {
   nadacPrices: ChartPrice[],
-  border?: boolean
+  /** Averages cover only these dates. */
+  dateWindow?: DateWindow,
 }
 
-export default function BarViz({ nadacPrices }: Props) {
+export default function BarViz({ nadacPrices, dateWindow }: Props) {
   return (
     <UnitSplit
       nadacPrices={nadacPrices}
+      dateWindow={dateWindow}
       renderChart={(unitPrices, pricingUnit) => (
         <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} />
       )}
@@ -68,6 +71,8 @@ function UnitBarChart({ nadacPrices, pricingUnit }: UnitBarChartProps) {
         name="Average Price"
         radius={[5, 5, 0, 0]}
         fill={theme.palette.primary.main}
+        // No animation, like LineViz: changes show at once.
+        isAnimationActive={false}
       />
     </BarChart>
   )
