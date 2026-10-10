@@ -4,7 +4,7 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 
 export default function SelectDetailLevel() {
   const { isLoading, data } = useFdaSearch();
-  const { fdaResultDetailLevel, setFdaResultDetailLevel } = useFdaSearchContext();
+  const { fdaResultDetailLevel, setFdaResultDetailLevel, setSelectedRows } = useFdaSearchContext();
   const detailLevels = ["Product", "Package"];
   const noData =
     data
@@ -23,6 +23,9 @@ export default function SelectDetailLevel() {
         onChange={(e) => {
           const newValue = e.target.value;
           setFdaResultDetailLevel(newValue);
+          // Product rows are keyed by product NDC and package rows by package NDC,
+          // so a selection from one level means nothing at the other.
+          setSelectedRows({ type: "include", ids: new Set() });
         }}>
         {
           detailLevels.map(value => {

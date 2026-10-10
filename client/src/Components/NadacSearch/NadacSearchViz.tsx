@@ -8,8 +8,9 @@ import LineViz from "./LineViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
 import { useEffect } from "react";
-import type { BarChart, LineChart, NadacPrice } from "../../library/types";
-import { CHART_AUTO_ADD_UPPER_THRESHOLD } from "../../library/constants";
+import type { BarChart, LineChart } from "../../library/types";
+import { MAX_AUTO_CHART_SERIES } from "../../library/constants";
+import { countSeries } from "../../library/chartSeries";
 
 
 export default function NadacSearchViz() {
@@ -17,13 +18,8 @@ export default function NadacSearchViz() {
   const { charts, setCharts } = useSearchContext();
   const { data, isLoading } = useNadacSearch();
 
-  function countPackages(prices: NadacPrice[]) {
-    const uniquePackages = new Set(...prices.map(p => p.ndc));
-    return [...uniquePackages].length;
-  }
-
   useEffect(() => {
-    if (data && countPackages(data.prices) <= CHART_AUTO_ADD_UPPER_THRESHOLD) {
+    if (data && countSeries(data.prices) <= MAX_AUTO_CHART_SERIES) {
       const barChart: BarChart = {
         type: "bar",
         nadacPrices: data.prices,

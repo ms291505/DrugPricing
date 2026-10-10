@@ -27,3 +27,5 @@ export const MAX_GLOBAL_MODAL_HEIGHT = 500;
 export const MAX_GLOBAL_MODAL_WIDTH = 700;
 export const LINE_VIZ_COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#d84848"];
 export const CHART_AUTO_ADD_UPPER_THRESHOLD = 10;
+/** Auto-added charts are drawn only when they would show this many series (NDCs) or fewer. */
+export const MAX_AUTO_CHART_SERIES = 8;

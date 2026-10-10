@@ -4,7 +4,9 @@ import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../../library/nadacPriceToDrugSummary";
 import { dollarFormatter } from "../../library/dollarFormatter";
 import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE } from "../../library/constants";
+import { pricingUnitLabel } from "../../library/chartSeries";
 import BarVizToolTipLabel from "./BarVizToolTipLabel";
+import UnitSplit from "./UnitSplit";
 
 type Props = {
   nadacPrices: NadacPrice[],
@@ -12,11 +14,28 @@ type Props = {
 }
 
 export default function BarViz({ nadacPrices }: Props) {
+  return (
+    <UnitSplit
+      nadacPrices={nadacPrices}
+      renderChart={(unitPrices, pricingUnit) => (
+        <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} />
+      )}
+    />
+  )
+}
+
+type UnitBarChartProps = {
+  nadacPrices: NadacPrice[],
+  pricingUnit: string,
+}
+
+function UnitBarChart({ nadacPrices, pricingUnit }: UnitBarChartProps) {
 
   const theme = useTheme();
 
   const drugSummaries: DrugSummary[] = nadacPriceToDrugSummary(nadacPrices);
 
+  const unit = pricingUnitLabel(pricingUnit);
 
   return (
     <BarChart data={drugSummaries} style={{ width: "100%", height: DEFAULT_CHART_HEIGHT }} responsive role="img">
@@ -35,7 +54,7 @@ export default function BarViz({ nadacPrices }: Props) {
           if (!drugSummary) return ndc as string;
           return (<BarVizToolTipLabel drugSummary={drugSummary} />);
         }}
-        formatter={dollarFormatter}
+        formatter={(value) => `${dollarFormatter(value as number)} / ${unit}`}
         contentStyle={{
           backgroundColor: theme.palette.background.paper,
           fontSize: DEFAULT_TOOLTIP_FONT_SIZE,

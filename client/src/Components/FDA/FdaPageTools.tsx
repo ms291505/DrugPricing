@@ -7,7 +7,7 @@ import { createChart, isFdaProductOtc, } from "../../library/types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";
-import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
+import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SsidChartIcon from '@mui/icons-material/SsidChart';
 
@@ -73,15 +73,15 @@ export default function FdaPageTools() {
     : "Select Drugs to Add Chart"
 
   const handleAddChart = (chartType: "line" | "bar") => {
-    const ndcs = [...selectedRows.ids]
+    const ndcs = new Set([...selectedRows.ids].map(String));
 
-    if (fdaResultDetailLevel === "product") {
-      const products = data?.products.filter(product => ndcs.includes(product.productNdc)) ?? [];
-      const chartData = fdaProductsToNadacPrices(products);
-      const id = crypto.randomUUID();
+    // At product level `ndc` is the product NDC, at package level the package NDC,
+    // matching the row ids of the table for that level.
+    const chartData = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel)
+      .filter(price => ndcs.has(price.ndc));
 
-      const newChart = createChart(chartType, chartData, id)
-
+    if (chartData.length > 0) {
+      const newChart = createChart(chartType, chartData, crypto.randomUUID());
       setCharts((prev) => [...prev, newChart]);
     }
 
