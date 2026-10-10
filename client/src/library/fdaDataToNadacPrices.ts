@@ -43,17 +43,6 @@ export default function fdaSearchResulsToNadacPrices(
   return nadacPrices;
 }
 
-export function fdaProductsToNadacPrices(
-  products: FdaProductDetail[],
-) {
-  const nadacPrices: NadacPrice[] = products
-    .flatMap(product => product.fdaPackageDetails.flatMap(fdaPackage => (
-      fdaPackage.nadacPrices.flatMap(price => ({ ...price, ndc: product.productNdc, ndcDescription: createProductDescription(product) }))
-    )))
-
-  return nadacPrices;
-}
-
 export function fdaProductHasNadacPrices(
   product: FdaProductDetail | undefined,
 ) {

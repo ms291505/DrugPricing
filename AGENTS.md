@@ -77,6 +77,15 @@ Notes and gotchas:
   (`{ProductNdc}_{guid}`) every time a product record changes, so it is a rotating version
   stamp kept only for traceability. `FdaProducts.ProductNdc` is unique and
   `FdaPackages.ProductNdc` is the FK — never join or upsert on `ProductId`.
+- **NADAC NDCs are stored without leading zeros.** CMS publishes 11-digit NDCs (always 5-4-2),
+  but the ETL reads the column as a number, so `NadacPrices.Ndc` holds `3089321` for
+  `00003-0893-21`. FDA's `NdcPackageCodeStripped` follows the same convention (pad to 11 digits,
+  drop leading zeros), and it is the join key between the two, so nothing is lost and no data
+  change is needed. Don't rebuild an FDA-style dashed code from a NADAC NDC: 4-4-2, 5-3-2, and
+  5-4-1 are ambiguous; take the dashed code from the FDA join. NDC search is a "contains"
+  match on the stored form, so the client converts input with `toStoredNadacNdc`
+  (`client/src/library/ndc.ts`) before searching: dashed input is padded per segment to
+  5-4-2, then leading zeros are dropped. Display shows the stored form on purpose.
 - `NdcExcludeFlag` is dead weight, not a gap to close. It is carried on both FDA entities
   and both Pydantic models, but no query filters on it, neither `FdaProductDetail` nor
   `FdaPackageDetail` exposes it, and the client never mentions it. The ETL populates it for
@@ -114,7 +123,7 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `createLineVizData.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
 | React Query hooks | `src/hooks/` — `useNadacSearch.ts`, `useFdaSearch.ts`, plus UI hooks (`useMobile`, `useOnScreen`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `GlobalModalContext` |
@@ -125,15 +134,28 @@ Feature folders under `src/Components/`:
 - `Workspace/` — the primary UI. A tabbed, multi-pane workspace (`WorkspaceContext` owns
   tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's content by
   `TabType`, resolved in `src/library/types.ts`.
-- `NadacSearch/` — NADAC search plus the visualizations (`LineViz`, `BarViz`, `TableViz`,
-  MUI X chart variants, `CreateChart`, `VizTools`).
+- `NadacSearch/` — NADAC search plus the visualizations shared by both search pages
+  (`LineViz`, `BarViz`, `UnitSplit`, `TableViz`, `VizTools`).
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
   `ExplorerGrid/`, `TabCreator/`, `ui/` — supporting UI.
 
 Notes:
 
-- Both `recharts` and `@mui/x-charts` are in use (`LineViz`/`BarViz` vs `MuiLineViz`/`MuiBarViz`).
+- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz`, `MuiBarViz` (`@mui/x-charts`), and
+  `CreateChart` are not imported anywhere.
+- **Chart data rules** (both search pages feed charts `NadacPrice[]`):
+  - A chart series is one `NadacPrice.ndc`. At FDA product level that is the *product* NDC, so
+    several packages share a series and can disagree on a date. `createLineVizData` averages
+    them per date and keeps their min–max as `rangeKey(ndc)`, which `LineViz` shades. Never
+    assume one price per NDC per date.
+  - Never put two pricing units on one axis. `LineViz` and `BarViz` render through `UnitSplit`,
+    which splits by `pricingUnit` and captions each chart with its unit.
+  - Auto-added charts are gated on **series** count, not price rows (one package has about
+    250 weekly rows). Both pages call `shouldAutoChart` in `chartSeries.ts`.
+  - FDA table row ids are the NDC that level's chart data uses (product NDC or package NDC),
+    which is what Add Chart filters on. `setFdaResultDetailLevel` in `FdaSearchContext`
+    clears the selection on every level change.
 - API base URL comes from `VITE_API_URL` (`client/.env.development` → `http://localhost:5250/api`).
 - Wire responses are converted to domain types by the `map*` helpers in `src/api/types.ts` —
   date strings become `Date` objects there, not in components.
@@ -223,7 +245,9 @@ Raspberry Pi). It builds the client and rsyncs `client/dist/` to `/var/www/DrugP
 publishes the server with `dotnet publish -c Release`, rsyncs it to the app directory
 (excluding `appsettings.json`), and restarts the `drugpricing` systemd service.
 
-Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
+Branching: work happens on feature branches that open PRs against `dev`. When `dev` is
+ready to ship, it is merged into `main`; `main` is the deploy branch (a push to it runs
+`deploy.yml`). Never target `main` directly from a feature branch.
 
 ## Conventions and agent guidance
 
@@ -247,6 +271,8 @@ Branching: work happens on `dev`; `main` is the deploy branch and the PR target.
 - `AdvancedSearchRequest` is bound `[FromBody]` on a `MapGet` route; the FDA equivalent
   smuggles JSON through a query-string parameter.
 - `Console.WriteLine` debug logging in `FdaProductEndpoints`; `console.log` in `api.ts`.
+- `flagNadacPriceChange` sorts the `nadacPrices` array it is given in place, which mutates the
+  React Query cache's package data. Harmless today (date order is the natural order).
 - No automated tests for the server or client. ETL has pytest coverage for model parsing
   and helpers only (see `etl/tests/`); fetch, load, and tombstone are untested.
 - `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to
