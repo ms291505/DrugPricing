@@ -137,6 +137,16 @@ Notes:
 - API base URL comes from `VITE_API_URL` (`client/.env.development` → `http://localhost:5250/api`).
 - Wire responses are converted to domain types by the `map*` helpers in `src/api/types.ts` —
   date strings become `Date` objects there, not in components.
+- **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`
+  → `/fda-products/advanced-search`) decide what data is loaded. The results-page filters
+  (`FdaResultFilter`, applied by `applyFdaResultFilter` in `src/library/types.ts`) narrow that
+  data locally, so users can start with a broad search and hunt through it without hitting the
+  server again. The overlap is not a bug to dedupe. Rule of thumb: a filter that limits
+  payload belongs on the server, and a filter for hunting through results belongs on the client.
+  Two counts follow from this: the toast in `useFdaSearch` reports what was fetched, and the
+  tables show what survives the client filters. Rough edges as of 2026-10: sample packages are
+  filtered on both layers, and the server excludes them by default, which leaves the client's
+  "Include Sample Packages" toggle disabled. The no-price filter exists only on the server.
 
 Commands (from `client/`):
 

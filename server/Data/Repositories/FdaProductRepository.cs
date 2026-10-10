@@ -219,6 +219,7 @@ public class FdaProductRepository : IFdaProductRepository
           })
           .ToList(),
       })
+      .Where(product => product.FdaPackageDetails.Count > 0)
       .ToListAsync(cancellationToken);
 
     return products;
