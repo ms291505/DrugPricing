@@ -5,8 +5,11 @@ import { BlankTabProvider, FdaTabProvider, NadacTabProvider } from "../Context/T
 import type { TabType } from "./types";
 
 export type TabTypeDefinition = {
-  /** Wraps the tab's content; `tabId` keys the tab's saved state. */
-  Provider: React.ComponentType<{ children: React.ReactNode, tabId: string }>;
+  /**
+   * Wraps the tab's content. `tabId` keys the tab's saved state; `active` is false until the
+   * tab has been shown, and holds back its search until then.
+   */
+  Provider: React.ComponentType<{ children: React.ReactNode, tabId: string, active?: boolean }>;
   Content: React.ComponentType;
   defaultTitle: string;
 }

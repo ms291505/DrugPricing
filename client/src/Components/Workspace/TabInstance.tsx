@@ -1,7 +1,7 @@
 import type { WorkspaceTab } from "../../library/types.ts";
 import { tabTypeRegistry } from "../../library/tabTypeRegistry.ts";
 import { Box } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import TabContextFab from "./TabContextFab.tsx";
 
@@ -20,6 +20,11 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
 
   const { Provider, Content } = tabTypeRegistry[workspaceTab.type];
 
+  // Hidden tabs stay mounted. A restored tab waits to run its search until it is first shown,
+  // so reloading a many-tab workspace doesn't fire every tab's search at once.
+  const [hasBeenVisible, setHasBeenVisible] = useState(visible);
+  if (visible && !hasBeenVisible) setHasBeenVisible(true);
+
   const showTabContextFab = visible && workspaceTab.type !== "new" ? true : false;
 
   return (
@@ -30,7 +35,7 @@ export default function TabInstance({ workspaceTab, visible }: Props) {
           minWidth: 0,
           width: "100%"
         }}>
-        <Provider tabId={workspaceTab.id}>
+        <Provider tabId={workspaceTab.id} active={hasBeenVisible}>
           <Content />
         </Provider>
       </Box>

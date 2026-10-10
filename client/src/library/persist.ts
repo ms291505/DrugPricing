@@ -11,12 +11,17 @@ import type { ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerIt
  *
  * Everything here is best effort: storage can be unavailable (private windows, blocked site
  * data) or full. Reads fall back to defaults, writes report once and carry on. Every key and
- * payload carries VERSION; bump it when a stored shape changes incompatibly, and old data is
- * ignored rather than misread.
+ * payload carries VERSION; bump it when a stored shape changes incompatibly. Old data is then
+ * ignored rather than misread, and keys under an old version's prefix are deleted on load.
+ *
+ * With the app open in several browser windows, each window holds its own copy in memory.
+ * When another window changes a stored value, this window stops writing (see
+ * `watchOtherWindows`) so it can't overwrite the newer data, and asks the user to reload.
  */
 
 const VERSION = 1;
-const PREFIX = `drugpricing.v${VERSION}`;
+const APP_PREFIX = "drugpricing.";
+const PREFIX = `${APP_PREFIX}v${VERSION}`;
 const WORKSPACE_KEY = `${PREFIX}.workspace`;
 const TAB_KEY_PREFIX = `${PREFIX}.tab.`;
 const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
@@ -27,6 +32,11 @@ export const STANDALONE_TAB_IDS = { fda: "page-fda", nadac: "page-nadac" } as co
 type Envelope<T> = { version: number, data: T };
 
 let warnedWriteFailure = false;
+
+// What this window last wrote per key, to tell another window's writes from our own.
+const lastWritten = new Map<string, string | null>();
+// Set once another window has changed stored data: from then on this window only reads.
+let readOnly = false;
 
 function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
   try {
@@ -41,8 +51,11 @@ function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
 }
 
 function write<T>(key: string, data: T): void {
+  if (readOnly) return;
   try {
-    localStorage.setItem(key, JSON.stringify({ version: VERSION, data } satisfies Envelope<T>));
+    const value = JSON.stringify({ version: VERSION, data } satisfies Envelope<T>);
+    localStorage.setItem(key, value);
+    lastWritten.set(key, value);
   } catch (error) {
     console.warn("Could not save to localStorage:", error);
     if (!warnedWriteFailure) {
@@ -53,8 +66,10 @@ function write<T>(key: string, data: T): void {
 }
 
 function remove(key: string): void {
+  if (readOnly) return;
   try {
     localStorage.removeItem(key);
+    lastWritten.set(key, null);
   } catch {
     // Nothing to do: storage is unavailable.
   }
@@ -65,7 +80,6 @@ function remove(key: string): void {
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
 const isString = (x: unknown): x is string => typeof x === "string";
 const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every(isString);
-const isBooleanOrNull = (x: unknown): x is boolean | null => typeof x === "boolean" || x === null;
 const oneOf = <T extends string>(values: readonly T[]) => (x: unknown): x is T => values.includes(x as T);
 
 const isTabType = oneOf<TabType>(["fda", "nadac", "new"]);
@@ -98,8 +112,9 @@ const isFdaSearchParams = (x: unknown): x is AdvancedFdaSearchParams =>
   && typeof x.includeSamplePackages === "boolean" && typeof x.includeResultsWNoPrices === "boolean";
 
 const isFdaResultFilter = (x: unknown): x is FdaResultFilter =>
-  isObject(x) && isStringArray(x.productNdcs) && isStringArray(x.dosageForms) && isStringArray(x.routes)
-  && isStringArray(x.labelers) && isBooleanOrNull(x.includeOtc) && isBooleanOrNull(x.includeSamplePackages);
+  isObject(x) && isStringArray(x.excludedProductNdcs) && isStringArray(x.excludedDosageForms)
+  && isStringArray(x.excludedRoutes) && isStringArray(x.excludedLabelers)
+  && typeof x.excludeOtc === "boolean" && typeof x.excludeSamplePackages === "boolean";
 
 const isNadacSearchParams = (x: unknown): x is NadacSearchParams =>
   isObject(x) && isString(x.ndcDescription) && isString(x.ndc) && isString(x.minDate) && isString(x.maxDate);
@@ -134,15 +149,40 @@ export function saveWorkspace(workspace: PersistedWorkspace): void {
   write(WORKSPACE_KEY, workspace);
 }
 
-/** Drops stored tab state for tabs that no longer exist (e.g. closed in another session). */
-export function pruneTabStates(keepTabIds: string[]): void {
+/**
+ * Deletes stored data that can never be read again: state for tabs that are not in the
+ * workspace, and anything stored under an older VERSION's prefix.
+ */
+export function pruneStoredState(keepTabIds: string[]): void {
   const keep = new Set([...keepTabIds, ...Object.values(STANDALONE_TAB_IDS)].map(tabKey));
   try {
-    const stale = Object.keys(localStorage).filter(key => key.startsWith(TAB_KEY_PREFIX) && !keep.has(key));
+    const stale = Object.keys(localStorage).filter(key =>
+      key.startsWith(APP_PREFIX)
+      && (!key.startsWith(PREFIX + ".") || (key.startsWith(TAB_KEY_PREFIX) && !keep.has(key))));
     stale.forEach(remove);
   } catch {
     // Nothing to do: storage is unavailable.
   }
+}
+
+/**
+ * Calls `onConflict` (once) when another browser window changes this app's stored data, and
+ * stops this window's writes from then on: its in-memory state is now older than storage, and
+ * saving it would overwrite the other window's changes. A window that only re-saves what is
+ * already stored (e.g. a second window opening) is not a conflict.
+ *
+ * @returns a function that stops watching
+ */
+export function watchOtherWindows(onConflict: () => void): () => void {
+  const handleStorage = (event: StorageEvent) => {
+    if (readOnly || event.storageArea !== localStorage) return;
+    if (event.key !== null && !event.key.startsWith(PREFIX + ".")) return;
+    if (event.key !== null && lastWritten.has(event.key) && lastWritten.get(event.key) === event.newValue) return;
+    readOnly = true;
+    onConflict();
+  };
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
 }
 
 // --- Search tabs --------------------------------------------------------------------------

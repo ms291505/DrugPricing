@@ -10,11 +10,11 @@ import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceContext } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { defaultTitleFor } from "../../library/tabTypeRegistry";
-import { defaultAdvFdaSearchParams } from "../../library/types.ts";
+import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/types.ts";
 
 export default function FdaSearchTool() {
 
-  const { fdaSearchParams, setFdaSearchParams } = useFdaSearchContext();
+  const { fdaSearchParams, setFdaSearchParams, setFdaResultFilter } = useFdaSearchContext();
 
   const { renameTab, findTab } = useWorkspaceContext();
 
@@ -40,6 +40,8 @@ export default function FdaSearchTool() {
     if (canChangeName) renameTab(id, draftSearchParams.proprietaryName.toUpperCase());
 
     setFdaSearchParams(draftSearchParams);
+    // A new search starts unfiltered.
+    setFdaResultFilter(createFdaResultFilter());
   }
 
   return (

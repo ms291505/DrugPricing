@@ -19,6 +19,8 @@ type SearchContextType = {
   setNewChartRows: React.Dispatch<React.SetStateAction<GridRowSelectionModel>>;
   searchParams: NadacSearchParams | null;
   setSearchParams: React.Dispatch<React.SetStateAction<NadacSearchParams | null>>;
+  /** False while the tab hasn't been shown yet; `useNadacSearch` waits for it. */
+  searchEnabled: boolean;
 }
 
 export const SearchContext = createContext<SearchContextType>({
@@ -34,6 +36,7 @@ export const SearchContext = createContext<SearchContextType>({
   setNewChartRows: () => { },
   searchParams: null,
   setSearchParams: () => { },
+  searchEnabled: true,
 });
 
 export type NadacSearchInitialState = {
@@ -45,9 +48,10 @@ type ProviderProps = {
   children: React.ReactNode,
   /** State restored from storage; the search re-runs from `searchParams`. */
   initial?: NadacSearchInitialState,
+  searchEnabled?: boolean,
 };
 
-export const SearchContextProvider = ({ children, initial }: ProviderProps) => {
+export const SearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
   const [newChartRows, setNewChartRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
   const [searchParams, setSearchParams] = useState<NadacSearchParams | null>(initial?.searchParams ?? null);
@@ -88,7 +92,8 @@ export const SearchContextProvider = ({ children, initial }: ProviderProps) => {
       newChartRows,
       setNewChartRows,
       setSearchParams,
-      searchParams
+      searchParams,
+      searchEnabled,
     }}>
       {children}
     </SearchContext.Provider>

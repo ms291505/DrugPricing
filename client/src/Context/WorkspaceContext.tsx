@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { validateTabTitle, type LayoutMode, type TabType, type WorkspaceTab } from "../library/types";
 import { defaultTitleFor } from "../library/tabTypeRegistry";
-import { loadWorkspace, pruneTabStates, removeTabState, saveWorkspace } from "../library/persist";
+import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
+import toast from "react-hot-toast";
+import { Box, Button } from "@mui/material";
 
 type WorkspaceContextType = {
   tabs: Array<WorkspaceTab>;
@@ -53,7 +55,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     const tab = createNewTab();
     const workspace = loadWorkspace() ?? { tabs: [tab], layoutMode: "single" as LayoutMode, paneAssignment: [tab.id] };
     // Saved state for tabs that aren't in the workspace can never be shown again.
-    pruneTabStates(workspace.tabs.map(t => t.id));
+    pruneStoredState(workspace.tabs.map(t => t.id));
     return workspace;
   });
   const [tabs, setTabs] = useState<Array<WorkspaceTab>>(initialWorkspace.tabs);
@@ -65,6 +67,18 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   useEffect(() => {
     saveWorkspace({ tabs, layoutMode, paneAssignment });
   }, [tabs, layoutMode, paneAssignment]);
+
+  // Another window changed the saved workspace: this one stops saving (persist.ts) and asks
+  // for a reload, rather than overwriting the newer data with its own older copy.
+  useEffect(() => watchOtherWindows(() => {
+    toast(
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        Your workspace changed in another window. Changes here won't be saved.
+        <Button size="small" variant="outlined" onClick={() => window.location.reload()}>Reload</Button>
+      </Box>,
+      { id: "workspace-changed-elsewhere", duration: Infinity },
+    );
+  }), []);
 
   const addTab = (tabType: TabType, title?: string) => {
     const id = crypto.randomUUID();
