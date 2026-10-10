@@ -21,10 +21,14 @@ workspace, but they should go away. What removing them touches:
   Once the ids are gone, the next load prunes their saved state
   (`drugpricing.v1.tab.page-fda`/`page-nadac`) on its own, so no cleanup code is needed.
 - `AGENTS.md`: the persistence notes that mention the standalone pages.
-- Testing: agents (and Chrome checks) have used `/fda-search` as a quick page. A workspace tab
-  in single layout is the same page. If a direct link is still wanted, a small
-  `/workspace?new=fda` that opens a fresh tab of that type would replace it. **Open question for
-  the author:** is that shortcut wanted, or is clicking "new tab" enough?
+- **Replace them with a route shortcut (decided 2026-10-10):** `/workspace?new=fda` (or
+  `?new=nadac`) opens a fresh workspace tab of that type and shows it, so agents and Chrome checks
+  still get a one-URL way to a search page. After creating the tab, replace the URL with plain
+  `/workspace` (`navigate(..., { replace: true })`). Otherwise every reload, with the workspace
+  persisted, adds another tab. Dev runs under `StrictMode`, which runs effects twice, so guard
+  against creating two tabs (e.g. a ref, or create the tab while reading the initial
+  workspace rather than in an effect). Ignore unknown types. Testing restore after a reload then
+  happens on that workspace tab, which is closer to real use than the standalone pages were.
 - With only the workspace, `/about` and `/welcome` left, `AppShell`'s "keep the workspace mounted
   but hidden" switch may simplify. Check before changing: it exists so workspace tabs keep their
   state while About is open.
