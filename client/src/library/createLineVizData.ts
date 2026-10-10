@@ -1,4 +1,4 @@
-import type { NadacPrice } from "./types";
+import type { ChartPrice } from "./types";
 
 type DateNumber = number;
 type Ndc = string;
@@ -20,10 +20,10 @@ export const rangeKey = (ndc: Ndc) => ndc + RANGE_KEY_SUFFIX;
  * the product NDC). Those are averaged into one point, and their min–max spread is kept under
  * `rangeKey(ndc)` so the chart can show it instead of hiding it.
  *
- * @param nadacPrices - an array of NadacPrices, all in one pricing unit
+ * @param nadacPrices - prices, all in one pricing unit
  * @returns rows sorted by date, plus the NDCs that have a spread on at least one date
  */
-export function createLineVizData(nadacPrices: NadacPrice[]) {
+export function createLineVizData(nadacPrices: ChartPrice[]) {
   const byDate = nadacPrices.reduce<Accumulator>((acc, { asOfDate, ndc, nadacPerUnit }) => {
     const dateKey = asOfDate.getTime();
     acc[dateKey] ??= {};

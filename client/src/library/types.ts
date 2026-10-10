@@ -73,40 +73,11 @@ export type DrugDescription = {
   ndcDescription: string
 }
 
-export type LineChart = {
-  id: string;
-  nadacPrices: NadacPrice[];
-  type: "line"
-};
-
-export type BarChart = {
-  id: string;
-  nadacPrices: NadacPrice[];
-  type: "bar"
-};
-
-export type Chart = LineChart | BarChart;
-
-export type ChartType = Chart["type"];
-
-export type ChartFactory<T extends ChartType> = (
-  nadacPrices: NadacPrice[],
-  id: string
-) => Extract<Chart, { type: T }>;
-
-export const chartTypeRegistry: { [T in ChartType]: ChartFactory<T> } = {
-  line: (nadacPrices, id) => ({ type: "line", nadacPrices, id }),
-  bar: (nadacPrices, id) => ({ type: "bar", nadacPrices, id }),
-};
-
-export function createChart<T extends ChartType>(
-  type: T,
-  nadacPrices: NadacPrice[],
-  id: string
-): Extract<Chart, { type: T }> {
-  const factory = chartTypeRegistry[type] as ChartFactory<T>;
-  return factory(nadacPrices, id);
-}
+/**
+ * The fields a chart reads from a price. Both live search results (`NadacPrice`) and pinned
+ * chart snapshots (see `explorerItems.ts`) provide them.
+ */
+export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit">;
 
 export type NadacSearchParams = {
   ndcDescription: string;

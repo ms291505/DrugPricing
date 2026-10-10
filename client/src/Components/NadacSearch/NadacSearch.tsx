@@ -18,7 +18,7 @@ export default function NadacSearch() {
   const [ndc, setNdc] = useState("");
   const [minDate, setMinDate] = useState(formatDateValue(MIN_DATE));
   const [maxDate, setMaxDate] = useState(formatDateValue(MAX_DATE));
-  const { setData, setVizData, setCharts, setSearchParams } = useSearchContext();
+  const { setData, setVizData, setSearchParams } = useSearchContext();
 
   // The server matches NDCs in NADAC's stored form, so convert what the user typed
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
@@ -42,7 +42,6 @@ export default function NadacSearch() {
       minDate: minDate,
       maxDate: maxDate
     });
-    setCharts([]);
   }
 
   const handleNdcDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {

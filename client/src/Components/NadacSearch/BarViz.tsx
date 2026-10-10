@@ -1,5 +1,5 @@
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts";
-import type { DrugSummary, NadacPrice } from "../../library/types";
+import type { ChartPrice, DrugSummary } from "../../library/types";
 import { useTheme } from "@mui/material/styles";
 import nadacPriceToDrugSummary from "../../library/nadacPriceToDrugSummary";
 import { dollarFormatter } from "../../library/dollarFormatter";
@@ -9,7 +9,7 @@ import BarVizToolTipLabel from "./BarVizToolTipLabel";
 import UnitSplit from "./UnitSplit";
 
 type Props = {
-  nadacPrices: NadacPrice[],
+  nadacPrices: ChartPrice[],
   border?: boolean
 }
 
@@ -25,7 +25,7 @@ export default function BarViz({ nadacPrices }: Props) {
 }
 
 type UnitBarChartProps = {
-  nadacPrices: NadacPrice[],
+  nadacPrices: ChartPrice[],
   pricingUnit: string,
 }
 

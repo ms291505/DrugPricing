@@ -123,28 +123,43 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
-| React Query hooks | `src/hooks/` — `useNadacSearch.ts`, `useFdaSearch.ts`, plus UI hooks (`useMobile`, `useOnScreen`, `useScrolled`) |
-| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `GlobalModalContext` |
+| React Query hooks | `src/hooks/` — `useNadacSearch.ts`, `useFdaSearch.ts`, item provenance (`useFdaItemSource`, `useNadacItemSource`), plus UI hooks (`useMobile`, `useOnScreen`, `useScrolled`) |
+| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` |
 
 Feature folders under `src/Components/`:
 
 - `Workspace/` — the primary UI. A tabbed, multi-pane workspace (`WorkspaceContext` owns
-  tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's content by
-  `TabType`, resolved in `src/library/types.ts`.
+  tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
+  content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
+  mounted (`display: none`), so per-tab state survives switching tabs.
 - `NadacSearch/` — NADAC search plus the visualizations shared by both search pages
   (`LineViz`, `BarViz`, `UnitSplit`, `TableViz`, `VizTools`).
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
+- `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
+  `PinnedSection`/`PinnedItemCard`, `PinButton`, `AddChartControl`, `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
-  `ExplorerGrid/`, `TabCreator/`, `ui/` — supporting UI.
+  `TabCreator/`, `ui/` — supporting UI.
 
 Notes:
 
-- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz`, `MuiBarViz` (`@mui/x-charts`), and
-  `CreateChart` are not imported anywhere.
-- **Chart data rules** (both search pages feed charts `NadacPrice[]`):
+- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz` and `MuiBarViz` (`@mui/x-charts`) are
+  not imported anywhere.
+- **Explorer items: system vs. pinned.** A search tab shows two kinds of cards.
+  - *System* items (the results table, auto charts, price-change charts) are derived from the
+    current search on every render and never stored.
+  - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
+    `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never
+    touch them. Don't clear them on search, and don't write system charts into them.
+  - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
+    today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
+    `points: [ms, price][]`), which is plain JSON so it can be persisted. `fromChartSeries` turns
+    it back into `ChartPrice[]` for `LineViz`/`BarViz`.
+  - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` for page
+    cards, `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+- **Chart data rules** (charts take `ChartPrice[]`, which `NadacPrice` satisfies):
   - A chart series is one `NadacPrice.ndc`. At FDA product level that is the *product* NDC, so
     several packages share a series and can disagree on a date. `createLineVizData` averages
     them per date and keeps their min–max as `rangeKey(ndc)`, which `LineViz` shades. Never

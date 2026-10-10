@@ -1,11 +1,11 @@
 import { Box, Chip, Typography } from "@mui/material";
 import type { ReactNode } from "react";
-import type { NadacPrice } from "../../library/types";
+import type { ChartPrice } from "../../library/types";
 import { pricingUnitLabel, splitByPricingUnit } from "../../library/chartSeries";
 
 type Props = {
-  nadacPrices: NadacPrice[],
-  renderChart: (nadacPrices: NadacPrice[], pricingUnit: string) => ReactNode,
+  nadacPrices: ChartPrice[],
+  renderChart: (nadacPrices: ChartPrice[], pricingUnit: string) => ReactNode,
 }
 
 /**

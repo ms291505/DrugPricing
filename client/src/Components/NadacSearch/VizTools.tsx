@@ -8,25 +8,29 @@ import InputLabel from "@mui/material/InputLabel";
 import FormControl from "@mui/material/FormControl";
 import Paper from "@mui/material/Paper"
 import Divider from "@mui/material/Divider"
-import Button from "@mui/material/Button"
 import { CONSTANT } from "../../library/constants";
-import type { LineChart } from "../../library/types";
+import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
+import { countSeries } from "../../library/chartSeries";
+import AddChartControl from "../ExplorerGrid/AddChartControl";
+import useNadacItemSource from "../../hooks/useNadacItemSource";
 
 export default function VizTools() {
-  const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData, setCharts } = useSearchContext();
-  const addChartButtonText = newChartRows.ids.size > 0 ? "Add Chart" : "Select Drugs to Add Chart";
-  const addChartDisabled = newChartRows.ids.size > 0 ? false : true;
-  const handleAddChart = () => {
-    const ndcs = [...newChartRows.ids];
-    const chartData = vizData.filter((nadacPrice) => (ndcs.includes(nadacPrice.ndc)));
-    const id = crypto.randomUUID();
-    const newChart: LineChart = {
-      type: "line",
-      nadacPrices: chartData,
-      id: id
-    };
+  const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
+  const { addItem } = useExplorerItems();
+  const itemSource = useNadacItemSource();
 
-    setCharts((prev) => [...prev, newChart]);
+  const handleAddChart = (chartType: ChartType) => {
+    const ndcs = new Set([...newChartRows.ids].map(String));
+    const chartData = vizData.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
+    if (chartData.length === 0) return;
+
+    addItem(createChartItem({
+      chartType,
+      prices: chartData,
+      defaultTitle: addedChartTitle(chartType, countSeries(chartData), itemSource.seriesLabel),
+      source: itemSource,
+    }), { focus: true });
   }
   return (
     <Paper
@@ -73,7 +77,7 @@ export default function VizTools() {
         </FormControl>
       </Box>
       <Divider />
-      <Button disabled={addChartDisabled} variant="outlined" onClick={handleAddChart}>{addChartButtonText}</Button>
+      <AddChartControl selectedCount={newChartRows.ids.size} onAdd={handleAddChart} />
     </Paper>
   )
 }

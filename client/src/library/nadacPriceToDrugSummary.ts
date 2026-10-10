@@ -1,6 +1,6 @@
-import type { DrugSummary, NadacPrice } from "./types";
+import type { ChartPrice, DrugSummary } from "./types";
 
-export default function nadacPriceToDrugSummary(nadacPrices: NadacPrice[]): DrugSummary[] {
+export default function nadacPriceToDrugSummary(nadacPrices: ChartPrice[]): DrugSummary[] {
   return Object.entries(
     nadacPrices.reduce((acc, item) => {
       if (!acc[item.ndc]) {

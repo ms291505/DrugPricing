@@ -1,4 +1,3 @@
-import { useSearchContext } from "../../Context/SearchContext"
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper"
 import Grid from "@mui/material/Grid";
@@ -7,38 +6,31 @@ import BarViz from "./BarViz";
 import LineViz from "./LineViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
-import { useEffect } from "react";
-import type { BarChart, LineChart } from "../../library/types";
 import { shouldAutoChart } from "../../library/chartSeries";
+import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
+import PinButton from "../ExplorerGrid/PinButton";
+import PinnedSection from "../ExplorerGrid/PinnedSection";
+import useNadacItemSource from "../../hooks/useNadacItemSource";
 
+const BAR_TITLE = "Average Price by NDC";
+const LINE_TITLE = "NDC Price Over Time";
 
 export default function NadacSearchViz() {
 
-  const { charts, setCharts } = useSearchContext();
   const { data, isLoading } = useNadacSearch();
+  const itemSource = useNadacItemSource();
 
-  useEffect(() => {
-    if (data && shouldAutoChart(data.prices)) {
-      const barChart: BarChart = {
-        type: "bar",
-        nadacPrices: data.prices,
-        id: "defaultBar"
-      }
-      const lineChart: LineChart = {
-        type: "line",
-        nadacPrices: data.prices,
-        id: "defaultLine"
-      }
-      setCharts([barChart, lineChart]);
-    }
-  }, [data, setCharts])
+  // System charts are derived from the current result on every render, like the FDA page's.
+  // User charts live in the tab's pinned items and are not touched by a new search.
+  const prices = data?.prices ?? [];
+  const showAutoCharts = shouldAutoChart(prices);
 
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 1,
+        gap: 2,
         width: "100%"
       }}
     >
@@ -48,23 +40,33 @@ export default function NadacSearchViz() {
         </Grid>
         <Grid size={{ xs: 12, sm: 9 }}>
           <Paper sx={{ p: 1 }}>
-            <TableViz nadacPrices={data?.prices ?? []} loading={isLoading} />
+            <TableViz nadacPrices={prices} loading={isLoading} />
           </Paper>
         </Grid>
       </Grid>
-      <Grid container spacing={2} justifyContent="center">
-        {charts.map((chart) => (
-          <Grid key={chart.id} size={{ xs: 12, sm: 6 }}>
-            <Paper>
-              {
-                chart.type === "line"
-                  ? <LineViz nadacPrices={chart.nadacPrices} />
-                  : <BarViz nadacPrices={chart.nadacPrices} />
-              }
-            </Paper>
+      {showAutoCharts
+        ?
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <ExplorerGridItem
+              title={BAR_TITLE}
+              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} source={itemSource} />}
+            >
+              <BarViz nadacPrices={prices} />
+            </ExplorerGridItem>
           </Grid>
-        ))}
-      </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <ExplorerGridItem
+              title={LINE_TITLE}
+              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} source={itemSource} />}
+            >
+              <LineViz nadacPrices={prices} />
+            </ExplorerGridItem>
+          </Grid>
+        </Grid>
+        : null
+      }
+      <PinnedSection />
     </Box>
   )
 }

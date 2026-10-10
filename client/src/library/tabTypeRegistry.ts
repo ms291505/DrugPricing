@@ -1,8 +1,7 @@
 import FdaSearch from "../Components/FDA/FdaSearch";
 import NadacSearch from "../Components/NadacSearch/NadacSearch";
 import TabCreator from "../Components/Workspace/TabCreator";
-import { FdaSearchContextProvider } from "../Context/FdaSearchContext";
-import { SearchContextProvider } from "../Context/SearchContext";
+import { FdaTabProvider, NadacTabProvider } from "../Context/TabProviders";
 import type { TabType } from "./types";
 
 export type TabTypeDefinition = {
@@ -13,17 +12,17 @@ export type TabTypeDefinition = {
 
 export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
   fda: {
-    Provider: FdaSearchContextProvider,
+    Provider: FdaTabProvider,
     Content: FdaSearch,
     defaultTitle: "New FDA Search",
   },
   nadac: {
-    Provider: SearchContextProvider,
+    Provider: NadacTabProvider,
     Content: NadacSearch,
     defaultTitle: "New NADAC Search",
   },
   new: {
-    Provider: FdaSearchContextProvider,
+    Provider: FdaTabProvider,
     Content: TabCreator,
     defaultTitle: "New Tab",
   }

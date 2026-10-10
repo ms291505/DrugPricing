@@ -1,21 +1,26 @@
 import Paper from "@mui/material/Paper"
-import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, Button, } from "@mui/material";
-import { useEffect, useMemo, useState, } from "react";
+import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, } from "@mui/material";
+import { useEffect, useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { createChart, isFdaProductOtc, } from "../../library/types";
+import { isFdaProductOtc, } from "../../library/types";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
-import BarChartIcon from '@mui/icons-material/BarChart';
-import SsidChartIcon from '@mui/icons-material/SsidChart';
+import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
+import { countSeries } from "../../library/chartSeries";
+import AddChartControl from "../ExplorerGrid/AddChartControl";
+import useFdaItemSource from "../../hooks/useFdaItemSource";
 
 export default function FdaPageTools() {
 
-  const [addChartToggle, setAddChartToggle] = useState(false);
+  const { fdaResultFilter, setFdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
-  const { fdaResultFilter, setFdaResultFilter, selectedRows, setCharts, fdaResultDetailLevel } = useFdaSearchContext();
+  const { addItem } = useExplorerItems();
+
+  const itemSource = useFdaItemSource();
 
   const { data } = useFdaSearch();
 
@@ -68,11 +73,7 @@ export default function FdaPageTools() {
 
   }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
 
-  const addChartButtonText = [...selectedRows.ids].length > 0
-    ? "Add Chart"
-    : "Select Drugs to Add Chart"
-
-  const handleAddChart = (chartType: "line" | "bar") => {
+  const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));
 
     // At product level `ndc` is the product NDC, at package level the package NDC,
@@ -80,12 +81,14 @@ export default function FdaPageTools() {
     const chartData = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel)
       .filter(price => ndcs.has(price.ndc));
 
-    if (chartData.length > 0) {
-      const newChart = createChart(chartType, chartData, crypto.randomUUID());
-      setCharts((prev) => [...prev, newChart]);
-    }
+    if (chartData.length === 0) return;
 
-    setAddChartToggle(false);
+    addItem(createChartItem({
+      chartType,
+      prices: chartData,
+      defaultTitle: addedChartTitle(chartType, countSeries(chartData), itemSource.seriesLabel),
+      source: itemSource,
+    }), { focus: true });
   }
 
   const pageToolsSectionSxProps: SxProps<Theme> = {
@@ -195,18 +198,7 @@ export default function FdaPageTools() {
             />
           </Tooltip>
         </FormGroup>
-        {addChartToggle
-          ?
-          <Box sx={{
-            display: "flex",
-            gap: 1
-          }}>
-            <Button sx={{ width: "100%" }} variant="contained" onClick={() => handleAddChart("bar")}><BarChartIcon /></Button>
-            <Button sx={{ width: "100%" }} variant="contained" onClick={() => handleAddChart("line")}><SsidChartIcon /></Button>
-          </Box>
-          :
-          <Button disabled={[...selectedRows.ids].length === 0} variant="outlined" onClick={() => setAddChartToggle(true)}>{addChartButtonText}</Button>
-        }
+        <AddChartControl selectedCount={selectedRows.ids.size} onAdd={handleAddChart} />
       </Box>
     </Paper>
   )
