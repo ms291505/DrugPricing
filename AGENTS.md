@@ -60,9 +60,9 @@ caching there unless changing that deliberately.
 API surface, all under `/api`:
 
 - `GET /api/up` — liveness.
-- `GET /api/app-init` — NADAC as-of date range, unique dosage form names, route names.
-  **Not called by the client yet** (as of 2026-10); the chart plan intends to use the as-of
-  range for default date windows.
+- `GET /api/app-init` — NADAC as-of date range, unique dosage form names, route names. The
+  client (`useAppInit`) uses only the date range: NADAC search default dates, date-input limits,
+  and the Page Tools chart-date presets. The name lists are unused as of 2026-10.
 - `GET /api/nadac-prices/{id}`
 - `GET /api/nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`
 - `GET /api/nadac-prices/advanced-search` — **incomplete**, currently returns an empty `Ok()`.
@@ -126,10 +126,10 @@ There is currently no server test project.
 | Concern | Where |
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
-| API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrug*.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrugSummary.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
 | Shared constants | `src/library/constants.ts` |
-| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), and UI (`useMobile`, `useOnScreen`, `useScrolled`) |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` |
 
@@ -139,18 +139,19 @@ Feature folders under `src/Components/`:
   tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
   content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
   mounted (`display: none`), so per-tab state survives switching tabs.
-- `NadacSearch/` — NADAC search plus the visualizations shared by both search pages
-  (`LineViz`, `BarViz`, `UnitSplit`, `TableViz`, `VizTools`).
+- `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
+- `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
+  `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates.
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
-  `PinnedSection`/`PinnedItemCard`, `PinButton`, `AddChartControl`, `ChartItemBody`.
+  `PinnedSection`/`PinnedItemCard`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
+  `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
   `TabCreator/`, `ui/` — supporting UI.
 
 Notes:
 
-- Charts are recharts (`LineViz`/`BarViz`). `MuiLineViz` and `MuiBarViz` (`@mui/x-charts`) are
-  not imported anywhere.
+- Charts are recharts (`Charts/LineViz`, `Charts/BarViz`).
 - **Explorer items: system vs. pinned.** A search tab shows two kinds of cards.
   - *System* items (the results table, auto charts, price-change charts) are derived from the
     current search on every render and never stored.
@@ -164,9 +165,24 @@ Notes:
     today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
     `points: [ms, price][]`), which is plain JSON so it can be persisted. `fromChartSeries` turns
     it back into `ChartPrice[]` for `LineViz`/`BarViz`.
+  - **Chart dates are a view setting, not a filter.** A chart item keeps *every* date of its
+    series and stores the dates it shows as `dateWindow` (`DateWindow` in `library/dates.ts`:
+    ms, inclusive, a null end is open). The window can be widened later from the card's dates
+    chip. `UnitSplit` clips to the window, and `LineViz` stretches the x-axis across the whole window,
+    so a series that starts late shows a gap rather than a shorter axis. The Page Tools "Chart
+    dates" control (`ChartDatesControl`, both pages) sets `chartWindow` in
+    `ExplorerItemsContext`: auto charts show it, and Add Chart and Pin start new items at it. It
+    is not part of `FdaResultFilter` and doesn't touch the results table or price-change
+    flagging, and a new search keeps it.
+  - Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the
+    change, with the change shaded (`changeSpan`, stored on pinned copies too), and toggle to the
+    full history. The Pinned section's "Match scale" switch gives pinned **line** charts in the
+    same pricing unit one price axis (`matchedPriceDomains`), over their visible dates.
   - An item's `source` (its provenance chip) is computed by `createChartItem` from the item's data
     compared with the whole unfiltered search result (`ChartOrigin.resultPrices`, from the
-    `use*ChartOrigin` hooks), never from filter state, so it stays true once stored. What a
+    `use*ChartOrigin` hooks), never from filter state, so it stays true once stored. `filtered`
+    compares whole series, not windows: the snapshot holds every date, so missing points can
+    only come from page filters (e.g. an excluded package of a product). What a
     series is is stored as `seriesKind` (`"product" | "package" | "ndc"`), not display text;
     wording comes from one table in `explorerItems.ts`.
   - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` for page
@@ -180,6 +196,13 @@ Notes:
     which splits by `pricingUnit` and captions each chart with its unit.
   - Auto-added charts are gated on **series** count, not price rows (one package has about
     250 weekly rows). Both pages call `shouldAutoChart` in `chartSeries.ts`.
+  - API dates are calendar days that `new Date("YYYY-MM-DD")` reads as UTC midnight. Every date
+    display, in charts or anywhere else, goes through the UTC helpers in `library/dates.ts`
+    (`formatDate`, `formatShortDate`, `toDateInput`). Local formatting shows the day before in
+    the Americas.
+  - Chart animations are off (`isAnimationActive={false}`). Recharts morphs the old line into the new
+    one point by point, which drew made-up prices whenever the dates changed, and re-renders
+    kept restarting it.
   - FDA table row ids are the NDC that level's chart data uses (product NDC or package NDC),
     which is what Add Chart filters on. `setFdaResultDetailLevel` in `FdaSearchContext`
     clears the selection on every level change.
@@ -205,7 +228,7 @@ Notes:
   `FdaResultFilter` is planned NADAC/FDA parity work.
 - **Persistence (`library/persist.ts`).** The workspace (tabs, layout, pane assignment) and each
   search tab's state (FDA: search params, result filter, detail level; NADAC: search params,
-  excluded Drug descriptions; both: pinned items) are saved to `localStorage` and restored on
+  excluded Drug descriptions; both: pinned items, chart dates, Match scale) are saved to `localStorage` and restored on
   load. A restored tab re-runs its search; pinned items come back from their snapshots. Row
   selection and card collapse state of system cards are not saved.
   - Keys are `drugpricing.v<VERSION>.workspace` and `drugpricing.v<VERSION>.tab.<tabId>`. Bump
@@ -216,6 +239,9 @@ Notes:
     (`loadFdaTabState`/`loadNadacTabState`), each field with its own default, so a bad field or
     a malformed pinned item never costs the tab its other pinned items. A page filter is kept
     only with a valid search. Writes that fail (storage full or blocked) warn once with a toast.
+  - Adding a field doesn't need a `VERSION` bump: make it optional when reading and give it a
+    default. Pinned charts saved before chart dates existed have no `dateWindow` and load showing
+    all dates. Bump only when old data would be misread.
   - Tab providers (`TabProviders.tsx`) load once on mount and save on every change; they get
     `tabId` as a prop from `TabInstance`. The standalone `/fda-search` and `/nadac-search` pages
     persist under `STANDALONE_TAB_IDS`. Blank "new" tabs save nothing.
@@ -240,9 +266,13 @@ npm install
 npm run dev      # Vite dev server
 npm run build    # tsc -b && vite build
 npm run lint     # eslint
+npm test         # vitest run
 ```
 
-There is currently no client test suite.
+Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
+windows, chart item provenance, Match scale domains, and loading saved tab state. They run in
+the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
+local-time date bug fails them. There are no component tests yet.
 
 ## ETL (`etl/`) — Python 3.13
 
@@ -324,8 +354,9 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
   `etl/library/models.py`, and `client/src/library/types.ts` + `src/api/types.ts`.
 - Minimum search lengths are duplicated across server and client and must be changed on both
   sides: server `MIN_NDC_DESCRIPTION_LENGTH`/`MIN_NDC_LENGTH` (`NadacService`) and
-  `MIN_NAME_LENGTH` (`FdaProductService`); client `client/src/library/constants.ts`. Date bounds
-  are client-only (`MIN_DATE`/`MAX_DATE` defaults); the server snaps to loaded as-of dates.
+  `MIN_NAME_LENGTH` (`FdaProductService`); client `client/src/library/constants.ts`. NADAC search
+  dates default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data (from `app-init`;
+  ending today if that fails); the server snaps both dates to loaded as-of dates.
 - Prefer adding new server logic in `Services/` and new data access in `Data/Repositories/`
   rather than in endpoint handlers.
 - Repository methods that `TryGetValue` must also `_cache.Set` before returning, and must use
@@ -338,6 +369,10 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
 
 ## Known rough edges (fair game for review)
 
+Structural cleanups (dead code, file moves, renames, the planned removal of the standalone
+`/fda-search` and `/nadac-search` routes) are tracked in [RECOMMENDATIONS.md](RECOMMENDATIONS.md).
+Add to it rather than fixing them inside unrelated work.
+
 - `/api/nadac-prices/advanced-search` is stubbed out and returns nothing useful.
 - `AdvancedSearchRequest` is bound `[FromBody]` on a `MapGet` route; the FDA equivalent
   smuggles JSON through a query-string parameter.
@@ -348,8 +383,9 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
   search results are never cached (it breaks the cache rule under Conventions).
 - `NadacService.ValidateNdc` is never called, so the server does not enforce the NDC minimum:
   `ndc=1` returns 47,072 rows for a one-week window. Only the client enforces it.
-- No automated tests for the server or client. ETL has pytest coverage for model parsing
-  and helpers only (see `etl/tests/`); fetch, load, and tombstone are untested.
+- No server tests. The client has Vitest coverage for `library/` logic only (no component
+  tests). ETL has pytest coverage for model parsing and helpers only (see `etl/tests/`); fetch,
+  load, and tombstone are untested.
 - `NadacPrice.loaded_at` in `etl/library/models.py` still defaults to
   `datetime.now(timezone.utc)` evaluated at **import** time, so a run shares one timestamp by
   accident. Harmless today because nothing keys off it; the FDA models had the same default
