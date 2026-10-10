@@ -178,23 +178,31 @@ export function isFdaProductOtc(productTypeName: string) {
 
 export type ResultSelect = ((data: FdaProductSearchResult) => FdaProductSearchResult) | undefined;
 
+/**
+ * The FDA results-page filter, stored as what the user *excluded*. Anything not excluded shows,
+ * including results that are new since the filter was set (e.g. a restored tab's re-run search),
+ * so nothing needs resetting when results arrive. A new search starts from `createFdaResultFilter()`.
+ */
 export type FdaResultFilter = {
-  productNdcs: string[],
-  dosageForms: string[],
-  routes: string[],
-  includeOtc: boolean | null,
-  labelers: string[],
-  includeSamplePackages: boolean | null,
+  excludedProductNdcs: string[],
+  excludedDosageForms: string[],
+  excludedRoutes: string[],
+  excludedLabelers: string[],
+  excludeOtc: boolean,
+  excludeSamplePackages: boolean,
 }
+
+/** The list-valued parts of `FdaResultFilter`, each edited by a `SelectFilter`. */
+export type FdaResultFilterListKey = "excludedProductNdcs" | "excludedDosageForms" | "excludedRoutes" | "excludedLabelers";
 
 export function createFdaResultFilter(): FdaResultFilter {
   return ({
-    productNdcs: [],
-    dosageForms: [],
-    routes: [],
-    includeOtc: null,
-    labelers: [],
-    includeSamplePackages: null
+    excludedProductNdcs: [],
+    excludedDosageForms: [],
+    excludedRoutes: [],
+    excludedLabelers: [],
+    excludeOtc: false,
+    excludeSamplePackages: false,
   })
 }
 
@@ -206,22 +214,19 @@ export function applyFdaResultFilter(
     ...data,
     products: data.products
       .filter(p =>
-        filter.productNdcs.includes(p.productNdc) &&
-        filter.dosageForms.includes(p.dosageFormName) &&
-        p.routeName.some(r => filter.routes.includes(r)) &&
-        (filter.includeOtc
-          ? true
-          : isFdaProductOtc(p.productTypeName) === false) &&
-        (filter.includeSamplePackages
-          ? true
-          : p.fdaPackageDetails.some(pkg => pkg.samplePackage === false)) &&
-        filter.labelers.includes(p.labelerName)
+        !filter.excludedProductNdcs.includes(p.productNdc) &&
+        !filter.excludedDosageForms.includes(p.dosageFormName) &&
+        // A product shows while any of its routes is still included.
+        (p.routeName.length === 0 || p.routeName.some(r => !filter.excludedRoutes.includes(r))) &&
+        !(filter.excludeOtc && isFdaProductOtc(p.productTypeName)) &&
+        (!filter.excludeSamplePackages || p.fdaPackageDetails.some(pkg => pkg.samplePackage === false)) &&
+        !filter.excludedLabelers.includes(p.labelerName)
       )
       .map(p => ({
         ...p,
-        fdaPackageDetails: filter.includeSamplePackages
-          ? p.fdaPackageDetails
-          : p.fdaPackageDetails.filter(pkg => pkg.samplePackage === false),
+        fdaPackageDetails: filter.excludeSamplePackages
+          ? p.fdaPackageDetails.filter(pkg => pkg.samplePackage === false)
+          : p.fdaPackageDetails,
       })),
   };
 }

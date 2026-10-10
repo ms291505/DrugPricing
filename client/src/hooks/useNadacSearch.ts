@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
 
 export function useNadacSearch() {
-  const { searchParams } = useSearchContext();
+  const { searchParams, searchEnabled } = useSearchContext();
   return useQuery({
     queryKey: ["nadacSearch", searchParams],
     queryFn: async () => getNadacSearchResults(
@@ -12,6 +12,6 @@ export function useNadacSearch() {
       new Date(searchParams!.minDate),
       new Date(searchParams!.maxDate)
     ),
-    enabled: searchParams !== null
+    enabled: searchParams !== null && searchEnabled
   });
 }

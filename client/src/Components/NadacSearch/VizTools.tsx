@@ -16,7 +16,7 @@ import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 
 export default function VizTools() {
-  const { data, setVizData, ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
+  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
 
@@ -63,7 +63,6 @@ export default function VizTools() {
                 : e.target.value;
 
               setSelectedNdcDescriptions(newDescriptions);
-              setVizData(data.filter((drug) => newDescriptions.includes(drug.ndcDescription)));
             }}
           >
             {

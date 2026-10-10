@@ -31,9 +31,15 @@ export const ExplorerItemsContext = createContext<ExplorerItemsContextType>({
   highlight: null,
 });
 
+type ProviderProps = {
+  children: React.ReactNode,
+  /** Items restored from storage. */
+  initialItems?: ExplorerItem[],
+};
+
 /** Holds one tab's pinned items. Each search tab type wraps its own provider with this. */
-export const ExplorerItemsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [pinnedItems, setPinnedItems] = useState<ExplorerItem[]>([]);
+export const ExplorerItemsProvider = ({ children, initialItems }: ProviderProps) => {
+  const [pinnedItems, setPinnedItems] = useState<ExplorerItem[]>(initialItems ?? []);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 

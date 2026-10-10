@@ -1,6 +1,6 @@
 import Paper from "@mui/material/Paper"
 import { Typography, Box, Checkbox, FormGroup, FormControlLabel, type SxProps, type Theme, Divider, Tooltip, } from "@mui/material";
-import { useEffect, useMemo, } from "react";
+import { useMemo, } from "react";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc, } from "../../library/types";
@@ -58,21 +58,6 @@ export default function FdaPageTools() {
     [data]
   )
 
-  useEffect(() => {
-    if (dosageForms.length + routes.length > 0) {
-      setFdaResultFilter(prev => ({
-        ...prev,
-        productNdcs: productNdcs,
-        dosageForms: dosageForms,
-        routes: routes,
-        includeOtc: resultsHaveOtcProducts,
-        labelers: lablers,
-        includeSamplePackages: resultsHaveSamplePackages,
-      }));
-    }
-
-  }, [productNdcs, dosageForms, routes, resultsHaveOtcProducts, lablers, resultsHaveSamplePackages, setFdaResultFilter])
-
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));
 
@@ -123,22 +108,22 @@ export default function FdaPageTools() {
       <Box component="section" id="page-filters" sx={pageToolsSectionSxProps}>
         <Typography variant="subtitle2">Filters</Typography>
         <SelectFilter
-          filterKey="productNdcs"
+          filterKey="excludedProductNdcs"
           possibleValues={productNdcs}
           label="Product NDCs"
         />
         <SelectFilter
-          filterKey="dosageForms"
+          filterKey="excludedDosageForms"
           possibleValues={dosageForms}
           label="Dosage Forms"
         />
         <SelectFilter
-          filterKey="routes"
+          filterKey="excludedRoutes"
           possibleValues={routes}
           label="Routes"
         />
         <SelectFilter
-          filterKey="labelers"
+          filterKey="excludedLabelers"
           possibleValues={lablers}
           label="Lablers"
         />
@@ -163,9 +148,9 @@ export default function FdaPageTools() {
           >
             <FormControlLabel
               control={
-                <Checkbox checked={fdaResultFilter.includeOtc === true && !disabledOrEmptyOtc} disabled={disabledOrEmptyOtc}
+                <Checkbox checked={!fdaResultFilter.excludeOtc && !disabledOrEmptyOtc} disabled={disabledOrEmptyOtc}
                   onChange={() => {
-                    setFdaResultFilter(prev => ({ ...prev, includeOtc: !prev.includeOtc }))
+                    setFdaResultFilter(prev => ({ ...prev, excludeOtc: !prev.excludeOtc }))
                   }}
                 />
               }
@@ -188,9 +173,9 @@ export default function FdaPageTools() {
           >
             <FormControlLabel
               control={
-                <Checkbox checked={fdaResultFilter.includeSamplePackages === true && !disabledOrEmptySample} disabled={disabledOrEmptySample}
+                <Checkbox checked={!fdaResultFilter.excludeSamplePackages && !disabledOrEmptySample} disabled={disabledOrEmptySample}
                   onChange={() => {
-                    setFdaResultFilter(prev => ({ ...prev, includeSamplePackages: !prev.includeSamplePackages }))
+                    setFdaResultFilter(prev => ({ ...prev, excludeSamplePackages: !prev.excludeSamplePackages }))
                   }}
                 />
               }

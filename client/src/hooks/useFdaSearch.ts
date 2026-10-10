@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 export default function useFdaSearch<TData = FdaProductSearchResult>(
   select?: (data: FdaProductSearchResult) => TData,
 ) {
-  const { fdaSearchParams } = useFdaSearchContext();
+  const { fdaSearchParams, searchEnabled } = useFdaSearchContext();
 
   if (fdaSearchParams === undefined)
     throw new Error("useFdaSearch must be called within FdaSearchContext Provider.")
@@ -24,7 +24,7 @@ export default function useFdaSearch<TData = FdaProductSearchResult>(
           error: (e: Error) => e.message,
         })
     ,
-    enabled: fdaSearchParams !== null,
+    enabled: fdaSearchParams !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,
     select
   });

@@ -13,7 +13,6 @@ import * as PriceFlagger from "../../library/flagNadacPriceChange";
 import { HALF_WIDTH_GRID_SIZE, LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
-import PinnedSection from "../ExplorerGrid/PinnedSection";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 
 type Props = {
@@ -105,9 +104,6 @@ export default function FdaExplorer({ visible = true }: Props) {
         })
         : null
       }
-      <Grid size={12}>
-        <PinnedSection />
-      </Grid>
     </Grid>
   )
 }
