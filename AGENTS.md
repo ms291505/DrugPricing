@@ -369,9 +369,10 @@ ready to ship, it is merged into `main`; `main` is the deploy branch (a push to 
 
 ## Known rough edges (fair game for review)
 
-Structural cleanups (dead code, file moves, renames, the planned removal of the standalone
-`/fda-search` and `/nadac-search` routes) are tracked in [RECOMMENDATIONS.md](RECOMMENDATIONS.md).
-Add to it rather than fixing them inside unrelated work.
+Planned work is in [FUTURE_WORK.md](FUTURE_WORK.md): decided directions (such as removing the
+standalone `/fda-search` and `/nadac-search` routes), cleanups, and feature ideas that should
+shape current structure. Don't flag its items as new findings, and add to it rather than fixing
+them inside unrelated work.
 
 - `/api/nadac-prices/advanced-search` is stubbed out and returns nothing useful.
 - `AdvancedSearchRequest` is bound `[FromBody]` on a `MapGet` route; the FDA equivalent

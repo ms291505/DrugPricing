@@ -1,14 +1,12 @@
-# Reorganization recommendations
+# Future work
 
-A running list of structural cleanups spotted while working on the chart plan
-(`~/.claude/plans/i-have-a-bug-flickering-tide.md`). Each open item says roughly how big it is
-and where it fits. When an item is done, move it to **Done** with the PR that did it.
+Work that hasn't been done yet: directions the author has decided on, cleanups worth making, and
+feature ideas that should shape today's structure. Items say roughly how big they are and where
+they fit. When something is done, delete it here. The code and its PR are the record.
 
-Started during step 4 (time windows), 2026-10-10.
+## Decided
 
-## Open
-
-### Retire the standalone search routes (decided direction, 2026-10-10)
+### Retire the standalone search routes (2026-10-10)
 
 All work is meant to happen in the workspace. `/fda-search` and `/nadac-search` are left over
 from earlier versions of the app. They were handy for testing a search page outside the
@@ -47,10 +45,38 @@ workspace, but they should go away. What removing them touches:
 
 Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
 
-### Future feature to keep in mind: popular searches and recent movers
+## Cleanups
+
+### Each a small PR of its own
+
+- **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
+  (`applyFdaResultFilter`, `summarizeNadacPrices`, `validateTabTitle`). Split it by domain
+  (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
+- **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
+  chart dates and the Match scale toggle. Consider renaming it to `ExplorerContext` (or splitting
+  out a small chart-settings context) so its name matches its job. It's a pure rename across
+  about 15 files.
+- **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
+  (autocomplete in the FDA search form) or drop them from the response. The client uses only the
+  date range.
+- **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
+  Decide whether the simple endpoint stays as public API or goes.
+
+### For the NADAC/FDA parity plan
+
+- **The NADAC page copies query results into context** (`setData` in a `useEffect` in
+  `NadacSearch`), where the FDA page derives everything from `useQuery`. Deriving would remove
+  the `data`/`setData` state and a render with stale data.
+- **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
+- **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
+  Chart dates but duplicate the panel layout, heading and section styles.
+
+## Ideas
+
+### Popular searches and recent movers
 
 The author would like to show popular searches or recent price movers, linking each to a
-workspace tab (see the link format above). Two consequences for current structure:
+workspace tab (see the link format under **Decided**). Two consequences for current structure:
 
 - **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
   result). A "recent movers" list across all drugs needs it on the server, most likely computed
@@ -59,47 +85,3 @@ workspace tab (see the link format above). Two consequences for current structur
   definition before there are two implementations.
 - **"Popular searches" needs search counts,** which nothing records today. That is a server
   addition, and a privacy decision about what gets logged.
-
-### Medium (its own small PR)
-
-1. **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
-   (`applyFdaResultFilter`, `summarizeNadacPrices`, `validateTabTitle`). Split it by domain
-   (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
-2. **`ExplorerItemsContext` now holds more than items:** step 4 added the page's chart dates and
-   the Match scale toggle. Consider renaming it to `ExplorerContext` (or splitting out a small
-   chart-settings context) so its name matches its job. It's a pure rename across about 15
-   files, kept out of step 4 so the diff stays readable.
-3. **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
-   (autocomplete in the FDA search form) or drop them from the response. As of step 4 the client
-   uses only the date range.
-4. **`/api/fda-products/search` has no client caller.** Step 4 deleted the unused
-   `getFdaSearchResults`, and the client uses only `advanced-search`. Decide whether the simple
-   endpoint stays as public API or goes.
-
-### Belongs to the NADAC/FDA parity plan
-
-5. **The NADAC page copies query results into context** (`setData` in a `useEffect` in
-   `NadacSearch`), where the FDA page derives everything from `useQuery`. Deriving would remove
-   the `data`/`setData` state and a render with stale data.
-6. **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
-7. **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` now share Add Chart and
-   Chart dates but duplicate the panel layout, heading and section styles.
-
-## Done
-
-Done in step 4 (time windows):
-
-- **Deleted dead client code:** `MuiLineViz`/`MuiBarViz` and the `@mui/x-charts` dependency,
-  `fdaData`/`setFdaData` in `FdaSearchContext`, `getFdaSearchResults`, `nadacPriceToDrug.ts`,
-  `useOnScreen.ts`, the unused `Drug`/`DrugDescription` types, and the unused `border` prop on
-  the charts.
-- **Moved the shared charts** (`LineViz`, `BarViz`, `UnitSplit`, `BarVizToolTipLabel`) from
-  `NadacSearch/` to `Components/Charts/`.
-- **One home for date helpers:** `library/dates.ts`. `AGENTS.md` now says every date display
-  goes through its UTC helpers.
-- **`useNadacSearch` has the same `staleTime` as `useFdaSearch`,** so returning to a tab doesn't
-  refetch.
-- **The bar's ABOUT button linked to `/`,** which the catch-all route redirects to
-  `/workspace`, so it never showed About. It now links to `/about`.
-- **Memoized `FdaExplorer`'s derived prices and price-change flags,** which used to be rebuilt on
-  every render, including each change of the chart dates.
