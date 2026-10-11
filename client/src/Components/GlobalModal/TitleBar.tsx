@@ -14,7 +14,7 @@ export default function TitleBar() {
           justifyContent: "end"
         }}
       >
-        <IconButton size="small" onClick={() => setGlobalModal(null)}>
+        <IconButton size="small" aria-label="Close" onClick={() => setGlobalModal(null)}>
           <CancelIcon fontSize="small" />
         </IconButton>
       </Box>

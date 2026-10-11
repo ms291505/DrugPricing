@@ -5,6 +5,7 @@ import OnBoarding from "../OnBoarding/OnBoarding"
 import { Modal, Box, } from "@mui/material"
 import { MAX_GLOBAL_MODAL_HEIGHT, MAX_GLOBAL_MODAL_WIDTH } from "../../library/constants"
 import TitleBar from "./TitleBar"
+import SettingsPanel from "../Settings/SettingsPanel"
 
 
 export default function GlobalModal() {
@@ -12,7 +13,7 @@ export default function GlobalModal() {
   const globalModalRegistry: Record<GlobalModal, ReactNode> = {
     about: <About />,
     onboarding: <OnBoarding />,
-    settings: <>Settings</>,
+    settings: <SettingsPanel />,
     help: <OnBoarding />,
   }
 

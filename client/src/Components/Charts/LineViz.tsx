@@ -1,9 +1,9 @@
 import { type ChartPrice, } from "../../library/types.ts";
-import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceArea, } from "recharts";
+import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceDot, ReferenceLine, } from "recharts";
 import { NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { createLineVizData, rangeKey } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
-import { dateTicks, fittedPriceAxis, formatPrice, priceTickFormatter } from "../../library/chartScale.ts";
+import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import type { ChartChangeSpan } from "../../library/explorerItems.ts";
@@ -16,7 +16,7 @@ type Props = {
   colors?: Map<string, string>;
   /** The dates to show. The axis spans the whole window, even where there are no prices. */
   dateWindow?: DateWindow;
-  /** A price change to shade and label. */
+  /** A price change to call out on the line. */
   changeSpan?: ChartChangeSpan;
   /** Shared price range per pricing unit ("Match scale"); units not in it fit their own data. */
   priceRanges?: Map<string, [number, number]>;
@@ -129,16 +129,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
         itemSorter={(item) => -(item.value as number)}
         {...chartTheme.tooltip}
       />
-      {changeSpan
-        ? <ReferenceArea
-          x1={changeSpan.start}
-          x2={changeSpan.end}
-          fill={changeColor}
-          fillOpacity={0.25}
-          label={{ value: changeSpan.label, position: "insideTop", fill: chartTheme.textPrimary, fontSize: chartTheme.fontSize }}
-        />
-        : null
-      }
+      {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
       {ndcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
         <Area
           key={rangeKey(ndc)}
@@ -171,4 +162,71 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
       ))}
     </ComposedChart>
   );
+}
+
+/**
+ * Calls out a price change on the line itself: the old price continues as a dashed line after
+ * the change, so the gap to the new price is the size of the change; dots at the top and bottom
+ * of the step mark the old and new prices, and a pill beside it reads "$9.69 → $5.52". The percent is in the card title.
+ * Rendered as an array, since recharts needs its reference elements as direct chart children.
+ */
+function changeCallout(
+  span: ChartChangeSpan,
+  color: string,
+  xDomain: [number, number],
+  chartTheme: ReturnType<typeof useChartTheme>,
+) {
+  const { from, to } = span;
+  // Pinned before the prices were stored: mark the date and label the percent.
+  if (from === undefined || to === undefined) {
+    return [
+      <ReferenceLine
+        key="change"
+        x={span.end}
+        stroke={color}
+        strokeDasharray="4 4"
+        label={{ value: span.label, position: "insideTopRight", fill: chartTheme.textPrimary, fontSize: chartTheme.fontSize }}
+      />,
+    ];
+  }
+
+  const text = `${formatPriceLabel(from)} → ${formatPriceLabel(to)}`;
+  // Beside the step on the side with more room, halfway between the two prices.
+  const placeLeft = (span.end - xDomain[0]) / (xDomain[1] - xDomain[0] || 1) > 0.6;
+  const pillWidth = text.length * 7 + 16;
+  const pillHeight = 22;
+
+  const pill = (
+    <ReferenceDot
+      key="callout"
+      x={span.end}
+      y={(from + to) / 2}
+      r={0}
+      ifOverflow="visible"
+      label={({ viewBox }: { viewBox?: { x?: number, y?: number } }) => {
+        const x = (viewBox?.x ?? 0) + (placeLeft ? -pillWidth - 10 : 10);
+        const y = (viewBox?.y ?? 0) - pillHeight / 2;
+        return (
+          <g>
+            <rect x={x} y={y} width={pillWidth} height={pillHeight} rx={4} fill={chartTheme.paper} stroke={color} />
+            <text x={x + pillWidth / 2} y={y + pillHeight / 2} dy="0.35em" textAnchor="middle" fill={chartTheme.textPrimary} fontSize={chartTheme.fontSize}>
+              {text}
+            </text>
+          </g>
+        );
+      }}
+    />
+  );
+
+  return [
+    <ReferenceLine
+      key="old-price"
+      segment={[{ x: span.end, y: from }, { x: xDomain[1], y: from }]}
+      stroke={chartTheme.textSecondary}
+      strokeDasharray="4 4"
+    />,
+    <ReferenceDot key="from" x={span.end} y={from} r={4} fill={chartTheme.paper} stroke={chartTheme.textSecondary} strokeWidth={2} />,
+    <ReferenceDot key="to" x={span.end} y={to} r={5} fill={color} stroke={chartTheme.paper} strokeWidth={2} />,
+    pill,
+  ];
 }

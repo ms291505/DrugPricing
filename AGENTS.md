@@ -130,7 +130,7 @@ There is currently no server test project.
 | Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
 | Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), and UI (`useMobile`, `useScrolled`) |
-| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
+| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` (including the chart series palette, `palette.chart.series`) |
 
 Feature folders under `src/Components/`:
@@ -227,19 +227,32 @@ Notes:
     page agrees and visible series never share a color while there are 10 or fewer. Add Chart and
     Pin store each series' `color` in the snapshot, because the result the slots came from is
     gone after the next search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
-  - **Bars** are horizontal and sorted. Each shows the latest price or the average over the
-    chart's dates (`BarValue`; a Latest/Average toggle on every bar card, stored on pinned bars),
-    with a whisker from the lowest to the highest price over the same dates.
+  - **Bar charts** are horizontal and sorted. Each row shows the latest price or the average
+    over the chart's dates (`BarValue`; a Latest/Average toggle on every bar card, stored on
+    pinned bars), plus the range from the lowest to the highest price over the same dates.
     `summarizeSeries` computes all of these from the per-date values the line chart draws, so
-    at product level the whisker is the range of the averaged line over time, never the
-    spread between packages.
+    at product level the range is that of the averaged line over time, never the spread
+    between packages. The app-wide `barStyle` setting picks how a row is drawn:
+    - `dot` (default): a dot at the price on a track over the range, on a fitted axis (the
+      exaggeration cap applies) with a faint rail per row from the label to the dot;
+    - `bar`: a bar from $0 to the price, with a gray range track under it.
+
+    A caption says what the marks mean. Rows are drawn in the `Bar` `shape` from the row's
+    band and the axis domain. Don't use recharts' `ErrorBar`: it kept a stale scale and drew
+    ranges at half their prices. Don't set `allowDataOverflow` on the value axis either,
+    because it clips the value labels to the plot.
   - Line charts draw steps (`type="stepAfter"`): a NADAC price holds until the next weekly
     file. Charts split by unit share one date axis. A single series has no legend; the
     title names it.
   - Titles are generated (`chartTitles.ts`): the title says what is common ("Humira: 7
     products over time"), and the subtitle gives the count and the dates shown. Price-change
-    cards name the change, its date, and the package. Shading is green for a drop and the
-    theme's `error` color for a rise (`ChartChangeSpan.direction`).
+    cards name the change (the percent), its date, and the package.
+  - **Price changes are called out on the line**, not with a shaded band: dots at the old
+    and new price on the step, the old price continued as a dashed line, and a pill
+    beside the step with the prices before and after ("$9.69 → $5.52"; `ChartChangeSpan.from`/
+    `to`). The percent stays in the title, which a collapsed card still shows. The pill is
+    outlined green for a drop and in the theme's `error` color for a rise. Spans pinned before
+    the prices were stored get a dashed line at the date, labeled with the percent.
   - Chart animations are off (`isAnimationActive={false}`). Recharts morphs the old line into the new
     one point by point, which drew made-up prices whenever the dates changed, and re-renders
     kept restarting it.
@@ -266,6 +279,12 @@ Notes:
   and a new search clears it. Only Add Chart reads `vizData`: the results table and auto charts
   always show the full result (`data.prices`). Moving it onto a client filter like
   `FdaResultFilter` is planned NADAC/FDA parity work.
+- **Settings** (`library/settings.ts`, `SettingsContext`, `Components/Settings/SettingsPanel`)
+  are app-wide preferences for choices most people never change, kept out of the always-visible
+  Page Tools. The panel opens from the gear in the app bar or SETTINGS in the workspace drawer
+  (the global modal's `"settings"`). Today it holds only `barStyle`. Settings are saved once
+  under `drugpricing.v<VERSION>.settings` and validated field by field (`loadSettings`), and
+  pruning keeps them. New preferences belong here, not in Page Tools.
 - **Persistence (`library/persist.ts`).** The workspace (tabs, layout, pane assignment) and each
   search tab's state (FDA: search params, result filter, detail level; NADAC: search params,
   excluded Drug descriptions; both: pinned items, chart dates) are saved to `localStorage` and restored on

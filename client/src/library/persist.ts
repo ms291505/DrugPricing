@@ -7,6 +7,7 @@ import {
 import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
 import type { BarValue } from "./seriesSummary";
+import { DEFAULT_SETTINGS, type AppSettings, type BarStyle } from "./settings";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -27,6 +28,7 @@ export const VERSION = 1;
 const APP_PREFIX = "drugpricing.";
 const PREFIX = `${APP_PREFIX}v${VERSION}`;
 const WORKSPACE_KEY = `${PREFIX}.workspace`;
+const SETTINGS_KEY = `${PREFIX}.settings`;
 const TAB_KEY_PREFIX = `${PREFIX}.tab.`;
 export const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
 
@@ -111,7 +113,8 @@ const isChartDates = (x: unknown): x is ChartDates =>
 
 const isChangeSpan = (x: unknown): x is ChartChangeSpan =>
   isObject(x) && typeof x.start === "number" && typeof x.end === "number" && isString(x.label)
-  && (x.direction === undefined || x.direction === "rise" || x.direction === "drop");
+  && (x.direction === undefined || x.direction === "rise" || x.direction === "drop")
+  && (x.from === undefined || typeof x.from === "number") && (x.to === undefined || typeof x.to === "number");
 
 const isBarValue = oneOf<BarValue>(["latest", "average"]);
 
@@ -213,6 +216,22 @@ export function watchOtherWindows(onConflict: () => void): () => void {
   };
   window.addEventListener("storage", handleStorage);
   return () => window.removeEventListener("storage", handleStorage);
+}
+
+// --- Settings ------------------------------------------------------------------------------
+
+const isBarStyle = oneOf<BarStyle>(["dot", "bar"]);
+
+/** The app-wide settings, field by field, each falling back to its default. */
+export function loadSettings(): AppSettings {
+  const raw = read(SETTINGS_KEY, isObject);
+  return {
+    barStyle: raw && isBarStyle(raw.barStyle) ? raw.barStyle : DEFAULT_SETTINGS.barStyle,
+  };
+}
+
+export function saveSettings(settings: AppSettings): void {
+  write(SETTINGS_KEY, settings);
 }
 
 // --- Search tabs --------------------------------------------------------------------------

@@ -32,6 +32,7 @@ export default function useChartTheme() {
       tooltip,
       legendStyle: { fontSize, color: theme.palette.text.secondary } as CSSProperties,
       textPrimary: theme.palette.text.primary,
+      paper: theme.palette.background.paper,
       textSecondary: theme.palette.text.secondary,
       rise: theme.palette.error.main,
       drop: theme.palette.success.main,

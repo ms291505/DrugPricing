@@ -78,11 +78,17 @@ export type ChartSeriesSnapshot = {
 
 /** A stretch of a chart to shade and label, e.g. the week a price dropped 43%. */
 export type ChartChangeSpan = {
+  /** Last as-of date at the old price. */
   start: number,
+  /** First as-of date at the new price. */
   end: number,
+  /** The change as a percent, e.g. "-43.0%". */
   label: string,
-  /** Colors the shading. Spans pinned before this was stored have none and shade neutrally. */
+  /** Colors the callout. Spans pinned before this was stored have none and draw neutrally. */
   direction?: "rise" | "drop",
+  /** Prices before and after, for the "$9.69 → $5.52" callout. Older pinned spans have none. */
+  from?: number,
+  to?: number,
 };
 
 export type ChartItem = ExplorerItemBase & {

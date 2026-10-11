@@ -12,6 +12,7 @@ import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
 import { STANDALONE_TAB_IDS } from "./library/persist";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
+import { SettingsProvider } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
 import Workspace from "./Components/Workspace/Workspace";
 import OnBoarding from "./Components/OnBoarding/OnBoarding";
@@ -28,12 +29,13 @@ export default function App() {
           <Toaster
             position="bottom-center"
           />
-          <GlobalModalContextProvider>
-
-            <WorkspaceContextProvider>
-              <AppShell />
-            </WorkspaceContextProvider>
-          </GlobalModalContextProvider>
+          <SettingsProvider>
+            <GlobalModalContextProvider>
+              <WorkspaceContextProvider>
+                <AppShell />
+              </WorkspaceContextProvider>
+            </GlobalModalContextProvider>
+          </SettingsProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -184,3 +184,22 @@ describe("watchOtherWindows", () => {
     expect(localStorage.getItem(persist.tabKey("t1"))).toBe(before);
   });
 });
+
+describe("settings", () => {
+  it("defaults when nothing or something unreadable is saved", () => {
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot" });
+    localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie" } }));
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot" });
+  });
+
+  it("round-trips what saveSettings wrote", () => {
+    persist.saveSettings({ barStyle: "bar" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar" });
+  });
+
+  it("survives pruning, which only removes tab state and old versions", () => {
+    persist.saveSettings({ barStyle: "bar" });
+    persist.pruneStoredState([]);
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar" });
+  });
+});

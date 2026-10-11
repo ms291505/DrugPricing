@@ -59,6 +59,7 @@ export default function DrawerContent() {
         }}
       >
         <NavButton to="/workspace">Workspace</NavButton>
+        <Button onClick={() => setGlobalModal("settings")}>SETTINGS</Button>
         <Button onClick={() => setGlobalModal("help")}>HELP</Button>
         <Button onClick={() => setGlobalModal("about")}>ABOUT</Button>
       </Paper>

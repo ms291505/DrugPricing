@@ -85,10 +85,10 @@ dates, so every line starts at 0% and shows how far it moved. It would be a char
 - the axis rule: the exaggeration cap is defined for dollar axes, and needs a percent
   equivalent.
 
-### User chart settings (2026-10-11)
+### More user chart settings (2026-10-11)
 
-Two chart rules from step 5 of the chart plan are constants today, and could become user
-settings in a later release:
+The Settings panel (gear in the app bar) exists and holds the bar chart style. Two more chart
+rules from step 5 of the chart plan are constants today, and could join it:
 
 - **Y-axis exaggeration cap.** Fitted price axes may exaggerate a change at most
   `MAX_AXIS_EXAGGERATION` times (4: a 10% change fills at most 40% of the chart height). A user
