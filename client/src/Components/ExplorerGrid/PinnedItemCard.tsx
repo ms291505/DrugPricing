@@ -6,21 +6,25 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import WidthFullIcon from "@mui/icons-material/WidthFull";
 import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
+import PinnedChartDates from "./PinnedChartDates";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   item: ExplorerItem,
   index: number,
   count: number,
+  /** Price-axis maximum per pricing unit from "Match scale". */
+  priceMax?: Map<string, number>,
 }
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function PinnedItemCard({ item, index, count }: Props) {
+export default function PinnedItemCard({ item, index, count, priceMax }: Props) {
   const { updateItem, removeItem, moveItem, highlight } = useExplorerItems();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
@@ -46,6 +50,9 @@ export default function PinnedItemCard({ item, index, count }: Props) {
     closeMenu();
   };
 
+  // The date picker opens from the dates chip, or from "Change dates" in the menu.
+  const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
+
   const actions = (
     <>
       <Tooltip title="Item actions">
@@ -69,6 +76,10 @@ export default function PinnedItemCard({ item, index, count }: Props) {
           <ListItemIcon><ArrowDownwardIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Move down</ListItemText>
         </MenuItem>
+        <MenuItem onClick={runAndClose(() => setDatesAnchor(menuAnchor))}>
+          <ListItemIcon><EditCalendarIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Change dates</ListItemText>
+        </MenuItem>
         <MenuItem onClick={runAndClose(() => updateItem(item.id, prev => ({
           ...prev, layout: { ...prev.layout, width: isFull ? "half" : "full" },
         })))}>
@@ -90,12 +101,24 @@ export default function PinnedItemCard({ item, index, count }: Props) {
         headingLevel={3}
         headingRef={headingRef}
         highlighted={highlighted}
-        badges={<Chip size="small" variant="outlined" label={formatItemSource(item.source)} />}
+        badges={<>
+          <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          {item.kind === "chart"
+            ? <PinnedChartDates
+              item={item}
+              title={title}
+              anchor={datesAnchor}
+              onOpen={setDatesAnchor}
+              onClose={() => setDatesAnchor(null)}
+            />
+            : null
+          }
+        </>}
         actions={actions}
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} /> : null}
+        {item.kind === "chart" ? <ChartItemBody item={item} priceMax={priceMax} /> : null}
       </ExplorerGridItem>
     </Grid>
   );

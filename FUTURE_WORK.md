@@ -1,0 +1,87 @@
+# Future work
+
+Work that hasn't been done yet: directions the author has decided on, cleanups worth making, and
+feature ideas that should shape today's structure. Items say roughly how big they are and where
+they fit. When something is done, delete it here. The code and its PR are the record.
+
+## Decided
+
+### Retire the standalone search routes (2026-10-10)
+
+All work is meant to happen in the workspace. `/fda-search` and `/nadac-search` are left over
+from earlier versions of the app. They were handy for testing a search page outside the
+workspace, but they should go away. What removing them touches:
+
+- `App.tsx`: the two `<Route>`s, and the `FdaTabProvider`/`NadacTabProvider`/`STANDALONE_TAB_IDS`
+  imports that only they use.
+- `DrugPricingBar.tsx`: the NADAC and FDA nav buttons.
+- `library/persist.ts`: `STANDALONE_TAB_IDS` and its entry in `pruneStoredState`'s keep set.
+  Once the ids are gone, the next load prunes their saved state
+  (`drugpricing.v1.tab.page-fda`/`page-nadac`) on its own, so no cleanup code is needed.
+- `AGENTS.md`: the persistence notes that mention the standalone pages.
+- **Replace them with a route shortcut (decided 2026-10-10):** `/workspace?new=fda` (or
+  `?new=nadac`) opens a fresh workspace tab of that type and shows it, so agents and Chrome checks
+  still get a one-URL way to a search page. After creating the tab, replace the URL with plain
+  `/workspace` (`navigate(..., { replace: true })`). Otherwise every reload, with the workspace
+  persisted, adds another tab. Dev runs under `StrictMode`, which runs effects twice, so guard
+  against creating two tabs (e.g. a ref, or create the tab while reading the initial
+  workspace rather than in an effect). Ignore unknown types. Testing restore after a reload then
+  happens on that workspace tab, which is closer to real use than the standalone pages were.
+- **Build it as a public link format, not a dev shortcut.** The author wants the same links
+  later for content: a blog post that opens a tab with a search already run, or links from a
+  "popular searches" / "recent movers" list. So:
+  - Let a link carry the search as well as the type, in readable params
+    (`/workspace?new=fda&name=eliquis`, `?new=nadac&ndc=3089321&from=2025-10-07`), not a JSON
+    blob. A blog link should read as what it opens.
+  - Treat the params as a contract. Published links can't be updated, so old params must keep
+    working (add new ones, never repurpose them), like the storage `VERSION` rule.
+  - URL input is untrusted. Validate it with the same per-field validators `persist.ts` uses for
+    saved tab state, and fall back to a blank tab of that type.
+  - Consider focusing an existing tab with the same search instead of adding a duplicate, so
+    following the same link twice doesn't stack up tabs.
+- With only the workspace, `/about` and `/welcome` left, `AppShell`'s "keep the workspace mounted
+  but hidden" switch may simplify. Check before changing: it exists so workspace tabs keep their
+  state while About is open.
+
+Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
+
+## Cleanups
+
+### Each a small PR of its own
+
+- **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
+  (`applyFdaResultFilter`, `summarizeNadacPrices`, `validateTabTitle`). Split it by domain
+  (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
+- **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
+  chart dates and the Match scale toggle. Consider renaming it to `ExplorerContext` (or splitting
+  out a small chart-settings context) so its name matches its job. It's a pure rename across
+  about 15 files.
+- **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
+  (autocomplete in the FDA search form) or drop them from the response. The client uses only the
+  date range.
+- **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
+  Decide whether the simple endpoint stays as public API or goes.
+
+### For the NADAC/FDA parity plan
+
+- **The NADAC page copies query results into context** (`setData` in a `useEffect` in
+  `NadacSearch`), where the FDA page derives everything from `useQuery`. Deriving would remove
+  the `data`/`setData` state and a render with stale data.
+- **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
+- **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
+  Chart dates but duplicate the panel layout, heading and section styles.
+
+## Ideas
+
+### Popular searches and recent movers
+
+The author would like to show popular searches or recent price movers, linking each to a
+workspace tab (see the link format under **Decided**). Two consequences for current structure:
+
+- **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
+  result). A "recent movers" list across all drugs needs it on the server, most likely computed
+  after each NADAC load (ETL or a SQL view) and served by an endpoint. Then client and server
+  must agree on the rule (the 10% threshold, consecutive as-of dates), so give it one written
+  definition before there are two implementations.
+- **"Popular searches" needs search counts,** which nothing records today. That is a server
+  addition, and a privacy decision about what gets logged.

@@ -1,4 +1,5 @@
 import type { ChartPrice } from "./types";
+import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**
  * Explorer items are the cards in a search tab's Pinned section. *System* items (the results
@@ -72,10 +73,21 @@ export type ChartSeriesSnapshot = {
   points: Array<[number, number]>,
 };
 
+/** A stretch of a chart to shade and label, e.g. the week a price dropped 43%. */
+export type ChartChangeSpan = {
+  start: number,
+  end: number,
+  label: string,
+};
+
 export type ChartItem = ExplorerItemBase & {
   kind: "chart",
   chartType: ChartType,
+  /** Every price of the chart's series, whatever `dateWindow` shows, so the window can widen later. */
   series: ChartSeriesSnapshot[],
+  /** The dates the chart shows. */
+  dateWindow: DateWindow,
+  changeSpan?: ChartChangeSpan,
 };
 
 export type ExplorerItem = ChartItem;
@@ -119,14 +131,15 @@ type NewChartItem = {
   prices: ChartPrice[],
   defaultTitle: string,
   origin: ChartOrigin,
+  dateWindow: DateWindow,
+  changeSpan?: ChartChangeSpan,
 };
 
-export function createChartItem({ chartType, prices, defaultTitle, origin }: NewChartItem): ChartItem {
+export function createChartItem({ chartType, prices, defaultTitle, origin, dateWindow, changeSpan }: NewChartItem): ChartItem {
   const series = toChartSeries(prices);
   const resultSeries = toChartSeries(origin.resultPrices);
   const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
-  // Assumes the chart carries each series' full date range. Once charts have a date window,
-  // count only result points inside that window, or every windowed chart will read "filtered".
+  // Snapshots keep every date, so missing points come from page filters, never the window.
   const filtered = series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
 
   return {
@@ -138,6 +151,8 @@ export function createChartItem({ chartType, prices, defaultTitle, origin }: New
     collapsed: false,
     chartType,
     series,
+    dateWindow,
+    ...(changeSpan && { changeSpan }),
     source: {
       searchLabel: origin.searchLabel,
       seriesKind: origin.seriesKind,
@@ -164,4 +179,36 @@ const CHART_TYPE_LABELS: Record<ChartType, string> = { line: "Line chart", bar: 
 export function addedChartTitle(chartType: ChartType, seriesCount: number, seriesKind: SeriesKind): string {
   const { singular, plural } = SERIES_KIND_LABELS[seriesKind];
   return `${CHART_TYPE_LABELS[chartType]}: ${seriesCount} ${seriesCount === 1 ? singular : plural}`;
+}
+
+/** First and last date the chart has prices for, whatever its window shows. */
+export function chartDataBounds(item: ChartItem): DateBounds | null {
+  let first = Infinity;
+  let last = -Infinity;
+  for (const { points } of item.series) {
+    for (const [time] of points) {
+      if (time < first) first = time;
+      if (time > last) last = time;
+    }
+  }
+  return first <= last ? { first, last } : null;
+}
+
+/**
+ * The highest visible price per pricing unit across the line charts, for "Match scale": matched
+ * charts share an axis from 0 to it. Bar charts keep their own scale.
+ */
+export function matchedPriceMax(items: ExplorerItem[]): Map<string, number> {
+  const maxByUnit = new Map<string, number>();
+  for (const item of items) {
+    if (item.kind !== "chart" || item.chartType !== "line") continue;
+    for (const { unit, points } of item.series) {
+      for (const [time, price] of points) {
+        if (inWindow(time, item.dateWindow) && price > (maxByUnit.get(unit) ?? -Infinity)) {
+          maxByUnit.set(unit, price);
+        }
+      }
+    }
+  }
+  return maxByUnit;
 }

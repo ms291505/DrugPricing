@@ -1,10 +1,8 @@
 import React, { createContext, useCallback, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type FdaProductDetail, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
+import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
 export type FdaSearchContextType = {
-  fdaData: Array<FdaProductDetail>;
-  setFdaData: Dispatch<SetStateAction<Array<FdaProductDetail>>>;
   fdaSearchParams: AdvancedFdaSearchParams | null;
   setFdaSearchParams: Dispatch<SetStateAction<AdvancedFdaSearchParams | null>>;
   fdaResultFilter: FdaResultFilter;
@@ -25,8 +23,6 @@ export type FdaSearchInitialState = {
 };
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
-  fdaData: [],
-  setFdaData: () => { },
   fdaSearchParams: { ...defaultAdvFdaSearchParams },
   setFdaSearchParams: () => { },
   fdaResultFilter: { ...createFdaResultFilter() },
@@ -47,7 +43,6 @@ type ProviderProps = {
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  const [fdaData, setFdaData] = useState<Array<FdaProductDetail>>([]);
   const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(initial?.searchParams ?? null)
   const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>(initial?.resultFilter ?? { ...createFdaResultFilter() });
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
@@ -64,8 +59,6 @@ export const FdaSearchContextProvider = ({ children, initial, searchEnabled = tr
 
   return (
     <FdaSearchContext.Provider value={{
-      fdaData,
-      setFdaData,
       fdaSearchParams,
       setFdaSearchParams,
       fdaResultFilter,

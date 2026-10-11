@@ -14,11 +14,14 @@ import { addedChartTitle, createChartItem, type ChartType } from "../../library/
 import { countSeries } from "../../library/chartSeries";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
+import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
+import useChartWindow from "../../hooks/useChartWindow";
 
 export default function VizTools() {
   const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
+  const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...newChartRows.ids].map(String));
@@ -30,6 +33,7 @@ export default function VizTools() {
       prices: chartData,
       defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
       origin,
+      dateWindow: chartWindow,
     }), { focus: true });
   }
   return (
@@ -76,6 +80,7 @@ export default function VizTools() {
         </FormControl>
       </Box>
       <Divider />
+      <ChartDatesControl value={chartDates} onChange={setChartDates} bounds={bounds} />
       <AddChartControl selectedCount={newChartRows.ids.size} onAdd={handleAddChart} />
     </Paper>
   )

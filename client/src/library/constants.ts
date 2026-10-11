@@ -1,5 +1,7 @@
-export const MIN_DATE = new Date(2025, 0, 31);
-export const MAX_DATE = new Date(2026, 0, 31);
+/** A new NADAC search covers this many months, ending at the last loaded as-of date. */
+export const DEFAULT_NADAC_SEARCH_MONTHS = 12;
+/** Price-change charts focus on this many months either side of the change. */
+export const PRICE_CHANGE_WINDOW_MONTHS = 3;
 export const MIN_NDC_DESCRIPTION_LENGTH = 5;
 export const MIN_NDC_LENGTH = 5;
 export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
