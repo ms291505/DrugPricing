@@ -3,7 +3,7 @@ import { Bar, BarChart, ErrorBar, LabelList, Rectangle, Tooltip, XAxis, YAxis } 
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { ChartPrice } from "../../library/types";
 import { pricingUnitLabel } from "../../library/chartSeries";
-import { formatPrice, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
+import { formatPrice, formatPriceLabel, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
 import { summarizeSeries, type BarValue, type SeriesSummary } from "../../library/seriesSummary";
 import { formatDate, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
@@ -132,7 +132,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
             const whiskerEnd = x + width + (row.value > 0 ? (row.max - row.value) * width / row.value : 0);
             return (
               <text x={whiskerEnd + 6} y={y + height / 2} dy="0.35em" fill={chartTheme.textPrimary} fontSize={chartTheme.fontSize}>
-                {formatPrice(row.value)}
+                {formatPriceLabel(row.value)}
               </text>
             );
           }}

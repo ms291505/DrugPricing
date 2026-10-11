@@ -96,6 +96,16 @@ export const formatPrice = (value: number) =>
     style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: Math.abs(value) < 1 ? 4 : 2,
   });
 
+/**
+ * A price for a label on the chart: cents from $1 up, three significant digits below ("$0.278"),
+ * so labels next to each other look alike. Tooltips and tables use `formatPrice`.
+ */
+export function formatPriceLabel(value: number): string {
+  if (Math.abs(value) >= 1 || value === 0) return formatPrice(Number(value.toFixed(2)));
+  const rounded = Number(value.toPrecision(3));
+  return "$" + rounded.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+}
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MONTH_STRIDES = [1, 2, 3, 6, 12, 24];
 const WEEK_STRIDES = [1, 2];

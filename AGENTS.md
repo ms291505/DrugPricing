@@ -211,7 +211,9 @@ Notes:
     "Match scale" feeds it one shared range per unit (`matchedPriceRange`). Bar lengths always
     start at $0 (`zeroBasedAxis`). Don't fit an axis tighter than this rule; the author
     considers small changes drawn as big ones misleading. Tick labels come from
-    `priceTickFormatter` (precision follows the tick step) and full prices from `formatPrice`.
+    `priceTickFormatter` (precision follows the tick step), value labels on the chart from
+    `formatPriceLabel` (three significant digits under $1, so neighbors look alike), and full
+    prices in tooltips and tables from `formatPrice`.
   - **Series colors** come from the theme palette (`palette.chart.series`: 10 color-blind-safe
     colors, each at least 3:1 on the card; `chartPalette.test.ts` checks it). Each NDC prefers
     the slot of its position in the *unfiltered* search result, so filters never move it.

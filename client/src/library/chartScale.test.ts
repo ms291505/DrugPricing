@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateTicks, fittedPriceAxis, formatPrice, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
+import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
 import { MAX_AXIS_EXAGGERATION } from "./constants";
 
 const day = (iso: string) => Date.parse(iso);
@@ -88,6 +88,11 @@ describe("tick and price formats", () => {
     expect(formatPrice(3412.18)).toBe("$3,412.18");
     expect(formatPrice(0.0123)).toBe("$0.0123");
     expect(formatPrice(9.6896)).toBe("$9.69");
+  });
+
+  it("keeps chart labels alike: cents from $1, three significant digits below", () => {
+    expect([1.92, 0.2777, 0.2532, 0.15, 0.0123, 3412.18].map(formatPriceLabel))
+      .toEqual(["$1.92", "$0.278", "$0.253", "$0.15", "$0.0123", "$3,412.18"]);
   });
 });
 
