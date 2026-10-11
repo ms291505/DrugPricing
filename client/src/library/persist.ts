@@ -129,7 +129,8 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   && typeof x.source.filtered === "boolean"
   && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
   && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
-  && (x.barValue === undefined || isBarValue(x.barValue));
+  && (x.barValue === undefined || isBarValue(x.barValue))
+  && (x.matchScale === undefined || typeof x.matchScale === "boolean");
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
@@ -221,8 +222,6 @@ export type PersistedExplorerState = {
   pinnedItems: ExplorerItem[],
   /** The Page Tools chart dates. */
   chartDates: ChartDates,
-  /** The Pinned section's "Match scale" toggle. */
-  matchScale: boolean,
 };
 
 export type PersistedFdaTab = {
@@ -250,7 +249,6 @@ function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState
   return {
     pinnedItems: validItems(raw.pinnedItems),
     chartDates: isChartDates(raw.chartDates) ? raw.chartDates : ALL_DATES,
-    matchScale: typeof raw.matchScale === "boolean" ? raw.matchScale : false,
   };
 }
 

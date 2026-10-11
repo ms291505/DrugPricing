@@ -95,6 +95,8 @@ export type ChartItem = ExplorerItemBase & {
   changeSpan?: ChartChangeSpan,
   /** Bar charts: what a bar shows. Defaults to the latest price. */
   barValue?: BarValue,
+  /** Line charts: share a price axis with the other matched line charts in the same unit. */
+  matchScale?: boolean,
 };
 
 export type ExplorerItem = ChartItem;
@@ -202,14 +204,15 @@ export function chartDataBounds(item: ChartItem): DateBounds | null {
 }
 
 /**
- * The lowest and highest visible price per pricing unit across the line charts, for "Match
- * scale": matched charts in one unit share the axis `fittedPriceAxis` builds from this range.
- * Bar charts keep their own scale.
+ * The lowest and highest visible price per pricing unit across the line charts the user matched
+ * ("Match scale"): those charts share the axis `fittedPriceAxis` builds from this range. Charts
+ * are matched one by one, so unrelated pins (a $0.25 drug and a $6,700 one) don't flatten each
+ * other. Bar charts keep their own scale.
  */
 export function matchedPriceRange(items: ExplorerItem[]): Map<string, [number, number]> {
   const ranges = new Map<string, [number, number]>();
   for (const item of items) {
-    if (item.kind !== "chart" || item.chartType !== "line") continue;
+    if (item.kind !== "chart" || item.chartType !== "line" || !item.matchScale) continue;
     for (const { unit, points } of item.series) {
       for (const [time, price] of points) {
         if (!inWindow(time, item.dateWindow)) continue;

@@ -7,6 +7,7 @@ import WidthFullIcon from "@mui/icons-material/WidthFull";
 import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
+import CheckIcon from "@mui/icons-material/Check";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
@@ -18,7 +19,7 @@ type Props = {
   item: ExplorerItem,
   index: number,
   count: number,
-  /** Shared price range per pricing unit from "Match scale". */
+  /** Shared price range per pricing unit across the matched line charts ("Match scale"). */
   priceRanges?: Map<string, [number, number]>,
 }
 
@@ -53,6 +54,9 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
   // The date picker opens from the dates chip, or from "Change dates" in the menu.
   const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
 
+  const isLineChart = item.kind === "chart" && item.chartType === "line";
+  const matched = isLineChart && item.matchScale === true;
+
   const actions = (
     <>
       <Tooltip title="Item actions">
@@ -80,6 +84,17 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
           <ListItemIcon><EditCalendarIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Change dates</ListItemText>
         </MenuItem>
+        {isLineChart
+          ? <MenuItem
+            role="menuitemcheckbox"
+            aria-checked={matched}
+            onClick={runAndClose(() => updateItem(item.id, prev => ({ ...prev, matchScale: !matched })))}
+          >
+            <ListItemIcon>{matched ? <CheckIcon fontSize="small" /> : null}</ListItemIcon>
+            <ListItemText>Match scale</ListItemText>
+          </MenuItem>
+          : null
+        }
         <MenuItem onClick={runAndClose(() => updateItem(item.id, prev => ({
           ...prev, layout: { ...prev.layout, width: isFull ? "half" : "full" },
         })))}>
@@ -113,12 +128,18 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
             />
             : null
           }
+          {matched
+            ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit">
+              <Chip size="small" variant="outlined" label="Matched scale" />
+            </Tooltip>
+            : null
+          }
         </>}
         actions={actions}
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={priceRanges} /> : null}
+        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={matched ? priceRanges : undefined} /> : null}
       </ExplorerGridItem>
     </Grid>
   );

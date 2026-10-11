@@ -180,8 +180,12 @@ Notes:
     the results table or price-change flagging, and a new search keeps it.
   - Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the
     change, with the change shaded (`changeSpan`, stored on pinned copies too), and toggle to the
-    full history. The Pinned section's "Match scale" switch gives pinned **line** charts in the
-    same pricing unit one price axis from 0 to their highest visible price (`matchedPriceMax`).
+    full history.
+  - **"Match scale" is per chart**, not per section: a pinned line chart's menu toggles
+    `ChartItem.matchScale`, and the matched charts in one pricing unit share a fitted price axis
+    (`matchedPriceRange`), marked by a "Matched scale" chip. New pins start unmatched. A
+    tab-wide switch matched unrelated pins with each other: $0.25 metformin on humira's
+    $0–$8K axis is flat. So don't match charts the user didn't choose.
   - An item's `source` (its provenance chip) is computed by `createChartItem` from the item's data
     compared with the whole unfiltered search result (`ChartOrigin.resultPrices`, from the
     `use*ChartOrigin` hooks), never from filter state, so it stays true once stored. `filtered`
@@ -208,7 +212,7 @@ Notes:
     (`constants.ts`, 4: a 10% change fills at most 40% of the chart height). `fittedPriceAxis`
     in `chartScale.ts` makes the visible span at least `max / MAX_AXIS_EXAGGERATION`, centers it on
     the data, never goes below $0, and rounds the ends to round ticks. Line charts use it, and
-    "Match scale" feeds it one shared range per unit (`matchedPriceRange`). Bar lengths always
+    Match scale feeds it one shared range per unit. Bar lengths always
     start at $0 (`zeroBasedAxis`). Don't fit an axis tighter than this rule; the author
     considers small changes drawn as big ones misleading. Tick labels come from
     `priceTickFormatter` (precision follows the tick step), value labels on the chart from
@@ -262,7 +266,7 @@ Notes:
   `FdaResultFilter` is planned NADAC/FDA parity work.
 - **Persistence (`library/persist.ts`).** The workspace (tabs, layout, pane assignment) and each
   search tab's state (FDA: search params, result filter, detail level; NADAC: search params,
-  excluded Drug descriptions; both: pinned items, chart dates, Match scale) are saved to `localStorage` and restored on
+  excluded Drug descriptions; both: pinned items, chart dates) are saved to `localStorage` and restored on
   load. A restored tab re-runs its search; pinned items come back from their snapshots. Row
   selection and card collapse state of system cards are not saved.
   - Keys are `drugpricing.v<VERSION>.workspace` and `drugpricing.v<VERSION>.tab.<tabId>`. Bump

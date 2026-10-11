@@ -63,11 +63,11 @@ describe("loading saved tab state", () => {
           ...oldItem, dateWindow: { start: 100, end: null },
           changeSpan: { start: 1, end: 2, label: "-43.0%", direction: "drop" },
           series: [{ ...oldItem.series[0], color: "#56B4E9" }],
+          matchScale: true,
         },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
       ],
       chartDates: { kind: "recent" as const, months: 6 },
-      matchScale: true,
     } as Parameters<Persist["saveTabState"]>[1];
     persist.saveTabState("t1", state);
     expect(loaded(persist.loadNadacTabState("t1"))).toEqual(state);
@@ -78,7 +78,7 @@ describe("loading saved tab state", () => {
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
     expect(state.chartDates).toEqual({ kind: "window", dateWindow: FULL_WINDOW });
-    expect(state.matchScale).toBe(false);
+    expect(state.pinnedItems[0].matchScale).toBeUndefined();
   });
 
   it("drops only the malformed items and fields", () => {
@@ -89,6 +89,7 @@ describe("loading saved tab state", () => {
         { ...oldItem, id: "bad-span", changeSpan: { start: 1 } },
         { ...oldItem, id: "bad-bar-value", chartType: "bar", barValue: "median" },
         { ...oldItem, id: "bad-color", series: [{ ...oldItem.series[0], color: 3 }] },
+        { ...oldItem, id: "bad-match", matchScale: "yes" },
         { ...oldItem, id: "good" },
       ],
       chartDates: { kind: "recent", months: 0 },
@@ -149,7 +150,7 @@ describe("watchOtherWindows", () => {
 
   const fdaTab = (searchParams: typeof fdaSearch | null) => ({
     type: "fda" as const, searchParams, resultFilter: createFdaResultFilter(), detailLevel: "product" as const,
-    pinnedItems: [], chartDates: { kind: "window" as const, dateWindow: FULL_WINDOW }, matchScale: false,
+    pinnedItems: [], chartDates: { kind: "window" as const, dateWindow: FULL_WINDOW },
   });
 
   it("ignores another window re-saving what this window wrote", () => {

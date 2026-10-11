@@ -24,9 +24,6 @@ type ExplorerItemsContextType = {
   /** The Page Tools chart dates. `useChartWindow` resolves them against the current search. */
   chartDates: ChartDates;
   setChartDates: (chartDates: ChartDates) => void;
-  /** Pinned line charts in the same pricing unit share one price axis. */
-  matchScale: boolean;
-  setMatchScale: (matchScale: boolean) => void;
 };
 
 export const ExplorerItemsContext = createContext<ExplorerItemsContextType>({
@@ -39,8 +36,6 @@ export const ExplorerItemsContext = createContext<ExplorerItemsContextType>({
   highlight: null,
   chartDates: ALL_DATES,
   setChartDates: () => { },
-  matchScale: false,
-  setMatchScale: () => { },
 });
 
 type ProviderProps = {
@@ -56,7 +51,6 @@ type ProviderProps = {
 export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
   const [pinnedItems, setPinnedItems] = useState<ExplorerItem[]>(initial?.pinnedItems ?? []);
   const [chartDates, setChartDates] = useState<ChartDates>(initial?.chartDates ?? ALL_DATES);
-  const [matchScale, setMatchScale] = useState(initial?.matchScale ?? false);
   const [highlight, setHighlight] = useState<Highlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -92,8 +86,8 @@ export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
 
   const value = useMemo(() => ({
     pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight,
-    chartDates, setChartDates, matchScale, setMatchScale,
-  }), [pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartDates, matchScale]);
+    chartDates, setChartDates,
+  }), [pinnedItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartDates]);
 
   return (
     <ExplorerItemsContext.Provider value={value}>

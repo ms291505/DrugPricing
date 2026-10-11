@@ -53,9 +53,8 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
   (`applyFdaResultFilter`, `summarizeNadacPrices`, `validateTabTitle`). Split it by domain
   (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
 - **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
-  chart dates and the Match scale toggle. Consider renaming it to `ExplorerContext` (or splitting
-  out a small chart-settings context) so its name matches its job. It's a pure rename across
-  about 15 files.
+  chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
+  chart-settings context) so its name matches its job. It's a pure rename across about 15 files.
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
@@ -72,6 +71,19 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
   Chart dates but duplicate the panel layout, heading and section styles.
 
 ## Ideas
+
+### Percent-change charts for comparing trends across prices (2026-10-11)
+
+"Match scale" puts charts on one dollar axis, which only helps when their prices are
+comparable. To compare *trends* between drugs at very different prices (a $0.25 generic and a
+$6,700 brand), a line chart could plot each series as the percent change since the start of its
+dates, so every line starts at 0% and shows how far it moved. It would be a chart option
+(dollars or % change) on line charts, stored on pinned items. Points to settle when it's built:
+
+- the base point when a series starts later than the window;
+- how the product-level min–max band translates;
+- the axis rule: the exaggeration cap is defined for dollar axes, and needs a percent
+  equivalent.
 
 ### User chart settings (2026-10-11)
 

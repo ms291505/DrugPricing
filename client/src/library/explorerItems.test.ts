@@ -58,19 +58,25 @@ describe("createChartItem provenance", () => {
 });
 
 describe("matchedPriceRange", () => {
-  const lineA = make(packageA1);
-  const lineB = make(productB, { start: day("2025-03-01"), end: null });
-  const mL = make(series("C", 300, "milliliter"));
-  const bar: ExplorerItem = { ...make(series("D", 1000)), chartType: "bar" };
+  const matched = (item: ExplorerItem): ExplorerItem => ({ ...item, matchScale: true });
+  const lineA = matched(make(packageA1));
+  const lineB = matched(make(productB, { start: day("2025-03-01"), end: null }));
+  const mL = matched(make(series("C", 300, "milliliter")));
+  const bar: ExplorerItem = matched({ ...make(series("D", 1000)), chartType: "bar" });
 
-  it("spans the visible prices of line charts per unit, ignoring bar charts", () => {
+  it("spans the visible prices of matched line charts per unit, ignoring bar charts", () => {
     const ranges = matchedPriceRange([lineA, lineB, mL, bar]);
     expect(ranges.get("each")).toEqual([5, 10]);
     expect(ranges.get("milliliter")).toEqual([300, 300]);
   });
 
+  it("leaves out charts the user didn't match, however their prices compare", () => {
+    const unmatched = make(series("E", 6745));
+    expect(matchedPriceRange([lineA, lineB, unmatched]).get("each")).toEqual([5, 10]);
+  });
+
   it("ignores prices outside each chart's window", () => {
-    const spike: ExplorerItem = make([...productB, { ...productB[0], nadacPerUnit: 99 }], { start: day("2025-02-01"), end: null });
+    const spike = matched(make([...productB, { ...productB[0], nadacPerUnit: 99 }], { start: day("2025-02-01"), end: null }));
     expect(matchedPriceRange([spike]).get("each")).toEqual([5, 5]);
   });
 });
