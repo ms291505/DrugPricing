@@ -177,10 +177,12 @@ Notes:
     result's last date, and the inputs are limited to its range. Auto charts show the resolved
     window, and Add Chart and Pin start new items at it. Pinned items store fixed dates only,
     since their data never changes. The setting is not part of `FdaResultFilter`, doesn't touch
-    the results table or price-change flagging, and a new search keeps it.
+    the results table or which changes get flagged, and a new search keeps it.
   - Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the
     change, with the change shaded (`changeSpan`, stored on pinned copies too), and toggle to the
-    full history.
+    full history. They follow the chart dates like the other auto charts: only changes whose
+    new price starts inside them get a card (`priceChangesInWindow`), and a note counts the
+    rest. `MAX_AUTO_PRICE_CHANGE_CHARTS` applies to the changes inside the dates.
   - **"Match scale" is per chart**, not per section: a pinned line chart's menu toggles
     `ChartItem.matchScale`, and the matched charts in one pricing unit share a fitted price axis
     (`matchedPriceRange`), marked by a "Matched scale" chip. New pins start unmatched. A

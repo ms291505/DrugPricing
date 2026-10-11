@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Grid, } from "@mui/material";
+import { Grid, Typography, } from "@mui/material";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../Charts/BarViz";
@@ -9,7 +9,7 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
-import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
+import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages, priceChangesInWindow } from "../../library/flagNadacPriceChange";
 import { HALF_WIDTH_GRID_SIZE, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
@@ -52,6 +52,12 @@ export default function FdaExplorer({ visible = true }: Props) {
   }
 
   const showAutoCharts = shouldAutoChart(nadacPrices);
+
+  // Price-change cards follow the chart dates like the other auto charts; each keeps its own focus.
+  const shownPriceChanges = useMemo(
+    () => priceChangesInWindow(productPriceChanges, chartWindow),
+    [productPriceChanges, chartWindow]);
+  const hiddenPriceChanges = productPriceChanges.length - shownPriceChanges.length;
 
   const labels = seriesLabels(nadacPrices);
   const barVizTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
@@ -115,9 +121,17 @@ export default function FdaExplorer({ visible = true }: Props) {
           </Grid>
           : null
       }
-      {productPriceChanges.length <= MAX_AUTO_PRICE_CHANGE_CHARTS
+      {hiddenPriceChanges > 0
+        ? <Grid size={12}>
+          <Typography variant="body2" color="text.secondary" sx={{ px: { xs: 1, md: 0 } }}>
+            {hiddenPriceChanges === 1 ? "1 price change is" : `${hiddenPriceChanges} price changes are`} outside the chart dates.
+          </Typography>
+        </Grid>
+        : null
+      }
+      {shownPriceChanges.length <= MAX_AUTO_PRICE_CHANGE_CHARTS
         ?
-        productPriceChanges.map((change) => (
+        shownPriceChanges.map((change) => (
           <Grid size={HALF_WIDTH_GRID_SIZE} key={change.packageNdc + change.priceChange.startDate.getTime()}>
             <PriceChangeCard
               change={change}
