@@ -1,21 +1,23 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Grid, } from "@mui/material";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../Charts/BarViz";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { applyFdaResultFilter, resultDetailLevelToLabel, type FdaResultDetailLevel, } from "../../library/types";
+import { applyFdaResultFilter, type FdaResultDetailLevel, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages } from "../../library/flagNadacPriceChange";
-import { HALF_WIDTH_GRID_SIZE, LINE_VIZ_COLORS, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
+import { HALF_WIDTH_GRID_SIZE, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 import useChartWindow from "../../hooks/useChartWindow";
-import { chartDatesSubtitle } from "../../library/dates";
+import useSeriesColors from "../../hooks/useSeriesColors";
+import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
+import type { BarValue } from "../../library/seriesSummary";
 import PriceChangeCard from "./PriceChangeCard";
 
 type Props = {
@@ -40,6 +42,10 @@ export default function FdaExplorer({ visible = true }: Props) {
     () => flagNadacPriceChangeForFdaProducts(applyFdaResultFilter(data ?? { products: [] }, fdaResultFilter).products),
     [data, fdaResultFilter]);
 
+  const colors = useSeriesColors(origin.resultPrices, nadacPrices);
+  const packageColors = useSeriesColors(packageOrigin.resultPrices, packageNadacPrices);
+  const [barValue, setBarValue] = useState<BarValue>("latest");
+
   const resultTableTitleMap: Record<FdaResultDetailLevel, string> = {
     product: "Products",
     package: "Packages"
@@ -47,9 +53,10 @@ export default function FdaExplorer({ visible = true }: Props) {
 
   const showAutoCharts = shouldAutoChart(nadacPrices);
 
-  const barVizTitle = "Average Price by " + resultDetailLevelToLabel(fdaResultDetailLevel);
-  const lineVizTitle = resultDetailLevelToLabel(fdaResultDetailLevel) + " Price Over Time";
-  const autoChartSubtitle = chartDatesSubtitle(chartWindow);
+  const labels = seriesLabels(nadacPrices);
+  const barVizTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
+  const lineVizTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels);
+  const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
   return (
     <Grid container spacing={2} display={visible ? "flex" : "none"} minHeight={0}>
@@ -75,11 +82,17 @@ export default function FdaExplorer({ visible = true }: Props) {
           <ExplorerGridItem
             title={barVizTitle}
             subtitle={autoChartSubtitle}
-            actions={<PinButton title={barVizTitle} chartType="bar" prices={nadacPrices} origin={origin} dateWindow={chartWindow} />}
+            actions={<PinButton
+              title={barVizTitle} chartType="bar" prices={nadacPrices} origin={origin} dateWindow={chartWindow}
+              colors={colors} barValue={barValue}
+            />}
           >
             <BarViz
               nadacPrices={nadacPrices}
+              colors={colors}
               dateWindow={chartWindow}
+              barValue={barValue}
+              onBarValueChange={setBarValue}
             />
           </ExplorerGridItem>
           : null
@@ -92,22 +105,25 @@ export default function FdaExplorer({ visible = true }: Props) {
             <ExplorerGridItem
               title={lineVizTitle}
               subtitle={autoChartSubtitle}
-              actions={<PinButton title={lineVizTitle} chartType="line" prices={nadacPrices} origin={origin} dateWindow={chartWindow} />}
+              actions={<PinButton
+                title={lineVizTitle} chartType="line" prices={nadacPrices} origin={origin} dateWindow={chartWindow}
+                colors={colors}
+              />}
             >
-              <LineViz nadacPrices={nadacPrices} dateWindow={chartWindow} />
+              <LineViz nadacPrices={nadacPrices} colors={colors} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
           : null
       }
       {productPriceChanges.length <= MAX_AUTO_PRICE_CHANGE_CHARTS
         ?
-        productPriceChanges.map((change, i) => (
+        productPriceChanges.map((change) => (
           <Grid size={HALF_WIDTH_GRID_SIZE} key={change.packageNdc + change.priceChange.startDate.getTime()}>
             <PriceChangeCard
               change={change}
               prices={getAllPricesForFlaggedPackages(change, packageNadacPrices)}
               origin={packageOrigin}
-              color={LINE_VIZ_COLORS[i % LINE_VIZ_COLORS.length]}
+              colors={packageColors}
             />
           </Grid>
         ))

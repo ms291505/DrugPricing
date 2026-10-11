@@ -13,22 +13,29 @@ import PinnedSection from "../ExplorerGrid/PinnedSection";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import useChartWindow from "../../hooks/useChartWindow";
-import { chartDatesSubtitle } from "../../library/dates";
-
-const BAR_TITLE = "Average Price by NDC";
-const LINE_TITLE = "NDC Price Over Time";
+import { useState } from "react";
+import useSeriesColors from "../../hooks/useSeriesColors";
+import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
+import type { BarValue } from "../../library/seriesSummary";
 
 export default function NadacSearchViz() {
 
   const { data, isLoading } = useNadacSearch();
   const origin = useNadacChartOrigin();
   const { chartWindow } = useChartWindow(origin.resultPrices);
-  const autoChartSubtitle = chartDatesSubtitle(chartWindow);
+  const [barValue, setBarValue] = useState<BarValue>("latest");
 
   // System charts are derived from the current result on every render, like the FDA page's.
   // User charts live in the tab's pinned items and are not touched by a new search.
   const prices = data?.prices ?? [];
   const showAutoCharts = shouldAutoChart(prices);
+  // The same rows as `prices`, behind a stable empty fallback, so the colors stay memoized.
+  const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
+
+  const labels = seriesLabels(prices);
+  const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
+  const lineTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels);
+  const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, prices);
 
   return (
     <Box
@@ -54,20 +61,32 @@ export default function NadacSearchViz() {
         <Grid container spacing={2}>
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
-              title={BAR_TITLE}
+              title={barTitle}
               subtitle={autoChartSubtitle}
-              actions={<PinButton title={BAR_TITLE} chartType="bar" prices={prices} origin={origin} dateWindow={chartWindow} />}
+              actions={<PinButton
+                title={barTitle} chartType="bar" prices={prices} origin={origin} dateWindow={chartWindow}
+                colors={colors} barValue={barValue}
+              />}
             >
-              <BarViz nadacPrices={prices} dateWindow={chartWindow} />
+              <BarViz
+                nadacPrices={prices}
+                colors={colors}
+                dateWindow={chartWindow}
+                barValue={barValue}
+                onBarValueChange={setBarValue}
+              />
             </ExplorerGridItem>
           </Grid>
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
-              title={LINE_TITLE}
+              title={lineTitle}
               subtitle={autoChartSubtitle}
-              actions={<PinButton title={LINE_TITLE} chartType="line" prices={prices} origin={origin} dateWindow={chartWindow} />}
+              actions={<PinButton
+                title={lineTitle} chartType="line" prices={prices} origin={origin} dateWindow={chartWindow}
+                colors={colors}
+              />}
             >
-              <LineViz nadacPrices={prices} dateWindow={chartWindow} />
+              <LineViz nadacPrices={prices} colors={colors} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
         </Grid>

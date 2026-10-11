@@ -1,4 +1,5 @@
 import type { ChartPrice } from "./types";
+import type { BarValue } from "./seriesSummary";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**
@@ -16,7 +17,7 @@ export type ExplorerItemWidth = "half" | "full";
 /** What one chart series is. Stored as a kind, not display text, so wording can change later. */
 export type SeriesKind = "product" | "package" | "ndc";
 
-const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: string, chip: string }> = {
+export const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: string, chip: string }> = {
   product: { singular: "product", plural: "products", chip: "Products" },
   package: { singular: "package", plural: "packages", chip: "Packages" },
   ndc: { singular: "NDC", plural: "NDCs", chip: "NDCs" },
@@ -71,6 +72,8 @@ export type ChartSeriesSnapshot = {
   label: string,
   unit: string,
   points: Array<[number, number]>,
+  /** The series' color on the page it came from. Charts pinned before colors were stored have none. */
+  color?: string,
 };
 
 /** A stretch of a chart to shade and label, e.g. the week a price dropped 43%. */
@@ -78,6 +81,8 @@ export type ChartChangeSpan = {
   start: number,
   end: number,
   label: string,
+  /** Colors the shading. Spans pinned before this was stored have none and shade neutrally. */
+  direction?: "rise" | "drop",
 };
 
 export type ChartItem = ExplorerItemBase & {
@@ -88,6 +93,8 @@ export type ChartItem = ExplorerItemBase & {
   /** The dates the chart shows. */
   dateWindow: DateWindow,
   changeSpan?: ChartChangeSpan,
+  /** Bar charts: what a bar shows. Defaults to the latest price. */
+  barValue?: BarValue,
 };
 
 export type ExplorerItem = ChartItem;
@@ -97,13 +104,15 @@ export const itemTitle = (item: ExplorerItem) => item.title ?? item.defaultTitle
 const seriesKey = (ndc: string, unit: string) => ndc + "|" + unit;
 
 /** Builds a chart snapshot from prices. Series are keyed by NDC and pricing unit. */
-export function toChartSeries(prices: ChartPrice[]): ChartSeriesSnapshot[] {
+export function toChartSeries(prices: ChartPrice[], colors?: Map<string, string>): ChartSeriesSnapshot[] {
   const series = new Map<string, ChartSeriesSnapshot>();
   for (const price of prices) {
     const key = seriesKey(price.ndc, price.pricingUnit);
     let entry = series.get(key);
     if (!entry) {
       entry = { ndc: price.ndc, label: price.ndcDescription, unit: price.pricingUnit, points: [] };
+      const color = colors?.get(price.ndc);
+      if (color) entry.color = color;
       series.set(key, entry);
     }
     entry.points.push([price.asOfDate.getTime(), price.nadacPerUnit]);
@@ -133,10 +142,15 @@ type NewChartItem = {
   origin: ChartOrigin,
   dateWindow: DateWindow,
   changeSpan?: ChartChangeSpan,
+  /** The page's series colors, kept with the snapshot. */
+  colors?: Map<string, string>,
+  barValue?: BarValue,
 };
 
-export function createChartItem({ chartType, prices, defaultTitle, origin, dateWindow, changeSpan }: NewChartItem): ChartItem {
-  const series = toChartSeries(prices);
+export function createChartItem({
+  chartType, prices, defaultTitle, origin, dateWindow, changeSpan, colors, barValue,
+}: NewChartItem): ChartItem {
+  const series = toChartSeries(prices, colors);
   const resultSeries = toChartSeries(origin.resultPrices);
   const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
   // Snapshots keep every date, so missing points come from page filters, never the window.
@@ -153,6 +167,7 @@ export function createChartItem({ chartType, prices, defaultTitle, origin, dateW
     series,
     dateWindow,
     ...(changeSpan && { changeSpan }),
+    ...(chartType === "bar" && barValue && { barValue }),
     source: {
       searchLabel: origin.searchLabel,
       seriesKind: origin.seriesKind,
@@ -173,14 +188,6 @@ export function formatItemSource(source: ExplorerItemSource): string {
   return parts.join(" · ");
 }
 
-const CHART_TYPE_LABELS: Record<ChartType, string> = { line: "Line chart", bar: "Bar chart" };
-
-/** Title for a chart made with Add Chart, e.g. "Line chart: 2 packages". */
-export function addedChartTitle(chartType: ChartType, seriesCount: number, seriesKind: SeriesKind): string {
-  const { singular, plural } = SERIES_KIND_LABELS[seriesKind];
-  return `${CHART_TYPE_LABELS[chartType]}: ${seriesCount} ${seriesCount === 1 ? singular : plural}`;
-}
-
 /** First and last date the chart has prices for, whatever its window shows. */
 export function chartDataBounds(item: ChartItem): DateBounds | null {
   let first = Infinity;
@@ -195,20 +202,21 @@ export function chartDataBounds(item: ChartItem): DateBounds | null {
 }
 
 /**
- * The highest visible price per pricing unit across the line charts, for "Match scale": matched
- * charts share an axis from 0 to it. Bar charts keep their own scale.
+ * The lowest and highest visible price per pricing unit across the line charts, for "Match
+ * scale": matched charts in one unit share the axis `fittedPriceAxis` builds from this range.
+ * Bar charts keep their own scale.
  */
-export function matchedPriceMax(items: ExplorerItem[]): Map<string, number> {
-  const maxByUnit = new Map<string, number>();
+export function matchedPriceRange(items: ExplorerItem[]): Map<string, [number, number]> {
+  const ranges = new Map<string, [number, number]>();
   for (const item of items) {
     if (item.kind !== "chart" || item.chartType !== "line") continue;
     for (const { unit, points } of item.series) {
       for (const [time, price] of points) {
-        if (inWindow(time, item.dateWindow) && price > (maxByUnit.get(unit) ?? -Infinity)) {
-          maxByUnit.set(unit, price);
-        }
+        if (!inWindow(time, item.dateWindow)) continue;
+        const [min, max] = ranges.get(unit) ?? [price, price];
+        ranges.set(unit, [Math.min(min, price), Math.max(max, price)]);
       }
     }
   }
-  return maxByUnit;
+  return ranges;
 }

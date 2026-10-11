@@ -58,7 +58,14 @@ describe("loading saved tab state", () => {
       type: "nadac" as const,
       searchParams: nadacSearch,
       excludedNdcDescriptions: ["ELIQUIS 5 MG TABLET"],
-      pinnedItems: [{ ...oldItem, dateWindow: { start: 100, end: null }, changeSpan: { start: 1, end: 2, label: "-43.0%" } }],
+      pinnedItems: [
+        {
+          ...oldItem, dateWindow: { start: 100, end: null },
+          changeSpan: { start: 1, end: 2, label: "-43.0%", direction: "drop" },
+          series: [{ ...oldItem.series[0], color: "#56B4E9" }],
+        },
+        { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
+      ],
       chartDates: { kind: "recent" as const, months: 6 },
       matchScale: true,
     } as Parameters<Persist["saveTabState"]>[1];
@@ -80,6 +87,8 @@ describe("loading saved tab state", () => {
       pinnedItems: [
         { ...oldItem, id: "bad-window", dateWindow: { start: "2025-01-01", end: null } },
         { ...oldItem, id: "bad-span", changeSpan: { start: 1 } },
+        { ...oldItem, id: "bad-bar-value", chartType: "bar", barValue: "median" },
+        { ...oldItem, id: "bad-color", series: [{ ...oldItem.series[0], color: 3 }] },
         { ...oldItem, id: "good" },
       ],
       chartDates: { kind: "recent", months: 0 },

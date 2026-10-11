@@ -127,11 +127,11 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `nadacPriceToDrugSummary.ts`, `fdaDataToNadacPrices.ts`, `dollarFormatter.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
-| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), and UI (`useMobile`, `useScrolled`) |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`; per-tab provider stacks in `TabProviders.tsx` |
-| Theme | `src/theme.ts` |
+| Theme | `src/theme.ts` (including the chart series palette, `palette.chart.series`) |
 
 Feature folders under `src/Components/`:
 
@@ -202,8 +202,36 @@ Notes:
     250 weekly rows). Both pages call `shouldAutoChart` in `chartSeries.ts`.
   - API dates are calendar days that `new Date("YYYY-MM-DD")` reads as UTC midnight. Every date
     display, in charts or anywhere else, goes through the UTC helpers in `library/dates.ts`
-    (`formatDate`, `formatShortDate`, `toDateInput`). Local formatting shows the day before in
+    (`formatDate`, `toDateInput`; axis ticks from `dateTicks` in `chartScale.ts`). Local formatting shows the day before in
     the Americas.
+  - **Price axes are fitted, but may exaggerate a change at most `MAX_AXIS_EXAGGERATION` times**
+    (`constants.ts`, 4: a 10% change fills at most 40% of the chart height). `fittedPriceAxis`
+    in `chartScale.ts` makes the visible span at least `max / MAX_AXIS_EXAGGERATION`, centers it on
+    the data, never goes below $0, and rounds the ends to round ticks. Line charts use it, and
+    "Match scale" feeds it one shared range per unit (`matchedPriceRange`). Bar lengths always
+    start at $0 (`zeroBasedAxis`). Don't fit an axis tighter than this rule; the author
+    considers small changes drawn as big ones misleading. Tick labels come from
+    `priceTickFormatter` (precision follows the tick step) and full prices from `formatPrice`.
+  - **Series colors** come from the theme palette (`palette.chart.series`: 10 color-blind-safe
+    colors, each at least 3:1 on the card; `chartPalette.test.ts` checks it). Each NDC prefers
+    the slot of its position in the *unfiltered* search result, so filters never move it.
+    `useSeriesColors` resolves clashes once per page over the series shown, so every chart on a
+    page agrees and visible series never share a color while there are 10 or fewer. Add Chart and
+    Pin store each series' `color` in the snapshot, because the result the slots came from is
+    gone after the next search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
+  - **Bars** are horizontal and sorted. Each shows the latest price or the average over the
+    chart's dates (`BarValue`; a Latest/Average toggle on every bar card, stored on pinned bars),
+    with a whisker from the lowest to the highest price over the same dates.
+    `summarizeSeries` computes all of these from the per-date values the line chart draws, so
+    at product level the whisker is the range of the averaged line over time, never the
+    spread between packages.
+  - Line charts draw steps (`type="stepAfter"`): a NADAC price holds until the next weekly
+    file. Charts split by unit share one date axis. A single series has no legend; the
+    title names it.
+  - Titles are generated (`chartTitles.ts`): the title says what is common ("Humira: 7
+    products over time"), and the subtitle gives the count and the dates shown. Price-change
+    cards name the change, its date, and the package. Shading is green for a drop and the
+    theme's `error` color for a rise (`ChartChangeSpan.direction`).
   - Chart animations are off (`isAnimationActive={false}`). Recharts morphs the old line into the new
     one point by point, which drew made-up prices whenever the dates changed, and re-renders
     kept restarting it.
@@ -274,7 +302,8 @@ npm test         # vitest run
 ```
 
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
-windows, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
+windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
+summaries, chart titles, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
 the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a

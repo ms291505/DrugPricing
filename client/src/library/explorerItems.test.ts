@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, formatItemSource, matchedPriceMax, type ChartOrigin, type ExplorerItem,
+  chartDataBounds, createChartItem, formatItemSource, matchedPriceRange, type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
@@ -57,20 +57,37 @@ describe("createChartItem provenance", () => {
   });
 });
 
-describe("matchedPriceMax", () => {
+describe("matchedPriceRange", () => {
   const lineA = make(packageA1);
   const lineB = make(productB, { start: day("2025-03-01"), end: null });
   const mL = make(series("C", 300, "milliliter"));
   const bar: ExplorerItem = { ...make(series("D", 1000)), chartType: "bar" };
 
-  it("takes the highest visible price of line charts per unit, ignoring bar charts", () => {
-    const maxByUnit = matchedPriceMax([lineA, lineB, mL, bar]);
-    expect(maxByUnit.get("each")).toBe(10);
-    expect(maxByUnit.get("milliliter")).toBe(300);
+  it("spans the visible prices of line charts per unit, ignoring bar charts", () => {
+    const ranges = matchedPriceRange([lineA, lineB, mL, bar]);
+    expect(ranges.get("each")).toEqual([5, 10]);
+    expect(ranges.get("milliliter")).toEqual([300, 300]);
   });
 
   it("ignores prices outside each chart's window", () => {
     const spike: ExplorerItem = make([...productB, { ...productB[0], nadacPerUnit: 99 }], { start: day("2025-02-01"), end: null });
-    expect(matchedPriceMax([spike]).get("each")).toBe(5);
+    expect(matchedPriceRange([spike]).get("each")).toEqual([5, 5]);
+  });
+});
+
+describe("createChartItem colors and bar value", () => {
+  it("keeps the page's color with each series it has one for", () => {
+    const item = createChartItem({
+      chartType: "line", prices: [...packageA1, ...productB], defaultTitle: "T", origin, dateWindow: FULL_WINDOW,
+      colors: new Map([["A", "#56B4E9"]]),
+    });
+    expect(item.series.map(s => s.color)).toEqual(["#56B4E9", undefined]);
+  });
+
+  it("stores the bar value on bar charts only", () => {
+    const bar = createChartItem({ chartType: "bar", prices: productB, defaultTitle: "T", origin, dateWindow: FULL_WINDOW, barValue: "average" });
+    const line = createChartItem({ chartType: "line", prices: productB, defaultTitle: "T", origin, dateWindow: FULL_WINDOW, barValue: "average" });
+    expect(bar.barValue).toBe("average");
+    expect("barValue" in line).toBe(false);
   });
 });

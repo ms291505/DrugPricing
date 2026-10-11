@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addMonths, ALL_DATES, chartDatesSubtitle, clipToWindow, formatDate, formatWindow, fromDateInput, FULL_WINDOW,
+  addMonths, ALL_DATES, clipToWindow, formatDate, formatWindow, fromDateInput, FULL_WINDOW,
   isValidWindow, resolveChartDates, toDateInput, windowAround, windowEndingAt,
 } from "./dates";
 import type { ChartPrice } from "./types";
@@ -52,11 +52,6 @@ describe("formatting", () => {
     expect(formatWindow(FULL_WINDOW, null)).toBeNull();
   });
 
-  it("subtitles only windows that cut something off", () => {
-    expect(chartDatesSubtitle(FULL_WINDOW)).toBeUndefined();
-    expect(chartDatesSubtitle({ start: day("2025-01-01"), end: null })).toMatch(/onward$/);
-    expect(chartDatesSubtitle({ start: null, end: day("2025-01-01") })).toMatch(/^Through /);
-  });
 });
 
 describe("window builders", () => {

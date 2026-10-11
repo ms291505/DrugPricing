@@ -1,30 +1,34 @@
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceArea, } from "recharts";
-import { DEFAULT_CHART_HEIGHT, DEFAULT_TOOLTIP_FONT_SIZE, LINE_VIZ_COLORS, NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
-import { useTheme } from "@mui/material/styles";
-import { dollarFormatter } from "../../library/dollarFormatter.ts";
+import { NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
 import { createLineVizData, rangeKey } from "../../library/createLineVizData.ts";
-import { niceCeiling, pricingUnitLabel } from "../../library/chartSeries.ts";
+import { pricingUnitLabel } from "../../library/chartSeries.ts";
+import { dateTicks, fittedPriceAxis, formatPrice, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
-import { formatDate, formatShortDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
+import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import type { ChartChangeSpan } from "../../library/explorerItems.ts";
+import useChartTheme from "../../hooks/useChartTheme.ts";
+import useMobile from "../../hooks/useMobile.ts";
 
 type Props = {
   nadacPrices: ChartPrice[];
-  lineColors?: string[];
+  /** Color per NDC, from the page (`useSeriesColors`) or a pinned snapshot. Others take palette order. */
+  colors?: Map<string, string>;
   /** The dates to show. The axis spans the whole window, even where there are no prices. */
   dateWindow?: DateWindow;
   /** A price change to shade and label. */
   changeSpan?: ChartChangeSpan;
-  /** Price-axis maximum per pricing unit ("Match scale"); units not in it scale to their data. */
-  priceMax?: Map<string, number>;
+  /** Shared price range per pricing unit ("Match scale"); units not in it fit their own data. */
+  priceRanges?: Map<string, [number, number]>;
 };
 
 const AVERAGE_SUFFIX = " (average; shaded band is min–max)";
 
-export default function LineViz({
-  nadacPrices, lineColors = LINE_VIZ_COLORS, dateWindow = FULL_WINDOW, changeSpan, priceMax,
-}: Props) {
+export default function LineViz({ nadacPrices, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
+  // Charts split by unit share one date axis: the window, with open ends at the data's dates.
+  const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
+  const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
+
   return (
     <UnitSplit
       nadacPrices={nadacPrices}
@@ -33,10 +37,10 @@ export default function LineViz({
         <UnitLineChart
           nadacPrices={unitPrices}
           pricingUnit={pricingUnit}
-          lineColors={lineColors}
-          dateWindow={dateWindow}
+          colors={colors}
+          xDomain={xDomain}
           changeSpan={changeSpan}
-          axisMax={priceMax?.get(pricingUnit)}
+          priceRange={priceRanges?.get(pricingUnit)}
         />
       )}
     />
@@ -46,15 +50,15 @@ export default function LineViz({
 type UnitLineChartProps = {
   nadacPrices: ChartPrice[];
   pricingUnit: string;
-  lineColors: string[];
-  dateWindow: DateWindow;
+  colors?: Map<string, string>;
+  xDomain: [number, number];
   changeSpan?: ChartChangeSpan;
-  axisMax?: number;
+  priceRange?: [number, number];
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, changeSpan, axisMax }: UnitLineChartProps) {
-
-  const theme = useTheme();
+function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
+  const chartTheme = useChartTheme();
+  const isMobile = useMobile();
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
 
@@ -69,47 +73,69 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, chang
   const unit = pricingUnitLabel(pricingUnit);
 
   // One lookup for both the band and its line, so they always share a color.
-  const seriesIndex = new Map(ndcs.map((ndc, i) => [ndc, i]));
-  const colorFor = (ndc: string) => lineColors[(seriesIndex.get(ndc) ?? 0) % lineColors.length];
+  const colorFor = (ndc: string) =>
+    colors?.get(ndc) ?? chartTheme.palette[ndcs.indexOf(ndc) % chartTheme.palette.length];
+
+  const xTicks = dateTicks(xDomain[0], xDomain[1], isMobile ? 4 : 7);
+
+  // Bands are within each date's min–max, so the raw prices bound everything drawn.
+  const prices = nadacPrices.map(price => price.nadacPerUnit);
+  const [low, high] = priceRange ?? [Math.min(...prices), Math.max(...prices)];
+  const yAxis = fittedPriceAxis(low, high);
+
+  const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
+    : changeSpan?.direction === "drop" ? chartTheme.drop
+      : chartTheme.textSecondary;
 
   return (
-    <ComposedChart data={vizData} style={{ width: "100%", height: DEFAULT_CHART_HEIGHT }} responsive role="img">
-      {/* <CartesianGrid strokeDasharray="3 3" /> */}
+    <ComposedChart
+      data={vizData}
+      margin={chartTheme.margin}
+      style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
+      responsive
+      role="img"
+    >
       <XAxis
         dataKey="asOfDate"
         scale="time"
         type="number"
-        domain={[dateWindow.start ?? "dataMin", dateWindow.end ?? "dataMax"]}
-        tickFormatter={formatShortDate}
+        domain={xDomain}
+        ticks={xTicks.ticks}
+        tickFormatter={xTicks.format}
+        tick={chartTheme.tick}
+        axisLine={chartTheme.axisLine}
+        tickLine={chartTheme.axisLine}
       />
       <YAxis
         width="auto"
-        // Matched charts keep the zero baseline unmatched ones get by default.
-        domain={axisMax === undefined ? undefined : [0, niceCeiling(axisMax)]}
-        tickFormatter={(value: number) =>
-          value >= 1000 ? `$${(value / 1000).toFixed(1)}K` : `$${value}`
-        }
+        domain={yAxis.domain}
+        ticks={yAxis.ticks}
+        tickFormatter={priceTickFormatter(yAxis.ticks)}
+        tick={chartTheme.tick}
+        axisLine={chartTheme.axisLine}
+        tickLine={chartTheme.axisLine}
       />
-      <Legend
-        formatter={(value: string) => value.split(NDC_NDC_DESCRIPTION_DELIMITER)[0]}
-      />
+      {/* One series is named by the card's title; a legend would only repeat it. */}
+      {ndcs.length > 1
+        ? <Legend
+          formatter={(value: string) => value.split(NDC_NDC_DESCRIPTION_DELIMITER)[0]}
+          wrapperStyle={chartTheme.legendStyle}
+        />
+        : null
+      }
       <Tooltip
         labelFormatter={(ts) => formatDate(ts as number)}
-        formatter={(value) => `${dollarFormatter(value as number)} / ${unit}`}
-        contentStyle={{
-          backgroundColor: theme.palette.background.paper,
-          fontSize: DEFAULT_TOOLTIP_FONT_SIZE,
-          maxWidth: 400,
-          whiteSpace: "normal"
-        }}
+        formatter={(value) => `${formatPrice(value as number)} / ${unit}`}
+        itemSorter={(item) => -(item.value as number)}
+        {...chartTheme.tooltip}
       />
       {changeSpan
         ? <ReferenceArea
           x1={changeSpan.start}
           x2={changeSpan.end}
-          fill={theme.palette.warning.main}
+          fill={changeColor}
           fillOpacity={0.25}
-          label={{ value: changeSpan.label, position: "insideTop", fill: theme.palette.text.primary, fontSize: DEFAULT_TOOLTIP_FONT_SIZE }}
+          label={{ value: changeSpan.label, position: "insideTop", fill: chartTheme.textPrimary, fontSize: chartTheme.fontSize }}
         />
         : null
       }
@@ -117,6 +143,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, chang
         <Area
           key={rangeKey(ndc)}
           dataKey={rangeKey(ndc)}
+          type="stepAfter"
           stroke="none"
           fill={colorFor(ndc)}
           fillOpacity={0.2}
@@ -132,7 +159,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, lineColors, dateWindow, chang
           key={ndc}
           dataKey={ndc}
           stroke={colorFor(ndc)}
-          type="monotone"
+          strokeWidth={2}
+          // NADAC prices hold until the next weekly file: steps, not curves between weeks.
+          type="stepAfter"
           dot={false}
           connectNulls={false}
           name={dataSeriesName(ndc)}

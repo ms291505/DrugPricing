@@ -73,6 +73,19 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
 
 ## Ideas
 
+### User chart settings (2026-10-11)
+
+Two chart rules from step 5 of the chart plan are constants today, and could become user
+settings in a later release:
+
+- **Y-axis exaggeration cap.** Fitted price axes may exaggerate a change at most
+  `MAX_AXIS_EXAGGERATION` times (4: a 10% change fills at most 40% of the chart height). A user
+  might prefer a stricter or looser axis, or a $0 baseline.
+- **Series colors: fixed or resolved.** Each NDC prefers a color from its place in the unfiltered
+  search result. Today, clashes among the visible series are resolved once per page, so no two
+  visible series share a color. The alternative is "an NDC always keeps its color", even if two
+  visible series then match.
+
 ### Popular searches and recent movers
 
 The author would like to show popular searches or recent price movers, linking each to a

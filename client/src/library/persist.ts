@@ -6,6 +6,7 @@ import {
 } from "./types";
 import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
+import type { BarValue } from "./seriesSummary";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -95,7 +96,8 @@ const isWorkspaceTab = (x: unknown): x is WorkspaceTab =>
   isObject(x) && isString(x.id) && isString(x.title) && isTabType(x.type);
 
 const isSeriesSnapshot = (x: unknown): x is ChartSeriesSnapshot =>
-  isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit) && Array.isArray(x.points)
+  isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit)
+  && (x.color === undefined || isString(x.color)) && Array.isArray(x.points)
   && x.points.every(p => Array.isArray(p) && p.length === 2 && typeof p[0] === "number" && typeof p[1] === "number");
 
 const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x === "number";
@@ -108,7 +110,10 @@ const isChartDates = (x: unknown): x is ChartDates =>
     || (x.kind === "recent" && Number.isInteger(x.months) && (x.months as number) > 0));
 
 const isChangeSpan = (x: unknown): x is ChartChangeSpan =>
-  isObject(x) && typeof x.start === "number" && typeof x.end === "number" && isString(x.label);
+  isObject(x) && typeof x.start === "number" && typeof x.end === "number" && isString(x.label)
+  && (x.direction === undefined || x.direction === "rise" || x.direction === "drop");
+
+const isBarValue = oneOf<BarValue>(["latest", "average"]);
 
 /** Charts pinned before chart windows existed have no `dateWindow`; they show every date. */
 type StoredExplorerItem = Omit<ChartItem, "dateWindow"> & { dateWindow?: DateWindow };
@@ -123,7 +128,8 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   && typeof x.source.seriesCount === "number" && typeof x.source.resultSeriesCount === "number"
   && typeof x.source.filtered === "boolean"
   && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
-  && (x.changeSpan === undefined || isChangeSpan(x.changeSpan));
+  && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
+  && (x.barValue === undefined || isBarValue(x.barValue));
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)

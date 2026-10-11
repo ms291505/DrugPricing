@@ -6,6 +6,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import LineViz from "../Charts/LineViz";
 import { percentageChangeToString } from "../../library/flagNadacPriceChange";
+import { priceChangeTitle } from "../../library/chartTitles";
 import { FULL_WINDOW, windowAround } from "../../library/dates";
 import { PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
 import type { ChartChangeSpan, ChartOrigin } from "../../library/explorerItems";
@@ -16,24 +17,27 @@ type Props = {
   /** Every price of the changed package. */
   prices: NadacPrice[],
   origin: ChartOrigin,
-  color: string,
+  /** The package-level page colors. */
+  colors: Map<string, string>,
 }
 
 /**
  * An auto chart for one flagged price change. It opens on the months around the change, with
  * the change shaded, and can widen to the package's full history. Pinning keeps the current view.
  */
-export default function PriceChangeCard({ change, prices, origin, color }: Props) {
+export default function PriceChangeCard({ change, prices, origin, colors }: Props) {
   const [showFullHistory, setShowFullHistory] = useState(false);
 
   const { startDate, endDate, percentage } = change.priceChange;
   const changeLabel = percentageChangeToString(percentage);
-  const changeSpan: ChartChangeSpan = { start: startDate.getTime(), end: endDate.getTime(), label: changeLabel };
+  const changeSpan: ChartChangeSpan = {
+    start: startDate.getTime(), end: endDate.getTime(), label: changeLabel, direction: percentage > 0 ? "rise" : "drop",
+  };
   const dateWindow = showFullHistory
     ? FULL_WINDOW
     : windowAround(changeSpan.start, changeSpan.end, PRICE_CHANGE_WINDOW_MONTHS);
 
-  const title = changeLabel + " Price Change for " + change.packageNdc;
+  const title = priceChangeTitle(changeLabel, changeSpan.end, change.packageNdc);
   const toggleLabel = "Show full history";
 
   return (
@@ -57,10 +61,11 @@ export default function PriceChangeCard({ change, prices, origin, color }: Props
           origin={origin}
           dateWindow={dateWindow}
           changeSpan={changeSpan}
+          colors={colors}
         />
       </>}
     >
-      <LineViz nadacPrices={prices} lineColors={[color]} dateWindow={dateWindow} changeSpan={changeSpan} />
+      <LineViz nadacPrices={prices} colors={colors} dateWindow={dateWindow} changeSpan={changeSpan} />
     </ExplorerGridItem>
   );
 }

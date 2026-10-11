@@ -101,10 +101,6 @@ export function fromDateInput(value: string): number | null {
 export const formatDate = (time: number) =>
   new Date(time).toLocaleDateString(undefined, { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
 
-/** "1/13/2026", for axis ticks. */
-export const formatShortDate = (time: number) =>
-  new Date(time).toLocaleDateString(undefined, { timeZone: "UTC" });
-
 /**
  * The window as text, with open ends filled in from the data, e.g. "Oct 14, 2025 – Apr 13, 2026".
  * Returns null when the window is open and there's no data to describe.
@@ -114,12 +110,4 @@ export function formatWindow(dateWindow: DateWindow, bounds: DateBounds | null):
   const end = dateWindow.end ?? bounds?.last;
   if (start === undefined || end === undefined) return null;
   return `${formatDate(start)} – ${formatDate(end)}`;
-}
-
-/** Subtitle for an auto chart that shows only some dates, e.g. "Jan 13, 2026 onward"; none for all dates. */
-export function chartDatesSubtitle({ start, end }: DateWindow): string | undefined {
-  if (start !== null && end !== null) return `${formatDate(start)} – ${formatDate(end)}`;
-  if (start !== null) return `${formatDate(start)} onward`;
-  if (end !== null) return `Through ${formatDate(end)}`;
-  return undefined;
 }

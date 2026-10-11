@@ -1,5 +1,10 @@
 /** A new NADAC search covers this many months, ending at the last loaded as-of date. */
 export const DEFAULT_NADAC_SEARCH_MONTHS = 12;
+/**
+ * How much a fitted price axis may exaggerate a change (see `fittedPriceAxis`): 4 means a 10%
+ * change fills at most 40% of the chart height. Lower is stricter; 1 is about a $0 baseline.
+ */
+export const MAX_AXIS_EXAGGERATION = 4;
 /** Price-change charts focus on this many months either side of the change. */
 export const PRICE_CHANGE_WINDOW_MONTHS = 3;
 export const MIN_NDC_DESCRIPTION_LENGTH = 5;
@@ -7,7 +12,6 @@ export const MIN_NDC_LENGTH = 5;
 export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
 export const DATA_GRID_PAGE_SIZES = [5, 10, 25];
 export const NDC_NDC_DESCRIPTION_DELIMITER = " - ";
-export const DEFAULT_CHART_HEIGHT = 400;
 export const DEFAULT_TOOLTIP_FONT_SIZE = 12;
 export const FILTER_SELECT_DELIMITER = " | ";
 
@@ -27,7 +31,6 @@ export const CONSTANT = {
 
 export const MAX_GLOBAL_MODAL_HEIGHT = 500;
 export const MAX_GLOBAL_MODAL_WIDTH = 700;
-export const LINE_VIZ_COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#d84848"];
 /** Price-change charts are auto-added only when there are this many flagged changes or fewer. */
 export const MAX_AUTO_PRICE_CHANGE_CHARTS = 9;
 /** Auto-added charts are drawn only when they would show this many series (NDCs) or fewer. */

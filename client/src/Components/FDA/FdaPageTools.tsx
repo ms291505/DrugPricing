@@ -9,8 +9,9 @@ import SelectDetailLevel from "./DetailLevelSelect";
 import { CONSTANT, } from "../../library/constants";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
-import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
-import { countSeries } from "../../library/chartSeries";
+import { createChartItem, type ChartType } from "../../library/explorerItems";
+import { chartTitle, seriesLabels } from "../../library/chartTitles";
+import useSeriesColors from "../../hooks/useSeriesColors";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 import useChartWindow from "../../hooks/useChartWindow";
@@ -26,6 +27,12 @@ export default function FdaPageTools() {
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
 
   const { data } = useFdaSearch();
+
+  // What the page shows at this level after filters: Add Chart's source, and the colors' visible set.
+  const visiblePrices = useMemo(
+    () => fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel),
+    [data, fdaResultFilter, fdaResultDetailLevel]);
+  const colors = useSeriesColors(origin.resultPrices, visiblePrices);
 
   const resultsHaveOtcProducts = useMemo(() =>
     (data?.products.some(p => isFdaProductOtc(p.productTypeName)) ?? false),
@@ -66,17 +73,17 @@ export default function FdaPageTools() {
 
     // At product level `ndc` is the product NDC, at package level the package NDC,
     // matching the row ids of the table for that level.
-    const chartData = fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel)
-      .filter(price => ndcs.has(price.ndc));
+    const chartData = visiblePrices.filter(price => ndcs.has(price.ndc));
 
     if (chartData.length === 0) return;
 
     addItem(createChartItem({
       chartType,
       prices: chartData,
-      defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
+      defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),
       origin,
       dateWindow: chartWindow,
+      colors,
     }), { focus: true });
   }
 

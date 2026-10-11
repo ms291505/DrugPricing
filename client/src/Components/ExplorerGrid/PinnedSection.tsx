@@ -1,7 +1,7 @@
 import { useId, useMemo } from "react";
 import { Box, Button, Chip, FormControlLabel, Grid, Switch, Tooltip, Typography } from "@mui/material";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
-import { matchedPriceMax } from "../../library/explorerItems";
+import { matchedPriceRange } from "../../library/explorerItems";
 import PinnedItemCard from "./PinnedItemCard";
 
 /**
@@ -15,8 +15,8 @@ export default function PinnedSection() {
   const lineChartCount = pinnedItems.filter(item => item.kind === "chart" && item.chartType === "line").length;
   // Matching takes at least two line charts; the stored setting waits until there are two again.
   const canMatchScale = lineChartCount >= 2;
-  const priceMax = useMemo(
-    () => matchScale && canMatchScale ? matchedPriceMax(pinnedItems) : undefined,
+  const priceRanges = useMemo(
+    () => matchScale && canMatchScale ? matchedPriceRange(pinnedItems) : undefined,
     [matchScale, canMatchScale, pinnedItems]);
 
   if (pinnedItems.length === 0) return null;
@@ -44,7 +44,7 @@ export default function PinnedSection() {
       </Box>
       <Grid container spacing={2}>
         {pinnedItems.map((item, index) => (
-          <PinnedItemCard key={item.id} item={item} index={index} count={pinnedItems.length} priceMax={priceMax} />
+          <PinnedItemCard key={item.id} item={item} index={index} count={pinnedItems.length} priceRanges={priceRanges} />
         ))}
       </Grid>
     </Box>

@@ -10,8 +10,9 @@ import Paper from "@mui/material/Paper"
 import Divider from "@mui/material/Divider"
 import { CONSTANT } from "../../library/constants";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
-import { addedChartTitle, createChartItem, type ChartType } from "../../library/explorerItems";
-import { countSeries } from "../../library/chartSeries";
+import { createChartItem, type ChartType } from "../../library/explorerItems";
+import { chartTitle, seriesLabels } from "../../library/chartTitles";
+import useSeriesColors from "../../hooks/useSeriesColors";
 import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
@@ -22,6 +23,8 @@ export default function VizTools() {
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
+  // The auto charts show the whole result (the Drug filter only feeds Add Chart), so it's the visible set too.
+  const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...newChartRows.ids].map(String));
@@ -31,9 +34,10 @@ export default function VizTools() {
     addItem(createChartItem({
       chartType,
       prices: chartData,
-      defaultTitle: addedChartTitle(chartType, countSeries(chartData), origin.seriesKind),
+      defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),
       origin,
       dateWindow: chartWindow,
+      colors,
     }), { focus: true });
   }
   return (

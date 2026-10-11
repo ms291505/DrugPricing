@@ -18,13 +18,13 @@ type Props = {
   item: ExplorerItem,
   index: number,
   count: number,
-  /** Price-axis maximum per pricing unit from "Match scale". */
-  priceMax?: Map<string, number>,
+  /** Shared price range per pricing unit from "Match scale". */
+  priceRanges?: Map<string, [number, number]>,
 }
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function PinnedItemCard({ item, index, count, priceMax }: Props) {
+export default function PinnedItemCard({ item, index, count, priceRanges }: Props) {
   const { updateItem, removeItem, moveItem, highlight } = useExplorerItems();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
@@ -118,7 +118,7 @@ export default function PinnedItemCard({ item, index, count, priceMax }: Props) 
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} priceMax={priceMax} /> : null}
+        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={priceRanges} /> : null}
       </ExplorerGridItem>
     </Grid>
   );
