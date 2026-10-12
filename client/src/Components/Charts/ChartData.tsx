@@ -61,7 +61,7 @@ type Column = { label: string, numeric?: boolean };
 function DataTable({ caption, columns, children }: { caption: string, columns: Column[], children: ReactNode }) {
   return (
     <>
-      {/* Shown outside the scroll box so it wraps at the screen's width; the table keeps its own caption. */}
+      {/* Outside the scroll box so it wraps; the <caption> is for screen readers. */}
       <Typography variant="body2" color="text.secondary" aria-hidden>{caption}</Typography>
       <TableContainer sx={{ overflowX: "auto" }}>
         <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 } } }}>

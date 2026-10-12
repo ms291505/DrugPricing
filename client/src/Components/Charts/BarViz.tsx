@@ -139,9 +139,8 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
       <Tooltip
         // Highlights the whole row, label to value, under the pointer.
         cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
-        // On a phone the rows fill the chart, so any spot inside it covers one. The tooltip goes
-        // above the plot instead (`compact` lifts it by its own height), over the caption and
-        // toggle, which aren't being read while a finger is on a row.
+        // On a phone the rows fill the chart, so the tooltip goes above the plot (`compact` lifts
+        // it by its own height), over the caption and toggle.
         position={isMobile ? { y: 0 } : undefined}
         allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
         content={({ active, payload }) => {

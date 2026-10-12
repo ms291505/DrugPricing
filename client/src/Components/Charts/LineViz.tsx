@@ -270,10 +270,9 @@ function LineTooltip({ date, unit, items, colorFor, descriptionFor, style }: Lin
 }
 
 /**
- * Calls out a price change on the line itself: the old price continues as a dashed line after
- * the change, so the gap to the new price is the size of the change; dots at the top and bottom
- * of the step mark the old and new prices, and a pill beside it reads "$9.69 → $5.52". The percent is in the card title.
- * Rendered as an array, since recharts needs its reference elements as direct chart children.
+ * Calls out a price change on the line: dots at the old and new price, the old price continued
+ * as a dashed line, and a "$9.69 → $5.52" pill. An array, since recharts needs reference elements
+ * as direct chart children.
  */
 function changeCallout(
   span: ChartChangeSpan,

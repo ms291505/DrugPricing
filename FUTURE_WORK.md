@@ -108,6 +108,15 @@ rules from step 5 of the chart plan are constants today, and could join it:
   visible series share a color. The alternative is "an NDC always keeps its color", even if two
   visible series then match.
 
+### Chart keyboard shortcuts (2026-10-12)
+
+Charts move one week per ←/→ press, through recharts' `accessibilityLayer`. Home/End and
+PageUp/PageDown (by month) would help on long series. They are blocked on recharts exposing a way
+to set the active tooltip index: `Tooltip defaultIndex` is ignored once the chart has been used,
+and the keyboard action is internal. Don't build them by turning off `accessibilityLayer`,
+dispatching synthetic keys, or importing recharts' internal store. Revisit when recharts adds an
+API.
+
 ### Popular searches and recent movers
 
 The author would like to show popular searches or recent price movers, linking each to a
