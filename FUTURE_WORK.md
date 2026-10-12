@@ -117,6 +117,10 @@ and the keyboard action is internal. Don't build them by turning off `accessibil
 dispatching synthetic keys, or importing recharts' internal store. Revisit when recharts adds an
 API.
 
+The same API would fix the bar charts' direction. Recharts reverses ←/→ for every direction except
+left-to-right, so on the vertical bar charts → moves up a row and ← moves down. The bar summary's
+keyboard hint says so; `reversed` with reversed data doesn't help, since bottom-to-top is reversed too.
+
 ### Popular searches and recent movers
 
 The author would like to show popular searches or recent price movers, linking each to a

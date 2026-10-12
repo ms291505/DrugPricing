@@ -57,7 +57,7 @@ describe("largestChange", () => {
       price("P", "2025-01-01", 10), price("P", "2025-01-01", 10),
       price("P", "2025-02-01", 5), price("P", "2025-02-01", 10),
     ];
-    expect(largestChange(prices)).toEqual({ ndc: "P", ratio: -0.25, date: Date.parse("2025-02-01") });
+    expect(largestChange(prices)).toEqual({ ndc: "P", ratio: -0.25, date: Date.parse("2025-02-01"), ndcs: ["P"] });
   });
 
   it("compares consecutive priced dates, skipping gaps, and takes the earliest on a tie", () => {
@@ -65,7 +65,19 @@ describe("largestChange", () => {
       price("A", "2025-01-01", 10), price("B", "2025-02-01", 1), price("A", "2025-03-01", 20),
       price("A", "2025-04-01", 40),
     ];
-    expect(largestChange(prices)).toEqual({ ndc: "A", ratio: 1, date: Date.parse("2025-03-01") });
+    expect(largestChange(prices)).toMatchObject({ ndc: "A", ratio: 1, date: Date.parse("2025-03-01") });
+  });
+
+  it("names every series that made the same change on that date", () => {
+    const prices = [
+      price("A", "2026-01-07", 9.69), price("A", "2026-01-14", 5.52),
+      price("B", "2026-01-07", 9.70), price("B", "2026-01-14", 5.53),
+      price("C", "2026-01-07", 9.70), price("C", "2026-01-14", 9.70),
+    ];
+    // A: -43.03%, B: -42.99%; both print as 43.0%.
+    expect(largestChange(prices)?.ndcs).toEqual(["A", "B"]);
+    expect(lineChartSummary(prices)).toContain("Largest change: down 43.0% for A and 1 other on Jan 14, 2026.");
+    expect(lineChartSummary(prices.filter(p => p.ndc !== "C"))).toContain("down 43.0% for both series");
   });
 
   it("is null when nothing changed", () => {
@@ -83,7 +95,7 @@ describe("barChartSummary", () => {
     expect(barChartSummary(prices, "latest")).toBe(
       "Rows show each series' latest price, highest first. 2 series, Jan 1, 2025 to Feb 1, 2025. "
       + "Highest: A at $12.00; lowest: B at $2.00. Range over these dates: $2.00 to $12.00. "
-      + "Use the left and right arrow keys to move through rows.");
+      + "Use the left arrow key to move down the rows and the right arrow key to move up.");
   });
 
   it("follows the bar value", () => {

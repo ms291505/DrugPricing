@@ -53,11 +53,11 @@ export default function ChartData({ title, bounds, toCsv, children }: Props) {
 }
 
 const ROWS_PER_PAGE = 25;
-const numeric = { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
+const numericCell = { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
 
-/** Scrolls sideways on its own, so a phone never scrolls the page. */
 type Column = { label: string, numeric?: boolean };
 
+/** Scrolls sideways on its own, so a phone never scrolls the page. */
 function DataTable({ caption, columns, children }: { caption: string, columns: Column[], children: ReactNode }) {
   return (
     <>
@@ -80,6 +80,19 @@ function DataTable({ caption, columns, children }: { caption: string, columns: C
   );
 }
 
+/** NDC → description, once per series, so the rows can show NDCs alone. */
+function SeriesKey({ series }: { series: Array<[string, string]> }) {
+  return (
+    <Box component="ul" sx={{ m: 0, mb: 1, pl: 0, listStyle: "none" }}>
+      {[...series].sort(([a], [b]) => a.localeCompare(b)).map(([ndc, description]) => (
+        <Typography component="li" variant="caption" color="text.secondary" key={ndc} sx={{ display: "block" }}>
+          <Box component="span" sx={{ color: "text.primary" }}>{ndc}</Box> {description}
+        </Typography>
+      ))}
+    </Box>
+  );
+}
+
 const unitText = (units: Set<string>) =>
   units.size === 1 ? `USD per ${pricingUnitLabel([...units][0])}.` : "USD per the unit in each row.";
 
@@ -89,7 +102,7 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
   const [page, setPage] = useState(0);
   const units = new Set(rows.map(row => row.unit));
   const hasRange = rows.some(row => row.range);
-  const series = [...new Map(rows.map(row => [row.ndc, row.description]))].sort(([a], [b]) => a.localeCompare(b));
+  const series = [...new Map(rows.map(row => [row.ndc, row.description]))];
   const lastPage = Math.max(0, Math.ceil(rows.length / ROWS_PER_PAGE) - 1);
   const shownPage = Math.min(page, lastPage);
 
@@ -101,24 +114,18 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
 
   return (
     <Box sx={{ mt: 1 }}>
-      <Box component="ul" sx={{ m: 0, mb: 1, pl: 0, listStyle: "none" }}>
-        {series.map(([ndc, description]) => (
-          <Typography component="li" variant="caption" color="text.secondary" key={ndc} sx={{ display: "block" }}>
-            <Box component="span" sx={{ color: "text.primary" }}>{ndc}</Box> {description}
-          </Typography>
-        ))}
-      </Box>
+      <SeriesKey series={series} />
       <DataTable caption={caption} columns={columns}>
         {rows.slice(shownPage * ROWS_PER_PAGE, (shownPage + 1) * ROWS_PER_PAGE).map(row => (
           <TableRow key={`${row.date}|${row.ndc}|${row.unit}`}>
             <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(row.date)}</TableCell>
             <TableCell sx={{ whiteSpace: "nowrap" }}>{row.ndc}</TableCell>
             {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
-            <TableCell align="right" sx={numeric}>{formatPrice(row.price)}</TableCell>
+            <TableCell align="right" sx={numericCell}>{formatPrice(row.price)}</TableCell>
             {hasRange
               ? <>
-                <TableCell align="right" sx={numeric}>{row.range ? formatPrice(row.range[0]) : ""}</TableCell>
-                <TableCell align="right" sx={numeric}>{row.range ? formatPrice(row.range[1]) : ""}</TableCell>
+                <TableCell align="right" sx={numericCell}>{row.range ? formatPrice(row.range[0]) : ""}</TableCell>
+                <TableCell align="right" sx={numericCell}>{row.range ? formatPrice(row.range[1]) : ""}</TableCell>
               </>
               : null}
           </TableRow>
@@ -131,6 +138,8 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
           page={shownPage}
           rowsPerPage={ROWS_PER_PAGE}
           rowsPerPageOptions={[]}
+          showFirstButton
+          showLastButton
           onPageChange={(_, next) => setPage(next)}
         />
         : null}
@@ -153,16 +162,17 @@ export function BarDataTable({ prices, dateWindow, barValue, bounds }: {
     + `Lowest and highest are over these dates. ${unitText(units)}`;
   return (
     <Box sx={{ mt: 1 }}>
+      <SeriesKey series={[...new Map(rows.map(row => [row.ndc, row.label]))]} />
       <DataTable caption={caption} columns={columns}>
         {rows.map(row => (
           <TableRow key={`${row.ndc}|${row.unit}`}>
             <TableCell sx={{ whiteSpace: "nowrap" }}>{row.ndc}</TableCell>
             {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
-            <TableCell align="right" sx={numeric}>{formatPrice(row.latest)}</TableCell>
+            <TableCell align="right" sx={numericCell}>{formatPrice(row.latest)}</TableCell>
             <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{formatDate(row.latestDate)}</TableCell>
-            <TableCell align="right" sx={numeric}>{formatPrice(row.average)}</TableCell>
-            <TableCell align="right" sx={numeric}>{formatPrice(row.min)}</TableCell>
-            <TableCell align="right" sx={numeric}>{formatPrice(row.max)}</TableCell>
+            <TableCell align="right" sx={numericCell}>{formatPrice(row.average)}</TableCell>
+            <TableCell align="right" sx={numericCell}>{formatPrice(row.min)}</TableCell>
+            <TableCell align="right" sx={numericCell}>{formatPrice(row.max)}</TableCell>
           </TableRow>
         ))}
       </DataTable>

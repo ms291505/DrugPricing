@@ -268,7 +268,8 @@ Notes:
     recharts' own `role="application"` (never `role="img"`, which broke its name and arrow
     keys) with `aria-label` "<title>, USD per <unit>" and `aria-describedby` pointing at a
     visually hidden summary from `chartSummary.ts`. Don't turn off `accessibilityLayer` or
-    reach into recharts' internal store; keyboard navigation is recharts' ←/→/Enter.
+    reach into recharts' internal store; keyboard navigation is recharts' ←/→/Enter (reversed on
+    the vertical bar charts, where → moves up a row; the bar summary's hint says so).
   - **The line legend** (`SeriesLegend`, below the plot) toggles and highlights series. Toggles
     are view state (`seriesVisibility.ts`), never stored, reset when the series in the dates
     change, and the last shown series of a unit chart can't be hidden. Colors come from the full

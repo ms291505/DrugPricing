@@ -12,7 +12,7 @@ export type LegendSeries = {
 type Props = {
   series: LegendSeries[],
   onToggle: (ndc: string) => void,
-  /** The series under the pointer or focus, or null when none is. */
+  /** The series under the mouse or keyboard focus, or null. Hidden series are ignored by the chart. */
   onHighlight: (ndc: string | null) => void,
 }
 
@@ -37,9 +37,10 @@ export default function SeriesLegend({ series, onToggle, onHighlight }: Props) {
                 aria-pressed={shown}
                 aria-disabled={locked || undefined}
                 onClick={() => { if (!locked) onToggle(ndc); }}
-                onMouseEnter={() => onHighlight(shown ? ndc : null)}
-                onMouseLeave={() => onHighlight(null)}
-                onFocus={() => onHighlight(shown ? ndc : null)}
+                // Mouse and keyboard only: a tap would leave the highlight on until the next tap elsewhere.
+                onPointerEnter={(event) => { if (event.pointerType === "mouse") onHighlight(ndc); }}
+                onPointerLeave={() => onHighlight(null)}
+                onFocusVisible={() => onHighlight(ndc)}
                 onBlur={() => onHighlight(null)}
                 sx={{
                   gap: 0.75, px: 0.75, py: 0.25, borderRadius: 1,

@@ -24,32 +24,51 @@ function latestOf(summary: SeriesSummary, lastDate: number): string {
   return `${summary.ndc} at ${formatPrice(summary.latest)}${stopped}`;
 }
 
-export type LargestChange = { ndc: string, ratio: number, date: number };
+type Change = { ndc: string, ratio: number, date: number };
+
+/** The largest change, and every series that made the same change (to the percent shown) on its date. */
+export type LargestChange = Change & { ndcs: string[] };
+
+const sameChange = (a: Change, b: Change) =>
+  a.date === b.date && Math.sign(a.ratio) === Math.sign(b.ratio) && formatPercent(a.ratio) === formatPercent(b.ratio);
 
 /**
  * The largest relative change between consecutive priced dates of one series, from the per-date
  * values the line draws (a product's average, not one of its packages). `date` is the first date
- * at the new price. Ties go to the earliest date. Null when no series changed.
+ * at the new price. Ties go to the earliest date. A manufacturer often reprices a whole line on one
+ * date, so `ndcs` lists every series with the same change. Null when no series changed.
  */
 export function largestChange(prices: ChartPrice[]): LargestChange | null {
   const { rows } = createLineVizData(prices);
-  const ndcs = new Set(prices.map(price => price.ndc));
-  let largest: LargestChange | null = null;
-  for (const ndc of ndcs) {
+  const changes: Change[] = [];
+  for (const ndc of new Set(prices.map(price => price.ndc))) {
     let previous: number | undefined;
     for (const row of rows) {
       const value = row[ndc];
       if (typeof value !== "number") continue;
       if (previous !== undefined && previous > 0 && value !== previous) {
-        const ratio = (value - previous) / previous;
-        const larger = !largest || Math.abs(ratio) > Math.abs(largest.ratio)
-          || (Math.abs(ratio) === Math.abs(largest.ratio) && row.asOfDate < largest.date);
-        if (larger) largest = { ndc, ratio, date: row.asOfDate };
+        changes.push({ ndc, ratio: (value - previous) / previous, date: row.asOfDate });
       }
       previous = value;
     }
   }
-  return largest;
+  let largest: Change | null = null;
+  for (const change of changes) {
+    const larger = !largest || Math.abs(change.ratio) > Math.abs(largest.ratio)
+      || (Math.abs(change.ratio) === Math.abs(largest.ratio) && change.date < largest.date);
+    if (larger) largest = change;
+  }
+  if (!largest) return null;
+  const top = largest;
+  return { ...top, ndcs: [top.ndc, ...changes.filter(c => c.ndc !== top.ndc && sameChange(c, top)).map(c => c.ndc)] };
+}
+
+/** "0003-3764", "0003-3764 and 2 others", "both series" or "all 3 series". */
+function whichSeries(ndcs: string[], seriesCount: number): string {
+  if (ndcs.length === 1) return ndcs[0];
+  if (ndcs.length === seriesCount) return seriesCount === 2 ? "both series" : `all ${seriesCount} series`;
+  const others = ndcs.length - 1;
+  return `${ndcs[0]} and ${others} ${others === 1 ? "other" : "others"}`;
 }
 
 /** "Price dropped 43.0% from $9.69 to $5.52 on Jan 14, 2026.": the callout pill, in words. */
@@ -86,7 +105,7 @@ export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeS
   const change = changeSpan ? null : largestChange(prices);
   if (change) {
     const direction = change.ratio < 0 ? "down" : "up";
-    sentences.push(`Largest change: ${direction} ${formatPercent(change.ratio)} for ${change.ndc} on ${formatDate(change.date)}.`);
+    sentences.push(`Largest change: ${direction} ${formatPercent(change.ratio)} for ${whichSeries(change.ndcs, summaries.length)} on ${formatDate(change.date)}.`);
   }
 
   sentences.push("Use the left and right arrow keys to move through dates.");
@@ -110,7 +129,8 @@ export function barChartSummary(prices: ChartPrice[], barValue: BarValue): strin
       ? `${row(rows[0])}.`
       : `Highest: ${row(rows[0])}; lowest: ${row(rows[rows.length - 1])}.`,
     `Range over these dates: ${formatPrice(Math.min(...rows.map(r => r.min)))} to ${formatPrice(Math.max(...rows.map(r => r.max)))}.`,
-    "Use the left and right arrow keys to move through rows.",
+    // Recharts reverses the arrow keys on a vertical chart.
+    "Use the left arrow key to move down the rows and the right arrow key to move up.",
   ];
   return sentences.join(" ");
 }
