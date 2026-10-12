@@ -49,7 +49,8 @@ export default function EliquisTable() {
 
   return (
     <TableContainer component={Paper}>
-      <Table aria-label="Eliquis drug package examples" size="small">
+      {/* Codes and short values stay on one line; the table scrolls sideways on narrow screens. */}
+      <Table aria-label="Eliquis drug package examples" size="small" sx={{ "& th, & td": { whiteSpace: "nowrap" } }}>
         <TableHead>
           <TableRow>
             <TableCell>Proprietary Name</TableCell>
@@ -70,7 +71,7 @@ export default function EliquisTable() {
               <TableCell>{row.productNdc}</TableCell>
               <TableCell>{row.packageCode}</TableCell>
               <TableCell>{row.strength}</TableCell>
-              <TableCell>{row.packageDescription}</TableCell>
+              <TableCell sx={{ "&&": { whiteSpace: "normal" }, minWidth: 260 }}>{row.packageDescription}</TableCell>
             </TableRow>
           ))}
         </TableBody>

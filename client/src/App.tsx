@@ -56,13 +56,13 @@ function AppShell() {
       {!isWorkspaceActive && (
         <Routes>
           <Route element={<DrugPricingBar />}>
-            <Route path="/about" element={<About />} />
+            <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
             <Route path="/nadac-search" element={
               <NadacTabProvider tabId={STANDALONE_TAB_IDS.nadac}><NadacSearch /></NadacTabProvider>
             } />
             <Route path="/fda-search" element=
               {<FdaTabProvider tabId={STANDALONE_TAB_IDS.fda}><FdaSearch /></FdaTabProvider>} />
-            <Route path="/welcome" element={<OnBoarding />} />
+            <Route path="/welcome" element={<Container maxWidth="md"><OnBoarding /></Container>} />
             <Route path="*" element={<Navigate to="/workspace" replace />} />
           </Route>
         </Routes>

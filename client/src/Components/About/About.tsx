@@ -1,14 +1,13 @@
 import Typography from "@mui/material/Typography"
-import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 
 export default function About() {
 
   return (
     <>
-      <Container maxWidth="lg">
-        <Typography variant="h3">About</Typography>
-        <Divider sx={{ mb: 2 }} />
+      <Box>
+        <Typography component="h2" variant="h5">About</Typography>
         <p>
           This demo website showcases skills that I've developed over the last few years specific to full stack webapp development and deployment.
           The website is a tool for users to search and chart drug pricing data over time. I chose NADAC because it is easily available,
@@ -49,11 +48,10 @@ export default function About() {
           I've attempted to follow SOLID principles, but I by no means claim to be an expert. I try to create things that make sense to me two weeks later, and the SOLID principles have added structure to these attempts.
         </p>
 
-        <Typography variant="h3">Ideas & Challenges</Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Ideas & Challenges</Typography>
         <p>There were some key points in this project that I'd like to use to explain my thought process in designing this tool.</p>
         <ol>
-          <Typography variant="h5"><li>Optimizing the NDC Description Search</li></Typography>
+          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Optimizing the NDC Description Search</li></Typography>
           <p>My original intention was to keep the models for the server and database as close to the source data as possible. I generally achieved this
             but found that I was initially slowing down my database calls for searches on the NdcDescription field, given that there are weekly entries covering multiple years for
             each package in the NADAC data. Therefore, the database was scanning millions of rows for every search, which meant operations were slower than I wanted them to be. I struggled to
@@ -62,7 +60,7 @@ export default function About() {
             which could be joined to the NadacPrice table using NDC as a foreign key. Now searches were much faster, quickly scanning through the DrugPackage table to find the NDCs needed to generate
             results on the NadacPrice table. Swapping to this strategy was simple and reduced searches on my localhost from over 300ms to around 3ms.
           </p>
-          <Typography variant="h5"><li>Integrating FDA Data</li></Typography>
+          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Integrating FDA Data</li></Typography>
           <p>
             The FDA publishes some data about drug products and packages that I think allow for some neat ways to search and filter the NADAC data.
             Unfortuntately, there are some significant gaps between the NDCs in the NADAC data and the package NDCs in the FDA data. I believe that most of these
@@ -74,7 +72,7 @@ export default function About() {
           </p>
         </ol>
         <Divider />
-        <Typography variant="h6">Attributions</Typography>
+        <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Attributions</Typography>
         <p>The medicine and bar graph icons are a free resouce from Flaticon, and are available here: </p>
         <ol>
           <li>
@@ -84,7 +82,7 @@ export default function About() {
             <a href="https://www.flaticon.com/free-icons/graph" style={{ color: "grey" }} target="_blank" title="graph icons">Graph icons created by Bamicon - Flaticon</a>
           </li>
         </ol>
-      </Container>
+      </Box>
     </>
   );
 }

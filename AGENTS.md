@@ -279,6 +279,11 @@ Notes:
   and a new search clears it. Only Add Chart reads `vizData`: the results table and auto charts
   always show the full result (`data.prices`). Moving it onto a client filter like
   `FdaResultFilter` is planned NADAC/FDA parity work.
+- **The global modal** (`Components/GlobalModal`, opened with `setGlobalModal`) owns its width
+  (`min(700px, 100vw − 32px)`, so a phone keeps 16px of screen at each edge), its height and
+  its padding. What it shows (Settings, Help/Welcome, About) brings no `Container` or outer
+  padding, and wide parts such as tables scroll on their own. The `/about` and `/welcome`
+  routes wrap the same components in a `Container` for page gutters.
 - **Settings** (`library/settings.ts`, `SettingsContext`, `Components/Settings/SettingsPanel`)
   are app-wide preferences for choices most people never change, kept out of the always-visible
   Page Tools. The panel opens from the gear in the app bar or SETTINGS in the workspace drawer

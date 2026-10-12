@@ -23,8 +23,8 @@ export default function SettingsPanel() {
   const barStyleId = useId();
 
   return (
-    <Box component="section" aria-labelledby={headingId} sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Typography component="h2" variant="h6" id={headingId}>Settings</Typography>
+    <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Typography component="h2" variant="h5" id={headingId}>Settings</Typography>
       <Typography variant="body2" color="text.secondary">Apply to every tab and are saved in this browser.</Typography>
       <FormControl>
         <FormLabel id={barStyleId}>Bar charts</FormLabel>

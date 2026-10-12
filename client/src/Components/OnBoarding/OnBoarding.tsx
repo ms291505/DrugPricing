@@ -1,11 +1,11 @@
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import EliquisTable from "./EliquisTable";
 
 export default function OnBoarding() {
 
   return (<>
-    <Container maxWidth="md">
-      <Typography variant="h4" sx={{ pb: 1 }}>
+    <Box>
+      <Typography component="h2" variant="h5" sx={{ pb: 1 }}>
         Welcome
       </Typography>
       <Box
@@ -29,7 +29,7 @@ export default function OnBoarding() {
           gap: 1
         }}
       >
-        <Typography variant="h5">
+        <Typography component="h3" variant="h6">
           What are drug products and drug packages?
         </Typography>
         <Typography
@@ -57,6 +57,6 @@ export default function OnBoarding() {
           Note that they have different strengths and/or formulations from 0003-0893.
         </Typography>
       </Box>
-    </Container>
+    </Box>
   </>)
 }
