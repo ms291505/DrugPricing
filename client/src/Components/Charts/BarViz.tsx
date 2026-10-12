@@ -11,6 +11,8 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
+import { barAnnouncement } from "../../library/chartReadout";
+import useChartReadout from "../../hooks/useChartReadout";
 import { barCsv, barDataRows } from "../../library/chartCsv";
 import ChartData, { BarDataTable } from "./ChartData";
 import { useSettings } from "../../Context/SettingsContext";
@@ -107,113 +109,122 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   const tickFormatter = priceTickFormatter(xAxis.ticks);
   const [low, high] = xAxis.domain;
 
+  const readout = useChartReadout((row: BarRow) => row.ndc, ndc => {
+    const row = rows.find(r => r.ndc === ndc);
+    return row ? barAnnouncement(row, barValue, unit) : null;
+  });
+
   return (<>
-    <BarChart
-      layout="vertical"
-      data={rows}
-      margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
-      style={{ width: "100%", height: rows.length * BAR_ROW_HEIGHT + 40 }}
-      responsive
-      aria-label={`${title}, USD per ${unit}`}
-      aria-describedby={descriptionId}
-    >
-      <XAxis
-        type="number"
-        domain={xAxis.domain}
-        ticks={xAxis.ticks}
-        tickFormatter={tickFormatter}
-        tick={chartTheme.tick}
-        axisLine={chartTheme.axisLine}
-        tickLine={chartTheme.axisLine}
-      />
-      <YAxis
-        type="category"
-        dataKey="ndc"
-        width="auto"
-        // Every bar keeps its label; recharts would otherwise drop some when space is tight.
-        interval={0}
-        tick={chartTheme.tick}
-        axisLine={chartTheme.axisLine}
-        tickLine={false}
-      />
-      <Tooltip
-        // Highlights the whole row, label to value, under the pointer.
-        cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
-        // On a phone the rows fill the chart, so the tooltip goes above the plot (`compact` lifts
-        // it by its own height), over the caption and toggle.
-        position={isMobile ? { y: 0 } : undefined}
-        allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
-        content={({ active, payload }) => {
-          const row = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
-          if (!row) return null;
-          const color = colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc));
-          return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} style={chartTheme.tooltip.contentStyle} />;
-        }}
-      />
-      <Bar
-        dataKey="value"
-        isAnimationActive={false}
-        // Drawn from the row's band and the axis domain, not recharts' bar rectangle: that
-        // starts at $0, which a fitted axis doesn't show. (recharts' ErrorBar also kept a stale
-        // scale and drew ranges at the wrong prices.)
-        shape={(props) => {
-          const row = props.payload as BarRow;
-          const band = props.background;
-          const left = band?.x ?? 0;
-          const plotWidth = band?.width ?? 0;
-          const at = (price: number) => left + (price - low) / (high - low) * plotWidth;
-          const { y = 0, height = 0 } = props;
-          const color = colorFor(row.ndc, props.index ?? 0);
-          const rangeX = at(row.min);
-          const rangeWidth = Math.max(at(row.max) - rangeX, 2);
-          const text = formatPriceLabel(row.value);
-          const textWidth = text.length * 7;
-          const valueX = at(row.value);
-          if (barStyle === "bar") {
-            const barHeight = height * 0.62;
-            const fitsAfterBar = valueX + 6 + textWidth <= left + plotWidth + LABEL_MARGIN;
+    <Box {...readout.focusProps}>
+      <BarChart
+        layout="vertical"
+        data={rows}
+        margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
+        style={{ width: "100%", height: rows.length * BAR_ROW_HEIGHT + 40 }}
+        responsive
+        aria-label={`${title}, USD per ${unit}`}
+        aria-describedby={descriptionId}
+      >
+        <XAxis
+          type="number"
+          domain={xAxis.domain}
+          ticks={xAxis.ticks}
+          tickFormatter={tickFormatter}
+          tick={chartTheme.tick}
+          axisLine={chartTheme.axisLine}
+          tickLine={chartTheme.axisLine}
+        />
+        <YAxis
+          type="category"
+          dataKey="ndc"
+          width="auto"
+          // Every bar keeps its label; recharts would otherwise drop some when space is tight.
+          interval={0}
+          tick={chartTheme.tick}
+          axisLine={chartTheme.axisLine}
+          tickLine={false}
+        />
+        <Tooltip
+          // Highlights the whole row, label to value, under the pointer.
+          cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
+          // On a phone the rows fill the chart, so the tooltip goes above the plot (`compact` lifts
+          // it by its own height), over the caption and toggle.
+          position={isMobile ? { y: 0 } : undefined}
+          allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
+          content={({ active, payload }) => {
+            const row = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
+            if (!row) return null;
+            const color = colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc));
+            return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} style={chartTheme.tooltip.contentStyle} />;
+          }}
+        />
+        <Bar
+          dataKey="value"
+          isAnimationActive={false}
+          // Drawn from the row's band and the axis domain, not recharts' bar rectangle: that
+          // starts at $0, which a fitted axis doesn't show. (recharts' ErrorBar also kept a stale
+          // scale and drew ranges at the wrong prices.)
+          shape={(props) => {
+            const row = props.payload as BarRow;
+            const band = props.background;
+            const left = band?.x ?? 0;
+            const plotWidth = band?.width ?? 0;
+            const at = (price: number) => left + (price - low) / (high - low) * plotWidth;
+            const { y = 0, height = 0 } = props;
+            const color = colorFor(row.ndc, props.index ?? 0);
+            const rangeX = at(row.min);
+            const rangeWidth = Math.max(at(row.max) - rangeX, 2);
+            const text = formatPriceLabel(row.value);
+            const textWidth = text.length * 7;
+            const valueX = at(row.value);
+            if (barStyle === "bar") {
+              const barHeight = height * 0.62;
+              const fitsAfterBar = valueX + 6 + textWidth <= left + plotWidth + LABEL_MARGIN;
+              return (
+                <g>
+                  <Rectangle x={left} y={y} width={at(row.value) - left} height={barHeight} radius={[0, 3, 3, 0]} fill={color} />
+                  <rect x={rangeX} y={y + barHeight + 4} width={rangeWidth} height={4} rx={2} fill={chartTheme.textSecondary} />
+                  {/* Right after the bar's end, or inside it in dark text if that would leave the chart.
+                      The range track runs below the bar, so the two never collide. */}
+                  <text
+                    x={fitsAfterBar ? valueX + 6 : valueX - 6}
+                    textAnchor={fitsAfterBar ? "start" : "end"}
+                    fill={fitsAfterBar ? chartTheme.textPrimary : chartTheme.paper}
+                    y={y + barHeight / 2}
+                    dy="0.35em"
+                    fontSize={chartTheme.fontSize}
+                  >
+                    {text}
+                  </text>
+                </g>
+              );
+            }
+
+            const cy = y + height / 2;
             return (
               <g>
-                <Rectangle x={left} y={y} width={at(row.value) - left} height={barHeight} radius={[0, 3, 3, 0]} fill={color} />
-                <rect x={rangeX} y={y + barHeight + 4} width={rangeWidth} height={4} rx={2} fill={chartTheme.textSecondary} />
-                {/* Right after the bar's end, or inside it in dark text if that would leave the chart.
-                    The range track runs below the bar, so the two never collide. */}
+                {/* A faint rail across the row leads the eye from the label to the dot. */}
+                <line x1={left} x2={left + plotWidth} y1={cy} y2={cy} stroke={chartTheme.axisLine.stroke} strokeDasharray="2 4" />
+                <rect x={rangeX} y={cy - 3} width={rangeWidth} height={6} rx={3} fill={color} fillOpacity={0.4} />
+                <circle cx={valueX} cy={cy} r={7} fill={color} stroke={chartTheme.paper} strokeWidth={2} />
+                {/* Above its dot, so it can't be read as the end of the range; kept inside the chart. */}
                 <text
-                  x={fitsAfterBar ? valueX + 6 : valueX - 6}
-                  textAnchor={fitsAfterBar ? "start" : "end"}
-                  fill={fitsAfterBar ? chartTheme.textPrimary : chartTheme.paper}
-                  y={y + barHeight / 2}
-                  dy="0.35em"
+                  x={Math.min(Math.max(valueX, left + textWidth / 2), left + plotWidth + LABEL_MARGIN - textWidth / 2)}
+                  y={cy - 11}
+                  textAnchor="middle"
+                  fill={chartTheme.textPrimary}
                   fontSize={chartTheme.fontSize}
                 >
                   {text}
                 </text>
               </g>
             );
-          }
-
-          const cy = y + height / 2;
-          return (
-            <g>
-              {/* A faint rail across the row leads the eye from the label to the dot. */}
-              <line x1={left} x2={left + plotWidth} y1={cy} y2={cy} stroke={chartTheme.axisLine.stroke} strokeDasharray="2 4" />
-              <rect x={rangeX} y={cy - 3} width={rangeWidth} height={6} rx={3} fill={color} fillOpacity={0.4} />
-              <circle cx={valueX} cy={cy} r={7} fill={color} stroke={chartTheme.paper} strokeWidth={2} />
-              {/* Above its dot, so it can't be read as the end of the range; kept inside the chart. */}
-              <text
-                x={Math.min(Math.max(valueX, left + textWidth / 2), left + plotWidth + LABEL_MARGIN - textWidth / 2)}
-                y={cy - 11}
-                textAnchor="middle"
-                fill={chartTheme.textPrimary}
-                fontSize={chartTheme.fontSize}
-              >
-                {text}
-              </text>
-            </g>
-          );
-        }}
-      />
-    </BarChart>
+          }}
+        />
+        {readout.reporter}
+      </BarChart>
+    </Box>
+    {readout.liveRegion}
     <Box id={descriptionId} sx={visuallyHidden}>{barChartSummary(nadacPrices, barValue)}</Box>
   </>);
 }

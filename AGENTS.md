@@ -127,9 +127,9 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `seriesVisibility.ts`, `chartSummary.ts`, `chartCsv.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `seriesVisibility.ts`, `chartSummary.ts`, `chartReadout.ts`, `chartCsv.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
-| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), and UI (`useMobile`, `useScrolled`) |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), the charts' screen-reader readout (`useChartReadout`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` (including the chart series palette, `palette.chart.series`) |
 
@@ -270,6 +270,13 @@ Notes:
     visually hidden summary from `chartSummary.ts`. Don't turn off `accessibilityLayer` or
     reach into recharts' internal store; keyboard navigation is recharts' ←/→/Enter (reversed on
     the vertical bar charts, where → moves up a row; the bar summary's hint says so).
+  - **Screen-reader readout** (`useChartReadout`): each unit chart has a visually hidden
+    `role="status"` region, in the DOM and empty from the first render, that speaks the active
+    point while the SVG has keyboard focus (`:focus-visible`; mouse hover stays silent), 300ms
+    after the last key. A child inside the chart reports recharts' active row with
+    `useActiveTooltipDataPoints`; keep only a primitive key of it in state, because the rows are
+    rebuilt each render and storing one loops. The text comes from `chartReadout.ts`, whose
+    `tooltipRows` the line tooltip draws from too, so the two never disagree.
   - **The line legend** (`SeriesLegend`, below the plot) toggles and highlights series. Toggles
     are view state (`seriesVisibility.ts`), never stored, reset when the series in the dates
     change, and the last shown series of a unit chart can't be hidden; "Show all" restores a unit
@@ -367,7 +374,7 @@ npm test         # vitest run
 
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
 windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
-summaries, chart titles, chart text summaries, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
+summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
 the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
