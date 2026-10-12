@@ -2,7 +2,7 @@ import Paper from "@mui/material/Paper"
 import Box from "@mui/material/Box"
 import TextField from "@mui/material/TextField"
 import useMobile from "../../hooks/useMobile"
-import { Button, Checkbox, CircularProgress, FormControlLabel } from "@mui/material";
+import { Button, Checkbox, CircularProgress, FormControlLabel, Grid } from "@mui/material";
 import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
@@ -80,34 +80,41 @@ export default function FdaSearchTool() {
           <Box
             sx={{
               display: "flex",
-              gap: 1
+              gap: 1,
             }}
           >
-            <TextField
-              size={isMobile ? "small" : "medium"}
-              type="text"
-              id="proprietaryName"
-              name="proprietaryName"
-              label="Brand Name"
-              value={draftSearchParams.proprietaryName}
-              onChange={(e) =>
-                setDraftSearchParams(
-                  prev => ({ ...prev, proprietaryName: e.target.value }))
-              }
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={!isValidSearch || fdaSearch.isLoading}
-              sx={{
-                width: { xs: "100%", md: 100 },
-              }}
-            >
-              {fdaSearch.isLoading
-                ? <CircularProgress aria-label="Loading..." />
-                : "Search"
-              }
-            </Button>
+            <Grid container display="flex">
+              <Grid size={9}>
+                <TextField
+                  size={isMobile ? "small" : "medium"}
+                  type="text"
+                  id="proprietaryName"
+                  name="proprietaryName"
+                  label="Brand Name"
+                  value={draftSearchParams.proprietaryName}
+                  onChange={(e) =>
+                    setDraftSearchParams(
+                      prev => ({ ...prev, proprietaryName: e.target.value }))
+                  }
+                />
+              </Grid>
+              <Grid size={3}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={!isValidSearch || fdaSearch.isLoading}
+                  sx={{
+                    width: { xs: "100%", md: 100 },
+                    height: "100%",
+                  }}
+                >
+                  {fdaSearch.isLoading
+                    ? <CircularProgress aria-label="Loading..." size={16} />
+                    : "Search"
+                  }
+                </Button>
+              </Grid>
+            </Grid>
           </Box>
           <Box
             id="checkbox-container"
