@@ -65,12 +65,12 @@ function DataTable({ caption, columns, children }: { caption: string, columns: C
       {/* Outside the scroll box so it wraps; the <caption> is for screen readers. */}
       <Typography variant="body2" color="text.secondary" aria-hidden>{caption}</Typography>
       <TableContainer sx={{ overflowX: "auto" }}>
-        <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 }, fontSize: { xs: "0.75rem", sm: undefined } } }}>
+        <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 }, fontSize: { xs: "0.75rem", sm: "0.875rem" } } }}>
           <Box component="caption" sx={visuallyHidden}>{caption}</Box>
           <TableHead>
             <TableRow>
               {columns.map(({ label, numeric }) => (
-                <TableCell key={label} scope="col" align={numeric ? "right" : "left"}>{label}</TableCell>
+                <TableCell key={label} scope="col" align={numeric ? "right" : "left"} sx={{ lineHeight: 1.3 }}>{label}</TableCell>
               ))}
             </TableRow>
           </TableHead>
