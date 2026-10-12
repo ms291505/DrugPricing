@@ -6,11 +6,13 @@ import type { ChartPrice } from "../../library/types";
 import { pricingUnitLabel } from "../../library/chartSeries";
 import { fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
 import { summarizeSeries, type BarValue, type SeriesSummary } from "../../library/seriesSummary";
-import { formatDate, type DateWindow } from "../../library/dates";
+import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
+import { barCsv, barDataRows } from "../../library/chartCsv";
+import ChartData, { BarDataTable } from "./ChartData";
 import { useSettings } from "../../Context/SettingsContext";
 
 type Props = {
@@ -30,13 +32,14 @@ type Props = {
  * One horizontal row per series, sorted by value: the latest price or the average over the
  * dates, with the range from the lowest to the highest price over the same dates.
  */
-export default function BarViz({ nadacPrices, title, colors, dateWindow, barValue: value, onBarValueChange: setValue }: Props) {
+export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, barValue: value, onBarValueChange: setValue }: Props) {
   const { barStyle } = useSettings().settings;
   const valueLabel = value === "latest" ? "latest price" : "average price";
   // Says what each mark means; the range is easy to misread without it.
   const caption = barStyle === "bar"
     ? `Bar: ${valueLabel} · gray line: lowest to highest over these dates`
     : `Dot: ${valueLabel} · line: lowest to highest over these dates`;
+  const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -61,6 +64,11 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow, barValu
           <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} title={title} colors={colors} barValue={value} />
         )}
       />
+      {bounds
+        ? <ChartData title={title} bounds={bounds} toCsv={() => barCsv(barDataRows(nadacPrices, dateWindow, value))}>
+          <BarDataTable prices={nadacPrices} dateWindow={dateWindow} barValue={value} bounds={bounds} />
+        </ChartData>
+        : null}
     </Box>
   );
 }

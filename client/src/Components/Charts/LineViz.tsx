@@ -10,6 +10,8 @@ import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
 import { canHide, seriesSetKey, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
 import SeriesLegend from "./SeriesLegend.tsx";
+import ChartData, { LineDataTable } from "./ChartData.tsx";
+import { lineCsv, lineDataRows } from "../../library/chartCsv.ts";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import type { ChartChangeSpan } from "../../library/explorerItems.ts";
 import useChartTheme from "../../hooks/useChartTheme.ts";
@@ -41,7 +43,7 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const hidden = visibility.seriesKey === seriesKey ? visibility.hidden : NONE_HIDDEN;
   const toggle = (ndc: string, group: string[]) => setVisibility({ seriesKey, hidden: toggleSeries(hidden, ndc, group) });
 
-  return (
+  return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <UnitSplit
       nadacPrices={nadacPrices}
       dateWindow={dateWindow}
@@ -59,7 +61,12 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
         />
       )}
     />
-  );
+    {bounds
+      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
+        <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
+      </ChartData>
+      : null}
+  </Box>);
 }
 
 const NONE_HIDDEN: ReadonlySet<string> = new Set();
