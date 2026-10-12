@@ -7,6 +7,7 @@ import { fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter, zer
 import { summarizeSeries, type BarValue, type SeriesSummary } from "../../library/seriesSummary";
 import { formatDate, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
+import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { useSettings } from "../../Context/SettingsContext";
 
@@ -75,6 +76,7 @@ const LABEL_MARGIN = 64;
 
 function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarChartProps) {
   const chartTheme = useChartTheme();
+  const isMobile = useMobile();
   const { barStyle } = useSettings().settings;
   const unit = pricingUnitLabel(pricingUnit);
 
@@ -122,11 +124,16 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
       <Tooltip
         // Highlights the whole row, label to value, under the pointer.
         cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
+        // On a phone the rows fill the chart, so any spot inside it covers one. The tooltip goes
+        // above the plot instead (`compact` lifts it by its own height), over the caption and
+        // toggle, which aren't being read while a finger is on a row.
+        position={isMobile ? { y: 0 } : undefined}
+        allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
         content={({ active, payload }) => {
           const row = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
           if (!row) return null;
           const color = colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc));
-          return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} style={chartTheme.tooltip.contentStyle} />;
+          return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} style={chartTheme.tooltip.contentStyle} />;
         }}
       />
       <Bar
@@ -201,13 +208,18 @@ type BarTooltipProps = {
   barValue: BarValue,
   unit: string,
   color: string,
+  /** Phone: no description or package count, and lifted above the plot. */
+  compact: boolean,
   style: CSSProperties,
 }
 
 /** One row in full, laid out like the line chart's tooltip: the value, its date, and the range. */
-function BarTooltip({ row, barValue, unit, color, style }: BarTooltipProps) {
+function BarTooltip({ row, barValue, unit, color, compact, style }: BarTooltipProps) {
   return (
-    <Box style={style} sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.25 }}>
+    <Box
+      style={style}
+      sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.25, transform: compact ? "translateY(-100%)" : undefined }}
+    >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
         <Typography variant="body2">
@@ -215,7 +227,7 @@ function BarTooltip({ row, barValue, unit, color, style }: BarTooltipProps) {
           <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
         </Typography>
       </Box>
-      <Typography variant="caption" color="text.secondary">{row.label}</Typography>
+      {compact ? null : <Typography variant="caption" color="text.secondary">{row.label}</Typography>}
       <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
         {barValue === "latest"
           ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
@@ -224,7 +236,7 @@ function BarTooltip({ row, barValue, unit, color, style }: BarTooltipProps) {
       <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
         Range {formatPrice(row.min)}–{formatPrice(row.max)}
       </Typography>
-      {row.packages > 1
+      {row.packages > 1 && !compact
         ? <Typography variant="caption" color="text.secondary">Average of {row.packages} packages</Typography>
         : null}
     </Box>

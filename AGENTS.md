@@ -250,8 +250,9 @@ Notes:
   - **Tooltips are drawn by the charts** (`LineTooltip`, `BarTooltip`), not recharts' default
     list, and they must work on a phone, where a chart is about 350px wide and a finger sits on
     it. The line tooltip lists the date and unit once, then a swatch, the NDC and the price per
-    series. Descriptions and package ranges show only from `md` up, and on a phone the tooltip
-    stays at the top of the chart. The tooltip box (`useChartTheme().tooltip`) is capped at
+    series. Descriptions, package ranges and package counts show only from `md` up. On a phone
+    the line tooltip stays at the top of the chart. The bar tooltip goes above the plot, over the
+    caption and toggle, because a bar chart's rows fill it and any spot inside would cover one. The tooltip box (`useChartTheme().tooltip`) is capped at
     `min(360px, 100vw − 64px)`. Before adding a line to a tooltip, check it at phone width.
   - Titles are generated (`chartTitles.ts`): the title says what is common ("Humira: 7
     products over time"), and the subtitle gives the count and the dates shown. Price-change
