@@ -65,12 +65,12 @@ function DataTable({ caption, columns, children }: { caption: string, columns: C
       {/* Outside the scroll box so it wraps; the <caption> is for screen readers. */}
       <Typography variant="body2" color="text.secondary" aria-hidden>{caption}</Typography>
       <TableContainer sx={{ overflowX: "auto" }}>
-        <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 } } }}>
+        <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 }, fontSize: { xs: "0.75rem", sm: undefined } } }}>
           <Box component="caption" sx={visuallyHidden}>{caption}</Box>
           <TableHead>
             <TableRow>
               {columns.map(({ label, numeric }) => (
-                <TableCell key={label} scope="col" align={numeric ? "right" : "left"} sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
+                <TableCell key={label} scope="col" align={numeric ? "right" : "left"}>{label}</TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -116,7 +116,8 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
       ? [{ label: "Package range", numeric: true }]
       : [{ label: "Lowest package", numeric: true }, { label: "Highest package", numeric: true }]),
   ];
-  const caption = `All ${series.length} series, ${formatDate(bounds.first)} – ${formatDate(bounds.last)}, newest first. ${unitText(units)}`;
+  const caption = `All ${series.length} series, ${formatDate(bounds.first)} – ${formatDate(bounds.last)}, newest first. ${unitText(units)}`
+    + (hasRange ? " Package prices are blank when a product has one package or its packages match." : "");
 
   return (
     <Box sx={{ mt: 1 }}>
@@ -130,7 +131,10 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
             {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
             <TableCell align="right" sx={numericCell}>{formatPrice(row.price)}</TableCell>
             {!hasRange ? null : isMobile
-              ? <TableCell align="right" sx={numericCell}>{range ? `${formatPrice(range[0])}–${formatPrice(range[1])}` : ""}</TableCell>
+              // May wrap after the dash, so the column fits a 390px phone.
+              ? <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                {range ? <>{formatPrice(range[0])}–<wbr />{formatPrice(range[1])}</> : ""}
+              </TableCell>
               : <>
                 <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[0]) : ""}</TableCell>
                 <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[1]) : ""}</TableCell>

@@ -105,7 +105,7 @@ describe("tick and price formats", () => {
   it("shows a package range only when its ends print differently", () => {
     expect(distinctRange([5.5128, 5.5131])).toBeNull();
     expect(distinctRange([5.51, 5.53])).toEqual([5.51, 5.53]);
-    expect(distinctRange(undefined)).toBeFalsy();
+    expect(distinctRange(undefined)).toBeNull();
   });
 
   it("keeps chart labels alike: cents from $1, three significant digits below", () => {

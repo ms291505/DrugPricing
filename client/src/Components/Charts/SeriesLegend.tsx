@@ -24,7 +24,7 @@ type Props = {
  */
 export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight }: Props) {
   const listRef = useRef<HTMLUListElement>(null);
-  return (
+  return (<Box>
     <Box
       ref={listRef}
       component="ul"
@@ -70,21 +70,20 @@ export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight 
           </li>
         );
       })}
-      {series.some(({ shown }) => !shown)
-        ? <li>
-          <Button
-            size="small"
-            onClick={(event) => {
-              onShowAll();
-              // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
-              if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
-            }}
-            sx={{ py: 0, minWidth: 0, textTransform: "none" }}
-          >
-            Show all
-          </Button>
-        </li>
-        : null}
     </Box>
-  );
+    {/* Outside the scroll box, so a long legend can't hide it. */}
+    {series.some(({ shown }) => !shown)
+      ? <Button
+        size="small"
+        onClick={(event) => {
+          onShowAll();
+          // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
+          if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
+        }}
+        sx={{ py: 0, minWidth: 0, textTransform: "none" }}
+      >
+        Show all
+      </Button>
+      : null}
+  </Box>);
 }
