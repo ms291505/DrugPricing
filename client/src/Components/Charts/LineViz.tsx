@@ -5,10 +5,10 @@ import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
 import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
-import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
+import { dateTicks, distinctRange, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
-import { canHide, seriesSetKey, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
+import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
 import SeriesLegend from "./SeriesLegend.tsx";
 import ChartData, { LineDataTable } from "./ChartData.tsx";
 import { lineCsv, lineDataRows } from "../../library/chartCsv.ts";
@@ -41,10 +41,12 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const seriesKey = seriesSetKey(shownPrices.map(price => price.ndc));
   const [visibility, setVisibility] = useState({ seriesKey, hidden: NONE_HIDDEN });
   const hidden = visibility.seriesKey === seriesKey ? visibility.hidden : NONE_HIDDEN;
-  const toggle = (ndc: string, group: string[]) => setVisibility(prev => ({
+  const update = (change: (hidden: ReadonlySet<string>) => ReadonlySet<string>) => setVisibility(prev => ({
     seriesKey,
-    hidden: toggleSeries(prev.seriesKey === seriesKey ? prev.hidden : NONE_HIDDEN, ndc, group),
+    hidden: change(prev.seriesKey === seriesKey ? prev.hidden : NONE_HIDDEN),
   }));
+  const toggle = (ndc: string, group: string[]) => update(hidden => toggleSeries(hidden, ndc, group));
+  const showAll = (group: string[]) => update(hidden => showGroup(hidden, group));
 
   return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <UnitSplit
@@ -58,6 +60,7 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
           colors={colors}
           hidden={hidden}
           onToggle={toggle}
+          onShowAll={showAll}
           xDomain={xDomain}
           changeSpan={changeSpan}
           priceRange={priceRanges?.get(pricingUnit)}
@@ -83,12 +86,13 @@ type UnitLineChartProps = {
   colors?: Map<string, string>;
   hidden: ReadonlySet<string>;
   onToggle: (ndc: string, group: string[]) => void;
+  onShowAll: (group: string[]) => void;
   xDomain: [number, number];
   changeSpan?: ChartChangeSpan;
   priceRange?: [number, number];
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const descriptionId = useId();
@@ -208,6 +212,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
           canHide: canHide(hidden, ndc, ndcs),
         }))}
         onToggle={ndc => onToggle(ndc, ndcs)}
+        onShowAll={() => onShowAll(ndcs)}
         onHighlight={setHighlighted}
       />
       : null}
@@ -244,11 +249,8 @@ function LineTooltip({ date, unit, items, colorFor, descriptionFor, style }: Lin
         <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
       </Typography>
       {sorted.map(({ ndc, price, row }) => {
-        const range = row[rangeKey(ndc)] as [number, number] | undefined;
-        // Only when the packages disagree at the precision shown.
-        const rangeText = range && formatPrice(range[0]) !== formatPrice(range[1])
-          ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}`
-          : null;
+        const range = distinctRange(row[rangeKey(ndc)] as [number, number] | undefined);
+        const rangeText = range ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}` : null;
         return (
           <Box key={ndc}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

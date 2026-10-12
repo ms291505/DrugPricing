@@ -272,13 +272,15 @@ Notes:
     the vertical bar charts, where → moves up a row; the bar summary's hint says so).
   - **The line legend** (`SeriesLegend`, below the plot) toggles and highlights series. Toggles
     are view state (`seriesVisibility.ts`), never stored, reset when the series in the dates
-    change, and the last shown series of a unit chart can't be hidden. Colors come from the full
+    change, and the last shown series of a unit chart can't be hidden; "Show all" restores a unit
+    chart's series. Colors come from the full
     NDC list, so hiding never recolors. Hidden series leave the axis fit (`linePriceAxis`), but
     a Match scale range stays as it is.
   - **View data / Download CSV** sit under every chart (`ChartData`). Both show every series,
     whatever the legend hides, over the chart's dates: line rows are the drawn per-date values
-    (a product's average, with its package range), bar rows the `summarizeSeries` rows. The CSV
-    (`chartCsv.ts`) uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards only
+    (a product's average, with its package range), bar rows the `summarizeSeries` rows. The table
+    shows a package range only when its ends print differently (`distinctRange`, as the tooltip
+    does), in one column on a phone. The CSV (`chartCsv.ts`) keeps every range and uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards only
     text fields against formula injection.
   - Chart animations are off (`isAnimationActive={false}`). Recharts morphs the old line into the new
     one point by point, which drew made-up prices whenever the dates changed, and re-renders

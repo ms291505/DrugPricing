@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canHide, seriesSetKey, toggleSeries, visibleSeries } from "./seriesVisibility";
+import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from "./seriesVisibility";
 
 describe("seriesVisibility", () => {
   it("toggles a series off and back on", () => {
@@ -18,6 +18,10 @@ describe("seriesVisibility", () => {
     // C is alone in its unit chart, so it stays even though A and B are shown elsewhere.
     expect(canHide(new Set(), "C", ["C"])).toBe(false);
     expect(canHide(new Set(["C"]), "A", ["A", "B"])).toBe(true);
+  });
+
+  it("shows a whole group without touching other groups", () => {
+    expect([...showGroup(new Set(["A", "B", "C"]), ["A", "B"])]).toEqual(["C"]);
   });
 
   it("keys a set of series regardless of order and duplicates", () => {

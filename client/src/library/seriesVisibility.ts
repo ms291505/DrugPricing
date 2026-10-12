@@ -19,4 +19,11 @@ export function toggleSeries(hidden: ReadonlySet<string>, ndc: string, group: st
   return next;
 }
 
+/** Shows every series of a group, leaving other groups' toggles alone. */
+export function showGroup(hidden: ReadonlySet<string>, group: string[]): ReadonlySet<string> {
+  const next = new Set(hidden);
+  for (const ndc of group) next.delete(ndc);
+  return next;
+}
+
 export const visibleSeries = (ndcs: string[], hidden: ReadonlySet<string>) => ndcs.filter(ndc => !hidden.has(ndc));

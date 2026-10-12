@@ -8,7 +8,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { barDataRows, csvFileName, downloadCsv, lineDataRows } from "../../library/chartCsv";
 import { visuallyHidden } from "@mui/utils";
 import { pricingUnitLabel } from "../../library/chartSeries";
-import { formatPrice } from "../../library/chartScale";
+import { distinctRange, formatPrice } from "../../library/chartScale";
+import useMobile from "../../hooks/useMobile";
 import { formatDate, type DateBounds, type DateWindow } from "../../library/dates";
 import type { BarValue } from "../../library/seriesSummary";
 import type { ChartPrice } from "../../library/types";
@@ -101,14 +102,19 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
   const rows = useMemo(() => lineDataRows(prices, dateWindow), [prices, dateWindow]);
   const [page, setPage] = useState(0);
   const units = new Set(rows.map(row => row.unit));
-  const hasRange = rows.some(row => row.range);
+  const isMobile = useMobile();
+  // Ranges whose ends print the same say nothing; a column of them is left out.
+  const hasRange = rows.some(row => distinctRange(row.range));
   const series = [...new Map(rows.map(row => [row.ndc, row.description]))];
   const lastPage = Math.max(0, Math.ceil(rows.length / ROWS_PER_PAGE) - 1);
   const shownPage = Math.min(page, lastPage);
 
   const columns: Column[] = [
     { label: "Date" }, { label: "NDC" }, ...(units.size > 1 ? [{ label: "Unit" }] : []), { label: "Price", numeric: true },
-    ...(hasRange ? [{ label: "Lowest package", numeric: true }, { label: "Highest package", numeric: true }] : []),
+    // One column on a phone, so the table needs less sideways scrolling.
+    ...(!hasRange ? [] : isMobile
+      ? [{ label: "Package range", numeric: true }]
+      : [{ label: "Lowest package", numeric: true }, { label: "Highest package", numeric: true }]),
   ];
   const caption = `All ${series.length} series, ${formatDate(bounds.first)} – ${formatDate(bounds.last)}, newest first. ${unitText(units)}`;
 
@@ -116,20 +122,21 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
     <Box sx={{ mt: 1 }}>
       <SeriesKey series={series} />
       <DataTable caption={caption} columns={columns}>
-        {rows.slice(shownPage * ROWS_PER_PAGE, (shownPage + 1) * ROWS_PER_PAGE).map(row => (
-          <TableRow key={`${row.date}|${row.ndc}|${row.unit}`}>
+        {rows.slice(shownPage * ROWS_PER_PAGE, (shownPage + 1) * ROWS_PER_PAGE).map(row => {
+          const range = distinctRange(row.range);
+          return (<TableRow key={`${row.date}|${row.ndc}|${row.unit}`}>
             <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(row.date)}</TableCell>
             <TableCell sx={{ whiteSpace: "nowrap" }}>{row.ndc}</TableCell>
             {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
             <TableCell align="right" sx={numericCell}>{formatPrice(row.price)}</TableCell>
-            {hasRange
-              ? <>
-                <TableCell align="right" sx={numericCell}>{row.range ? formatPrice(row.range[0]) : ""}</TableCell>
-                <TableCell align="right" sx={numericCell}>{row.range ? formatPrice(row.range[1]) : ""}</TableCell>
-              </>
-              : null}
-          </TableRow>
-        ))}
+            {!hasRange ? null : isMobile
+              ? <TableCell align="right" sx={numericCell}>{range ? `${formatPrice(range[0])}–${formatPrice(range[1])}` : ""}</TableCell>
+              : <>
+                <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[0]) : ""}</TableCell>
+                <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[1]) : ""}</TableCell>
+              </>}
+          </TableRow>);
+        })}
       </DataTable>
       {rows.length > ROWS_PER_PAGE
         ? <TablePagination
