@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, linePriceAxis, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
+import { dateTicks, distinctRange, fittedPriceAxis, formatPrice, formatPriceLabel, linePriceAxis, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
 import { MAX_AXIS_EXAGGERATION } from "./constants";
 
 const day = (iso: string) => Date.parse(iso);
@@ -100,6 +100,12 @@ describe("tick and price formats", () => {
     expect(formatPrice(3412.18)).toBe("$3,412.18");
     expect(formatPrice(0.0123)).toBe("$0.0123");
     expect(formatPrice(9.6896)).toBe("$9.69");
+  });
+
+  it("shows a package range only when its ends print differently", () => {
+    expect(distinctRange([5.5128, 5.5131])).toBeNull();
+    expect(distinctRange([5.51, 5.53])).toEqual([5.51, 5.53]);
+    expect(distinctRange(undefined)).toBeFalsy();
   });
 
   it("keeps chart labels alike: cents from $1, three significant digits below", () => {
