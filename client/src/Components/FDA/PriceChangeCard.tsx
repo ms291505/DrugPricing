@@ -66,7 +66,7 @@ export default function PriceChangeCard({ change, prices, origin, colors }: Prop
         />
       </>}
     >
-      <LineViz nadacPrices={prices} colors={colors} dateWindow={dateWindow} changeSpan={changeSpan} />
+      <LineViz nadacPrices={prices} title={title} colors={colors} dateWindow={dateWindow} changeSpan={changeSpan} />
     </ExplorerGridItem>
   );
 }

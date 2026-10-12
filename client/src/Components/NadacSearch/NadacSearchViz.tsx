@@ -72,6 +72,7 @@ export default function NadacSearchViz() {
             >
               <BarViz
                 nadacPrices={prices}
+                title={barTitle}
                 colors={colors}
                 dateWindow={chartWindow}
                 barValue={barValue}
@@ -88,7 +89,7 @@ export default function NadacSearchViz() {
                 colors={colors}
               />}
             >
-              <LineViz nadacPrices={prices} colors={colors} dateWindow={chartWindow} />
+              <LineViz nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
         </Grid>

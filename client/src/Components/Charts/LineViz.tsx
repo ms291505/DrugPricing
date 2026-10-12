@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 import { Box, Typography } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceDot, ReferenceLine, } from "recharts";
 import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
@@ -13,6 +14,8 @@ import useMobile from "../../hooks/useMobile.ts";
 
 type Props = {
   nadacPrices: ChartPrice[];
+  /** The card's title: the chart's accessible name. */
+  title: string;
   /** Color per NDC, from the page (`useSeriesColors`) or a pinned snapshot. Others take palette order. */
   colors?: Map<string, string>;
   /** The dates to show. The axis spans the whole window, even where there are no prices. */
@@ -23,7 +26,7 @@ type Props = {
   priceRanges?: Map<string, [number, number]>;
 };
 
-export default function LineViz({ nadacPrices, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
+export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
   const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
   const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
@@ -36,6 +39,7 @@ export default function LineViz({ nadacPrices, colors, dateWindow = FULL_WINDOW,
         <UnitLineChart
           nadacPrices={unitPrices}
           pricingUnit={pricingUnit}
+          title={title}
           colors={colors}
           xDomain={xDomain}
           changeSpan={changeSpan}
@@ -49,15 +53,17 @@ export default function LineViz({ nadacPrices, colors, dateWindow = FULL_WINDOW,
 type UnitLineChartProps = {
   nadacPrices: ChartPrice[];
   pricingUnit: string;
+  title: string;
   colors?: Map<string, string>;
   xDomain: [number, number];
   changeSpan?: ChartChangeSpan;
   priceRange?: [number, number];
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
+  const descriptionId = useId();
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
 
@@ -88,7 +94,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
       margin={chartTheme.margin}
       style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
       responsive
-      role="img"
+      // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
+      aria-label={`${title}, USD per ${unit}`}
+      aria-describedby={descriptionId}
     >
       <XAxis
         dataKey="asOfDate"
@@ -162,6 +170,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
         />
       ))}
     </ComposedChart>
+    <Box id={descriptionId} sx={visuallyHidden}>{title}</Box>
     {/* Said once here rather than in every tooltip row. */}
     {rangeNdcs.size > 0
       ? <Typography variant="caption" color="text.secondary">
