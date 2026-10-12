@@ -1,4 +1,5 @@
-import { Box, ButtonBase, Tooltip, Typography } from "@mui/material";
+import { useRef } from "react";
+import { Box, Button, ButtonBase, Tooltip, Typography } from "@mui/material";
 
 export type LegendSeries = {
   ndc: string,
@@ -12,6 +13,7 @@ export type LegendSeries = {
 type Props = {
   series: LegendSeries[],
   onToggle: (ndc: string) => void,
+  onShowAll: () => void,
   /** The series under the mouse or keyboard focus, or null. Hidden series are ignored by the chart. */
   onHighlight: (ndc: string | null) => void,
 }
@@ -20,9 +22,11 @@ type Props = {
  * A line chart's legend below the plot: one toggle button per series, with its description in a
  * tooltip. Hovering or focusing a button highlights its series.
  */
-export default function SeriesLegend({ series, onToggle, onHighlight }: Props) {
-  return (
+export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight }: Props) {
+  const listRef = useRef<HTMLUListElement>(null);
+  return (<Box>
     <Box
+      ref={listRef}
       component="ul"
       aria-label="Series"
       // About three rows, then it scrolls rather than growing the card.
@@ -67,5 +71,19 @@ export default function SeriesLegend({ series, onToggle, onHighlight }: Props) {
         );
       })}
     </Box>
-  );
+    {/* Outside the scroll box, so a long legend can't hide it. */}
+    {series.some(({ shown }) => !shown)
+      ? <Button
+        size="small"
+        onClick={(event) => {
+          onShowAll();
+          // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
+          if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
+        }}
+        sx={{ py: 0, minWidth: 0, textTransform: "none" }}
+      >
+        Show all
+      </Button>
+      : null}
+  </Box>);
 }

@@ -108,6 +108,10 @@ export const formatPrice = (value: number) =>
     style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: Math.abs(value) < 1 ? 4 : 2,
   });
 
+/** A package range worth showing: null when both ends print the same with `formatPrice`. */
+export const distinctRange = (range?: [number, number]) =>
+  range && formatPrice(range[0]) !== formatPrice(range[1]) ? range : null;
+
 /**
  * A price for a label on the chart: cents from $1 up, three significant digits below ("$0.278"),
  * so labels next to each other look alike. Tooltips and tables use `formatPrice`.
