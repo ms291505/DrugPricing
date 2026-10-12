@@ -1,13 +1,15 @@
-import { useId, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
-import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceDot, ReferenceLine, } from "recharts";
+import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
 import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
-import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter } from "../../library/chartScale.ts";
+import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
+import { canHide, seriesSetKey, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
+import SeriesLegend from "./SeriesLegend.tsx";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import type { ChartChangeSpan } from "../../library/explorerItems.ts";
 import useChartTheme from "../../hooks/useChartTheme.ts";
@@ -29,8 +31,15 @@ type Props = {
 
 export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
-  const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
+  const shownPrices = clipToWindow(nadacPrices, dateWindow);
+  const bounds = dateBounds(shownPrices);
   const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
+
+  // Legend toggles are view state. A new set of series in the dates starts with every series shown.
+  const seriesKey = seriesSetKey(shownPrices.map(price => price.ndc));
+  const [visibility, setVisibility] = useState({ seriesKey, hidden: NONE_HIDDEN });
+  const hidden = visibility.seriesKey === seriesKey ? visibility.hidden : NONE_HIDDEN;
+  const toggle = (ndc: string, group: string[]) => setVisibility({ seriesKey, hidden: toggleSeries(hidden, ndc, group) });
 
   return (
     <UnitSplit
@@ -42,6 +51,8 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
           pricingUnit={pricingUnit}
           title={title}
           colors={colors}
+          hidden={hidden}
+          onToggle={toggle}
           xDomain={xDomain}
           changeSpan={changeSpan}
           priceRange={priceRanges?.get(pricingUnit)}
@@ -51,22 +62,33 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   );
 }
 
+const NONE_HIDDEN: ReadonlySet<string> = new Set();
+/** Other series' strength while one is highlighted from the legend. */
+const DIMMED_OPACITY = 0.25;
+
 type UnitLineChartProps = {
   nadacPrices: ChartPrice[];
   pricingUnit: string;
   title: string;
   colors?: Map<string, string>;
+  hidden: ReadonlySet<string>;
+  onToggle: (ndc: string, group: string[]) => void;
   xDomain: [number, number];
   changeSpan?: ChartChangeSpan;
   priceRange?: [number, number];
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const descriptionId = useId();
+  const [highlighted, setHighlighted] = useState<string | null>(null);
 
   const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
+  const shownNdcs = visibleSeries(ndcs, hidden);
+  // A series hidden while under the pointer dims nothing.
+  const focusNdc = highlighted && shownNdcs.includes(highlighted) ? highlighted : null;
+  const opacityOf = (ndc: string) => focusNdc && focusNdc !== ndc ? DIMMED_OPACITY : 1;
 
   const { rows: vizData, rangeNdcs } = createLineVizData(nadacPrices);
 
@@ -74,16 +96,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
 
   const unit = pricingUnitLabel(pricingUnit);
 
-  // One lookup for both the band and its line, so they always share a color.
+  // One lookup for both the band and its line, so they always share a color. From the full list,
+  // so hiding a series doesn't recolor the others.
   const colorFor = (ndc: string) =>
     colors?.get(ndc) ?? chartTheme.palette[ndcs.indexOf(ndc) % chartTheme.palette.length];
 
   const xTicks = dateTicks(xDomain[0], xDomain[1], isMobile ? 4 : 7);
 
-  // Bands are within each date's min–max, so the raw prices bound everything drawn.
-  const prices = nadacPrices.map(price => price.nadacPerUnit);
-  const [low, high] = priceRange ?? [Math.min(...prices), Math.max(...prices)];
-  const yAxis = fittedPriceAxis(low, high);
+  const yAxis = linePriceAxis(nadacPrices, shownNdcs, priceRange);
 
   const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
     : changeSpan?.direction === "drop" ? chartTheme.drop
@@ -119,11 +139,6 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
         axisLine={chartTheme.axisLine}
         tickLine={chartTheme.axisLine}
       />
-      {/* One series is named by the card's title; a legend would only repeat it. */}
-      {ndcs.length > 1
-        ? <Legend wrapperStyle={chartTheme.legendStyle} />
-        : null
-      }
       <Tooltip
         // On a phone the finger is on the chart: keep the readout at the top, out from under it.
         position={isMobile ? { y: 0 } : undefined}
@@ -132,7 +147,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
             date={label as number}
             unit={unit}
             // The bands' entries come through too; keep the lines'.
-            items={payload.filter(item => ndcs.includes(String(item.dataKey))).map(item => ({ ndc: String(item.dataKey), price: item.value as number, row: item.payload as LineVizRow }))}
+            items={payload.filter(item => shownNdcs.includes(String(item.dataKey))).map(item => ({ ndc: String(item.dataKey), price: item.value as number, row: item.payload as LineVizRow }))}
             colorFor={colorFor}
             descriptionFor={isMobile ? undefined : descriptionFor}
             style={chartTheme.tooltip.contentStyle}
@@ -140,14 +155,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
           : null}
       />
       {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
-      {ndcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
+      {shownNdcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
         <Area
           key={rangeKey(ndc)}
           dataKey={rangeKey(ndc)}
           type="stepAfter"
           stroke="none"
           fill={colorFor(ndc)}
-          fillOpacity={0.2}
+          fillOpacity={0.2 * opacityOf(ndc)}
           activeDot={false}
           legendType="none"
           tooltipType="none"
@@ -155,11 +170,12 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
           isAnimationActive={false}
         />
       ))}
-      {ndcs.map((ndc) => (
+      {shownNdcs.map((ndc) => (
         <Line
           key={ndc}
           dataKey={ndc}
           stroke={colorFor(ndc)}
+          strokeOpacity={opacityOf(ndc)}
           strokeWidth={2}
           // NADAC prices hold until the next weekly file: steps, not curves between weeks.
           type="stepAfter"
@@ -171,9 +187,23 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
         />
       ))}
     </ComposedChart>
+    {/* One series is named by the card's title; a legend would only repeat it. */}
+    {ndcs.length > 1
+      ? <SeriesLegend
+        series={ndcs.map(ndc => ({
+          ndc,
+          color: colorFor(ndc),
+          description: descriptionFor(ndc),
+          shown: !hidden.has(ndc),
+          canHide: canHide(hidden, ndc, ndcs),
+        }))}
+        onToggle={ndc => onToggle(ndc, ndcs)}
+        onHighlight={setHighlighted}
+      />
+      : null}
     <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, changeSpan)}</Box>
     {/* Said once here rather than in every tooltip row. */}
-    {rangeNdcs.size > 0
+    {shownNdcs.some(ndc => rangeNdcs.has(ndc))
       ? <Typography variant="caption" color="text.secondary">
         Line: average of the product's packages · shading: lowest to highest package price
       </Typography>

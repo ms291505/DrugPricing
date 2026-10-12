@@ -30,7 +30,6 @@ export default function useChartTheme() {
       tick,
       axisLine,
       tooltip,
-      legendStyle: { fontSize, color: theme.palette.text.secondary } as CSSProperties,
       textPrimary: theme.palette.text.primary,
       paper: theme.palette.background.paper,
       textSecondary: theme.palette.text.secondary,
