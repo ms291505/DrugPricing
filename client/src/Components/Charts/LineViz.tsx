@@ -5,9 +5,11 @@ import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
 import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
-import { dateTicks, distinctRange, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
+import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
+import { lineAnnouncement, tooltipRows, type TooltipRow } from "../../library/chartReadout.ts";
+import useChartReadout from "../../hooks/useChartReadout.tsx";
 import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
 import SeriesLegend from "./SeriesLegend.tsx";
 import ChartData, { LineDataTable } from "./ChartData.tsx";
@@ -119,88 +121,97 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 
   const yAxis = linePriceAxis(nadacPrices, shownNdcs, priceRange);
 
+  const readout = useChartReadout((row: LineVizRow) => row.asOfDate, date => {
+    const row = vizData.find(r => r.asOfDate === date);
+    const rows = row ? tooltipRows(row, shownNdcs) : [];
+    return rows.length ? lineAnnouncement(date, unit, rows) : null;
+  });
+
   const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
 
   return (<>
-    <ComposedChart
-      data={vizData}
-      margin={chartTheme.margin}
-      style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
-      responsive
-      // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
-      aria-label={`${title}, USD per ${unit}`}
-      aria-describedby={descriptionId}
-    >
-      <XAxis
-        dataKey="asOfDate"
-        scale="time"
-        type="number"
-        domain={xDomain}
-        ticks={xTicks.ticks}
-        tickFormatter={xTicks.format}
-        tick={chartTheme.tick}
-        axisLine={chartTheme.axisLine}
-        tickLine={chartTheme.axisLine}
-      />
-      <YAxis
-        width="auto"
-        domain={yAxis.domain}
-        ticks={yAxis.ticks}
-        tickFormatter={priceTickFormatter(yAxis.ticks)}
-        tick={chartTheme.tick}
-        axisLine={chartTheme.axisLine}
-        tickLine={chartTheme.axisLine}
-      />
-      <Tooltip
-        // On a phone the finger is on the chart: keep the readout at the top, out from under it.
-        position={isMobile ? { y: 0 } : undefined}
-        content={({ active, payload, label }) => active && payload?.length
-          ? <LineTooltip
-            date={label as number}
-            unit={unit}
-            // The bands' entries come through too; keep the lines'.
-            items={payload.filter(item => shownNdcs.includes(String(item.dataKey))).map(item => ({ ndc: String(item.dataKey), price: item.value as number, row: item.payload as LineVizRow }))}
-            colorFor={colorFor}
-            descriptionFor={isMobile ? undefined : descriptionFor}
-            style={chartTheme.tooltip.contentStyle}
+    <Box {...readout.focusProps}>
+      <ComposedChart
+        data={vizData}
+        margin={chartTheme.margin}
+        style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
+        responsive
+        // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
+        aria-label={`${title}, USD per ${unit}`}
+        aria-describedby={descriptionId}
+      >
+        <XAxis
+          dataKey="asOfDate"
+          scale="time"
+          type="number"
+          domain={xDomain}
+          ticks={xTicks.ticks}
+          tickFormatter={xTicks.format}
+          tick={chartTheme.tick}
+          axisLine={chartTheme.axisLine}
+          tickLine={chartTheme.axisLine}
+        />
+        <YAxis
+          width="auto"
+          domain={yAxis.domain}
+          ticks={yAxis.ticks}
+          tickFormatter={priceTickFormatter(yAxis.ticks)}
+          tick={chartTheme.tick}
+          axisLine={chartTheme.axisLine}
+          tickLine={chartTheme.axisLine}
+        />
+        <Tooltip
+          // On a phone the finger is on the chart: keep the readout at the top, out from under it.
+          position={isMobile ? { y: 0 } : undefined}
+          content={({ active, payload, label }) => active && payload?.length
+            ? <LineTooltip
+              date={label as number}
+              unit={unit}
+              rows={tooltipRows(payload[0].payload as LineVizRow, shownNdcs)}
+              colorFor={colorFor}
+              descriptionFor={isMobile ? undefined : descriptionFor}
+              style={chartTheme.tooltip.contentStyle}
+            />
+            : null}
+        />
+        {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
+        {shownNdcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
+          <Area
+            key={rangeKey(ndc)}
+            dataKey={rangeKey(ndc)}
+            type="stepAfter"
+            stroke="none"
+            fill={colorFor(ndc)}
+            fillOpacity={0.2 * opacityOf(ndc)}
+            activeDot={false}
+            legendType="none"
+            tooltipType="none"
+            connectNulls={false}
+            isAnimationActive={false}
           />
-          : null}
-      />
-      {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
-      {shownNdcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
-        <Area
-          key={rangeKey(ndc)}
-          dataKey={rangeKey(ndc)}
-          type="stepAfter"
-          stroke="none"
-          fill={colorFor(ndc)}
-          fillOpacity={0.2 * opacityOf(ndc)}
-          activeDot={false}
-          legendType="none"
-          tooltipType="none"
-          connectNulls={false}
-          isAnimationActive={false}
-        />
-      ))}
-      {shownNdcs.map((ndc) => (
-        <Line
-          key={ndc}
-          dataKey={ndc}
-          stroke={colorFor(ndc)}
-          strokeOpacity={opacityOf(ndc)}
-          strokeWidth={2}
-          // NADAC prices hold until the next weekly file: steps, not curves between weeks.
-          type="stepAfter"
-          dot={false}
-          connectNulls={false}
-          name={ndc}
-          // Off: recharts morphs old lines into new ones and draws made-up prices.
-          isAnimationActive={false}
-        />
-      ))}
-    </ComposedChart>
+        ))}
+        {shownNdcs.map((ndc) => (
+          <Line
+            key={ndc}
+            dataKey={ndc}
+            stroke={colorFor(ndc)}
+            strokeOpacity={opacityOf(ndc)}
+            strokeWidth={2}
+            // NADAC prices hold until the next weekly file: steps, not curves between weeks.
+            type="stepAfter"
+            dot={false}
+            connectNulls={false}
+            name={ndc}
+            // Off: recharts morphs old lines into new ones and draws made-up prices.
+            isAnimationActive={false}
+          />
+        ))}
+        {readout.reporter}
+      </ComposedChart>
+    </Box>
+    {readout.liveRegion}
     {/* One series is named by the card's title; a legend would only repeat it. */}
     {ndcs.length > 1
       ? <SeriesLegend
@@ -229,7 +240,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 type LineTooltipProps = {
   date: number,
   unit: string,
-  items: Array<{ ndc: string, price: number, row: LineVizRow }>,
+  rows: TooltipRow[],
   colorFor: (ndc: string) => string,
   /** Each series' description, left out on a phone to keep the tooltip small. */
   descriptionFor?: (ndc: string) => string,
@@ -240,16 +251,14 @@ type LineTooltipProps = {
  * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
  * description and, for an averaged product, its packages' range beneath on wider screens.
  */
-function LineTooltip({ date, unit, items, colorFor, descriptionFor, style }: LineTooltipProps) {
-  const sorted = [...items].sort((a, b) => b.price - a.price);
+function LineTooltip({ date, unit, rows, colorFor, descriptionFor, style }: LineTooltipProps) {
   return (
     <Box style={style} sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
       <Typography variant="body2">
         <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
         <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
       </Typography>
-      {sorted.map(({ ndc, price, row }) => {
-        const range = distinctRange(row[rangeKey(ndc)] as [number, number] | undefined);
+      {rows.map(({ ndc, price, range }) => {
         const rangeText = range ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}` : null;
         return (
           <Box key={ndc}>

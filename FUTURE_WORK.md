@@ -70,6 +70,8 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
   that accounts for the drawer, or Page Tools should move above the cards there.
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
+- **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
+  (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 
 ### For the NADAC/FDA parity plan
 
@@ -120,6 +122,12 @@ API.
 The same API would fix the bar charts' direction. Recharts reverses ←/→ for every direction except
 left-to-right, so on the vertical bar charts → moves up a row and ← moves down. The bar summary's
 keyboard hint says so; `reversed` with reversed data doesn't help, since bottom-to-top is reversed too.
+
+### Shorter readout on charts with many series (2026-10-12)
+
+The screen-reader readout (`chartReadout.ts`) reads every shown series at each point: 7 NDCs on
+humira, 15 on a metformin pin, on every arrow press. If that proves tiring in VoiceOver, read the
+top few and "and N more"; View data still has the full table.
 
 ### Popular searches and recent movers
 
