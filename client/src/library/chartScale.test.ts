@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
+import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, linePriceAxis, niceStep, priceTickFormatter, zeroBasedAxis } from "./chartScale";
 import { MAX_AXIS_EXAGGERATION } from "./constants";
 
 const day = (iso: string) => Date.parse(iso);
@@ -28,6 +28,18 @@ describe("fittedPriceAxis", () => {
         expect(axis.domain[1]).toBeGreaterThanOrEqual(max);
       }
     }
+  });
+
+  it("fits line charts to the shown series only, under the same cap, unless matched", () => {
+    const price = (ndc: string, nadacPerUnit: number) =>
+      ({ ndc, ndcDescription: ndc, pricingUnit: "each", nadacPerUnit, asOfDate: new Date("2025-01-01") });
+    const prices = [price("A", 9.6), price("A", 9.7), price("B", 100)];
+    const all = linePriceAxis(prices, ["A", "B"]);
+    const onlyA = linePriceAxis(prices, ["A"]);
+    expect(all.domain[1]).toBeGreaterThanOrEqual(100);
+    expect(onlyA.domain[1]).toBeLessThan(20);
+    expect(9.7 / span(onlyA)).toBeLessThanOrEqual(MAX_AXIS_EXAGGERATION + 1e-9);
+    expect(linePriceAxis(prices, ["A"], [9.6, 100])).toEqual(all);
   });
 
   it("shows humira's ~10% rise at about 40% of the height, not flat and not full", () => {

@@ -1,4 +1,5 @@
 import { MAX_AXIS_EXAGGERATION } from "./constants";
+import type { ChartPrice } from "./types";
 
 /*
  * Axis scales and tick labels for the charts. Kept out of the components so the rules are
@@ -63,6 +64,17 @@ export function fittedPriceAxis(min: number, max: number, maxExaggeration = MAX_
   lo = Math.floor(lo / step) * step;
   hi = Math.ceil(hi / step) * step;
   return { domain: [lo, hi], ticks: ticksBetween(lo, hi, step) };
+}
+
+/**
+ * A line chart's price axis: fitted to the shown series (bands lie within their raw prices), or
+ * to the shared Match scale range, which doesn't refit when series are hidden.
+ */
+export function linePriceAxis(prices: ChartPrice[], shownNdcs: string[], priceRange?: [number, number]): Axis {
+  if (priceRange) return fittedPriceAxis(...priceRange);
+  const shown = new Set(shownNdcs);
+  const values = prices.filter(price => shown.has(price.ndc)).map(price => price.nadacPerUnit);
+  return fittedPriceAxis(Math.min(...values), Math.max(...values));
 }
 
 /** Decimals needed to write `step` exactly: 0.25 → 2, 0.5 → 1, 5 → 0. */

@@ -1,18 +1,24 @@
-import { type CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import type { ChartPrice } from "../../library/types";
 import { pricingUnitLabel } from "../../library/chartSeries";
 import { fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
 import { summarizeSeries, type BarValue, type SeriesSummary } from "../../library/seriesSummary";
-import { formatDate, type DateWindow } from "../../library/dates";
+import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
+import { barChartSummary } from "../../library/chartSummary";
+import { barCsv, barDataRows } from "../../library/chartCsv";
+import ChartData, { BarDataTable } from "./ChartData";
 import { useSettings } from "../../Context/SettingsContext";
 
 type Props = {
   nadacPrices: ChartPrice[],
+  /** The card's title: the chart's accessible name. */
+  title: string,
   /** Color per NDC, from the page or a pinned snapshot. Others take palette order. */
   colors?: Map<string, string>,
   /** Bars summarize only these dates. */
@@ -26,13 +32,14 @@ type Props = {
  * One horizontal row per series, sorted by value: the latest price or the average over the
  * dates, with the range from the lowest to the highest price over the same dates.
  */
-export default function BarViz({ nadacPrices, colors, dateWindow, barValue: value, onBarValueChange: setValue }: Props) {
+export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, barValue: value, onBarValueChange: setValue }: Props) {
   const { barStyle } = useSettings().settings;
   const valueLabel = value === "latest" ? "latest price" : "average price";
   // Says what each mark means; the range is easy to misread without it.
   const caption = barStyle === "bar"
     ? `Bar: ${valueLabel} · gray line: lowest to highest over these dates`
     : `Dot: ${valueLabel} · line: lowest to highest over these dates`;
+  const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -54,9 +61,14 @@ export default function BarViz({ nadacPrices, colors, dateWindow, barValue: valu
         nadacPrices={nadacPrices}
         dateWindow={dateWindow}
         renderChart={(unitPrices, pricingUnit) => (
-          <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} colors={colors} barValue={value} />
+          <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} title={title} colors={colors} barValue={value} />
         )}
       />
+      {bounds
+        ? <ChartData title={title} bounds={bounds} toCsv={() => barCsv(barDataRows(nadacPrices, dateWindow, value))}>
+          <BarDataTable prices={nadacPrices} dateWindow={dateWindow} barValue={value} bounds={bounds} />
+        </ChartData>
+        : null}
     </Box>
   );
 }
@@ -64,6 +76,7 @@ export default function BarViz({ nadacPrices, colors, dateWindow, barValue: valu
 type UnitBarChartProps = {
   nadacPrices: ChartPrice[],
   pricingUnit: string,
+  title: string,
   colors?: Map<string, string>,
   barValue: BarValue,
 }
@@ -74,11 +87,12 @@ const BAR_ROW_HEIGHT = 40;
 /** Room right of the plot for value labels. */
 const LABEL_MARGIN = 64;
 
-function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarChartProps) {
+function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: UnitBarChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const { barStyle } = useSettings().settings;
   const unit = pricingUnitLabel(pricingUnit);
+  const descriptionId = useId();
 
   const rows: BarRow[] = summarizeSeries(nadacPrices)
     .map(summary => ({ ...summary, value: summary[barValue] }))
@@ -93,14 +107,15 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
   const tickFormatter = priceTickFormatter(xAxis.ticks);
   const [low, high] = xAxis.domain;
 
-  return (
+  return (<>
     <BarChart
       layout="vertical"
       data={rows}
       margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
       style={{ width: "100%", height: rows.length * BAR_ROW_HEIGHT + 40 }}
       responsive
-      role="img"
+      aria-label={`${title}, USD per ${unit}`}
+      aria-describedby={descriptionId}
     >
       <XAxis
         type="number"
@@ -124,9 +139,8 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
       <Tooltip
         // Highlights the whole row, label to value, under the pointer.
         cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
-        // On a phone the rows fill the chart, so any spot inside it covers one. The tooltip goes
-        // above the plot instead (`compact` lifts it by its own height), over the caption and
-        // toggle, which aren't being read while a finger is on a row.
+        // On a phone the rows fill the chart, so the tooltip goes above the plot (`compact` lifts
+        // it by its own height), over the caption and toggle.
         position={isMobile ? { y: 0 } : undefined}
         allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
         content={({ active, payload }) => {
@@ -200,7 +214,8 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
         }}
       />
     </BarChart>
-  );
+    <Box id={descriptionId} sx={visuallyHidden}>{barChartSummary(nadacPrices, barValue)}</Box>
+  </>);
 }
 
 type BarTooltipProps = {

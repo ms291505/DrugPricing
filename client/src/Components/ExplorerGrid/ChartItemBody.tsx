@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fromChartSeries, type ChartItem } from "../../library/explorerItems";
+import { fromChartSeries, itemTitle, type ChartItem } from "../../library/explorerItems";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import LineViz from "../Charts/LineViz";
 import BarViz from "../Charts/BarViz";
@@ -24,6 +24,7 @@ export default function ChartItemBody({ item, priceRanges }: Props) {
       return (
         <LineViz
           nadacPrices={prices}
+          title={itemTitle(item)}
           colors={colors}
           dateWindow={item.dateWindow}
           changeSpan={item.changeSpan}
@@ -34,6 +35,7 @@ export default function ChartItemBody({ item, priceRanges }: Props) {
       return (
         <BarViz
           nadacPrices={prices}
+          title={itemTitle(item)}
           colors={colors}
           dateWindow={item.dateWindow}
           barValue={item.barValue ?? "latest"}

@@ -127,7 +127,7 @@ There is currently no server test project.
 | --- | --- |
 | App shell + routing | `src/App.tsx` (BrowserRouter, MUI theme, React Query provider) |
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
-| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
+| Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `seriesVisibility.ts`, `chartSummary.ts`, `chartCsv.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
 | Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
@@ -141,7 +141,8 @@ Feature folders under `src/Components/`:
   mounted (`display: none`), so per-tab state survives switching tabs.
 - `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
 - `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
-  `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates.
+  `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates;
+  `SeriesLegend` and `ChartData` (View data / Download CSV) are drawn by `LineViz`/`BarViz`.
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
   `PinnedSection`/`PinnedItemCard`/`PinnedChartDates`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
@@ -263,6 +264,22 @@ Notes:
     `to`). The percent stays in the title, which a collapsed card still shows. The pill is
     outlined green for a drop and in the theme's `error` color for a rise. Spans pinned before
     the prices were stored get a dashed line at the date, labeled with the percent.
+  - **Accessibility.** `LineViz`/`BarViz` take the card's `title`. Each unit chart's SVG keeps
+    recharts' own `role="application"` (never `role="img"`, which broke its name and arrow
+    keys) with `aria-label` "<title>, USD per <unit>" and `aria-describedby` pointing at a
+    visually hidden summary from `chartSummary.ts`. Don't turn off `accessibilityLayer` or
+    reach into recharts' internal store; keyboard navigation is recharts' ←/→/Enter (reversed on
+    the vertical bar charts, where → moves up a row; the bar summary's hint says so).
+  - **The line legend** (`SeriesLegend`, below the plot) toggles and highlights series. Toggles
+    are view state (`seriesVisibility.ts`), never stored, reset when the series in the dates
+    change, and the last shown series of a unit chart can't be hidden. Colors come from the full
+    NDC list, so hiding never recolors. Hidden series leave the axis fit (`linePriceAxis`), but
+    a Match scale range stays as it is.
+  - **View data / Download CSV** sit under every chart (`ChartData`). Both show every series,
+    whatever the legend hides, over the chart's dates: line rows are the drawn per-date values
+    (a product's average, with its package range), bar rows the `summarizeSeries` rows. The CSV
+    (`chartCsv.ts`) uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards only
+    text fields against formula injection.
   - Chart animations are off (`isAnimationActive={false}`). Recharts morphs the old line into the new
     one point by point, which drew made-up prices whenever the dates changed, and re-renders
     kept restarting it.
@@ -348,7 +365,7 @@ npm test         # vitest run
 
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
 windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
-summaries, chart titles, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
+summaries, chart titles, chart text summaries, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
 the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a

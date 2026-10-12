@@ -105,6 +105,7 @@ export default function FdaExplorer({ visible = true }: Props) {
           >
             <BarViz
               nadacPrices={nadacPrices}
+              title={barVizTitle}
               colors={colors}
               dateWindow={chartWindow}
               barValue={barValue}
@@ -126,7 +127,7 @@ export default function FdaExplorer({ visible = true }: Props) {
                 colors={colors}
               />}
             >
-              <LineViz nadacPrices={nadacPrices} colors={colors} dateWindow={chartWindow} />
+              <LineViz nadacPrices={nadacPrices} title={lineVizTitle} colors={colors} dateWindow={chartWindow} />
             </ExplorerGridItem>
           </Grid>
           : null
