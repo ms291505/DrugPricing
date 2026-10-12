@@ -15,8 +15,8 @@ function ActivePointReporter({ onChange }: { onChange: (point: unknown) => void 
 }
 
 /**
- * A screen-reader readout of a chart's active point, spoken only while the chart has keyboard
- * focus. Render `reporter` inside the recharts chart, spread `focusProps` on a box around it, and
+ * A screen-reader readout of a chart's active point, spoken only when the keys moved it, not the
+ * pointer. Render `reporter` inside the recharts chart, spread `focusProps` on a box around it, and
  * render `liveRegion` next to it.
  *
  * @param keyOf - identifies a row of the chart's data (a line chart's date, a bar chart's NDC).
@@ -28,8 +28,8 @@ export default function useChartReadout<Row, Key extends string | number>(
   describe: (key: Key) => string | null,
 ) {
   const [activeKey, setActiveKey] = useState<Key>();
-  const [keyboardFocus, setKeyboardFocus] = useState(false);
-  const text = keyboardFocus && activeKey !== undefined ? describe(activeKey) ?? "" : "";
+  const [keyboardDriven, setKeyboardDriven] = useState(false);
+  const text = keyboardDriven && activeKey !== undefined ? describe(activeKey) ?? "" : "";
 
   const [announcement, setAnnouncement] = useState("");
   useEffect(() => {
@@ -40,10 +40,12 @@ export default function useChartReadout<Row, Key extends string | number>(
   return {
     reporter: <ActivePointReporter onChange={point => setActiveKey(point === undefined ? undefined : keyOf(point as Row))} />,
     focusProps: {
-      // Mouse users focus the chart by clicking it; hover must not speak.
+      // The last input decides: a click then arrow keys speaks, and hover never does.
       onFocus: (event: FocusEvent) =>
-        setKeyboardFocus(event.target instanceof SVGSVGElement && event.target.matches(":focus-visible")),
-      onBlur: () => setKeyboardFocus(false),
+        setKeyboardDriven(event.target instanceof SVGSVGElement && event.target.matches(":focus-visible")),
+      onKeyDown: () => setKeyboardDriven(true),
+      onPointerMove: () => setKeyboardDriven(false),
+      onBlur: () => setKeyboardDriven(false),
     },
     // In the DOM, empty, from the first render: regions added along with their text often go unread.
     liveRegion: (

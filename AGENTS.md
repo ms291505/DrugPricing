@@ -272,10 +272,10 @@ Notes:
     the vertical bar charts, where → moves up a row; the bar summary's hint says so).
   - **Screen-reader readout** (`useChartReadout`): each unit chart has a visually hidden
     `role="status"` region, in the DOM and empty from the first render, that speaks the active
-    point while the SVG has keyboard focus (`:focus-visible`; mouse hover stays silent), 300ms
-    after the last key. A child inside the chart reports recharts' active row with
-    `useActiveTooltipDataPoints`; keep only a primitive key of it in state, because the rows are
-    rebuilt each render and storing one loops. The text comes from `chartReadout.ts`, whose
+    point after a key press while the SVG has focus, 300ms after the last key; moving the pointer
+    silences it until the next key, so hover never speaks. A child inside the chart reports
+    recharts' active row with `useActiveTooltipDataPoints`; keep only a primitive key of it in
+    state, because the rows are rebuilt each render and storing one loops. The text comes from `chartReadout.ts`, whose
     `tooltipRows` the line tooltip draws from too, so the two never disagree.
   - **The line legend** (`SeriesLegend`, below the plot) toggles and highlights series. Toggles
     are view state (`seriesVisibility.ts`), never stored, reset when the series in the dates
