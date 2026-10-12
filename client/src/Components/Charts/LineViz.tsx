@@ -41,7 +41,10 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const seriesKey = seriesSetKey(shownPrices.map(price => price.ndc));
   const [visibility, setVisibility] = useState({ seriesKey, hidden: NONE_HIDDEN });
   const hidden = visibility.seriesKey === seriesKey ? visibility.hidden : NONE_HIDDEN;
-  const toggle = (ndc: string, group: string[]) => setVisibility({ seriesKey, hidden: toggleSeries(hidden, ndc, group) });
+  const toggle = (ndc: string, group: string[]) => setVisibility(prev => ({
+    seriesKey,
+    hidden: toggleSeries(prev.seriesKey === seriesKey ? prev.hidden : NONE_HIDDEN, ndc, group),
+  }));
 
   return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <UnitSplit

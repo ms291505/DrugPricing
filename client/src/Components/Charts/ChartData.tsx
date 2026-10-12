@@ -6,6 +6,7 @@ import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { barDataRows, csvFileName, downloadCsv, lineDataRows } from "../../library/chartCsv";
+import { visuallyHidden } from "@mui/utils";
 import { pricingUnitLabel } from "../../library/chartSeries";
 import { formatPrice } from "../../library/chartScale";
 import { formatDate, type DateBounds, type DateWindow } from "../../library/dates";
@@ -59,24 +60,28 @@ type Column = { label: string, numeric?: boolean };
 
 function DataTable({ caption, columns, children }: { caption: string, columns: Column[], children: ReactNode }) {
   return (
-    <TableContainer sx={{ overflowX: "auto" }}>
-      <Table size="small" sx={{ "& caption": { captionSide: "top", px: 0 } }}>
-        <caption>{caption}</caption>
-        <TableHead>
-          <TableRow>
-            {columns.map(({ label, numeric }) => (
-              <TableCell key={label} scope="col" align={numeric ? "right" : "left"} sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>{children}</TableBody>
-      </Table>
-    </TableContainer>
+    <>
+      {/* Shown outside the scroll box so it wraps at the screen's width; the table keeps its own caption. */}
+      <Typography variant="body2" color="text.secondary" aria-hidden>{caption}</Typography>
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table size="small" sx={{ "& th, & td": { px: { xs: 1, sm: 2 } } }}>
+          <Box component="caption" sx={visuallyHidden}>{caption}</Box>
+          <TableHead>
+            <TableRow>
+              {columns.map(({ label, numeric }) => (
+                <TableCell key={label} scope="col" align={numeric ? "right" : "left"} sx={{ whiteSpace: "nowrap" }}>{label}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>{children}</TableBody>
+        </Table>
+      </TableContainer>
+    </>
   );
 }
 
 const unitText = (units: Set<string>) =>
-  units.size === 1 ? `USD per ${pricingUnitLabel([...units][0])}.` : "USD per each row's unit.";
+  units.size === 1 ? `USD per ${pricingUnitLabel([...units][0])}.` : "USD per the unit in each row.";
 
 /** A line chart's prices, one row per series and date, every series whatever the legend hides. */
 export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPrice[], dateWindow: DateWindow, bounds: DateBounds }) {
