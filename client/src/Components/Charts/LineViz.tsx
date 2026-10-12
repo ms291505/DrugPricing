@@ -7,6 +7,7 @@ import { createLineVizData, rangeKey, type LineVizRow } from "../../library/crea
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
 import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
+import { lineChartSummary } from "../../library/chartSummary.ts";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import type { ChartChangeSpan } from "../../library/explorerItems.ts";
 import useChartTheme from "../../hooks/useChartTheme.ts";
@@ -170,7 +171,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, xDomain, chang
         />
       ))}
     </ComposedChart>
-    <Box id={descriptionId} sx={visuallyHidden}>{title}</Box>
+    <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, changeSpan)}</Box>
     {/* Said once here rather than in every tooltip row. */}
     {rangeNdcs.size > 0
       ? <Typography variant="caption" color="text.secondary">

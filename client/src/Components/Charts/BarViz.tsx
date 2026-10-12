@@ -10,6 +10,7 @@ import { formatDate, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
+import { barChartSummary } from "../../library/chartSummary";
 import { useSettings } from "../../Context/SettingsContext";
 
 type Props = {
@@ -206,7 +207,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
         }}
       />
     </BarChart>
-    <Box id={descriptionId} sx={visuallyHidden}>{title}</Box>
+    <Box id={descriptionId} sx={visuallyHidden}>{barChartSummary(nadacPrices, barValue)}</Box>
   </>);
 }
 
