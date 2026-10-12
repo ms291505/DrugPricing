@@ -19,7 +19,7 @@ export default function OnBoarding() {
           <li>The FDA's directory of products and packages currently on the market. When available, NADAC prices for drug packages in the FDA data are provided.</li>
         </Box>
         <Typography variant="body1">
-          NADAC data is updated weekly and the tool contains data going back to 2023. Not all products in the FDA data have prices tracked by CMS.
+          NADAC data is updated weekly and the tool contains data going back to 2022. Not all products in the FDA data have prices tracked by CMS.
         </Typography>
       </Box>
       <Box

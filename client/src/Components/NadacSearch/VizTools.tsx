@@ -23,7 +23,10 @@ export default function VizTools() {
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
-  // The auto charts show the whole result (the Drug filter only feeds Add Chart), so it's the visible set too.
+  // The auto charts show the whole result (the Drug filter only feeds Add Chart), so it is also
+  // the visible set.
+  // `origin.resultPrices` is the result's prices with a stable empty fallback; `data?.prices ?? []`
+  // would be a new [] on every render while loading and re-run the color memo.
   const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
 
   const handleAddChart = (chartType: ChartType) => {

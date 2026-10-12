@@ -57,7 +57,17 @@ export default function FdaExplorer({ visible = true }: Props) {
   const shownPriceChanges = useMemo(
     () => priceChangesInWindow(productPriceChanges, chartWindow),
     [productPriceChanges, chartWindow]);
-  const hiddenPriceChanges = productPriceChanges.length - shownPriceChanges.length;
+  const outsidePriceChanges = productPriceChanges.length - shownPriceChanges.length;
+  const tooManyPriceChanges = shownPriceChanges.length > MAX_AUTO_PRICE_CHANGE_CHARTS;
+  // Says why changes the search found have no card: outside the dates, or too many to chart.
+  const priceChangeNotes = [
+    tooManyPriceChanges
+      ? `${shownPriceChanges.length} price changes in these dates are too many to chart (up to ${MAX_AUTO_PRICE_CHANGE_CHARTS}). Narrow the dates or filter the results.`
+      : null,
+    outsidePriceChanges > 0
+      ? `${outsidePriceChanges === 1 ? "1 price change is" : `${outsidePriceChanges} price changes are`} outside the chart dates.`
+      : null,
+  ].filter(note => note !== null);
 
   const labels = seriesLabels(nadacPrices);
   const barVizTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
@@ -121,15 +131,15 @@ export default function FdaExplorer({ visible = true }: Props) {
           </Grid>
           : null
       }
-      {hiddenPriceChanges > 0
+      {priceChangeNotes.length > 0
         ? <Grid size={12}>
           <Typography variant="body2" color="text.secondary" sx={{ px: { xs: 1, md: 0 } }}>
-            {hiddenPriceChanges === 1 ? "1 price change is" : `${hiddenPriceChanges} price changes are`} outside the chart dates.
+            {priceChangeNotes.join(" ")}
           </Typography>
         </Grid>
         : null
       }
-      {shownPriceChanges.length <= MAX_AUTO_PRICE_CHANGE_CHARTS
+      {!tooManyPriceChanges
         ?
         shownPriceChanges.map((change) => (
           <Grid size={HALF_WIDTH_GRID_SIZE} key={change.packageNdc + change.priceChange.startDate.getTime()}>

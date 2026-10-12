@@ -183,6 +183,24 @@ describe("watchOtherWindows", () => {
     persist.removeTabState("t1");
     expect(localStorage.getItem(persist.tabKey("t1"))).toBe(before);
   });
+
+  it("follows another window's settings instead of going read-only", () => {
+    const onConflict = vi.fn();
+    const onSettings = vi.fn();
+    persist.watchOtherWindows(onConflict);
+    persist.watchSettings(onSettings);
+
+    // What the other window's saveSettings would write.
+    const settingsKey = `drugpricing.v${persist.VERSION}.settings`;
+    const value = JSON.stringify({ version: persist.VERSION, data: { barStyle: "bar" } });
+    localStorage.setItem(settingsKey, value);
+    window.dispatchEvent(storageEvent(settingsKey, value));
+
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar" });
+    persist.saveTabState("t1", fdaTab(null));
+    expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
+  });
 });
 
 describe("settings", () => {

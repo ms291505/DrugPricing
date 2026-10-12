@@ -21,7 +21,9 @@ export type NadacPriceChange = {
   packageNdc: string,
   startDate: Date,
   endDate: Date,
-  difference: number,
+  /** The last price before the change and the first after it. */
+  oldPrice: number,
+  newPrice: number,
   percentage: number,
 }
 

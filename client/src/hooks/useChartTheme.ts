@@ -13,16 +13,16 @@ export default function useChartTheme() {
     const fontSize = 12;
     const tick = { fill: theme.palette.text.secondary, fontSize };
     const axisLine = { stroke: theme.palette.divider };
-    const tooltip: { contentStyle: CSSProperties, labelStyle: CSSProperties, itemStyle: CSSProperties } = {
+    // The charts draw their own tooltip content (`LineTooltip`, `BarTooltip`) in this box.
+    const tooltip: { contentStyle: CSSProperties } = {
       contentStyle: {
         backgroundColor: theme.palette.background.paper,
         border: `1px solid ${theme.palette.divider}`,
         fontSize: 13,
-        maxWidth: 360,
+        // Leaves room around it on a phone, where a chart is about 350px wide.
+        maxWidth: "min(360px, calc(100vw - 64px))",
         whiteSpace: "normal",
       },
-      labelStyle: { color: theme.palette.text.primary, fontWeight: 600 },
-      itemStyle: { padding: 0 },
     };
     return {
       palette: theme.palette.chart.series,

@@ -29,9 +29,12 @@ export default function GlobalModal() {
       <Modal
         open={open}
         onClose={handleClose}
-        aria-label={globalModalRegistry[globalModal].label}
       >
+        {/* MUI's Modal root is role="presentation", so the dialog role and its name go here. */}
         <Box
+          role="dialog"
+          aria-modal="true"
+          aria-label={globalModalRegistry[globalModal].label}
           sx={{
             // One width for every modal, whatever it shows, with 16px of screen at each edge
             // on a phone. Without a width, `left: 50%` let the content size it, up to half the screen.

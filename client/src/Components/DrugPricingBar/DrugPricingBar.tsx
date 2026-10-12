@@ -59,7 +59,8 @@ export default function DrugPricingBar() {
           </Tooltip>
         </Toolbar>
       </AppBar>
-      <Toolbar sx={{ mb: 1 }} />
+      {/* Room for the app bar, which phones don't show. */}
+      <Toolbar sx={{ mb: 1, display: { xs: "none", md: "flex" } }} />
       <Outlet />
     </>);
 }

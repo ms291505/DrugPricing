@@ -39,6 +39,10 @@ workspace, but they should go away. What removing them touches:
     saved tab state, and fall back to a blank tab of that type.
   - Consider focusing an existing tab with the same search instead of adding a duplicate, so
     following the same link twice doesn't stack up tabs.
+- **Phones have no navigation off the workspace.** The app bar is hidden below `md`, so
+  `/about` and `/welcome` (and today the standalone pages) offer no way back to the workspace or
+  to Settings. Once only those two routes remain, give them a phone header with a link back to
+  the workspace.
 - With only the workspace, `/about` and `/welcome` left, `AppShell`'s "keep the workspace mounted
   but hidden" switch may simplify. Check before changing: it exists so workspace tabs keep their
   state while About is open.
@@ -58,6 +62,12 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
+- **The drawer tab's ⋮ menu still holds MUI's sample items** (Profile, My account, Logout in
+  `DrawerTab.tsx`). Replace them with real tab actions (rename, close, change type) or remove the menu.
+- **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
+  the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
+  bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint
+  that accounts for the drawer, or Page Tools should move above the cards there.
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
 

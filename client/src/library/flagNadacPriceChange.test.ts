@@ -6,7 +6,7 @@ import type { FdaProductPriceChange } from "./types";
 const day = (iso: string) => Date.parse(iso);
 const change = (start: string, end: string): FdaProductPriceChange => ({
   productNdc: "0003-0893", packageNdc: "0003-0893-21", packageNdcStripped: "3089321",
-  priceChange: { packageNdc: "0003-0893-21", startDate: new Date(start), endDate: new Date(end), difference: -4.17, percentage: -0.43 },
+  priceChange: { packageNdc: "0003-0893-21", startDate: new Date(start), endDate: new Date(end), oldPrice: 9.69, newPrice: 5.52, percentage: -0.43 },
 });
 
 describe("priceChangesInWindow", () => {

@@ -28,7 +28,8 @@ export function flagNadacPriceChange(
       packageNdc: current.ndc,
       startDate: last.asOfDate,
       endDate: current.asOfDate,
-      difference: difference,
+      oldPrice: last.nadacPerUnit,
+      newPrice: current.nadacPerUnit,
       percentage: percentage,
     })
 

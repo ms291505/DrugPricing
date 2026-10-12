@@ -1,7 +1,8 @@
+import type { CSSProperties } from "react";
+import { Box, Typography } from "@mui/material";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Legend, ReferenceDot, ReferenceLine, } from "recharts";
-import { NDC_NDC_DESCRIPTION_DELIMITER } from "../../library/constants.ts";
-import { createLineVizData, rangeKey } from "../../library/createLineVizData.ts";
+import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
 import { dateTicks, fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
@@ -21,8 +22,6 @@ type Props = {
   /** Shared price range per pricing unit ("Match scale"); units not in it fit their own data. */
   priceRanges?: Map<string, [number, number]>;
 };
-
-const AVERAGE_SUFFIX = " (average; shaded band is min–max)";
 
 export default function LineViz({ nadacPrices, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
@@ -64,11 +63,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
 
   const { rows: vizData, rangeNdcs } = createLineVizData(nadacPrices);
 
-  const dataSeriesName = (ndc: string): string => {
-    const ndcDescription = nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
-    const suffix = rangeNdcs.has(ndc) ? AVERAGE_SUFFIX : "";
-    return ndc + NDC_NDC_DESCRIPTION_DELIMITER + ndcDescription + suffix;
-  };
+  const descriptionFor = (ndc: string) => nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
 
   const unit = pricingUnitLabel(pricingUnit);
 
@@ -87,7 +82,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
 
-  return (
+  return (<>
     <ComposedChart
       data={vizData}
       margin={chartTheme.margin}
@@ -117,17 +112,23 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
       />
       {/* One series is named by the card's title; a legend would only repeat it. */}
       {ndcs.length > 1
-        ? <Legend
-          formatter={(value: string) => value.split(NDC_NDC_DESCRIPTION_DELIMITER)[0]}
-          wrapperStyle={chartTheme.legendStyle}
-        />
+        ? <Legend wrapperStyle={chartTheme.legendStyle} />
         : null
       }
       <Tooltip
-        labelFormatter={(ts) => formatDate(ts as number)}
-        formatter={(value) => `${formatPrice(value as number)} / ${unit}`}
-        itemSorter={(item) => -(item.value as number)}
-        {...chartTheme.tooltip}
+        // On a phone the finger is on the chart: keep the readout at the top, out from under it.
+        position={isMobile ? { y: 0 } : undefined}
+        content={({ active, payload, label }) => active && payload?.length
+          ? <LineTooltip
+            date={label as number}
+            unit={unit}
+            // The bands' entries come through too; keep the lines'.
+            items={payload.filter(item => ndcs.includes(String(item.dataKey))).map(item => ({ ndc: String(item.dataKey), price: item.value as number, row: item.payload as LineVizRow }))}
+            colorFor={colorFor}
+            descriptionFor={isMobile ? undefined : descriptionFor}
+            style={chartTheme.tooltip.contentStyle}
+          />
+          : null}
       />
       {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
       {ndcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
@@ -155,12 +156,66 @@ function UnitLineChart({ nadacPrices, pricingUnit, colors, xDomain, changeSpan, 
           type="stepAfter"
           dot={false}
           connectNulls={false}
-          name={dataSeriesName(ndc)}
+          name={ndc}
           // Off: recharts morphs old lines into new ones and draws made-up prices.
           isAnimationActive={false}
         />
       ))}
     </ComposedChart>
+    {/* Said once here rather than in every tooltip row. */}
+    {rangeNdcs.size > 0
+      ? <Typography variant="caption" color="text.secondary">
+        Line: average of the product's packages · shading: lowest to highest package price
+      </Typography>
+      : null}
+  </>);
+}
+
+type LineTooltipProps = {
+  date: number,
+  unit: string,
+  items: Array<{ ndc: string, price: number, row: LineVizRow }>,
+  colorFor: (ndc: string) => string,
+  /** Each series' description, left out on a phone to keep the tooltip small. */
+  descriptionFor?: (ndc: string) => string,
+  style: CSSProperties,
+}
+
+/**
+ * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
+ * description and, for an averaged product, its packages' range beneath on wider screens.
+ */
+function LineTooltip({ date, unit, items, colorFor, descriptionFor, style }: LineTooltipProps) {
+  const sorted = [...items].sort((a, b) => b.price - a.price);
+  return (
+    <Box style={style} sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+      <Typography variant="body2">
+        <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
+        <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
+      </Typography>
+      {sorted.map(({ ndc, price, row }) => {
+        const range = row[rangeKey(ndc)] as [number, number] | undefined;
+        // Only when the packages disagree at the precision shown.
+        const rangeText = range && formatPrice(range[0]) !== formatPrice(range[1])
+          ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}`
+          : null;
+        return (
+          <Box key={ndc}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: colorFor(ndc), flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ flexGrow: 1 }}>{ndc}</Typography>
+              <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{formatPrice(price)}</Typography>
+            </Box>
+            {descriptionFor
+              ? <Typography variant="caption" color="text.secondary" component="div" sx={{ pl: 2.25 }}>
+                {descriptionFor(ndc)}
+                {rangeText ? <><br />{rangeText}</> : null}
+              </Typography>
+              : null}
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
 

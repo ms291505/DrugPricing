@@ -28,13 +28,11 @@ type Props = {
 export default function PriceChangeCard({ change, prices, origin, colors }: Props) {
   const [showFullHistory, setShowFullHistory] = useState(false);
 
-  const { startDate, endDate, percentage, difference } = change.priceChange;
-  // percentage = difference / old price, so the old price is difference / percentage.
-  const from = difference / percentage;
+  const { startDate, endDate, percentage, oldPrice, newPrice } = change.priceChange;
   const changeLabel = percentageChangeToString(percentage);
   const changeSpan: ChartChangeSpan = {
     start: startDate.getTime(), end: endDate.getTime(), label: changeLabel, direction: percentage > 0 ? "rise" : "drop",
-    from, to: from + difference,
+    from: oldPrice, to: newPrice,
   };
   const dateWindow = showFullHistory
     ? FULL_WINDOW

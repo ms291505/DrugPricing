@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { loadSettings, saveSettings } from "../library/persist";
+import { loadSettings, saveSettings, watchSettings } from "../library/persist";
 import { DEFAULT_SETTINGS, type AppSettings } from "../library/settings";
 
 type SettingsContextType = {
@@ -12,11 +12,16 @@ export const SettingsContext = createContext<SettingsContextType>({
   updateSettings: () => { },
 });
 
-/** App-wide settings (see `library/settings.ts`): loaded once, saved on every change. */
+/**
+ * App-wide settings (see `library/settings.ts`): loaded once, saved on every change, and followed
+ * when another window changes them.
+ */
 export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
 
   useEffect(() => saveSettings(settings), [settings]);
+  // Saving what another window wrote is a no-op: an unchanged value fires no storage event.
+  useEffect(() => watchSettings(setSettings), []);
 
   const updateSettings = useCallback((changes: Partial<AppSettings>) => {
     setSettings(prev => ({ ...prev, ...changes }));

@@ -182,7 +182,9 @@ Notes:
     change, with the change shaded (`changeSpan`, stored on pinned copies too), and toggle to the
     full history. They follow the chart dates like the other auto charts: only changes whose
     new price starts inside them get a card (`priceChangesInWindow`), and a note counts the
-    rest. `MAX_AUTO_PRICE_CHANGE_CHARTS` applies to the changes inside the dates.
+    rest. `MAX_AUTO_PRICE_CHANGE_CHARTS` applies to the changes inside the dates; past it, the
+    note says how many there are instead of charting them. `NadacPriceChange` carries the
+    `oldPrice` and `newPrice` the callout draws.
   - **"Match scale" is per chart**, not per section: a pinned line chart's menu toggles
     `ChartItem.matchScale`, and the matched charts in one pricing unit share a fitted price axis
     (`matchedPriceRange`), marked by a "Matched scale" chip. New pins start unmatched. A
@@ -243,7 +245,14 @@ Notes:
     because it clips the value labels to the plot.
   - Line charts draw steps (`type="stepAfter"`): a NADAC price holds until the next weekly
     file. Charts split by unit share one date axis. A single series has no legend; the
-    title names it.
+    title names it. When a line averages several packages, a caption under the chart says so
+    and what the band means, once, rather than in every tooltip row.
+  - **Tooltips are drawn by the charts** (`LineTooltip`, `BarTooltip`), not recharts' default
+    list, and they must work on a phone, where a chart is about 350px wide and a finger sits on
+    it. The line tooltip lists the date and unit once, then a swatch, the NDC and the price per
+    series. Descriptions and package ranges show only from `md` up, and on a phone the tooltip
+    stays at the top of the chart. The tooltip box (`useChartTheme().tooltip`) is capped at
+    `min(360px, 100vw − 64px)`. Before adding a line to a tooltip, check it at phone width.
   - Titles are generated (`chartTitles.ts`): the title says what is common ("Humira: 7
     products over time"), and the subtitle gives the count and the dates shown. Price-change
     cards name the change (the percent), its date, and the package.
@@ -282,14 +291,17 @@ Notes:
 - **The global modal** (`Components/GlobalModal`, opened with `setGlobalModal`) owns its width
   (`min(700px, 100vw − 32px)`, so a phone keeps 16px of screen at each edge), its height and
   its padding. What it shows (Settings, Help/Welcome, About) brings no `Container` or outer
-  padding, and wide parts such as tables scroll on their own. The `/about` and `/welcome`
+  padding, and wide parts such as tables scroll on their own. The dialog role and its name sit on the
+  inner box, because MUI's `Modal` root is `role="presentation"`. The phone drawer closes before
+  a modal opens from it. The `/about` and `/welcome`
   routes wrap the same components in a `Container` for page gutters.
 - **Settings** (`library/settings.ts`, `SettingsContext`, `Components/Settings/SettingsPanel`)
   are app-wide preferences for choices most people never change, kept out of the always-visible
   Page Tools. The panel opens from the gear in the app bar or SETTINGS in the workspace drawer
   (the global modal's `"settings"`). Today it holds only `barStyle`. Settings are saved once
   under `drugpricing.v<VERSION>.settings` and validated field by field (`loadSettings`), and
-  pruning keeps them. New preferences belong here, not in Page Tools.
+  pruning keeps them. Other windows follow a settings change (`watchSettings`) instead of going
+  read-only like they do for tab state. New preferences belong here, not in Page Tools.
 - **Persistence (`library/persist.ts`).** The workspace (tabs, layout, pane assignment) and each
   search tab's state (FDA: search params, result filter, detail level; NADAC: search params,
   excluded Drug descriptions; both: pinned items, chart dates) are saved to `localStorage` and restored on

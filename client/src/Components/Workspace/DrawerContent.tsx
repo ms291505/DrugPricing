@@ -3,19 +3,30 @@ import { Box, Typography, Paper, Button } from "@mui/material";
 import DrawerTab from "./DrawerTab.tsx";
 import NavButton from "../DrugPricingBar/NavButton.tsx";
 import TabButton from "./TabButton.tsx";
-import { useGlobalModalContext } from "../../Context/GlobalModalContext.tsx";
+import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
 
 export default function DrawerContent() {
   const { tabs, addTab, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
   const { setGlobalModal } = useGlobalModalContext();
 
-  const onClick = () => {
-    const newTabId = addTab("new");
-    setPaneAssigment([newTabId]);
+  const closeMobileDrawer = () => {
     if (mobileDrawerIsOpen) {
       setMobileDrawerIsClosing(true);
       setMobileDrawerIsOpen(false);
     }
+  }
+
+  const onClick = () => {
+    const newTabId = addTab("new");
+    setPaneAssigment([newTabId]);
+    closeMobileDrawer();
+  }
+
+  // On a phone the drawer would otherwise stay open behind the modal, and closing the modal
+  // would land back in it.
+  const openModal = (modal: GlobalModal) => {
+    closeMobileDrawer();
+    setGlobalModal(modal);
   }
 
   return (
@@ -59,9 +70,9 @@ export default function DrawerContent() {
         }}
       >
         <NavButton to="/workspace">Workspace</NavButton>
-        <Button onClick={() => setGlobalModal("settings")}>SETTINGS</Button>
-        <Button onClick={() => setGlobalModal("help")}>HELP</Button>
-        <Button onClick={() => setGlobalModal("about")}>ABOUT</Button>
+        <Button onClick={() => openModal("settings")}>SETTINGS</Button>
+        <Button onClick={() => openModal("help")}>HELP</Button>
+        <Button onClick={() => openModal("about")}>ABOUT</Button>
       </Paper>
     </>
   )

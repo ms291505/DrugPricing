@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper"
 import Grid from "@mui/material/Grid";
@@ -13,7 +14,6 @@ import PinnedSection from "../ExplorerGrid/PinnedSection";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import useChartWindow from "../../hooks/useChartWindow";
-import { useState } from "react";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue } from "../../library/seriesSummary";
@@ -29,7 +29,9 @@ export default function NadacSearchViz() {
   // User charts live in the tab's pinned items and are not touched by a new search.
   const prices = data?.prices ?? [];
   const showAutoCharts = shouldAutoChart(prices);
-  // The same rows as `prices`, behind a stable empty fallback, so the colors stay memoized.
+  // The auto charts show the whole result, so it is also the visible set.
+  // `origin.resultPrices` is the result's prices with a stable empty fallback; `data?.prices ?? []`
+  // would be a new [] on every render while loading and re-run the color memo.
   const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
 
   const labels = seriesLabels(prices);

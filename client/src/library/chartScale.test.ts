@@ -98,10 +98,16 @@ describe("tick and price formats", () => {
 
 describe("dateTicks", () => {
   it("puts ticks on month starts with a stride that fits", () => {
-    const { ticks, format } = dateTicks(day("2022-01-05"), day("2026-10-07"), 7);
+    const { ticks, format } = dateTicks(day("2021-03-05"), day("2026-10-07"), 7);
     expect(ticks.length).toBeLessThanOrEqual(7);
     expect(ticks.every(tick => iso(tick).endsWith("-01"))).toBe(true);
     expect(format(ticks[0])).toMatch(/^\d{4}$/);
+  });
+
+  it("labels the first period at the axis start when the data starts just after its boundary", () => {
+    const { ticks, format } = dateTicks(day("2022-01-05"), day("2026-10-07"), 7);
+    expect(ticks.map(format)).toEqual(["2022", "2023", "2024", "2025", "2026"]);
+    expect(iso(ticks[0])).toBe("2022-01-05");
   });
 
   it("labels months with a short year on shorter spans", () => {

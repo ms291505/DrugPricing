@@ -109,6 +109,8 @@ export function formatPriceLabel(value: number): string {
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MONTH_STRIDES = [1, 2, 3, 6, 12, 24];
 const WEEK_STRIDES = [1, 2];
+/** How far into a period (a share of the stride) its label may still sit at the axis start. */
+const BOUNDARY_SNAP = 0.1;
 
 export type DateTicks = { ticks: number[], format: (time: number) => string };
 
@@ -141,6 +143,11 @@ export function dateTicks(start: number, end: number, maxTicks: number): DateTic
     if (tick > end) break;
     ticks.push(tick);
   }
+  // Data that starts just after a boundary (Jan 5 on a yearly axis) still gets that period's
+  // label, at its first date, rather than leaving the first year unlabeled.
+  const boundary = Math.floor(startMonth / stride) * stride;
+  const sinceBoundary = start - Date.UTC(Math.floor(boundary / 12), boundary % 12, 1);
+  if (ticks[0] !== start && ticks.length < maxTicks && sinceBoundary <= stride * 30.44 * MS_PER_DAY * BOUNDARY_SNAP) ticks.unshift(start);
   const format = stride >= 12
     ? utc({ year: "numeric" })
     : (time: number) => utc({ month: "short" })(time) + " '" + utc({ year: "2-digit" })(time);

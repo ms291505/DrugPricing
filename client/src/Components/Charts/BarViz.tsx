@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { ChartPrice } from "../../library/types";
@@ -16,19 +16,16 @@ type Props = {
   colors?: Map<string, string>,
   /** Bars summarize only these dates. */
   dateWindow?: DateWindow,
-  /** What a bar shows. Without `onBarValueChange` the chart keeps its own choice. */
-  barValue?: BarValue,
-  onBarValueChange?: (barValue: BarValue) => void,
+  /** What a row shows; the caller owns it (page state, or the pinned item). */
+  barValue: BarValue,
+  onBarValueChange: (barValue: BarValue) => void,
 }
 
 /**
- * One horizontal bar per series, sorted by value: the latest price or the average over the
- * dates, with a whisker from the lowest to the highest price over the same dates.
+ * One horizontal row per series, sorted by value: the latest price or the average over the
+ * dates, with the range from the lowest to the highest price over the same dates.
  */
-export default function BarViz({ nadacPrices, colors, dateWindow, barValue, onBarValueChange }: Props) {
-  const [ownBarValue, setOwnBarValue] = useState<BarValue>("latest");
-  const value = barValue ?? ownBarValue;
-  const setValue = onBarValueChange ?? setOwnBarValue;
+export default function BarViz({ nadacPrices, colors, dateWindow, barValue: value, onBarValueChange: setValue }: Props) {
   const { barStyle } = useSettings().settings;
   const valueLabel = value === "latest" ? "latest price" : "average price";
   // Says what each mark means; the range is easy to misread without it.
@@ -127,7 +124,9 @@ function UnitBarChart({ nadacPrices, pricingUnit, colors, barValue }: UnitBarCha
         cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
         content={({ active, payload }) => {
           const row = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
-          return row ? <BarTooltip row={row} barValue={barValue} unit={unit} style={chartTheme.tooltip.contentStyle} /> : null;
+          if (!row) return null;
+          const color = colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc));
+          return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} style={chartTheme.tooltip.contentStyle} />;
         }}
       />
       <Bar
@@ -201,22 +200,32 @@ type BarTooltipProps = {
   row: BarRow,
   barValue: BarValue,
   unit: string,
+  color: string,
   style: CSSProperties,
 }
 
-function BarTooltip({ row, barValue, unit, style }: BarTooltipProps) {
+/** One row in full, laid out like the line chart's tooltip: the value, its date, and the range. */
+function BarTooltip({ row, barValue, unit, color, style }: BarTooltipProps) {
   return (
-    <Box style={style} sx={{ p: 1 }}>
-      <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.ndc}</Typography>
-      <Typography variant="body2" color="text.secondary">{row.label}</Typography>
-      <Typography variant="body2">
+    <Box style={style} sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.25 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
+        <Typography variant="body2">
+          <Box component="span" sx={{ fontWeight: 600 }}>{row.ndc}</Box>
+          <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
+        </Typography>
+      </Box>
+      <Typography variant="caption" color="text.secondary">{row.label}</Typography>
+      <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
         {barValue === "latest"
-          ? `Latest ${formatPrice(row.latest)} / ${unit} (${formatDate(row.latestDate)})`
-          : `Average ${formatPrice(row.average)} / ${unit}`}
+          ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
+          : <>Average <b>{formatPrice(row.average)}</b></>}
       </Typography>
-      <Typography variant="body2">Range over these dates {formatPrice(row.min)}–{formatPrice(row.max)}</Typography>
+      <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+        Range {formatPrice(row.min)}–{formatPrice(row.max)}
+      </Typography>
       {row.packages > 1
-        ? <Typography variant="body2" color="text.secondary">Average of {row.packages} packages</Typography>
+        ? <Typography variant="caption" color="text.secondary">Average of {row.packages} packages</Typography>
         : null}
     </Box>
   );

@@ -210,6 +210,8 @@ export function watchOtherWindows(onConflict: () => void): () => void {
   const handleStorage = (event: StorageEvent) => {
     if (readOnly || event.storageArea !== localStorage) return;
     if (event.key !== null && !event.key.startsWith(PREFIX + ".")) return;
+    // Settings are safe to share: every window follows them (`watchSettings`).
+    if (event.key === SETTINGS_KEY) return;
     if (event.key !== null && lastWritten.has(event.key) && lastWritten.get(event.key) === event.newValue) return;
     readOnly = true;
     onConflict();
@@ -232,6 +234,20 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings): void {
   write(SETTINGS_KEY, settings);
+}
+
+/**
+ * Calls `onChange` with the new settings when another window saves them. Unlike tab state,
+ * settings are one small value every window can simply follow, so a change never makes this
+ * window read-only.
+ */
+export function watchSettings(onChange: (settings: AppSettings) => void): () => void {
+  const handleStorage = (event: StorageEvent) => {
+    if (event.storageArea !== localStorage || event.key !== SETTINGS_KEY) return;
+    onChange(loadSettings());
+  };
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
 }
 
 // --- Search tabs --------------------------------------------------------------------------

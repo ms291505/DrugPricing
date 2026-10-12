@@ -25,7 +25,7 @@ export default function SettingsPanel() {
   return (
     <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Typography component="h2" variant="h5" id={headingId}>Settings</Typography>
-      <Typography variant="body2" color="text.secondary">Apply to every tab and are saved in this browser.</Typography>
+      <Typography variant="body2" color="text.secondary">These apply to every tab and are saved in this browser.</Typography>
       <FormControl>
         <FormLabel id={barStyleId}>Bar charts</FormLabel>
         <RadioGroup
