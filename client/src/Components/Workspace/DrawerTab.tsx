@@ -1,28 +1,26 @@
-import { useWorkspaceContext } from "../../Context/WorkspaceContext"
+import { useWorkspaceActions } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
 import { Box, IconButton, ButtonBase, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { useState } from "react";
+import { memo, useState } from "react";
 import SearchTypeChip from "../SearchTypeChip";
 
 type Props = {
   tab: WorkspaceTab,
+  selected: boolean,
 }
 
-export default function DrawerTab({ tab, }: Props) {
+// Memoized: a tab switch re-renders only the two tabs whose `selected` changed.
+export default memo(function DrawerTab({ tab, selected }: Props) {
   const tabId = tab.id;
 
-  const { paneAssignment, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
-  const selected = paneAssignment.includes(tabId);
+  const { setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true);
-      setMobileDrawerIsOpen(false);
-    }
+    setMobileDrawerIsOpen(false);
   }
 
   const buttonId = `${tabId}-button`;
@@ -79,7 +77,8 @@ export default function DrawerTab({ tab, }: Props) {
         <IconButton
           className="tab-menu-icon"
           sx={{
-            opacity: mobileDrawerIsOpen ? 1 : 0,
+            // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
+            opacity: 0,
             transition: "opacity 0.15s",
             borderRadius: 1,
           }}
@@ -117,4 +116,4 @@ export default function DrawerTab({ tab, }: Props) {
       <MenuItem onClick={handleClose}>Logout</MenuItem>
     </Menu>
   </>)
-}
+});

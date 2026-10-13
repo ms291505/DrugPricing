@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext";
+import { useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext";
 import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
 import MobileDrawerFab from "./MobileDrawerFab";
-import { TabInstanceContextProvider, } from "../../Context/TabInstanceContext";
 import WhiteSpaceToolBar from "../WhiteSpaceToolBar";
 
 export default function Workspace() {
-  const { tabs, paneAssignment } = useWorkspaceContext();
+  const tabs = useWorkspaceTabs();
+  const { paneAssignment } = useWorkspacePanes();
   return (
     <>
       <WhiteSpaceToolBar />
@@ -19,13 +19,20 @@ export default function Workspace() {
         }}
       >
         <WorkspaceDrawer />
-        {
-          tabs.map(tab =>
-            <TabInstanceContextProvider key={tab.id}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            flexGrow: 1,
+            minWidth: 0,
+          }}
+        >
+          {
+            tabs.map(tab =>
               <TabInstance key={tab.id} visible={paneAssignment.includes(tab.id)} workspaceTab={tab} />
-            </TabInstanceContextProvider>
-          )
-        }
+            )
+          }
+        </Box>
       </Box>
     </>
   )

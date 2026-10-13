@@ -1,7 +1,7 @@
 
 import { theme } from "../../theme.ts";
 import { Box, Fab, Menu, MenuItem, MenuList, TextField, } from "@mui/material";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { CONSTANT } from "../../library/constants.ts";
@@ -13,7 +13,8 @@ export default function TabContextFab() {
 
   const scrolled = useScrolled();
 
-  const { tabs, setPaneAssigment, renameTab, removeTab } = useWorkspaceContext();
+  const tabs = useWorkspaceTabs();
+  const { setPaneAssigment, renameTab, removeTab } = useWorkspaceActions();
   const { id } = useTabInstanceContext();
 
   const uuid = useId();

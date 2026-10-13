@@ -3,17 +3,15 @@ import { CONSTANT } from "../../library/constants.ts";
 import { Fab, } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import Menu from "@mui/icons-material/Menu";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
+import { useMobileDrawer, useWorkspaceActions } from "../../Context/WorkspaceContext.tsx";
 import useScrolled from "../../hooks/useScrolled.ts";
 
 export default function MobileDrawerFab() {
-  const { mobileDrawerIsOpen, setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceContext();
+  const { mobileDrawerIsOpen } = useMobileDrawer();
+  const { setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const handleClick = () => {
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true)
-    }
-    setMobileDrawerIsOpen(!mobileDrawerIsOpen);
+    setMobileDrawerIsOpen(open => !open);
   };
 
   const { opacity, drawerWidth } = CONSTANT;

@@ -1,4 +1,4 @@
-import { useWorkspaceContext } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
 import { Box, Typography, Paper, Button } from "@mui/material";
 import DrawerTab from "./DrawerTab.tsx";
 import NavButton from "../DrugPricingBar/NavButton.tsx";
@@ -6,15 +6,10 @@ import TabButton from "./TabButton.tsx";
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
 
 export default function DrawerContent() {
-  const { tabs, addTab, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
+  const { addTab, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
   const { setGlobalModal } = useGlobalModalContext();
 
-  const closeMobileDrawer = () => {
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true);
-      setMobileDrawerIsOpen(false);
-    }
-  }
+  const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
 
   const onClick = () => {
     const newTabId = addTab("new");
@@ -58,8 +53,7 @@ export default function DrawerContent() {
             py: 1
           }}
         >
-          {tabs.map(t => <DrawerTab key={t.id} tab={t} />)}
-          <TabButton onClick={onClick} />
+          <DrawerTabList onAddTab={onClick} />
         </Box>
       </Box>
       <Paper
@@ -74,6 +68,19 @@ export default function DrawerContent() {
         <Button onClick={() => openModal("help")}>HELP</Button>
         <Button onClick={() => openModal("about")}>ABOUT</Button>
       </Paper>
+    </>
+  )
+}
+
+// Only the tab list reads the panes, so a tab switch doesn't re-render the rest of the drawer.
+function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
+  const tabs = useWorkspaceTabs();
+  const { paneAssignment } = useWorkspacePanes();
+
+  return (
+    <>
+      {tabs.map(t => <DrawerTab key={t.id} tab={t} selected={paneAssignment.includes(t.id)} />)}
+      <TabButton onClick={onAddTab} />
     </>
   )
 }

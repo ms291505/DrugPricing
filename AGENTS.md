@@ -138,7 +138,21 @@ Feature folders under `src/Components/`:
 - `Workspace/` — the primary UI. A tabbed, multi-pane workspace (`WorkspaceContext` owns
   tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
   content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
-  mounted (`display: none`), so per-tab state survives switching tabs.
+  mounted, so per-tab state survives switching tabs.
+  - **A tab switch must not re-render hidden tabs.** `WorkspaceContext` is split into narrow
+    hooks: `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every
+    switch), `useMobileDrawer` (changes on every tab tap on a phone), and `useWorkspaceActions`
+    (stable functions). Code inside a tab or a drawer tab must not read `useWorkspacePanes` or
+    `useMobileDrawer` (only `WorkspaceDrawer` and `MobileDrawerFab` read the drawer state), and
+    don't bring back one catch-all context value. Tabs and panes share a reducer
+    (`workspaceReducer` in `library/workspace.ts`, tested), which keeps the identity of every
+    `WorkspaceTab` it doesn't change; `TabInstance` and `DrawerTab` are `memo`'d on that, and
+    `TabInstance` memoizes its page element so showing or hiding a tab doesn't re-render the page.
+  - Hidden panes use `content-visibility: hidden` (falling back to `display: none` where it
+    isn't supported), not `display: none`, so showing a tab reuses its layout. Every pane sits
+    in one grid cell, so hidden tabs keep the visible tab's width and their charts and grids
+    see no resize on show. This assumes one visible pane: split layouts (`"split-2"`,
+    `"split-4"`, unused so far) would need their own grid.
 - `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
 - `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
   `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates;
@@ -297,6 +311,11 @@ Notes:
     clears the selection on every level change.
 - API base URL comes from `VITE_API_URL`. `client/.env.development` is gitignored; copy
   `client/.env.example` to it for local dev (`http://localhost:5250/api`).
+- React Query doesn't refetch on window focus or reconnect (`App.tsx`). Hidden tabs stay mounted,
+  so every tab that has run its search would refetch at once on each return to the app or
+  network change, with one
+  "Searching FDA products…" toast per FDA tab (the toast wraps `useFdaSearch`'s `queryFn`).
+  The data changes weekly.
 - Wire responses are converted to domain types by the `map*` helpers in `src/api/types.ts` —
   date strings become `Date` objects there, not in components.
 - **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`
@@ -375,7 +394,8 @@ npm test         # vitest run
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
 windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
 summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
-the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
+the multi-window read-only switch), and the workspace reducer (closing a tab, and that unchanged
+tabs keep their identity). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
 local-time date bug fails them. There are no component tests yet.

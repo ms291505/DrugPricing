@@ -7,7 +7,7 @@ import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext";
+import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { defaultTitleFor } from "../../library/tabTypeRegistry";
 import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/types.ts";
@@ -16,9 +16,11 @@ export default function FdaSearchTool() {
 
   const { fdaSearchParams, setFdaSearchParams, setFdaResultFilter } = useFdaSearchContext();
 
-  const { renameTab, findTab } = useWorkspaceContext();
+  const { renameTab } = useWorkspaceActions();
 
   const { id } = useTabInstanceContext();
+
+  const tab = useWorkspaceTab(id);
 
   // A restored tab shows the search it re-ran.
   const [draftSearchParams, setDraftSearchParams] = useState(fdaSearchParams ?? defaultAdvFdaSearchParams);
@@ -28,8 +30,6 @@ export default function FdaSearchTool() {
   const fdaSearch = useFdaSearch();
 
   const isValidSearch = draftSearchParams.proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
-
-  const tab = findTab(id);
 
   const canChangeName = tab
     ? tab.title === defaultTitleFor(tab?.type)

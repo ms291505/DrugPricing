@@ -1,39 +1,20 @@
-import React, { createContext, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import type { NdcColorMap } from "../library/types";
-
+import React, { createContext, useContext, useMemo } from "react";
 
 type TabInstanceContextType = {
   id: string;
-  setId: Dispatch<SetStateAction<string>>;
-  ndcColorMap: NdcColorMap | null;
-  setNdcColorMap: Dispatch<SetStateAction<NdcColorMap | null>>;
 }
 
-export const TabInstanceContext = createContext<TabInstanceContextType>(
-  {
-    id: "",
-    setId: () => { },
-    ndcColorMap: null,
-    setNdcColorMap: () => { },
-  }
-);
+export const TabInstanceContext = createContext<TabInstanceContextType>({ id: "" });
 
-export const TabInstanceContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [id, setId] = useState("");
-  const [ndcColorMap, setNdcColorMap] = useState<NdcColorMap | null>(null);
+export const TabInstanceContextProvider = ({ id, children }: { id: string, children: React.ReactNode }) => {
+  const value = useMemo(() => ({ id }), [id]);
   return (
-    <TabInstanceContext.Provider value={{
-      id,
-      setId,
-      ndcColorMap,
-      setNdcColorMap,
-    }}
-    >
+    <TabInstanceContext.Provider value={value}>
       {children}
-    </TabInstanceContext.Provider >
+    </TabInstanceContext.Provider>
   )
-
 }
+
 export const useTabInstanceContext = () => {
   return useContext(TabInstanceContext);
 }
