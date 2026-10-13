@@ -20,7 +20,7 @@ export default function WorkspaceDrawer() {
         open={mobileDrawerIsOpen}
         onClose={handleDrawerClose}
         sx={{
-          display: { xs: 'block', sm: 'none' },
+          display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           // No hover on a phone, so the tabs' menu buttons always show.
           '& .tab-menu-icon': { opacity: 1 },

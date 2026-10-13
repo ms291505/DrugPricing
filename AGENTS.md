@@ -311,6 +311,10 @@ Notes:
     clears the selection on every level change.
 - API base URL comes from `VITE_API_URL`. `client/.env.development` is gitignored; copy
   `client/.env.example` to it for local dev (`http://localhost:5250/api`).
+- React Query doesn't refetch on window focus (`App.tsx`). Hidden tabs stay mounted, so every
+  tab that has run its search would refetch at once on each return to the app, with one
+  "Searching FDA products…" toast per FDA tab (the toast wraps `useFdaSearch`'s `queryFn`).
+  The data changes weekly.
 - Wire responses are converted to domain types by the `map*` helpers in `src/api/types.ts` —
   date strings become `Date` objects there, not in components.
 - **FDA search filters on two layers, on purpose.** The search params (`AdvancedFdaSearchParams`

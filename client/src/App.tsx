@@ -18,7 +18,12 @@ import Workspace from "./Components/Workspace/Workspace";
 import OnBoarding from "./Components/OnBoarding/OnBoarding";
 import GlobalModal from "./Components/GlobalModal/GlobalModal";
 
-const queryClient = new QueryClient();
+// No refetch when the window regains focus: every mounted tab, hidden ones included, would
+// refetch at once (one "Searching…" toast per FDA tab) on each return to the app, and the data
+// only changes weekly.
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { refetchOnWindowFocus: false } },
+});
 
 export default function App() {
   return (
