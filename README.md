@@ -5,7 +5,7 @@ NADAC weekly pricing series by drug name or NDC, or explore the FDA NDC director
 the prices for the products and packages you find. The app began as a way to learn new
 skills end to end, from database to deployment.
 
-**Live demo:** <https://drugpricing.replicator.icu>
+**Live demo:** <https://drugpricing.mikesteiner.info>
 
 ## What it does
 
