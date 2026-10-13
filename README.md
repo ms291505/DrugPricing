@@ -142,3 +142,17 @@ The medicine and graph icons are free resources from Flaticon:
 
 - [Medicine icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/medicine)
 - [Graph icons created by Bamicon - Flaticon](https://www.flaticon.com/free-icons/graph)
+
+## License
+
+Copyright © 2026 Michael Steiner. All rights reserved.
+
+This source code is made available for viewing and evaluation only, as a demonstration of the
+author's work. No permission is granted to copy, modify, distribute, sublicense, or use this
+code, in whole or in part, in any product or service, without the author's prior written
+consent. Requests for permission may be made through the author's GitHub profile.
+
+The software is provided "as is", without warranty of any kind, express or implied. The author
+is not liable for any claim, damages, or other liability arising from its use.
+
+Third-party data and icons remain subject to their owners' terms.
