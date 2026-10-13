@@ -1,7 +1,7 @@
 # DrugPricing
 
 A full-stack web app for storing, serving, and charting US drug pricing data. Search the
-NADAC weekly pricing series by drug name or NDC, or explore the FDA NDC directory and chart
+NADAC weekly pricing series by drug description or NDC, or explore the FDA NDC directory and chart
 the prices for the products and packages you find. The app began as a way to learn new
 skills end to end, from database to deployment.
 
@@ -12,12 +12,12 @@ skills end to end, from database to deployment.
 - Searches NADAC prices by drug description or NDC, over a date range.
 - Searches and filters FDA products and packages (name, dosage form, route, and more),
   then charts the NADAC prices for what matched.
-- Draws line charts (a price holds until the next weekly file, so lines are steps) and
-  bar charts that compare series by latest or average price, with the price range.
+- Draws line charts of price over time and bar charts comparing series by latest or
+  average price.
 - Flags price changes and charts them in context.
 - Lets you pin charts into a tabbed, multi-pane workspace that is saved in your browser.
-- Offers a data table and CSV download under every chart, keyboard navigation, and a
-  screen-reader readout of the active point.
+- Offers a data table and CSV download under every chart.
+- Supports keyboard navigation and a screen-reader readout of the active point.
 
 ## Architecture
 
@@ -32,8 +32,7 @@ skills end to end, from database to deployment.
 Data flows one way: the ETL downloads and loads NADAC and FDA data into Postgres, the API
 reads it (with in-memory caching), and the client queries the API.
 
-On the server, requests go endpoint → service → repository → `DrugPricingContext`. See
-[`AGENTS.md`](AGENTS.md) for the full map of the code, conventions, and known rough edges,
+See [`AGENTS.md`](AGENTS.md) for the full map of the code, conventions, and known rough edges,
 and [`FUTURE_WORK.md`](FUTURE_WORK.md) for planned work.
 
 ## Data sources
@@ -47,13 +46,14 @@ and [`FUTURE_WORK.md`](FUTURE_WORK.md) for planned work.
 ### Disclaimer
 
 DrugPricing is a personal learning project. It is not affiliated with or endorsed by CMS or
-the FDA. NADAC is a survey-based estimate of what pharmacies pay to acquire a drug. It is
-not what a patient pays, a retail price, or a reimbursement rate. The data may be incomplete
+the FDA. NADAC is a survey-based estimate of what retail community pharmacies pay to acquire a
+drug. It is not what a patient pays, a retail price, or itself a reimbursement rate. The data may be incomplete
 or out of date, and nothing here is medical, financial, or pricing advice.
 
 ## Getting started
 
-You need Docker, the .NET 10 SDK, Node.js, and Python 3.13.
+You need Docker, the .NET 10 SDK, Node.js 20.19 or later (or 22.12+), and Python 3.13. To add
+migrations you also need the EF Core tool: `dotnet tool install --global dotnet-ef`.
 
 ### 1. Database
 
@@ -63,18 +63,22 @@ From `server/`:
 docker compose up -d
 ```
 
-This starts Postgres with a `drug_dev` database on port 5432. On a fresh database, enable
-the trigram extension once (the search indexes need it):
+This starts Postgres with a `drug_dev` database on port 5432 (user `appuser`, password
+`devpassword`). Before starting the server for the first time, enable the trigram extension.
+The first migration builds trigram indexes and fails without it:
 
-```sql
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+```bash
+docker compose exec postgres psql -U appuser -d drug_dev -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
 ```
 
 ### 2. Server
 
 1. Copy `server/example.appsettings.Development.json` to
-   `server/appsettings.Development.json` and fill it in. `DevClientHost` must be set or
-   the server will not start.
+   `server/appsettings.Development.json` and fill it in. It is gitignored. Use:
+   - `ConnectionStrings:Default`:
+     `Host=localhost;Port=5432;Database=drug_dev;Username=appuser;Password=devpassword`
+   - `DevClientHost`: `http://localhost:5173` (Vite's default port). It must be set or the
+     server will not start, and CORS rejects the client if it doesn't match.
 2. From `server/`:
 
    ```bash
@@ -86,11 +90,14 @@ applied on startup.
 
 ### 3. Load data (ETL)
 
-1. Copy `etl/.env.example` to `etl/.env.dev` and set `DATABASE_URL`.
+1. Copy `etl/.env.example` to `etl/.env.dev` and set:
+   - `DATABASE_URL`: the same database as the server.
+   - `NADAC_FILE_DATES`: the NADAC files to load, as comma-separated `mm-dd-yyyy` dates (no
+     spaces), one per Wednesday. If it is empty, the NADAC load exits without loading anything.
 2. From `etl/`:
 
    ```bash
-   python -m venv .venv
+   python3.13 -m venv .venv
    source .venv/bin/activate
    pip install -r requirements.txt
    python drug_pricing_etl.py dev
@@ -99,9 +106,6 @@ applied on startup.
 The script asks whether to update FDA data, NADAC data, or both. Each NADAC file is
 cumulative for the year to date (over a million rows late in the year), so leave
 `NADAC_FILTER_BEFORE_INSERT` on to skip rows that are already loaded.
-
-NADAC files have been available as early as about 6:17 AM on Wednesdays, so a scheduled
-job should start early and retry every 30 minutes.
 
 ### 4. Client
 
@@ -136,6 +140,12 @@ Pi). It syncs the ETL, builds and publishes the client, publishes the server, an
 the `drugpricing` service. Production reads its database settings from the standard `PG*`
 environment variables (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`).
 
+The ETL can also run without prompts: `python drug_pricing_etl.py <mode> --fda --nadac`
+(either flag, or both). With flags, `--nadac` loads the most recent Wednesday's file instead
+of `NADAC_FILE_DATES`, which makes it suitable for cron. NADAC files have been available as
+early as about 6:17 AM Eastern on Wednesdays, so a scheduled job should start early and retry
+every 30 minutes.
+
 ## Attributions
 
 The medicine and graph icons are free resources from Flaticon:
@@ -148,9 +158,9 @@ The medicine and graph icons are free resources from Flaticon:
 Copyright © 2026 Michael Steiner. All rights reserved.
 
 This source code is made available for viewing and evaluation only, as a demonstration of the
-author's work. No permission is granted to copy, modify, distribute, sublicense, or use this
-code, in whole or in part, in any product or service, without the author's prior written
-consent. Requests for permission may be made through the author's GitHub profile.
+author's work. Beyond the rights granted by GitHub's Terms of Service, no permission is granted to copy,
+modify, distribute, sublicense, or use this code, in whole or in part, in any product or
+service, without the author's prior written consent. Requests for permission may be made through the author's GitHub profile.
 
 The software is provided "as is", without warranty of any kind, express or implied. The author
 is not liable for any claim, damages, or other liability arising from its use.
