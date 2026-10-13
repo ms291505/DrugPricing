@@ -70,6 +70,12 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
   that accounts for the drawer, or Page Tools should move above the cards there.
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
+- **The FDA search toast belongs to the fetch, not the search.** `useFdaSearch` wraps its
+  `queryFn` in `toast.promise`, so any refetch shows "Searching FDA products…", not only a search
+  the user ran. Refetch on focus and on reconnect are off for now (PR 12), which hides the burst
+  of one toast per FDA tab. Show the toast only for a search the user starts (from
+  `FdaSearchTool`'s submit, or by watching the query's fetch only after a submit), and decide
+  whether the NADAC search, which has no toast, should get the same one.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 
