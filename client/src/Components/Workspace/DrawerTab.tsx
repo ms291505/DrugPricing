@@ -1,21 +1,23 @@
-import { useWorkspaceContext } from "../../Context/WorkspaceContext"
+import { useMobileDrawer, useWorkspaceActions } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
 import { Box, IconButton, ButtonBase, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { useState } from "react";
+import { memo, useState } from "react";
 import SearchTypeChip from "../SearchTypeChip";
 
 type Props = {
   tab: WorkspaceTab,
+  selected: boolean,
 }
 
-export default function DrawerTab({ tab, }: Props) {
+// Memoized: a tab switch re-renders only the two tabs whose `selected` changed.
+export default memo(function DrawerTab({ tab, selected }: Props) {
   const tabId = tab.id;
 
-  const { paneAssignment, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen, mobileDrawerIsOpen } = useWorkspaceContext();
-  const selected = paneAssignment.includes(tabId);
+  const { mobileDrawerIsOpen } = useMobileDrawer();
+  const { setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
@@ -117,4 +119,4 @@ export default function DrawerTab({ tab, }: Props) {
       <MenuItem onClick={handleClose}>Logout</MenuItem>
     </Menu>
   </>)
-}
+});

@@ -138,7 +138,19 @@ Feature folders under `src/Components/`:
 - `Workspace/` — the primary UI. A tabbed, multi-pane workspace (`WorkspaceContext` owns
   tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
   content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
-  mounted (`display: none`), so per-tab state survives switching tabs.
+  mounted, so per-tab state survives switching tabs.
+  - **A tab switch must not re-render hidden tabs.** `WorkspaceContext` is split into narrow
+    hooks: `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every
+    switch), `useMobileDrawer`, and `useWorkspaceActions` (stable functions). Code inside a tab
+    must not read `useWorkspacePanes`, and don't bring back one catch-all context value. Tabs
+    and panes share a reducer, so unchanged `WorkspaceTab` objects keep their identity; `TabInstance`
+    and `DrawerTab` are `memo`'d on that, and `TabInstance` memoizes its page element so
+    showing or hiding a tab doesn't re-render the page.
+  - Hidden panes use `content-visibility: hidden` (falling back to `display: none` where it
+    isn't supported), not `display: none`, so showing a tab reuses its layout. Every pane sits
+    in one grid cell, so hidden tabs keep the visible tab's width and their charts and grids
+    see no resize on show. This assumes one visible pane: split layouts (`"split-2"`,
+    `"split-4"`, unused so far) would need their own grid.
 - `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
 - `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
   `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates;

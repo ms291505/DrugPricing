@@ -1,5 +1,5 @@
 import { Box, Typography, type SxProps, } from "@mui/material";
-import { useWorkspaceContext } from "../../Context/WorkspaceContext";
+import { useWorkspaceActions } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import useMobile from "../../hooks/useMobile";
 import type { DescriptionCardProps } from "../TabCreator/DescriptionCard";
@@ -9,7 +9,7 @@ export default function TabCreator() {
 
   const question = "What type of search would you like to perform?";
 
-  const { changeTabType } = useWorkspaceContext();
+  const { changeTabType } = useWorkspaceActions();
 
   const { id } = useTabInstanceContext();
 
