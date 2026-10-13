@@ -1,4 +1,4 @@
-import { useMobileDrawer, useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
 import { Box, Typography, Paper, Button } from "@mui/material";
 import DrawerTab from "./DrawerTab.tsx";
 import NavButton from "../DrugPricingBar/NavButton.tsx";
@@ -6,16 +6,10 @@ import TabButton from "./TabButton.tsx";
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
 
 export default function DrawerContent() {
-  const { mobileDrawerIsOpen } = useMobileDrawer();
-  const { addTab, setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { addTab, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
   const { setGlobalModal } = useGlobalModalContext();
 
-  const closeMobileDrawer = () => {
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true);
-      setMobileDrawerIsOpen(false);
-    }
-  }
+  const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
 
   const onClick = () => {
     const newTabId = addTab("new");

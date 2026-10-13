@@ -8,13 +8,10 @@ import useScrolled from "../../hooks/useScrolled.ts";
 
 export default function MobileDrawerFab() {
   const { mobileDrawerIsOpen } = useMobileDrawer();
-  const { setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const handleClick = () => {
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true)
-    }
-    setMobileDrawerIsOpen(!mobileDrawerIsOpen);
+    setMobileDrawerIsOpen(open => !open);
   };
 
   const { opacity, drawerWidth } = CONSTANT;

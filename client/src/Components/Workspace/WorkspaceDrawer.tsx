@@ -5,17 +5,12 @@ import { useMobileDrawer, useWorkspaceActions } from "../../Context/WorkspaceCon
 
 export default function WorkspaceDrawer() {
   const { mobileDrawerIsOpen } = useMobileDrawer();
-  const { setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const { drawerWidth } = CONSTANT;
 
   const handleDrawerClose = () => {
-    setMobileDrawerIsClosing(true);
     setMobileDrawerIsOpen(false);
-  };
-
-  const handleDrawerTransitionEnd = () => {
-    setMobileDrawerIsClosing(false);
   };
 
   return (
@@ -23,11 +18,12 @@ export default function WorkspaceDrawer() {
       <Drawer
         variant="temporary"
         open={mobileDrawerIsOpen}
-        onTransitionEnd={handleDrawerTransitionEnd}
         onClose={handleDrawerClose}
         sx={{
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          // No hover on a phone, so the tabs' menu buttons always show.
+          '& .tab-menu-icon': { opacity: 1 },
         }}
         slotProps={{
           root: {

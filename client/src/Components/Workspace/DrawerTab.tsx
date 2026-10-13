@@ -1,4 +1,4 @@
-import { useMobileDrawer, useWorkspaceActions } from "../../Context/WorkspaceContext"
+import { useWorkspaceActions } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
 import { Box, IconButton, ButtonBase, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -16,15 +16,11 @@ type Props = {
 export default memo(function DrawerTab({ tab, selected }: Props) {
   const tabId = tab.id;
 
-  const { mobileDrawerIsOpen } = useMobileDrawer();
-  const { setPaneAssigment, setMobileDrawerIsClosing, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
 
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
-    if (mobileDrawerIsOpen) {
-      setMobileDrawerIsClosing(true);
-      setMobileDrawerIsOpen(false);
-    }
+    setMobileDrawerIsOpen(false);
   }
 
   const buttonId = `${tabId}-button`;
@@ -81,7 +77,8 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
         <IconButton
           className="tab-menu-icon"
           sx={{
-            opacity: mobileDrawerIsOpen ? 1 : 0,
+            // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
+            opacity: 0,
             transition: "opacity 0.15s",
             borderRadius: 1,
           }}

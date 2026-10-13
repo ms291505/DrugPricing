@@ -141,11 +141,13 @@ Feature folders under `src/Components/`:
   mounted, so per-tab state survives switching tabs.
   - **A tab switch must not re-render hidden tabs.** `WorkspaceContext` is split into narrow
     hooks: `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every
-    switch), `useMobileDrawer`, and `useWorkspaceActions` (stable functions). Code inside a tab
-    must not read `useWorkspacePanes`, and don't bring back one catch-all context value. Tabs
-    and panes share a reducer, so unchanged `WorkspaceTab` objects keep their identity; `TabInstance`
-    and `DrawerTab` are `memo`'d on that, and `TabInstance` memoizes its page element so
-    showing or hiding a tab doesn't re-render the page.
+    switch), `useMobileDrawer` (changes on every tab tap on a phone), and `useWorkspaceActions`
+    (stable functions). Code inside a tab or a drawer tab must not read `useWorkspacePanes` or
+    `useMobileDrawer` (only `WorkspaceDrawer` and `MobileDrawerFab` read the drawer state), and
+    don't bring back one catch-all context value. Tabs and panes share a reducer
+    (`workspaceReducer` in `library/workspace.ts`, tested), which keeps the identity of every
+    `WorkspaceTab` it doesn't change; `TabInstance` and `DrawerTab` are `memo`'d on that, and
+    `TabInstance` memoizes its page element so showing or hiding a tab doesn't re-render the page.
   - Hidden panes use `content-visibility: hidden` (falling back to `display: none` where it
     isn't supported), not `display: none`, so showing a tab reuses its layout. Every pane sits
     in one grid cell, so hidden tabs keep the visible tab's width and their charts and grids
@@ -387,7 +389,8 @@ npm test         # vitest run
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
 windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
 summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
-the multi-window read-only switch). `persist.test.ts` re-imports the module for each test
+the multi-window read-only switch), and the workspace reducer (closing a tab, and that unchanged
+tabs keep their identity). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
 local-time date bug fails them. There are no component tests yet.

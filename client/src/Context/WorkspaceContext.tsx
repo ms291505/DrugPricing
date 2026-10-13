@@ -1,13 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type SetStateAction } from "react";
-import { validateTabTitle, type LayoutMode, type TabType, type WorkspaceTab } from "../library/types";
+import type { LayoutMode, TabType, WorkspaceTab } from "../library/types";
+import { workspaceReducer, type WorkspaceState } from "../library/workspace";
 import { defaultTitleFor } from "../library/tabTypeRegistry";
-import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows, type PersistedWorkspace } from "../library/persist";
+import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
 
 // The workspace is split into several contexts so a component re-renders only for the state it
-// reads. Switching tabs changes only the panes, so hidden tabs, which read the tab list and the
-// actions, don't re-render. Don't merge these back into one catch-all value.
+// reads. Switching tabs changes only the panes (and, on a phone, the drawer), so hidden tabs,
+// which read the tab list and the actions, don't re-render. Don't merge these back into one
+// catch-all value.
 
 type WorkspacePanes = {
   layoutMode: LayoutMode;
@@ -16,7 +18,6 @@ type WorkspacePanes = {
 
 type MobileDrawerState = {
   mobileDrawerIsOpen: boolean;
-  mobileDrawerIsClosing: boolean;
 };
 
 /** Never change identity, so reading them doesn't re-render a component. */
@@ -28,7 +29,6 @@ type WorkspaceActions = {
   setLayoutMode: (value: SetStateAction<LayoutMode>) => void;
   setPaneAssigment: (value: SetStateAction<Array<string | null>>) => void;
   setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
-  setMobileDrawerIsClosing: (value: SetStateAction<boolean>) => void;
 };
 
 const WorkspaceTabsContext = createContext<Array<WorkspaceTab>>([]);
@@ -40,7 +40,6 @@ const WorkspacePanesContext = createContext<WorkspacePanes>({
 
 const MobileDrawerContext = createContext<MobileDrawerState>({
   mobileDrawerIsOpen: false,
-  mobileDrawerIsClosing: false,
 });
 
 const WorkspaceActionsContext = createContext<WorkspaceActions>({
@@ -51,60 +50,7 @@ const WorkspaceActionsContext = createContext<WorkspaceActions>({
   setLayoutMode: () => { },
   setPaneAssigment: () => { },
   setMobileDrawerIsOpen: () => { },
-  setMobileDrawerIsClosing: () => { },
 });
-
-type WorkspaceAction =
-  | { type: "add", tab: WorkspaceTab }
-  | { type: "remove", id: string }
-  | { type: "rename", id: string, title: string }
-  | { type: "changeType", id: string, tabType: TabType }
-  | { type: "setLayoutMode", value: SetStateAction<LayoutMode> }
-  | { type: "setPanes", value: SetStateAction<Array<string | null>> };
-
-const resolve = <T,>(value: SetStateAction<T>, prev: T) =>
-  typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
-
-// Tabs and panes share one reducer because closing a tab picks its replacement pane from the
-// tab list. Unchanged tabs keep their identity, so their panes skip rendering.
-function workspaceReducer(state: PersistedWorkspace, action: WorkspaceAction): PersistedWorkspace {
-  switch (action.type) {
-    case "add":
-      return { ...state, tabs: [...state.tabs, action.tab] };
-    case "remove": {
-      const { tabs } = state;
-      const idx = tabs.findIndex(t => t.id === action.id);
-      if (idx < 0) return state;
-      const replacementIdx = idx < (tabs.length - 1) ? idx + 1 : idx - 1;
-      const replacement = replacementIdx < 0 ? null : tabs[replacementIdx].id;
-      return {
-        ...state,
-        tabs: tabs.filter(t => t.id !== action.id),
-        paneAssignment: state.paneAssignment.map(pane => pane === action.id ? replacement : pane),
-      };
-    }
-    case "rename": {
-      const tab = state.tabs.find(t => t.id === action.id);
-      if (!tab || !validateTabTitle(action.title, tab.title)) return state;
-      return {
-        ...state,
-        tabs: state.tabs.map(t => (t.id === action.id ? { ...t, title: action.title.trim() } : t)),
-      };
-    }
-    case "changeType":
-      return {
-        ...state,
-        tabs: state.tabs.map(t => (
-          t.id === action.id
-            ? { id: t.id, title: defaultTitleFor(action.tabType), type: action.tabType }
-            : t)),
-      };
-    case "setLayoutMode":
-      return { ...state, layoutMode: resolve(action.value, state.layoutMode) };
-    case "setPanes":
-      return { ...state, paneAssignment: resolve(action.value, state.paneAssignment) };
-  }
-}
 
 function createNewTab(): WorkspaceTab {
   return {
@@ -115,7 +61,7 @@ function createNewTab(): WorkspaceTab {
 }
 
 // Restore the workspace saved in localStorage, if any; otherwise start with one blank tab.
-function initWorkspace(): PersistedWorkspace {
+function initWorkspace(): WorkspaceState {
   const tab = createNewTab();
   const workspace = loadWorkspace() ?? { tabs: [tab], layoutMode: "single" as LayoutMode, paneAssignment: [tab.id] };
   // Saved state for tabs that aren't in the workspace can never be shown again.
@@ -127,7 +73,6 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const [workspace, dispatch] = useReducer(workspaceReducer, undefined, initWorkspace);
   const { tabs, layoutMode, paneAssignment } = workspace;
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
-  const [mobileDrawerIsClosing, setMobileDrawerIsClosing] = useState(false);
 
   useEffect(() => {
     saveWorkspace(workspace);
@@ -167,7 +112,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const changeTabType = useCallback((id: string, tabType: TabType) => {
     // Saved state belongs to the old type; the tab starts fresh as the new one.
     removeTabState(id);
-    dispatch({ type: "changeType", id, tabType });
+    dispatch({ type: "changeType", id, tabType, title: defaultTitleFor(tabType) });
   }, []);
 
   const setLayoutMode = useCallback((value: SetStateAction<LayoutMode>) => {
@@ -186,14 +131,11 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setLayoutMode,
     setPaneAssigment,
     setMobileDrawerIsOpen,
-    setMobileDrawerIsClosing,
   }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment]);
 
   const panes = useMemo(() => ({ layoutMode, paneAssignment }), [layoutMode, paneAssignment]);
 
-  const mobileDrawer = useMemo(
-    () => ({ mobileDrawerIsOpen, mobileDrawerIsClosing }),
-    [mobileDrawerIsOpen, mobileDrawerIsClosing]);
+  const mobileDrawer = useMemo(() => ({ mobileDrawerIsOpen }), [mobileDrawerIsOpen]);
 
   return (
     <WorkspaceActionsContext.Provider value={actions}>
@@ -216,6 +158,7 @@ export const useWorkspaceTab = (id: string) => useWorkspaceTabs().find(t => t.id
 /** Which tabs are shown. Changes on every tab switch, so hidden tabs must not read it. */
 export const useWorkspacePanes = () => useContext(WorkspacePanesContext);
 
+/** Changes on every tab tap on a phone; only the drawer itself and its button read it. */
 export const useMobileDrawer = () => useContext(MobileDrawerContext);
 
 export const useWorkspaceActions = () => useContext(WorkspaceActionsContext);
