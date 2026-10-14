@@ -1,14 +1,15 @@
+import sys
+
+import pandas as pd
 from config import get_env
 from library.db import get_connection, test_connection
-from nadac.fetch_nadac import fetch_nadac
-from nadac.load_nadac import load_nadac
-from nadac.parse_nadac import parse_nadac
-from nadac.get_loaded_as_of_dates import get_loaded_as_of_dates
-import pandas as pd
-from nadac.update_drug_package import update_drug_package
 from library.parsing import NADAC_DATE_FORMAT
 from library.timing import timed
-import sys
+from nadac.fetch_nadac import fetch_nadac
+from nadac.get_loaded_as_of_dates import get_loaded_as_of_dates
+from nadac.load_nadac import load_nadac
+from nadac.parse_nadac import parse_nadac
+from nadac.update_drug_package import update_drug_package
 
 
 def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
@@ -84,7 +85,7 @@ def update_nadac_for_dates(file_dates):
         sys.exit()
 
     for date in file_dates:
-        print(date)
+        print(f"Updating NADAC for the following date: {date}")
         with timed(f"NADAC total {date}"):
             update_nadac(report_mm_dd_yyyy=date)
 
