@@ -1,10 +1,10 @@
-import { useWorkspaceActions } from "../../Context/WorkspaceContext"
+import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
-import { Box, IconButton, ButtonBase, } from "@mui/material";
+import { Box, IconButton, ButtonBase, TextField, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import SearchTypeChip from "../SearchTypeChip";
 
 type Props = {
@@ -16,7 +16,14 @@ type Props = {
 export default memo(function DrawerTab({ tab, selected }: Props) {
   const tabId = tab.id;
 
-  const { setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const [renameActive, setRenameActive] = useState(false);
+  const [newTitle, setNewTitle] = useState(tab.title);
+
+  const { setPaneAssigment, setMobileDrawerIsOpen, removeTab, renameTab } = useWorkspaceActions();
+
+  const tabs = useWorkspaceTabs();
+
+  const closeTabDisabled = tabs.length === 1;
 
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
@@ -30,9 +37,35 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handleCloseMenu = () => {
     setAnchorEl(null);
   };
+
+  const onClickRename = () => {
+    handleCloseMenu();
+    setRenameActive(true);
+  }
+
+  const handleRenameTab = () => {
+    renameTab(tab.id, newTitle);
+    setRenameActive(false);
+    handleCloseMenu();
+  }
+
+  const handleCloseTab = () => {
+    removeTab(tab.id);
+    handleCloseMenu();
+  }
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (renameActive && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [renameActive])
+
 
   return (<>
     <ButtonBase
@@ -72,7 +105,23 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
             flexGrow: 1
           }}
         >
-          {tab.title}
+          {!renameActive
+            ? tab.title
+            : <TextField
+              value={newTitle}
+              onChange={(e) => {
+                setNewTitle(e.target.value);
+              }}
+              onBlur={handleRenameTab}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  handleRenameTab();
+                }
+              }}
+              variant="standard"
+              inputRef={inputRef}
+            />
+          }
         </Box>
         <IconButton
           className="tab-menu-icon"
@@ -96,7 +145,7 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
       id={menuId}
       anchorEl={anchorEl}
       open={open}
-      onClose={handleClose}
+      onClose={handleCloseMenu}
       slotProps={{
         list: {
           'aria-labelledby': buttonId,
@@ -111,9 +160,8 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
         vertical: "top"
       }}
     >
-      <MenuItem onClick={handleClose}>Profile</MenuItem>
-      <MenuItem onClick={handleClose}>My account</MenuItem>
-      <MenuItem onClick={handleClose}>Logout</MenuItem>
+      <MenuItem onClick={onClickRename} >Rename</MenuItem>
+      <MenuItem disabled={closeTabDisabled} onClick={handleCloseTab} >Close Tab</MenuItem>
     </Menu>
   </>)
 });
