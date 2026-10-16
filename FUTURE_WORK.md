@@ -62,8 +62,13 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
-- **The drawer tab's ⋮ menu still holds MUI's sample items** (Profile, My account, Logout in
-  `DrawerTab.tsx`). Replace them with real tab actions (rename, close, change type) or remove the menu.
+- **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
+  13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
+  unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
+  (`DrawerTabList` focuses the row of `replacementTabId` after a close). Give the FAB the same
+  treatment: after Close, focus the replacement tab's FAB, or its drawer row when that tab is a
+  blank "new" tab with no FAB. After Minimize, the pane is empty, so focus its drawer row. On a
+  phone the drawer is closed, so a drawer row isn't a target there. Small.
 - **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
   the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
   bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint
