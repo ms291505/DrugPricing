@@ -1,29 +1,28 @@
-import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/WorkspaceContext"
+import { useWorkspaceActions, } from "../../Context/WorkspaceContext"
 import type { WorkspaceTab } from "../../library/types";
 import { Box, IconButton, ButtonBase, TextField, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useState } from "react";
 import SearchTypeChip from "../SearchTypeChip";
+import useTabRename from "../../hooks/useTabRename.ts";
 
 type Props = {
   tab: WorkspaceTab,
   selected: boolean,
+  canClose: boolean,
 }
 
 // Memoized: a tab switch re-renders only the two tabs whose `selected` changed.
-export default memo(function DrawerTab({ tab, selected }: Props) {
+export default memo(function DrawerTab({ tab, selected, canClose }: Props) {
   const tabId = tab.id;
 
-  const [renameActive, setRenameActive] = useState(false);
-  const [newTitle, setNewTitle] = useState(tab.title);
+  // Destructured: passing `tabRename.returnFocusRef` as a `ref` makes the React Compiler lint
+  // treat the whole object as a ref and flag every other read of it during render.
+  const { returnFocusRef, ...tabRename } = useTabRename(tab.id, tab.title);
 
-  const { setPaneAssigment, setMobileDrawerIsOpen, removeTab, renameTab } = useWorkspaceActions();
-
-  const tabs = useWorkspaceTabs();
-
-  const closeTabDisabled = tabs.length === 1;
+  const { setPaneAssigment, setMobileDrawerIsOpen, removeTab } = useWorkspaceActions();
 
   const handleTabClick = () => {
     setPaneAssigment([tab.id]);
@@ -43,29 +42,13 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
 
   const onClickRename = () => {
     handleCloseMenu();
-    setRenameActive(true);
-  }
-
-  const handleRenameTab = () => {
-    renameTab(tab.id, newTitle);
-    setRenameActive(false);
-    handleCloseMenu();
+    tabRename.start();
   }
 
   const handleCloseTab = () => {
     removeTab(tab.id);
     handleCloseMenu();
   }
-
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (renameActive && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [renameActive])
-
 
   return (<>
     <ButtonBase
@@ -86,6 +69,10 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
             opacity: 1,
           },
         },
+        // Keyboard focus shows the menu button too, e.g. when a rename returns focus to it.
+        "& .tab-menu-icon.Mui-focusVisible": {
+          opacity: 1,
+        },
       }}
     >
       <SearchTypeChip tabType={tab.type} />
@@ -105,26 +92,35 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
             flexGrow: 1
           }}
         >
-          {!renameActive
+          {!tabRename.active
             ? tab.title
             : <TextField
-              value={newTitle}
-              onChange={(e) => {
-                setNewTitle(e.target.value);
-              }}
-              onBlur={handleRenameTab}
-              onKeyDown={e => {
-                if (e.key === "Enter") {
-                  handleRenameTab();
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Tab name"
                 }
               }}
+              value={tabRename.draft}
+              onChange={(e) => {
+                tabRename.setDraft(e.target.value);
+              }}
+              onBlur={tabRename.commit}
+              onKeyDown={tabRename.onKeyDown}
               variant="standard"
-              inputRef={inputRef}
+              inputRef={tabRename.inputRef}
+              onClick={e => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
             />
           }
         </Box>
         <IconButton
+          ref={returnFocusRef}
           className="tab-menu-icon"
+          id={buttonId}
+          aria-label="Tab options"
+          aria-haspopup="true"
+          aria-controls={open ? menuId : undefined}
+          aria-expanded={open}
           sx={{
             // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
             opacity: 0,
@@ -161,7 +157,7 @@ export default memo(function DrawerTab({ tab, selected }: Props) {
       }}
     >
       <MenuItem onClick={onClickRename} >Rename</MenuItem>
-      <MenuItem disabled={closeTabDisabled} onClick={handleCloseTab} >Close Tab</MenuItem>
+      <MenuItem disabled={!canClose} onClick={handleCloseTab} >Close Tab</MenuItem>
     </Menu>
   </>)
 });

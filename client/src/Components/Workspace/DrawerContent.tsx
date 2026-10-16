@@ -79,7 +79,7 @@ function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
 
   return (
     <>
-      {tabs.map(t => <DrawerTab key={t.id} tab={t} selected={paneAssignment.includes(t.id)} />)}
+      {tabs.map(t => <DrawerTab key={t.id} tab={t} selected={paneAssignment.includes(t.id)} canClose={tabs.length > 1} />)}
       <TabButton onClick={onAddTab} />
     </>
   )
