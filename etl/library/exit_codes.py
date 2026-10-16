@@ -10,4 +10,5 @@ class ExitCode(IntEnum):
     FDA_INSERT_FAILED = 15
     NADAC_404 = 24
     NADAC_INSET_FAILED = 25
+    NADAC_NOT_200 = 26
     INTERRUPTED = 130

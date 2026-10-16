@@ -31,21 +31,23 @@ def load_nadac(conn: psycopg.Connection, records: list[NadacPrice]) -> int:
             ) FROM STDIN
         """) as copy:
             for record in records:
-                copy.write_row((
-                    record.ndc_description,
-                    record.ndc,
-                    record.nadac_per_unit,
-                    record.effective_date,
-                    record.pricing_unit.value,
-                    record.pharmacy_type_indicator,
-                    record.is_otc,
-                    [e.value for e in record.explanation_code],
-                    record.classification_for_rate_setting.value,
-                    record.corresponding_generic_nadac_per_unit,
-                    record.corresponding_generic_effective_date,
-                    record.as_of_date,
-                    record.loaded_at
-                ))
+                copy.write_row(
+                    (
+                        record.ndc_description,
+                        record.ndc,
+                        record.nadac_per_unit,
+                        record.effective_date,
+                        record.pricing_unit.value,
+                        record.pharmacy_type_indicator,
+                        record.is_otc,
+                        [e.value for e in record.explanation_code],
+                        record.classification_for_rate_setting.value,
+                        record.corresponding_generic_nadac_per_unit,
+                        record.corresponding_generic_effective_date,
+                        record.as_of_date,
+                        record.loaded_at,
+                    )
+                )
         cur.execute("""
             INSERT INTO "NadacPrices" (
                 "NdcDescription",

@@ -1,6 +1,7 @@
 import sys
 
 import pandas as pd
+
 from config import get_env
 from library.db import get_connection, test_connection
 from library.parsing import NADAC_DATE_FORMAT
@@ -21,14 +22,8 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
 
     filter_before_insert = env.nadac_filter_before_insert
 
-    URL = (
-        "https://download.medicaid.gov/data/nadac-national-average-drug-acquisition-cost-"
-        + report_mm_dd_yyyy
-        + ".csv"
-    )
-
     with timed("NADAC fetch"):
-        (nadac_data, _) = fetch_nadac(url=URL)
+        (nadac_data, _) = fetch_nadac(report_mm_dd_yyyy)
 
     COLUMN_MAP = {
         "NADAC_Per_Unit": "NADAC Per Unit",
