@@ -2,10 +2,11 @@
 import { theme } from "../../theme.ts";
 import { Box, Fab, Menu, MenuItem, MenuList, TextField, } from "@mui/material";
 import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { CONSTANT } from "../../library/constants.ts";
 import useScrolled from "../../hooks/useScrolled.ts";
+import useTabRename from "../../hooks/useTabRename.ts";
 
 export default function TabContextFab() {
 
@@ -14,7 +15,7 @@ export default function TabContextFab() {
   const scrolled = useScrolled();
 
   const tabs = useWorkspaceTabs();
-  const { setPaneAssigment, renameTab, removeTab } = useWorkspaceActions();
+  const { setPaneAssigment, removeTab } = useWorkspaceActions();
   const { id } = useTabInstanceContext();
 
   const uuid = useId();
@@ -23,22 +24,7 @@ export default function TabContextFab() {
 
   const tabTitle = tabs.find(t => t.id === id)?.title ?? "Workspace";
 
-  const [renameActive, setRenameActive] = useState(false);
-  const [newName, setNewName] = useState(tabTitle);
-
-  const handleRenameTab = () => {
-    renameTab(id, newName);
-    setRenameActive(false);
-  }
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (renameActive && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [renameActive])
+  const { returnFocusRef, ...tabRename } = useTabRename(id, tabTitle);
 
   const [tabMenuAnchorEl, setTabMenuAnchorEl] = useState<null | HTMLElement>(null);
   const tabMenuOpen = Boolean(tabMenuAnchorEl);
@@ -70,13 +56,14 @@ export default function TabContextFab() {
 
   const handleClickRename = () => {
     handleCloseTabConextMenu();
-    setRenameActive(true);
+    tabRename.start();
   }
 
   const closeTabDisabled = tabs.length === 1;
 
   return (<>
     <Fab
+      ref={returnFocusRef}
       variant="extended"
       id={fabId}
       sx={{
@@ -91,9 +78,9 @@ export default function TabContextFab() {
         width: tabContextFabHeight,
       }}
       onClick={tabMenuOpen ? handleCloseTabConextMenu : handleClick}
-      disabled={renameActive}
+      disabled={tabRename.active}
     >
-      {!renameActive
+      {!tabRename.active
         ? <Box
           component="span"
           sx={{
@@ -110,19 +97,15 @@ export default function TabContextFab() {
       }
     </Fab>
 
-    {!renameActive
+    {!tabRename.active
       ? null
       : <TextField
-        value={newName}
+        value={tabRename.draft}
         onChange={(e) => {
-          setNewName(e.target.value);
+          tabRename.setDraft(e.target.value);
         }}
-        onBlur={handleRenameTab}
-        onKeyDown={e => {
-          if (e.key === "Enter") {
-            handleRenameTab()
-          }
-        }}
+        onBlur={tabRename.commit}
+        onKeyDown={tabRename.onKeyDown}
         variant="standard"
         sx={{
           position: "fixed",
@@ -136,7 +119,7 @@ export default function TabContextFab() {
           borderRadius: "16px 16px 16px 16px",
           zIndex: theme.zIndex.fab + 1,
         }}
-        inputRef={inputRef}
+        inputRef={tabRename.inputRef}
       />
     }
 
