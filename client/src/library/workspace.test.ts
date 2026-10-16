@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkspaceTab } from "./types";
-import { workspaceReducer, type WorkspaceState } from "./workspace";
+import { replacementTabId, workspaceReducer, type WorkspaceState } from "./workspace";
 
 const tab = (id: string, title = id): WorkspaceTab => ({ id, type: "fda", title });
 
@@ -50,6 +50,20 @@ describe("workspaceReducer", () => {
     it("ignores a tab that doesn't exist", () => {
       const prev = workspace();
       expect(workspaceReducer(prev, { type: "remove", id: "x" })).toBe(prev);
+    });
+  });
+
+  describe("replacementTabId", () => {
+    const tabs = workspace().tabs;
+    it("picks the next tab, or the previous one for the last tab", () => {
+      expect(replacementTabId(tabs, "a")).toBe("b");
+      expect(replacementTabId(tabs, "b")).toBe("c");
+      expect(replacementTabId(tabs, "c")).toBe("b");
+    });
+
+    it("returns null for the only tab or a missing one", () => {
+      expect(replacementTabId([tab("a")], "a")).toBeNull();
+      expect(replacementTabId(tabs, "x")).toBeNull();
     });
   });
 

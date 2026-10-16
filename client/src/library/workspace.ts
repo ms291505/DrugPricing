@@ -16,6 +16,16 @@ const resolve = <T,>(value: SetStateAction<T>, prev: T) =>
   typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
 
 /**
+ * The tab that takes over when `id` closes: the next one, or the previous one if it was last.
+ * The reducer gives it the closed tab's pane, and the drawer moves keyboard focus to its row.
+ */
+export function replacementTabId(tabs: WorkspaceTab[], id: string): string | null {
+  const idx = tabs.findIndex(t => t.id === id);
+  if (idx < 0) return null;
+  return tabs[idx + 1]?.id ?? tabs[idx - 1]?.id ?? null;
+}
+
+/**
  * Tabs and panes share one reducer because closing a tab picks its replacement pane from the
  * tab list. Every action keeps the identity of the tabs it doesn't change: memoized panes
  * (`TabInstance`, `DrawerTab`) skip rendering on that, so a new object for an unchanged tab
@@ -26,15 +36,11 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
     case "add":
       return { ...state, tabs: [...state.tabs, action.tab] };
     case "remove": {
-      const { tabs } = state;
-      const idx = tabs.findIndex(t => t.id === action.id);
-      if (idx < 0) return state;
-      // The next tab takes the closed tab's pane, or the previous one if it was last.
-      const replacementIdx = idx < (tabs.length - 1) ? idx + 1 : idx - 1;
-      const replacement = replacementIdx < 0 ? null : tabs[replacementIdx].id;
+      if (!state.tabs.some(t => t.id === action.id)) return state;
+      const replacement = replacementTabId(state.tabs, action.id);
       return {
         ...state,
-        tabs: tabs.filter(t => t.id !== action.id),
+        tabs: state.tabs.filter(t => t.id !== action.id),
         paneAssignment: state.paneAssignment.map(pane => pane === action.id ? replacement : pane),
       };
     }
