@@ -152,3 +152,20 @@ workspace tab (see the link format under **Decided**). Two consequences for curr
   definition before there are two implementations.
 - **"Popular searches" needs search counts,** which nothing records today. That is a server
   addition, and a privacy decision about what gets logged.
+
+### Notes from user testing (2026-10-17)
+
+On this date I used the web app and took notes on improvements I'd like to see as a user.
+
+- On the line charts there's text that says "Line: average of the product's packages · shading: lowest to highest package price". Either this doesn't work or it's not obvious what it's trying to explain. What is the shading that's referenced here? Doesn't the line itself show the lowest and highest prices?
+  - This does not appear on the NADAC version of the line charts. Why?
+- I think the z-index for the tooltip on line charts isn't working right. The x-axis labels appear in front of the tooltip, the tooltip needs to be in front of everything on the chart.
+- Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
+- The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?
+- The page tools should probably be moved to something that sits below the search and/or be completely dismissable. I think the user needs to understand that first you search, then you can filter the results using the page tools. One solution could be making it something that pops up as a modal with a floating action button for toggling this to the right of the tab instance context FAB. That would work on desktop and mobile. Perhaps a toggle in there to permanently add it to the page below the search in an explorer item box?
+- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it for some reason.
+- The tab names for NADAC searches doesn't update when a search is done, this needs implemented.
+- Tooltips for all the charts should only appear on a click. I think this will really clean things up a bit. Right now they're too floaty and almost get in the way of things. It might improve performance too.
+- The app really struggles when the user starts to pin charts and is really getting to work trying to compare things. Did the performance improvement for tab switching mess this up? I didn't do enough testing before to determine if this impacted it.
+- I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:
+  - When something is mixed units, it should probably just be different explorer items (aka completely different charts) instead of a split chart as one item. A toast can explain why multiple charts were added. This makes it easier to compare the per each version of Wegovy to Rybelsus.
