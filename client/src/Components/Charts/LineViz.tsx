@@ -163,6 +163,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
           tickLine={chartTheme.axisLine}
         />
         <Tooltip
+          wrapperStyle={{ zIndex: 1 }}
           // On a phone the finger is on the chart: keep the readout at the top, out from under it.
           position={isMobile ? { y: 0 } : undefined}
           content={({ active, payload, label }) => active && payload?.length
