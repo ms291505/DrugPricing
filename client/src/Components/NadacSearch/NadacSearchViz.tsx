@@ -44,7 +44,7 @@ export default function NadacSearchViz() {
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 2,
+        gap: 1,
         width: "100%"
       }}
     >
@@ -60,7 +60,7 @@ export default function NadacSearchViz() {
       </Grid>
       {showAutoCharts
         ?
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
               title={barTitle}

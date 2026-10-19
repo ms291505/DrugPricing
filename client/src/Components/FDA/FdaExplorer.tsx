@@ -75,19 +75,21 @@ export default function FdaExplorer({ visible = true }: Props) {
   const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
   return (
-    <Grid container spacing={2} display={visible ? "flex" : "none"} minHeight={0}>
+    <Grid container spacing={1} display={visible ? "flex" : "none"} minHeight={0}>
       <Grid
-        size={{ xs: 12, md: 3 }}
+        size={{ xs: 12 }}
       >
-        <FdaPageTools />
+        <ExplorerGridItem title="Page Tools" defaultCollapsed>
+          <FdaPageTools />
+        </ExplorerGridItem>
       </Grid>
       <Grid
         component="div"
-        size={{ xs: 12, md: 9 }}
+        size={{ xs: 12 }}
         sx={{
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 1,
         }}
       >
         <ExplorerGridItem title={resultTableTitleMap[fdaResultDetailLevel]}>

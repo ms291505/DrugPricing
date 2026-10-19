@@ -85,7 +85,7 @@ export default function NadacSearch() {
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
-          gap: { xs: 1, md: 2 },
+          gap: 1,
           padding: 2,
           width: "100%",
           justifyContent: "center"

@@ -7,7 +7,6 @@ import { MAX_GLOBAL_MODAL_HEIGHT, MAX_GLOBAL_MODAL_WIDTH } from "../../library/c
 import TitleBar from "./TitleBar"
 import SettingsPanel from "../Settings/SettingsPanel"
 
-
 export default function GlobalModal() {
 
   const globalModalRegistry: Record<GlobalModal, { label: string, content: ReactNode }> = {
