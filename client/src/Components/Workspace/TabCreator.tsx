@@ -17,19 +17,27 @@ export default function TabCreator() {
 
   const cards: Array<DescriptionCardProps> = [
     {
-      searchType: "fda",
+      tabType: "fda",
       onClick: () => changeTabType(id, "fda"),
       header: "FDA + NADAC",
       body: "The FDA's database of drug products currently on the market, including National Average Drug Aquisition Cost data when available.",
       isMobile: isMobile,
     },
     {
-      searchType: "nadac",
+      tabType: "nadac",
       onClick: () => changeTabType(id, "nadac"),
       header: "NADAC Only",
       body: "National Average Drug Aquisition Cost data going back to 2022.",
       isMobile: isMobile,
+    },
+    {
+      tabType: "collection",
+      onClick: () => changeTabType(id, "collection"),
+      header: "Create Collection",
+      body: "Create a new collection of search results and graphs.",
+      isMobile: isMobile,
     }
+
   ]
 
   const boxSx: SxProps =
@@ -75,7 +83,7 @@ export default function TabCreator() {
       >
         {cards.map(card => (
           <DescriptionCard
-            key={card.searchType}
+            key={card.tabType}
             {...card}
           />
         ))}

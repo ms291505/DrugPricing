@@ -236,7 +236,7 @@ export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
 
 export type LayoutMode = "single" | "split-2" | "split-4";
 
-export type TabType = "fda" | "nadac" | "new";
+export type TabType = "fda" | "nadac" | "collection" | "new";
 
 export type WorkspaceTab = {
   id: string;

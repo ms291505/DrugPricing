@@ -4,14 +4,14 @@ import type { TabType } from "../../library/types";
 import SearchTypeChip from "../SearchTypeChip";
 
 export type DescriptionCardProps = {
-  searchType: TabType,
+  tabType: TabType,
   onClick: () => void,
   header: string | ReactNode,
   body: string | ReactNode,
   isMobile?: boolean,
 }
 
-export default function DescriptionCard({ onClick, header, body, isMobile = false, searchType }: DescriptionCardProps) {
+export default function DescriptionCard({ onClick, header, body, isMobile = false, tabType }: DescriptionCardProps) {
   const cardSx: SxProps = isMobile
     ? { flex: "0 0 80%", scrollSnapAlign: "center" }
     : { height: "100%", width: 320 }
@@ -31,7 +31,7 @@ export default function DescriptionCard({ onClick, header, body, isMobile = fals
               gap: 1
             }}
           >
-            <SearchTypeChip tabType={searchType} />
+            <SearchTypeChip tabType={tabType} />
             <Typography variant="h5" component="div">{header}</Typography>
           </Box>
           <Divider />

@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
 import { SearchContextProvider, useSearchContext } from "./SearchContext";
 import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
 import { loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
+import { CollectionContextProvider } from "./CollectionContext";
 
 // Each search tab gets its own page context plus its own pinned items, restored from and saved
 // to storage under the tab's id. Restoring the search params re-runs the search.
 
 type TabProviderProps = {
-  children: React.ReactNode,
+  children: ReactNode,
   tabId: string,
   /** False until the tab is first shown; the search waits for it. Standalone pages are always active. */
   active?: boolean,
@@ -37,6 +38,14 @@ export const NadacTabProvider = ({ children, tabId, active = true }: TabProvider
     </SearchContextProvider>
   );
 };
+
+export const CollectionTabProvider = ({ children }: TabProviderProps) => {
+  return (
+    <CollectionContextProvider>
+      {children}
+    </CollectionContextProvider>
+  )
+}
 
 /** A tab that hasn't chosen a search type yet: nothing to restore or save. */
 export const BlankTabProvider = ({ children }: TabProviderProps) => (

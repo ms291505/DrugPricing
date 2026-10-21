@@ -5,11 +5,18 @@ import { defaultTitleFor } from "../library/tabTypeRegistry";
 import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
+import type { ExplorerItem } from "../library/explorerItems";
 
 // The workspace is split into several contexts so a component re-renders only for the state it
 // reads. Switching tabs changes only the panes (and, on a phone, the drawer), so hidden tabs,
 // which read the tab list and the actions, don't re-render. Don't merge these back into one
 // catch-all value.
+//
+
+type CollectionData = {
+  tabId: string;
+  items: ExplorerItem[];
+}
 
 type WorkspacePanes = {
   layoutMode: LayoutMode;
@@ -31,6 +38,13 @@ type WorkspaceActions = {
   setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
 };
 
+type CollectionsManagerActions = {
+  getCollections: () => CollectionData[];
+  findCollection: (id: string) => CollectionData | null;
+  addItem: (id: string, item: ExplorerItem) => void;
+  removeItem: (id: string) => void;
+}
+
 const WorkspaceTabsContext = createContext<Array<WorkspaceTab>>([]);
 
 const WorkspacePanesContext = createContext<WorkspacePanes>({
@@ -50,6 +64,13 @@ const WorkspaceActionsContext = createContext<WorkspaceActions>({
   setLayoutMode: () => { },
   setPaneAssigment: () => { },
   setMobileDrawerIsOpen: () => { },
+});
+
+const CollectionsManagerContext = createContext<CollectionsManagerActions>({
+  getCollections: () => [],
+  findCollection: () => null,
+  addItem: () => { },
+  removeItem: () => { },
 });
 
 function createNewTab(): WorkspaceTab {
