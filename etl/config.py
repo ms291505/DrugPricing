@@ -37,6 +37,10 @@ def get_env_variables(mode: str):
 
     nadac_filter_before_insert = os.getenv("NADAC_FILTER_BEFORE_INSERT", "1")
 
+    nadac_file_alternative_date_format = os.getenv(
+        "NADAC_FILE_ALTERNATIVE_DATE_FORMAT", "0"
+    )
+
     raw_dates = os.getenv("NADAC_FILE_DATES", "")
     nadac_file_dates = raw_dates.split(",") if raw_dates else []
 
@@ -47,6 +51,7 @@ def get_env_variables(mode: str):
         mode=mode,
         nadac_file_dates=nadac_file_dates,
         database_url=SecretStr(database_url),
+        nadac_file_alternative_date_format=nadac_file_alternative_date_format == "1",
     )
 
     return env

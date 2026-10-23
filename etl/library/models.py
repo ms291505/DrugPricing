@@ -20,6 +20,7 @@ class Environment(BaseModel):
     nadac_file_dates: list[str]
     nadac_filter_before_insert: bool
     database_url: SecretStr
+    nadac_file_alternative_date_format: bool
 
 
 class NadacPricingUnit(str, Enum):
@@ -120,9 +121,7 @@ class FdaPackage(BaseModel):
             product_ndc=row["PRODUCTNDC"],
             ndc_package_code=row["NDCPACKAGECODE"],
             package_description=row["PACKAGEDESCRIPTION"],
-            start_marketing_date=parse_date(
-                row["STARTMARKETINGDATE"], FDA_DATE_FORMAT
-            ),
+            start_marketing_date=parse_date(row["STARTMARKETINGDATE"], FDA_DATE_FORMAT),
             end_marketing_date=parse_date(row["ENDMARKETINGDATE"], FDA_DATE_FORMAT),
             ndc_exclude_flag=row["NDC_EXCLUDE_FLAG"].strip(),
             sample_package=row["SAMPLE_PACKAGE"] == "Y",
@@ -171,9 +170,7 @@ class FdaProduct(BaseModel):
             non_proprietary_name=split_values(row["NONPROPRIETARYNAME"]),
             dosage_form_name=row["DOSAGEFORMNAME"],
             route_name=split_values(row["ROUTENAME"]),
-            start_marketing_date=parse_date(
-                row["STARTMARKETINGDATE"], FDA_DATE_FORMAT
-            ),
+            start_marketing_date=parse_date(row["STARTMARKETINGDATE"], FDA_DATE_FORMAT),
             end_marketing_date=parse_date(row["ENDMARKETINGDATE"], FDA_DATE_FORMAT),
             marketing_category_name=row["MARKETINGCATEGORYNAME"],
             application_number=str_or_none(row["APPLICATIONNUMBER"]),
