@@ -59,7 +59,7 @@ export default function FdaExplorer({ visible = true }: Props) {
     [productPriceChanges, chartWindow]);
   const outsidePriceChanges = productPriceChanges.length - shownPriceChanges.length;
   const tooManyPriceChanges = shownPriceChanges.length > MAX_AUTO_PRICE_CHANGE_CHARTS;
-  // Says why changes the search found have no card: outside the dates, or too many to chart.
+  // Explains why price-changes the search found have no card.
   const priceChangeNotes = [
     tooManyPriceChanges
       ? `${shownPriceChanges.length} price changes in these dates are too many to chart (up to ${MAX_AUTO_PRICE_CHANGE_CHARTS}). Narrow the dates or filter the results.`

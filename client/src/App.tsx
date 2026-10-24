@@ -5,18 +5,18 @@ import { ThemeProvider } from "@mui/material/styles";
 import { Box, CssBaseline } from "@mui/material";
 import { theme } from "./theme";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
-import About from "./Components/About/About";
+import About from "./Components/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
-import FdaSearch from "./Components/FDA/FdaSearch";
+import FdaSearch from "./Components/FdaSearch";
 import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
 import { STANDALONE_TAB_IDS } from "./library/persist";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { SettingsProvider } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
-import Workspace from "./Components/Workspace/Workspace";
-import OnBoarding from "./Components/OnBoarding/OnBoarding";
-import GlobalModal from "./Components/GlobalModal/GlobalModal";
+import Workspace from "./Components/Workspace";
+import OnBoarding from "./Components/OnBoarding";
+import GlobalModal from "./Components/GlobalModal";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden
 // ones included, would refetch at once (one "Searching…" toast per FDA tab), and the data only
