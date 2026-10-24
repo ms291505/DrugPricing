@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
-import { SearchContextProvider, useSearchContext } from "./SearchContext";
+import { NadacSearchContextProvider, useSearchContext } from "./NadacSearchContext";
 import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
 import { loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
 
@@ -29,12 +29,12 @@ export const FdaTabProvider = ({ children, tabId, active = true }: TabProviderPr
 export const NadacTabProvider = ({ children, tabId, active = true }: TabProviderProps) => {
   const [saved] = useState(() => loadNadacTabState(tabId));
   return (
-    <SearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
+    <NadacSearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
       <ExplorerItemsProvider initial={saved ?? undefined}>
         <SaveNadacTab tabId={tabId} />
         {children}
       </ExplorerItemsProvider>
-    </SearchContextProvider>
+    </NadacSearchContextProvider>
   );
 };
 

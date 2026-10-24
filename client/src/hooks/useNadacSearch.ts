@@ -1,4 +1,4 @@
-import { useSearchContext } from "../Context/SearchContext";
+import { useSearchContext } from "../Context/NadacSearchContext";
 import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
 import { CONSTANT } from "../library/constants";

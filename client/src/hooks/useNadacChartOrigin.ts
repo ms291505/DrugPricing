@@ -1,4 +1,4 @@
-import { useSearchContext } from "../Context/SearchContext";
+import { useSearchContext } from "../Context/NadacSearchContext";
 import type { ChartOrigin } from "../library/explorerItems";
 import { useNadacSearch } from "./useNadacSearch";
 

@@ -1,7 +1,7 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useSearchContext } from "../../Context/SearchContext";
+import { useSearchContext } from "../../Context/NadacSearchContext";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";

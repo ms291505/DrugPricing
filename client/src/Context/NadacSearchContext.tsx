@@ -1,9 +1,9 @@
 // TODO: Update to be NadacSearchContext!
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react"
+import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react"
 import type { NadacPrice, NadacSearchParams } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 
-type SearchContextType = {
+type NadacSearchContextType = {
   data: Array<NadacPrice>;
   setData: React.Dispatch<React.SetStateAction<Array<NadacPrice>>>;
   /** `data` without the descriptions the Drug page filter excludes. Only Add Chart reads it. */
@@ -23,7 +23,7 @@ type SearchContextType = {
   searchEnabled: boolean;
 }
 
-export const SearchContext = createContext<SearchContextType>({
+export const NadacSearchContext = createContext<NadacSearchContextType>({
   data: [],
   setData: () => { },
   vizData: [],
@@ -45,13 +45,13 @@ export type NadacSearchInitialState = {
 };
 
 type ProviderProps = {
-  children: React.ReactNode,
+  children: ReactNode,
   /** State restored from storage; the search re-runs from `searchParams`. */
   initial?: NadacSearchInitialState,
   searchEnabled?: boolean,
 };
 
-export const SearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
+export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
   const [newChartRows, setNewChartRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
   const [searchParams, setSearchParams] = useState<NadacSearchParams | null>(initial?.searchParams ?? null);
@@ -80,7 +80,7 @@ export const SearchContextProvider = ({ children, initial, searchEnabled = true 
   }, [data, excludedNdcDescriptions]);
 
   return (
-    <SearchContext.Provider value={{
+    <NadacSearchContext.Provider value={{
       data,
       setData,
       vizData,
@@ -96,10 +96,10 @@ export const SearchContextProvider = ({ children, initial, searchEnabled = true 
       searchEnabled,
     }}>
       {children}
-    </SearchContext.Provider>
+    </NadacSearchContext.Provider>
   );
 };
 
 export const useSearchContext = () => {
-  return useContext(SearchContext);
+  return useContext(NadacSearchContext);
 };
