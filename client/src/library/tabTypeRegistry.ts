@@ -1,6 +1,6 @@
 import FdaSearch from "../Components/FDA/FdaSearch";
 import NadacSearch from "../Components/NadacSearch/NadacSearch";
-import TabCreator from "../Components/Workspace/TabCreator";
+import TabCreator from "../Components/TabCreator/TabCreator";
 import { BlankTabProvider, FdaTabProvider, NadacTabProvider } from "../Context/TabProviders";
 import type { TabType } from "./types";
 

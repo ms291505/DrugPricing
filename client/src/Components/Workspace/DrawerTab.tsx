@@ -5,7 +5,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { memo, useId, useState } from "react";
-import SearchTypeChip from "../SearchTypeChip";
+import SearchTypeChip from "../ui/SearchTypeChip.tsx";
 import useTabRename from "../../hooks/useTabRename.ts";
 
 type Props = {

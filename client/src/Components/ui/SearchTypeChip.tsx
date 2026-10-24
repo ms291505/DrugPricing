@@ -1,4 +1,4 @@
-import { type TabType } from "../library/types.ts";
+import { type TabType } from "../../library/types.ts";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MedicationIcon from '@mui/icons-material/Medication';
 import ArticleIcon from '@mui/icons-material/Article';

@@ -1,7 +1,7 @@
 import { Card, CardActionArea, CardContent, Typography, type SxProps, Box, Divider } from "@mui/material";
 import type { ReactNode } from "react";
 import type { TabType } from "../../library/types";
-import SearchTypeChip from "../SearchTypeChip";
+import SearchTypeChip from "../ui/SearchTypeChip";
 
 export type DescriptionCardProps = {
   searchType: TabType,

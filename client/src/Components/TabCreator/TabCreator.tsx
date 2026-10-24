@@ -75,7 +75,7 @@ export default function TabCreator() {
       >
         {cards.map(card => (
           <DescriptionCard
-            key={card.searchType}
+            key={card.searchType.toString()}
             {...card}
           />
         ))}
