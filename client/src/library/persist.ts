@@ -2,8 +2,9 @@ import toast from "react-hot-toast";
 import {
   createFdaResultFilter,
   type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, type LayoutMode,
-  type NadacSearchParams, type TabType, type WorkspaceTab,
+  type NadacSearchParams,
 } from "./types";
+import { type TabType, type WorkspaceTab } from "./tabType";
 import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
 import type { BarValue } from "./seriesSummary";
@@ -89,7 +90,7 @@ const isString = (x: unknown): x is string => typeof x === "string";
 const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every(isString);
 const oneOf = <T extends string>(values: readonly T[]) => (x: unknown): x is T => values.includes(x as T);
 
-const isTabType = oneOf<TabType>(["fda", "nadac", "new"]);
+const isTabType = oneOf<TabType>(["fda", "nadac", "new", "collection"]);
 const isLayoutMode = oneOf<LayoutMode>(["single", "split-2", "split-4"]);
 const isDetailLevel = oneOf<FdaResultDetailLevel>(["product", "package"]);
 const isSeriesKind = oneOf<SeriesKind>(["product", "package", "ndc"]);
@@ -272,7 +273,11 @@ export type PersistedNadacTab = {
   excludedNdcDescriptions: string[],
 } & PersistedExplorerState;
 
-type PersistedTab = PersistedFdaTab | PersistedNadacTab;
+export type PersistedCollectionTab = {
+  type: "collection"
+} & PersistedExplorerState;
+
+type PersistedTab = PersistedFdaTab | PersistedNadacTab | PersistedCollectionTab;
 
 /*
  * Tab state is validated field by field, each with its own default, so one bad field never
@@ -313,6 +318,15 @@ export function loadNadacTabState(tabId: string): PersistedNadacTab | null {
     type: "nadac",
     searchParams,
     excludedNdcDescriptions: searchParams && isStringArray(raw.excludedNdcDescriptions) ? raw.excludedNdcDescriptions : [],
+    ...loadExplorerState(raw),
+  };
+}
+
+export function loadCollectionTabState(tabId: string): PersistedCollectionTab | null {
+  const raw = readTab(tabId, "collection");
+  if (!raw) return null;
+  return {
+    type: "collection",
     ...loadExplorerState(raw),
   };
 }

@@ -7,7 +7,6 @@ import useFdaSearch from "../../hooks/useFdaSearch";
 import { applyFdaResultFilter, type FdaResultDetailLevel, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
-import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
 import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages, priceChangesInWindow } from "../../library/flagNadacPriceChange";
 import { HALF_WIDTH_GRID_SIZE, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
@@ -19,6 +18,7 @@ import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue } from "../../library/seriesSummary";
 import PriceChangeCard from "./PriceChangeCard";
+import ExplorerGrid, { ExplorerGridItem } from "../ExplorerGrid";
 
 type Props = {
   visible?: boolean
@@ -75,17 +75,10 @@ export default function FdaExplorer({ visible = true }: Props) {
   const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
   return (
-    <Grid container spacing={1} display={visible ? "flex" : "none"} minHeight={0}>
-      <Grid
-        size={{ xs: 12 }}
-      >
-        <ExplorerGridItem title="Page Tools" defaultCollapsed>
-          <FdaPageTools />
-        </ExplorerGridItem>
-      </Grid>
+    <ExplorerGrid visible={visible}>
       <Grid
         component="div"
-        size={{ xs: 12 }}
+        size={12}
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -95,8 +88,25 @@ export default function FdaExplorer({ visible = true }: Props) {
         <ExplorerGridItem title={resultTableTitleMap[fdaResultDetailLevel]}>
           <FdaSearchResults />
         </ExplorerGridItem>
-        {showAutoCharts
-          ?
+      </Grid>
+      <Grid
+        size={12}
+      >
+        <ExplorerGridItem title="Page Tools" >
+          <FdaPageTools />
+        </ExplorerGridItem>
+      </Grid>
+      {showAutoCharts
+        ?
+        <Grid
+          component="div"
+          size={12}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
           <ExplorerGridItem
             title={barVizTitle}
             subtitle={autoChartSubtitle}
@@ -114,9 +124,9 @@ export default function FdaExplorer({ visible = true }: Props) {
               onBarValueChange={setBarValue}
             />
           </ExplorerGridItem>
-          : null
-        }
-      </Grid>
+        </Grid>
+        : null
+      }
       {
         showAutoCharts
           ?
@@ -156,7 +166,7 @@ export default function FdaExplorer({ visible = true }: Props) {
         ))
         : null
       }
-    </Grid>
+    </ExplorerGrid>
   )
 }
 

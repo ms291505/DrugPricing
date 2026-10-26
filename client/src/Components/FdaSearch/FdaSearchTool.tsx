@@ -9,7 +9,7 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
-import { defaultTitleFor } from "../../library/tabTypeRegistry";
+import { defaultTitleFor } from "../../library/tabType.ts";
 import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/types.ts";
 
 export default function FdaSearchTool() {

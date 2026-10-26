@@ -1,5 +1,6 @@
 import type { SetStateAction } from "react";
-import { validateTabTitle, type LayoutMode, type TabType, type WorkspaceTab } from "./types";
+import { type LayoutMode, } from "./types";
+import { validateTabTitle, type TabType, type WorkspaceTab } from "./tabType.ts";
 import type { PersistedWorkspace } from "./persist";
 
 export type WorkspaceState = PersistedWorkspace;

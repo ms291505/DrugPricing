@@ -1,5 +1,5 @@
 import { useWorkspaceActions } from "../../Context/WorkspaceContext"
-import type { WorkspaceTab } from "../../library/types";
+import type { WorkspaceTab } from "../../library/tabType.ts";
 import { Box, IconButton, ButtonBase, TextField, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Menu from '@mui/material/Menu';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { WorkspaceTab } from "./types";
+import type { WorkspaceTab } from "./tabType.ts";
 import { replacementTabId, workspaceReducer, type WorkspaceState } from "./workspace";
 
 const tab = (id: string, title = id): WorkspaceTab => ({ id, type: "fda", title });

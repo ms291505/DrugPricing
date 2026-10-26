@@ -29,6 +29,8 @@ export const CONSTANT = {
   tabContextFabHeight: 220,
 }
 
+export const SMALL_SPACING = 1;
+
 export const MAX_GLOBAL_MODAL_HEIGHT = 500;
 export const MAX_GLOBAL_MODAL_WIDTH = 700;
 /** Price-change charts are auto-added only when there are this many flagged changes or fewer. */

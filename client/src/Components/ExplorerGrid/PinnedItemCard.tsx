@@ -137,7 +137,7 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
         </>}
         actions={actions}
         collapsed={item.collapsed}
-        onCollapsedChange={(collapsed) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
+        onCollapsedChange={(collapsed: boolean) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
         {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={matched ? priceRanges : undefined} /> : null}
       </ExplorerGridItem>

@@ -15,19 +15,29 @@ export default function TabCreator() {
 
   const isMobile = useMobile();
 
-  const cards: Array<DescriptionCardProps> = [
+  const searchCards: Array<DescriptionCardProps> = [
     {
-      searchType: "fda",
+      tabType: "fda",
       onClick: () => changeTabType(id, "fda"),
       header: "FDA + NADAC",
       body: "The FDA's database of drug products currently on the market, including National Average Drug Aquisition Cost data when available.",
       isMobile: isMobile,
     },
     {
-      searchType: "nadac",
+      tabType: "nadac",
       onClick: () => changeTabType(id, "nadac"),
       header: "NADAC Only",
       body: "National Average Drug Aquisition Cost data going back to 2022.",
+      isMobile: isMobile,
+    }
+  ]
+
+  const otherCards: Array<DescriptionCardProps> = [
+    {
+      tabType: "collection",
+      onClick: () => changeTabType(id, "collection"),
+      header: "New Collection",
+      body: "A collection of graphs created from search results.",
       isMobile: isMobile,
     }
   ]
@@ -73,9 +83,24 @@ export default function TabCreator() {
       <Box
         sx={boxSx}
       >
-        {cards.map(card => (
+        {searchCards.map(card => (
           <DescriptionCard
-            key={card.searchType.toString()}
+            key={card.tabType}
+            {...card}
+          />
+        ))}
+      </Box>
+      <Typography
+        variant="h6"
+      >
+        "Other Types"
+      </Typography>
+      <Box
+        sx={boxSx}
+      >
+        {otherCards.map(card => (
+          <DescriptionCard
+            key={card.tabType}
             {...card}
           />
         ))}

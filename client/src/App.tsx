@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import NadacSearch from "./Components/NadacSearch/NadacSearch";
+import NadacSearch from "./Components/NadacSearch";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box, CssBaseline } from "@mui/material";

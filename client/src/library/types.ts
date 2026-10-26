@@ -236,24 +236,6 @@ export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
 
 export type LayoutMode = "single" | "split-2" | "split-4";
 
-export type TabType = "fda" | "nadac" | "new";
-
-export type WorkspaceTab = {
-  id: string;
-  type: TabType;
-  title: string;
-}
-
-export function validateTabTitle(newTitle: string, oldTitle?: string) {
-  let isValid = true;
-
-  if (newTitle.trim() === "") isValid = false;
-
-  if (oldTitle && newTitle.trim() === oldTitle) isValid = false;
-
-  return isValid;
-}
-
 export type MobileDrawer = {
   isOpen: boolean,
   isClosing: boolean,

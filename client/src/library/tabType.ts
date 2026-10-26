@@ -1,8 +1,10 @@
+import Collection from "../Components/Collection";
 import FdaSearch from "../Components/FdaSearch";
-import NadacSearch from "../Components/NadacSearch/NadacSearch";
-import TabCreator from "../Components/TabCreator/TabCreator";
-import { BlankTabProvider, FdaTabProvider, NadacTabProvider } from "../Context/TabProviders";
-import type { TabType } from "./types";
+import NadacSearch from "../Components/NadacSearch";
+import TabCreator from "../Components/TabCreator";
+import { BlankTabProvider, CollectionTabProvider, FdaTabProvider, NadacTabProvider } from "../Context/TabProviders";
+
+export type TabType = "fda" | "nadac" | "new" | "collection";
 
 export type TabTypeDefinition = {
   /**
@@ -29,7 +31,28 @@ export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
     Provider: BlankTabProvider,
     Content: TabCreator,
     defaultTitle: "New Tab",
-  }
+  },
+  collection: {
+    Provider: CollectionTabProvider,
+    Content: Collection,
+    defaultTitle: "New Collection",
+  },
 };
 
 export const defaultTitleFor = (tabType: TabType) => tabTypeRegistry[tabType].defaultTitle;
+
+export type WorkspaceTab = {
+  id: string;
+  type: TabType;
+  title: string;
+}
+
+export function validateTabTitle(newTitle: string, oldTitle?: string) {
+  let isValid = true;
+
+  if (newTitle.trim() === "") isValid = false;
+
+  if (oldTitle && newTitle.trim() === oldTitle) isValid = false;
+
+  return isValid;
+}

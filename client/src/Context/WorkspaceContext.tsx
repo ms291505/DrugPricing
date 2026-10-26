@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type SetStateAction } from "react";
-import type { LayoutMode, TabType, WorkspaceTab } from "../library/types";
+import type { LayoutMode } from "../library/types";
 import { workspaceReducer, type WorkspaceState } from "../library/workspace";
-import { defaultTitleFor } from "../library/tabTypeRegistry";
+import { defaultTitleFor, type TabType, type WorkspaceTab } from "../library/tabType";
 import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
@@ -65,7 +65,7 @@ function initWorkspace(): WorkspaceState {
   const tab = createNewTab();
   const workspace = loadWorkspace() ?? { tabs: [tab], layoutMode: "single" as LayoutMode, paneAssignment: [tab.id] };
   // Saved state for tabs that aren't in the workspace can never be shown again.
-  pruneStoredState(workspace.tabs.map(t => t.id));
+  pruneStoredState(workspace.tabs.map(t => t.id.toString()));
   return workspace;
 }
 

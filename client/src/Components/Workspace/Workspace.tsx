@@ -3,7 +3,7 @@ import { useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceCont
 import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
 import MobileDrawerFab from "./MobileDrawerFab";
-import WhiteSpaceToolBar from "../WhiteSpaceToolBar";
+import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar";
 
 export default function Workspace() {
   const tabs = useWorkspaceTabs();

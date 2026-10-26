@@ -1,5 +1,5 @@
-import type { WorkspaceTab } from "../../library/types.ts";
-import { tabTypeRegistry } from "../../library/tabTypeRegistry.ts";
+import type { WorkspaceTab } from "../../library/tabType.ts";
+import { tabTypeRegistry } from "../../library/tabType.ts";
 import { Box } from "@mui/material";
 import { memo, useMemo, useState } from "react";
 import { TabInstanceContextProvider } from "../../Context/TabInstanceContext.tsx";
