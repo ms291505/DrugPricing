@@ -49,6 +49,53 @@ workspace, but they should go away. What removing them touches:
 
 Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
 
+### Usability round from the user-testing notes (2026-11-01)
+
+Goal: make the core flow usable (search, results table, chart and compare) before adding
+anything new. Decided in an interview about the notes under **Ideas**, to ship as focused PRs to
+`dev` in this order:
+
+1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
+   first (3 tabs × about 10 pins), then:
+   - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (a change of
+     the page dates, or the 2s add highlight, re-renders every pinned chart today);
+   - memoize each chart's derived data;
+   - debounce the tab-state saves, which stringify every pin's full history on each change;
+   - mount charts only near the viewport.
+2. **A Results section replaces Page Tools on both pages.** One framed section, "Results:
+   <search>", holds a toolbar (Dates, the filters, and Product/Package on FDA), then the results
+   table, then the auto charts. Pinned sits below it with a note that filters and dates don't
+   change pins.
+   - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
+     Max** columns in every results table (from `summarizeSeries`, so they match the bar chart;
+     "—" for no prices in the window), and for the auto charts. Rows stay when they have no
+     prices in the window.
+   - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
+     preset keeps the typed dates, so Custom can be switched back on.
+   - Add Chart becomes **Chart selected** (Line/Bar) on the results table.
+   - NADAC's Drug filter narrows the table and the auto charts too, like FDA's filters (this is
+     the parity item below).
+3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
+   values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
+   and its own scroll.
+   - Click or tap locks a date, and a second click or Esc unlocks it.
+   - Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click arrow keys
+     no longer move the readout.
+4. **Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. A
+   toast says why there are several. Pins saved earlier with mixed units still render split.
+
+Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
+
+### Workspace rework (2026-11-01)
+
+A later plan, not this round. Every tab starts as a blank slate:
+
+- a search (run from a modal) adds a results table to the tab;
+- charts are added from results tables.
+
+The Collections proof of concept (`Components/Collection/`, disabled in the tab creator) stays
+in the code until then. It is an early step toward this rework.
+
 ## Cleanups
 
 ### Each a small PR of its own
@@ -156,14 +203,12 @@ workspace tab (see the link format under **Decided**). Two consequences for curr
 ### Notes from user testing (2026-10-17)
 
 On this date I used the web app and took notes on improvements I'd like to see as a user.
+What was decided from them is under **Decided: Usability round** above.
 
-- On the line charts there's text that says "Line: average of the product's packages · shading: lowest to highest package price". Either this doesn't work or it's not obvious what it's trying to explain. What is the shading that's referenced here? Doesn't the line itself show the lowest and highest prices?
-  - This does not appear on the NADAC version of the line charts. Why?
 - Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
 - The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?
 - Page tools is just strange... Adding a chart should probably come from the table not page tools. It's hard to understand what page tools and filters are supposed to be... The intent is to filter the results table, really... Not the whole page. Same issue for both search types.
-- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it foldedr some reason.
-- The tab names for NADAC searches doesn't update when a search is done, this needs implemented.
+- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it for some reason.
 - Tooltips for all the charts should only appear on a click. I think this will really clean things up a bit. Right now they're too floaty and almost get in the way of things. It might improve performance too.
 - The app really struggles when the user starts to pin charts and is really getting to work trying to compare things. Did the performance improvement for tab switching mess this up? I didn't do enough testing before to determine if this impacted it.
 - I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:

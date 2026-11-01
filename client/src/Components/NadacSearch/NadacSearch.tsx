@@ -12,6 +12,9 @@ import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import useAppInit from "../../hooks/useAppInit.ts";
 import { toDateInput, windowEndingAt } from "../../library/dates.ts";
+import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext.tsx";
+import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
+import { defaultTitleFor } from "../../library/tabType.ts";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
@@ -42,6 +45,12 @@ export default function NadacSearch() {
 
   const nadacSearchQuery = useNadacSearch();
 
+  const { renameTab } = useWorkspaceActions();
+  const { id } = useTabInstanceContext();
+  const tab = useWorkspaceTab(id);
+  // Name the tab after its first search, unless the user has already named it.
+  const canChangeName = tab ? tab.title === defaultTitleFor(tab.type) : false;
+
   useEffect(() => {
     if (nadacSearchQuery.data?.prices) {
       setData(nadacSearchQuery.data.prices);
@@ -49,6 +58,11 @@ export default function NadacSearch() {
   }, [nadacSearchQuery.data, setData]);
 
   const handleSearch = () => {
+    if (canChangeName) {
+      const description = ndcDescription.trim();
+      renameTab(id, description.length >= MIN_NDC_DESCRIPTION_LENGTH ? description.toUpperCase() : `NDC ${searchNdc}`);
+    }
+
     setSearchParams({
       ndcDescription: ndcDescription,
       ndc: searchNdc,

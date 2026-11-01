@@ -25,16 +25,9 @@ export type SeriesSummary = {
  * @param prices - prices in one pricing unit, already clipped to the chart's dates
  */
 export function summarizeSeries(prices: ChartPrice[]): SeriesSummary[] {
-  const { rows } = createLineVizData(prices);
+  const { rows, packageCounts } = createLineVizData(prices);
   const labels = new Map<string, string>();
-  const packagesPerDate = new Map<string, Map<number, number>>();
-  for (const price of prices) {
-    labels.set(price.ndc, price.ndcDescription);
-    const perDate = packagesPerDate.get(price.ndc) ?? new Map<number, number>();
-    const time = price.asOfDate.getTime();
-    perDate.set(time, (perDate.get(time) ?? 0) + 1);
-    packagesPerDate.set(price.ndc, perDate);
-  }
+  for (const price of prices) labels.set(price.ndc, price.ndcDescription);
 
   return [...labels].map(([ndc, label]) => {
     const values = rows.flatMap(row => typeof row[ndc] === "number" ? [[row.asOfDate, row[ndc]] as const] : []);
@@ -48,7 +41,7 @@ export function summarizeSeries(prices: ChartPrice[]): SeriesSummary[] {
       average: prices.reduce((sum, value) => sum + value, 0) / prices.length,
       min: Math.min(...prices),
       max: Math.max(...prices),
-      packages: Math.max(...packagesPerDate.get(ndc)!.values()),
+      packages: packageCounts.get(ndc)!,
     };
   });
 }
