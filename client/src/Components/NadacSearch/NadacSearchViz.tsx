@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper"
 import Grid from "@mui/material/Grid";
@@ -18,7 +18,9 @@ import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue } from "../../library/seriesSummary";
 
-export default function NadacSearchViz() {
+// Memoized (it takes no props) so the search form's keystrokes and changes to the workspace's
+// tab list, such as a rename after a search, don't re-render every NADAC tab's results.
+export default memo(function NadacSearchViz() {
 
   const { data, isLoading } = useNadacSearch();
   const origin = useNadacChartOrigin();
@@ -99,4 +101,4 @@ export default function NadacSearchViz() {
       <PinnedSection />
     </Box>
   )
-}
+})

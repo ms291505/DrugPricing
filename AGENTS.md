@@ -153,6 +153,12 @@ Feature folders under `src/Components/`:
     in one grid cell, so hidden tabs keep the visible tab's width and their charts and grids
     see no resize on show. This assumes one visible pane: split layouts (`"split-2"`,
     `"split-4"`, unused so far) would need their own grid.
+  - A search tab is named after its first search while it still has its default title: FDA
+    after the name searched; NADAC after the description, which wins when both fields are filled,
+    or else `NDC <ndc>` in the stored form (`NDC 3089321`; `nadacTabTitle` in
+    `library/nadacSearch.ts`). Reading the tab list re-renders a page on every add, close,
+    rename and retype, in hidden tabs too, so keep it in the search form: `NadacSearch` reads it,
+    and `NadacSearchViz` is `memo`'d so its results don't re-render with it.
 - `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
 - `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
   `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates;
@@ -260,8 +266,18 @@ Notes:
     because it clips the value labels to the plot.
   - Line charts draw steps (`type="stepAfter"`): a NADAC price holds until the next weekly
     file. Charts split by unit share one date axis. A single series has no legend; the
-    title names it. When a line averages several packages, a caption under the chart says so
-    and what the band means, once, rather than in every tooltip row.
+    title names it. When a line averages several packages that differ in price, a band shades
+    their lowest to highest price, and a caption under the chart (`averagedLineCaption`) says
+    what the line and the band are, once, rather than in every tooltip row. Neither shows
+    unless the band would be visible: packages that print the same price have no range
+    (`rangeNdcs` uses `distinctRange`), and a spread under 1% of the price axis's span is
+    dropped (`visibleBandNdcs`). Humira 0074-0124's $9 spread is dropped both on its own
+    $5.5K–$8K axis (1% is $25) and on the 7-product humira chart's $2K–$7K axis (1% is $50). A
+    band dropped for being too thin still shows its range in the tooltip (from `md` up), View
+    data and the CSV; only the CSV keeps ranges that print as one price. A band is rare: most
+    products price every package the same per unit (bottle sizes of liquids are the usual
+    exception). NADAC and FDA package-level series are one package each, so they never
+    average.
   - **Tooltips are drawn by the charts** (`LineTooltip`, `BarTooltip`), not recharts' default
     list, and they must work on a phone, where a chart is about 350px wide and a finger sits on
     it. The line tooltip lists the date and unit once, then a swatch, the NDC and the price per
@@ -392,8 +408,8 @@ npm test         # vitest run
 ```
 
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
-windows, axis scales and tick formats (including the exaggeration cap), series colors, bar
-summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
+windows, axis scales and tick formats (including the exaggeration cap), series colors, line data
+(package averages, bands and their caption), NADAC search validity and tab titles, bar summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
 the multi-window read-only switch), and the workspace reducer (closing a tab, and that unchanged
 tabs keep their identity). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in

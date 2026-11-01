@@ -49,6 +49,55 @@ workspace, but they should go away. What removing them touches:
 
 Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
 
+### Usability round from the user-testing notes (2026-11-01)
+
+Goal: make the core flow usable (search, results table, chart and compare) before adding
+anything new. Decided in an interview about the notes under **Ideas**, to ship as focused PRs to
+`dev` in this order:
+
+1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
+   first (3 tabs × about 10 pins), then:
+   - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (a change of
+     the page dates, or the 2s add highlight, re-renders every pinned chart today). The split
+     settles the Cleanups item about the context's name: name the new contexts for their jobs;
+   - memoize each chart's derived data;
+   - debounce the tab-state saves, which stringify every pin's full history on each change;
+   - mount charts only near the viewport.
+2. **A Results section replaces Page Tools on both pages.** One framed section, "Results:
+   <search>", holds a toolbar (Dates, the filters, and Product/Package on FDA), then the results
+   table, then the auto charts. Pinned sits below it with a note that filters and dates don't
+   change pins.
+   - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
+     Max** columns in every results table (from `summarizeSeries`, so they match the bar chart;
+     "—" for no prices in the window), and for the auto charts. Rows stay when they have no
+     prices in the window.
+   - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
+     preset keeps the typed dates, so Custom can be switched back on.
+   - Add Chart becomes **Chart selected** (Line/Bar) on the results table.
+   - NADAC's Drug filter narrows the table and the auto charts too, like FDA's filters.
+   - This settles two Cleanups items, "Page Tools is cramped at 1024px" and "One Page Tools
+     shell for both pages". Delete them with it.
+3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
+   values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
+   and its own scroll.
+   - Click or tap locks a date, and a second click or Esc unlocks it.
+   - Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click arrow keys
+     no longer move the readout.
+4. **Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. A
+   toast says why there are several. Pins saved earlier with mixed units still render split.
+
+Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
+
+### Workspace rework (2026-11-01)
+
+A later plan, not this round. Every tab starts as a blank slate:
+
+- a search (run from a modal) adds a results table to the tab;
+- charts are added from results tables.
+
+The Collections proof of concept (`Components/Collection/`, disabled in the tab creator) stays
+in the code until then. It is an early step toward this rework.
+
 ## Cleanups
 
 ### Each a small PR of its own
@@ -59,6 +108,7 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
 - **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
   chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
   chart-settings context) so its name matches its job. It's a pure rename across about 15 files.
+  Step 1 of the usability round (under **Decided**) splits this context, so do it there.
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
@@ -72,7 +122,8 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
 - **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
   the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
   bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint
-  that accounts for the drawer, or Page Tools should move above the cards there.
+  that accounts for the drawer, or Page Tools should move above the cards there. Superseded by
+  step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
 - **The FDA search toast belongs to the fetch, not the search.** `useFdaSearch` wraps its
@@ -91,7 +142,8 @@ Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan
   the `data`/`setData` state and a render with stale data.
 - **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
 - **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
-  Chart dates but duplicate the panel layout, heading and section styles.
+  Chart dates but duplicate the panel layout, heading and section styles. Superseded by step 2
+  of the usability round: one Results section on both pages.
 
 ## Ideas
 
@@ -156,14 +208,13 @@ workspace tab (see the link format under **Decided**). Two consequences for curr
 ### Notes from user testing (2026-10-17)
 
 On this date I used the web app and took notes on improvements I'd like to see as a user.
+What was decided from them is under **Decided** above, in "Usability round from the
+user-testing notes".
 
-- On the line charts there's text that says "Line: average of the product's packages · shading: lowest to highest package price". Either this doesn't work or it's not obvious what it's trying to explain. What is the shading that's referenced here? Doesn't the line itself show the lowest and highest prices?
-  - This does not appear on the NADAC version of the line charts. Why?
 - Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
 - The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?
 - Page tools is just strange... Adding a chart should probably come from the table not page tools. It's hard to understand what page tools and filters are supposed to be... The intent is to filter the results table, really... Not the whole page. Same issue for both search types.
-- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it foldedr some reason.
-- The tab names for NADAC searches doesn't update when a search is done, this needs implemented.
+- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it for some reason.
 - Tooltips for all the charts should only appear on a click. I think this will really clean things up a bit. Right now they're too floaty and almost get in the way of things. It might improve performance too.
 - The app really struggles when the user starts to pin charts and is really getting to work trying to compare things. Did the performance improvement for tab switching mess this up? I didn't do enough testing before to determine if this impacted it.
 - I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:

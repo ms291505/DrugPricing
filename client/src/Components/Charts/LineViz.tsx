@@ -3,7 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
-import { createLineVizData, rangeKey, type LineVizRow } from "../../library/createLineVizData.ts";
+import { averagedLineCaption, createLineVizData, rangeKey, visibleBandNdcs, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/chartSeries.ts";
 import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
@@ -80,6 +80,8 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
 const NONE_HIDDEN: ReadonlySet<string> = new Set();
 /** Other series' strength while one is highlighted from the legend. */
 const DIMMED_OPACITY = 0.25;
+/** The package-range band's strength behind its line. */
+const BAND_OPACITY = 0.3;
 
 type UnitLineChartProps = {
   nadacPrices: ChartPrice[];
@@ -106,7 +108,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const focusNdc = highlighted && shownNdcs.includes(highlighted) ? highlighted : null;
   const opacityOf = (ndc: string) => focusNdc && focusNdc !== ndc ? DIMMED_OPACITY : 1;
 
-  const { rows: vizData, rangeNdcs } = createLineVizData(nadacPrices);
+  const { rows: vizData, rangeNdcs, packageCounts } = createLineVizData(nadacPrices);
 
   const descriptionFor = (ndc: string) => nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
 
@@ -120,6 +122,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const xTicks = dateTicks(xDomain[0], xDomain[1], isMobile ? 4 : 7);
 
   const yAxis = linePriceAxis(nadacPrices, shownNdcs, priceRange);
+
+  const bandNdcs = visibleBandNdcs(vizData, shownNdcs.filter(ndc => rangeNdcs.has(ndc)), yAxis.domain);
+  const bandCaption = averagedLineCaption(bandNdcs, shownNdcs.length, packageCounts);
 
   const readout = useChartReadout((row: LineVizRow) => row.asOfDate, date => {
     const row = vizData.find(r => r.asOfDate === date);
@@ -178,14 +183,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             : null}
         />
         {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
-        {shownNdcs.filter(ndc => rangeNdcs.has(ndc)).map((ndc) => (
+        {bandNdcs.map((ndc) => (
           <Area
             key={rangeKey(ndc)}
             dataKey={rangeKey(ndc)}
             type="stepAfter"
             stroke="none"
             fill={colorFor(ndc)}
-            fillOpacity={0.2 * opacityOf(ndc)}
+            fillOpacity={BAND_OPACITY * opacityOf(ndc)}
             activeDot={false}
             legendType="none"
             tooltipType="none"
@@ -230,10 +235,8 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
       : null}
     <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, changeSpan)}</Box>
     {/* Said once here rather than in every tooltip row. */}
-    {shownNdcs.some(ndc => rangeNdcs.has(ndc))
-      ? <Typography variant="caption" color="text.secondary">
-        Line: average of the product's packages · shading: lowest to highest package price
-      </Typography>
+    {bandCaption
+      ? <Typography variant="caption" color="text.secondary">{bandCaption}</Typography>
       : null}
   </>);
 }

@@ -4,7 +4,7 @@ import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
 import React, { useState, useEffect } from "react";
-import { DEFAULT_NADAC_SEARCH_MONTHS, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../../library/constants.ts";
+import { DEFAULT_NADAC_SEARCH_MONTHS } from "../../library/constants.ts";
 import { useSearchContext } from "../../Context/NadacSearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
@@ -12,6 +12,10 @@ import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import useAppInit from "../../hooks/useAppInit.ts";
 import { toDateInput, windowEndingAt } from "../../library/dates.ts";
+import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext.tsx";
+import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
+import { defaultTitleFor } from "../../library/tabType.ts";
+import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
@@ -38,9 +42,15 @@ export default function NadacSearch() {
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
   const searchNdc = toStoredNadacNdc(ndc);
 
-  const isValidSearch = ndcDescription.length >= MIN_NDC_DESCRIPTION_LENGTH || searchNdc.length >= MIN_NDC_LENGTH;
+  const isValidSearch = isValidNadacSearch(ndcDescription, searchNdc);
 
   const nadacSearchQuery = useNadacSearch();
+
+  const { renameTab } = useWorkspaceActions();
+  const { id } = useTabInstanceContext();
+  const tab = useWorkspaceTab(id);
+  // Name the tab after its first search, unless the user has already named it.
+  const canChangeName = tab ? tab.title === defaultTitleFor(tab.type) : false;
 
   useEffect(() => {
     if (nadacSearchQuery.data?.prices) {
@@ -49,8 +59,13 @@ export default function NadacSearch() {
   }, [nadacSearchQuery.data, setData]);
 
   const handleSearch = () => {
+    const title = nadacTabTitle(ndcDescription, searchNdc);
+    if (canChangeName && title) renameTab(id, title);
+
     setSearchParams({
-      ndcDescription: ndcDescription,
+      // Trimmed, as the validity check and the tab title are: " eliquis" would miss descriptions
+      // that start with ELIQUIS.
+      ndcDescription: ndcDescription.trim(),
       ndc: searchNdc,
       minDate: minDate,
       maxDate: maxDate
