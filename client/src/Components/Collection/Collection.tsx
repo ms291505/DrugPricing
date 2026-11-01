@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import PinnedSection from "../ExplorerGrid/PinnedSection";
+import ItemSection from "../ExplorerGrid/ItemSection";
 import { useWorkspaceActions } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { useEffect } from "react";
@@ -18,7 +18,7 @@ export default function Collection() {
       <Box>
         This is a collection.
       </Box>
-      <PinnedSection />
+      <ItemSection pinned />
     </Box>
   )
 }

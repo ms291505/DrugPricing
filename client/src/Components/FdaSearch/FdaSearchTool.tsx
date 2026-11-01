@@ -6,6 +6,7 @@ import { Button, Checkbox, CircularProgress, FormControlLabel, Grid } from "@mui
 import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
+import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
@@ -15,6 +16,7 @@ import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/
 export default function FdaSearchTool() {
 
   const { fdaSearchParams, setFdaSearchParams, setFdaResultFilter } = useFdaSearchContext();
+  const { clearUnpinnedItems } = useExplorerItems();
 
   const { renameTab } = useWorkspaceActions();
 
@@ -40,8 +42,9 @@ export default function FdaSearchTool() {
     if (canChangeName) renameTab(id, draftSearchParams.proprietaryName.toUpperCase());
 
     setFdaSearchParams(draftSearchParams);
-    // A new search starts unfiltered.
+    // A new search starts unfiltered, without the last search's added charts.
     setFdaResultFilter(createFdaResultFilter());
+    clearUnpinnedItems();
   }
 
   return (

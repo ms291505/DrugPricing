@@ -8,6 +8,8 @@ import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
+import toast from "react-hot-toast";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
@@ -17,16 +19,19 @@ import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   item: ExplorerItem,
+  /** False for an Add Chart chart, which gets a pin button. */
+  pinned: boolean,
   index: number,
   count: number,
-  /** Shared price range per pricing unit across the matched line charts ("Match scale"). */
+  /** Shared price range per pricing unit across the section's matched line charts ("Match scale"). */
   priceRanges?: Map<string, [number, number]>,
 }
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function PinnedItemCard({ item, index, count, priceRanges }: Props) {
-  const { updateItem, removeItem, moveItem, highlight } = useExplorerItems();
+/** A user chart, pinned or added, drawn from its stored snapshot. */
+export default function ItemCard({ item, pinned, index, count, priceRanges }: Props) {
+  const { updateItem, removeItem, moveItem, pinItem, highlight } = useExplorerItems();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
 
@@ -35,8 +40,8 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
   const highlighted = highlight?.id === item.id;
   const focusOnAdd = highlighted && highlight.focus;
 
-  // Add Chart feedback: bring the new card into view and move focus to its heading,
-  // so keyboard and screen-reader users land on what they just created.
+  // Add Chart and pin feedback: bring the card into view and move focus to its heading, so
+  // keyboard and screen-reader users land on what they just created or moved.
   useEffect(() => {
     if (!focusOnAdd) return;
     cardRef.current?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
@@ -57,8 +62,21 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
   const isLineChart = item.kind === "chart" && item.chartType === "line";
   const matched = isLineChart && item.matchScale === true;
 
+  const handlePin = () => {
+    pinItem(item.id);
+    toast.success(`Pinned "${title}"`);
+  };
+
   const actions = (
     <>
+      {pinned
+        ? null
+        : <Tooltip title="Pin to this tab">
+          <IconButton size="small" onClick={handlePin} aria-label={`Pin ${title}`}>
+            <PushPinOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      }
       <Tooltip title="Item actions">
         <IconButton
           size="small"

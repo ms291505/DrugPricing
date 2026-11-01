@@ -10,7 +10,7 @@ import VizTools from "./VizTools";
 import { shouldAutoChart } from "../../library/chartSeries";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
-import PinnedSection from "../ExplorerGrid/PinnedSection";
+import ItemSection from "../ExplorerGrid/ItemSection";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import useChartWindow from "../../hooks/useChartWindow";
@@ -96,7 +96,8 @@ export default function NadacSearchViz() {
         </Grid>
         : null
       }
-      <PinnedSection />
+      <ItemSection pinned={false} />
+      <ItemSection pinned />
     </Box>
   )
 }

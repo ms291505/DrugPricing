@@ -23,7 +23,7 @@ export default function FdaPageTools({ displayHeader }: Props) {
 
   const { fdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
-  const { addItem } = useExplorerItems();
+  const { addUnpinnedItem } = useExplorerItems();
 
   const origin = useFdaChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
@@ -65,16 +65,14 @@ export default function FdaPageTools({ displayHeader }: Props) {
 
     if (chartData.length === 0) return;
 
-    const item = createChartItem({
+    addUnpinnedItem(createChartItem({
       chartType,
       prices: chartData,
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),
       origin,
       dateWindow: chartWindow,
       colors,
-    })
-
-    addItem(item, { focus: true });
+    }), { focus: true });
   }
 
   const pageToolsSectionSxProps: SxProps<Theme> = {

@@ -159,7 +159,7 @@ Feature folders under `src/Components/`:
   `SeriesLegend` and `ChartData` (View data / Download CSV) are drawn by `LineViz`/`BarViz`.
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
-  `PinnedSection`/`PinnedItemCard`/`PinnedChartDates`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
+  `ItemSection`/`ItemCard`/`PinnedChartDates`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
   `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
   `TabCreator/`, `ui/` — supporting UI.
@@ -167,14 +167,20 @@ Feature folders under `src/Components/`:
 Notes:
 
 - Charts are recharts (`Charts/LineViz`, `Charts/BarViz`).
-- **Explorer items: system vs. pinned.** A search tab shows two kinds of cards.
+- **Explorer items: system, added, and pinned.** A search tab shows three kinds of cards.
   - *System* items (the results table, auto charts, price-change charts) are derived from the
     current search on every render and never stored.
+  - *Added* (unpinned) items are what Add Chart makes: snapshots in `ExplorerItemsContext`
+    (`unpinnedItems`), shown in the "Added charts" section. They are not saved, and a new search
+    clears them (`clearUnpinnedItems`, called where each page starts a search). The pin button
+    on an added card moves it to Pinned (`pinItem`) with its dates, width, and Match scale.
   - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
-    `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never
-    touch them. Don't clear them on search, and don't write system charts into them. The
-    Pinned section renders on both pages regardless of search state (on the FDA page it sits in
-    `FdaSearch`, outside the `isSuccess` gate), so pins show while a search is missing,
+    `TabProviders.tsx`). The pin button on an auto chart or an added chart creates them; new
+    searches and filter changes never touch them. Don't clear them on search, and don't write
+    system charts into them. Only pinned items are saved with the tab.
+  - Both sections are one component, `ItemSection` (`pinned` prop), with one card, `ItemCard`.
+    They render on both pages regardless of search state (on the FDA page they sit in
+    `FdaSearch`, outside the `isSuccess` gate), so they show while a search is missing,
     loading, or failing.
   - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
     today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
@@ -200,7 +206,7 @@ Notes:
     rest. `MAX_AUTO_PRICE_CHANGE_CHARTS` applies to the changes inside the dates; past it, the
     note says how many there are instead of charting them. `NadacPriceChange` carries the
     `oldPrice` and `newPrice` the callout draws.
-  - **"Match scale" is per chart**, not per section: a pinned line chart's menu toggles
+  - **"Match scale" is per chart**, within its section: a pinned or added line chart's menu toggles
     `ChartItem.matchScale`, and the matched charts in one pricing unit share a fitted price axis
     (`matchedPriceRange`), marked by a "Matched scale" chip. New pins start unmatched. A
     tab-wide switch matched unrelated pins with each other: $0.25 metformin on humira's

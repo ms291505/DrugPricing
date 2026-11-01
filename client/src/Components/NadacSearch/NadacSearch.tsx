@@ -6,6 +6,7 @@ import CircularProgress from "@mui/material/CircularProgress"
 import React, { useState, useEffect } from "react";
 import { DEFAULT_NADAC_SEARCH_MONTHS, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../../library/constants.ts";
 import { useSearchContext } from "../../Context/NadacSearchContext.tsx";
+import { useExplorerItems } from "../../Context/ExplorerItemsContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
@@ -15,6 +16,7 @@ import { toDateInput, windowEndingAt } from "../../library/dates.ts";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
+  const { clearUnpinnedItems } = useExplorerItems();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const [ndcDescription, setNdcDescription] = useState(searchParams?.ndcDescription ?? "");
@@ -56,6 +58,7 @@ export default function NadacSearch() {
       maxDate: maxDate
     });
     clearNdcDescriptionFilter();
+    clearUnpinnedItems();
   }
 
   const handleNdcDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
