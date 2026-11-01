@@ -224,3 +224,20 @@ user-testing notes".
 - The app really struggles when the user starts to pin charts and is really getting to work trying to compare things. Did the performance improvement for tab switching mess this up? I didn't do enough testing before to determine if this impacted it.
 - I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:
   - When something is mixed units, it should probably just be different explorer items (aka completely different charts) instead of a split chart as one item. A toast can explain why multiple charts were added. This makes it easier to compare the per each version of Wegovy to Rybelsus.
+
+### Workspace Redo (11-01-2026)
+
+The Workspace has gone in a direction that probably isn't the best place to be. A shouldn't be a search. A tab should be a collection of results and charts
+created by a user and stored for comparison. A search is really a tool. People can use the app and simply perform a search and look around a bit, that would be the
+fda search and nadac search routes. The workspace is for when people want to collect results for notes and comparison. They add results using a search. This is
+where the Collection idea was going before development on that stopped.
+
+When a new tab is created, users should be asked how they want to add data: which search they want to use. One they pick it probably opens a modal with the search in it.
+Users can then add results tables and charts to their collection (aka tab).
+
+Auto charts are now essentially recommended additions to the collection in this context.
+
+Eventually we can add "starting points" for tabs a user might want to see or start with. They'll also be a demo. GLP-1 drugs might be a good starting point.
+
+The current Collection might be a good starting point, but it just uses PinnedSection and has a wonky mailbox design to get items to it. The whole workspace
+context needs to be rethought, so probably no need to stick to this mailbox design. However, users should be able to create a workspace tab from the basic search endpoints if they want to start there and then do something more complex. Because of that the workspace context probably needs to wrap around the whole app like it essentially does now.
