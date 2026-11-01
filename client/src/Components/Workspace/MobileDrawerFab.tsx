@@ -27,7 +27,7 @@ export default function MobileDrawerFab() {
       onClick={handleClick}
       sx={{
         position: "fixed",
-        top: 16,
+        bottom: 16,
         left: 16,
         transform: mobileDrawerIsOpen ? `translateX(${drawerWidth}px)` : "translateX(0)",
         transition: (theme) =>

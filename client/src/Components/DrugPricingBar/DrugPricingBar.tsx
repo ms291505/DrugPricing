@@ -4,13 +4,10 @@ import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar"
 import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
-import { Divider, IconButton, Tooltip } from "@mui/material";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { useGlobalModalContext } from "../../Context/GlobalModalContext";
+import { Divider, } from "@mui/material";
 import Portal from "@mui/material/Portal"
 
 export default function DrugPricingBar() {
-  const { setGlobalModal } = useGlobalModalContext();
   return (
     <>
       {import.meta.env.DEV && (
@@ -28,7 +25,7 @@ export default function DrugPricingBar() {
         </Portal>
       )}
       <AppBar
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, display: { xs: "none", md: "block" } }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, display: { xs: "block", md: "block" } }}
       >
         <Toolbar sx={{
           display: "flex",
@@ -52,15 +49,10 @@ export default function DrugPricingBar() {
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/workspace">Workspace</NavButton>
           </Box>
-          <Tooltip title="Settings">
-            <IconButton aria-label="Settings" onClick={() => setGlobalModal("settings")} sx={{ ml: "auto" }}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
         </Toolbar>
       </AppBar>
       {/* Room for the app bar, which phones don't show. */}
-      <Toolbar sx={{ mb: 1, display: { xs: "none", md: "flex" } }} />
+      <Toolbar sx={{ mb: 1, display: { xs: "flex", md: "flex" } }} />
       <Outlet />
     </>);
 }

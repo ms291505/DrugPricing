@@ -1,10 +1,10 @@
 import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
-import { Box, Typography, Paper, Button } from "@mui/material";
+import { Box, Paper, Button } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
 import DrawerTab from "./DrawerTab.tsx";
-import NavButton from "../DrugPricingBar/NavButton.tsx";
 import TabButton from "./TabButton.tsx";
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
+import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 
 export default function DrawerContent() {
   const { addTab, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
@@ -28,11 +28,7 @@ export default function DrawerContent() {
   return (
 
     <>
-      <Paper
-        sx={{ p: 1 }}
-      >
-        <Typography variant="h5">DrugPricing</Typography>
-      </Paper>
+      <WhiteSpaceToolBar />
       <Box
         sx={{
           display: "flex",
@@ -51,10 +47,8 @@ export default function DrawerContent() {
           flexDirection: "column"
         }}
       >
-        <NavButton to="/workspace">Workspace</NavButton>
         <Button onClick={() => openModal("settings")}>SETTINGS</Button>
         <Button onClick={() => openModal("help")}>HELP</Button>
-        <Button onClick={() => openModal("about")}>ABOUT</Button>
       </Paper>
     </>
   )

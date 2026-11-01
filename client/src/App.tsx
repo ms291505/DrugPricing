@@ -54,6 +54,7 @@ function AppShell() {
   return (
     <Container maxWidth="xl" sx={{ pb: 2 }}>
       <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
+        <DrugPricingBar />
         <Workspace />
       </Box>
       <GlobalModal />
@@ -68,7 +69,7 @@ function AppShell() {
             <Route path="/fda-search" element=
               {<FdaTabProvider tabId={STANDALONE_TAB_IDS.fda}><FdaSearch /></FdaTabProvider>} />
             <Route path="/welcome" element={<Container maxWidth="md"><OnBoarding /></Container>} />
-            <Route path="*" element={<Navigate to="/workspace" replace />} />
+            <Route path="*" element={<Navigate to="/about" replace />} />
           </Route>
         </Routes>
       )}

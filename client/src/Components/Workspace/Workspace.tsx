@@ -3,14 +3,12 @@ import { useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceCont
 import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
 import MobileDrawerFab from "./MobileDrawerFab";
-import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar";
 
 export default function Workspace() {
   const tabs = useWorkspaceTabs();
   const { paneAssignment } = useWorkspacePanes();
   return (
     <>
-      <WhiteSpaceToolBar />
       <MobileDrawerFab />
       <Box
         sx={{

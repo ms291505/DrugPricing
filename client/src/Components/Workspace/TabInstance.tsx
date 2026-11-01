@@ -4,6 +4,7 @@ import { Box } from "@mui/material";
 import { memo, useMemo, useState } from "react";
 import { TabInstanceContextProvider } from "../../Context/TabInstanceContext.tsx";
 import TabContextFab from "./TabContextFab.tsx";
+import useMobile from "../../hooks/useMobile.ts";
 
 // Unlike `display: none`, `content-visibility: hidden` keeps the tab's layout, so showing it
 // again doesn't lay out the whole page from scratch. It also takes the content out of the
@@ -25,6 +26,7 @@ export default memo(function TabInstance({ workspaceTab, visible }: Props) {
 
   const { id, type } = workspaceTab;
   const { Provider, Content } = tabTypeRegistry[type];
+  const isMobile = useMobile();
 
   // Hidden tabs stay mounted. A restored tab waits to run its search until it is first shown,
   // so reloading a many-tab workspace doesn't fire every tab's search at once.
@@ -38,7 +40,7 @@ export default memo(function TabInstance({ workspaceTab, visible }: Props) {
     </Provider>
   ), [Provider, Content, id, hasBeenVisible]);
 
-  const showTabContextFab = visible && type !== "new";
+  const showTabContextFab = visible && type !== "new" && isMobile;
 
   return (
     <TabInstanceContextProvider id={id}>

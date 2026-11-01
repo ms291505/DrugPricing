@@ -7,6 +7,7 @@ import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { CONSTANT } from "../../library/constants.ts";
 import useScrolled from "../../hooks/useScrolled.ts";
 import useTabRename from "../../hooks/useTabRename.ts";
+import useMobile from "../../hooks/useMobile.ts";
 
 export default function TabContextFab() {
 
@@ -21,6 +22,9 @@ export default function TabContextFab() {
   const uuid = useId();
   const fabId = `${uuid}-button`;
   const tabMenuId = `${uuid}-menu`;
+  // Phones keep the tab's controls at the bottom, in thumb reach; wider screens use the top.
+  const isMobile = useMobile();
+  const edge = isMobile ? { bottom: 16 } : { top: 82 };
 
   const tabTitle = tabs.find(t => t.id === id)?.title ?? "Workspace";
 
@@ -66,7 +70,7 @@ export default function TabContextFab() {
       id={fabId}
       sx={{
         position: "fixed",
-        top: 16,
+        ...edge,
         left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
         transform: "translateX(-50%)",
         height: 40,
@@ -107,7 +111,7 @@ export default function TabContextFab() {
         variant="standard"
         sx={{
           position: "fixed",
-          top: 16,
+          ...edge,
           left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
           transform: "translateX(-50%)",
           height: 40,
@@ -135,8 +139,9 @@ export default function TabContextFab() {
         vertical: "center",
         horizontal: "center"
       }}
+      // The menu grows away from the screen edge the FAB sits on, tucked behind the FAB.
       transformOrigin={{
-        vertical: "top",
+        vertical: isMobile ? "bottom" : "top",
         horizontal: "center"
       }}
       sx={{
@@ -144,8 +149,8 @@ export default function TabContextFab() {
 
           width: tabContextFabHeight,
           bgcolor: theme.palette.primary.dark,
-          pt: 2,
-          borderRadius: "4px 4px 16px 16px",
+          ...(isMobile ? { pb: 2 } : { pt: 2 }),
+          borderRadius: isMobile ? "16px 16px 4px 4px" : "4px 4px 16px 16px",
 
         },
         zIndex: theme.zIndex.fab - 1,
