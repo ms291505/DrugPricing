@@ -1,10 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type SetStateAction } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type SetStateAction } from "react";
 import type { LayoutMode } from "../library/types";
 import { workspaceReducer, type WorkspaceState } from "../library/workspace";
 import { defaultTitleFor, type TabType, type WorkspaceTab } from "../library/tabType";
 import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
+import type { ExplorerItem } from "../library/explorerItems";
 
 // The workspace is split into several contexts so a component re-renders only for the state it
 // reads. Switching tabs changes only the panes (and, on a phone, the drawer), so hidden tabs,
@@ -29,6 +30,9 @@ type WorkspaceActions = {
   setLayoutMode: (value: SetStateAction<LayoutMode>) => void;
   setPaneAssigment: (value: SetStateAction<Array<string | null>>) => void;
   setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
+  addToCollection: (item: ExplorerItem, id?: string) => void;
+  /** Lets a collection tab receive items; returns the unregister function. */
+  registerTab: (id: string, receive: (item: ExplorerItem) => void) => () => void;
 };
 
 const WorkspaceTabsContext = createContext<Array<WorkspaceTab>>([]);
@@ -50,6 +54,8 @@ const WorkspaceActionsContext = createContext<WorkspaceActions>({
   setLayoutMode: () => { },
   setPaneAssigment: () => { },
   setMobileDrawerIsOpen: () => { },
+  addToCollection: () => { },
+  registerTab: () => () => { },
 });
 
 function createNewTab(): WorkspaceTab {
@@ -73,6 +79,21 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const [workspace, dispatch] = useReducer(workspaceReducer, undefined, initWorkspace);
   const { tabs, layoutMode, paneAssignment } = workspace;
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
+
+  // Collection tabs register a receiver for items sent from other tabs. Items sent to a tab that
+  // hasn't registered yet (one just created) wait in `pending` until it does.
+  const receivers = useRef(new Map<string, (item: ExplorerItem) => void>());
+  const pending = useRef(new Map<string, ExplorerItem[]>());
+
+  const registerTab = useCallback(
+    (id: string, receive: (item: ExplorerItem) => void) => {
+      receivers.current.set(id, receive);
+      pending.current.get(id)?.forEach(receive);
+      pending.current.delete(id);
+      return () => { receivers.current.delete(id); };
+    },
+    []
+  );
 
   useEffect(() => {
     saveWorkspace(workspace);
@@ -123,6 +144,16 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     dispatch({ type: "setPanes", value });
   }, []);
 
+  // Sends a copy, so the same chart can go to a collection more than once. Without an id, a new
+  // collection tab is created for it.
+  const addToCollection = useCallback((item: ExplorerItem, id?: string) => {
+    const copy = { ...item, id: crypto.randomUUID() };
+    const target = id ?? addTab("collection");
+    const receive = receivers.current.get(target);
+    if (receive) receive(copy);
+    else pending.current.set(target, [...(pending.current.get(target) ?? []), copy]);
+  }, [addTab]);
+
   const actions = useMemo<WorkspaceActions>(() => ({
     addTab,
     removeTab,
@@ -131,7 +162,9 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setLayoutMode,
     setPaneAssigment,
     setMobileDrawerIsOpen,
-  }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment]);
+    addToCollection,
+    registerTab,
+  }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment, addToCollection, registerTab]);
 
   const panes = useMemo(() => ({ layoutMode, paneAssignment }), [layoutMode, paneAssignment]);
 

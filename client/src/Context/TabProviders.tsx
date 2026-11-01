@@ -42,6 +42,7 @@ export const CollectionTabProvider = ({ children, tabId }: TabProviderProps) => 
   const [saved] = useState(() => loadCollectionTabState(tabId));
   return (
     <ExplorerItemsProvider initial={saved ?? undefined}>
+      <SaveCollectionTab tabId={tabId} />
       {children}
     </ExplorerItemsProvider>
   )
@@ -85,6 +86,16 @@ function SaveNadacTab({ tabId }: { tabId: string }) {
       chartDates,
     });
   }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems, chartDates]);
+
+  return null;
+}
+
+function SaveCollectionTab({ tabId }: { tabId: string }) {
+  const { pinnedItems, chartDates } = useExplorerItems();
+
+  useEffect(() => {
+    saveTabState(tabId, { type: "collection", pinnedItems, chartDates });
+  }, [tabId, pinnedItems, chartDates]);
 
   return null;
 }

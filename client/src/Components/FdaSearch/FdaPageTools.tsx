@@ -14,6 +14,7 @@ import AddChartControl from "../ExplorerGrid/AddChartControl";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 import useChartWindow from "../../hooks/useChartWindow";
 import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
+import { useWorkspaceActions } from "../../Context/WorkspaceContext";
 
 type Props = {
   displayHeader?: boolean
@@ -24,6 +25,7 @@ export default function FdaPageTools({ displayHeader }: Props) {
   const { fdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
   const { addItem } = useExplorerItems();
+  const { addToCollection } = useWorkspaceActions();
 
   const origin = useFdaChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
@@ -65,14 +67,17 @@ export default function FdaPageTools({ displayHeader }: Props) {
 
     if (chartData.length === 0) return;
 
-    addItem(createChartItem({
+    const item = createChartItem({
       chartType,
       prices: chartData,
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),
       origin,
       dateWindow: chartWindow,
       colors,
-    }), { focus: true });
+    })
+
+    addItem(item, { focus: true });
+    addToCollection(item);
   }
 
   const pageToolsSectionSxProps: SxProps<Theme> = {

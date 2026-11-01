@@ -20,7 +20,7 @@ export default function PinnedSection() {
   const anyExpanded = pinnedItems.some(item => !item.collapsed);
 
   return (
-    <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1, }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: { xs: 1, md: 0 } }}>
         <Typography component="h2" variant="h6" id={headingId}>Pinned</Typography>
         <Chip size="small" label={pinnedItems.length} aria-label={`${pinnedItems.length} pinned items`} />
