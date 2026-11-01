@@ -32,16 +32,6 @@ export default function TabCreator() {
     }
   ]
 
-  const otherCards: Array<DescriptionCardProps> = [
-    {
-      tabType: "collection",
-      onClick: () => changeTabType(id, "collection"),
-      header: "New Collection",
-      body: "A collection of graphs created from search results.",
-      isMobile: isMobile,
-    }
-  ]
-
   const boxSx: SxProps =
     isMobile
       ? {
@@ -84,21 +74,6 @@ export default function TabCreator() {
         sx={boxSx}
       >
         {searchCards.map(card => (
-          <DescriptionCard
-            key={card.tabType}
-            {...card}
-          />
-        ))}
-      </Box>
-      <Typography
-        variant="h6"
-      >
-        "Other Types"
-      </Typography>
-      <Box
-        sx={boxSx}
-      >
-        {otherCards.map(card => (
           <DescriptionCard
             key={card.tabType}
             {...card}
