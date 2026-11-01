@@ -85,7 +85,7 @@ describe("visibleBandNdcs", () => {
     expect(visibleBandNdcs(rows, ["C"], [2000, 7000])).toEqual(["C"]);
   });
 
-  it("drops a series whose only dates without a range sit beside thin spreads", () => {
+  it("drops a series whose spreads are all too thin, past a date with no range", () => {
     const { rows } = createLineVizData([
       price("D", "2025-01-01", 3000), price("D", "2025-01-01", 3009),
       price("D", "2025-02-01", 3000),

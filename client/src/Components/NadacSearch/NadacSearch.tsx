@@ -63,7 +63,9 @@ export default function NadacSearch() {
     if (canChangeName && title) renameTab(id, title);
 
     setSearchParams({
-      ndcDescription: ndcDescription,
+      // Trimmed, as the validity check and the tab title are: " eliquis" would miss descriptions
+      // that start with ELIQUIS.
+      ndcDescription: ndcDescription.trim(),
       ndc: searchNdc,
       minDate: minDate,
       maxDate: maxDate

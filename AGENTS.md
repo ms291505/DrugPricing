@@ -267,15 +267,17 @@ Notes:
   - Line charts draw steps (`type="stepAfter"`): a NADAC price holds until the next weekly
     file. Charts split by unit share one date axis. A single series has no legend; the
     title names it. When a line averages several packages that differ in price, a band shades
-    their lowest to highest price, and a caption under the chart (`averagedLineCaption`) says what
-    the line and the band are, once, rather than in every tooltip row. Neither shows unless the
-    band would be visible: packages that print the same price have no range (`rangeNdcs` uses
-    `distinctRange`), and a spread under 1% of the price axis is dropped (`visibleBandNdcs`),
-    e.g. humira's $9 spread on a $2K–$7K axis, where 1% of the $5K span is $50. A band dropped
-    for being too thin still shows its range in the tooltip (from `md` up), View data and the
-    CSV; only the CSV keeps ranges that print as one price. A band is rare: most products
-    price every package the same per unit (bottle sizes of liquids are the usual exception). NADAC and FDA package-level series are one package each, so they
-    never average.
+    their lowest to highest price, and a caption under the chart (`averagedLineCaption`) says
+    what the line and the band are, once, rather than in every tooltip row. Neither shows
+    unless the band would be visible: packages that print the same price have no range
+    (`rangeNdcs` uses `distinctRange`), and a spread under 1% of the price axis's span is
+    dropped (`visibleBandNdcs`). Humira 0074-0124's $9 spread is dropped both on its own
+    $5.5K–$8K axis (1% is $25) and on the 7-product humira chart's $2K–$7K axis (1% is $50). A
+    band dropped for being too thin still shows its range in the tooltip (from `md` up), View
+    data and the CSV; only the CSV keeps ranges that print as one price. A band is rare: most
+    products price every package the same per unit (bottle sizes of liquids are the usual
+    exception). NADAC and FDA package-level series are one package each, so they never
+    average.
   - **Tooltips are drawn by the charts** (`LineTooltip`, `BarTooltip`), not recharts' default
     list, and they must work on a phone, where a chart is about 350px wide and a finger sits on
     it. The line tooltip lists the date and unit once, then a swatch, the NDC and the price per
