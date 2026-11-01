@@ -9,71 +9,89 @@ export default function About() {
       <Box>
         <Typography component="h2" variant="h5">About</Typography>
         <p>
-          This demo website showcases skills that I've developed over the last few years specific to full stack webapp development and deployment.
-          The website is a tool for users to search and chart drug pricing data over time. I chose NADAC because it is easily available,
-          extensive, and covers about 5 years, allowing for some interesting visualizations.
+          DrugPricing is a tool for looking up what US pharmacies pay for drugs and how those prices change over time. It is built on
+          NADAC (National Average Drug Acquisition Cost), a weekly price survey published by CMS. I chose NADAC because it is publicly available,
+          covers tens of thousands of drug packages, and has several years of history, so users can track a drug's price over time.
+        </p>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Two Tools, Two Data Sources</Typography>
+        <p>
+          The app has two search tools, and both answer the same question: what's the NADAC for this drug? The difference is how you
+          find the drug.
         </p>
         <ol>
-          <li>Python, JavaScript (TypeScript), and C#</li>
-          <li>React, including some popular libraries:</li>
-          <ul>
-            <li>Material UI</li>
-            <li>Tanstack Query</li>
-            <li>React Router</li>
-          </ul>
-          <li>.NET, including:</li>
-          <ul>
-            <li>Entity Framework Core</li>
-          </ul>
-          <li>Administering a PostgreSQL Database
-            <ul>
-              <li>
-                At work, I frequently write queries for data extracts and reporting, but have never written to or administered a DB professionally.
-              </li>
-            </ul>
+          <li>
+            <strong>NADAC Search</strong> is a simple search tool. Type part of a drug description or an NDC, pick a date range, and you get every
+            matching package with its price history. It searches all of the NADAC data and nothing else.
           </li>
-          <li>Data Transformation and Loading
-            <ul>
-              <li>
-                Creating a process that's easy to manage using to download data from publicly available APIs, filter and validate records, and insert fresh data into a database.
-              </li>
-              <li>
-                Currently, I run the transformations on my developer machine and then write to the production database from there. Eventually, I'd like to set up a weekly cron job to update the NADAC data each week.
-              </li>
-            </ul>
+          <li>
+            <strong>FDA Search</strong> provides more advanced features. It searches the FDA's NDC Directory, which describes each product and
+            package in much more detail than NADAC does (brand and generic names, dosage form, route, labeler, and so on), and then pulls in the
+            NADAC prices for whatever matches. The trade-off is that it can only show prices for packages that appear in both the FDA data
+            and NADAC.
+          </li>
+        </ol>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Joining the Data</Typography>
+        <p>
+          Having two sources means the data has to be joined. The only thing NADAC and the FDA have in common is the NDC (National Drug
+          Code), and they don't write it the same way. The FDA publishes dashed, 10-digit codes in three different layouts, while NADAC
+          uses 11-digit codes without dashes. I standardize both to the same 11-digit form so that a package can be matched between them.
+        </p>
+        <p>
+          Even after that, the two sources don't line up completely. Roughly a quarter of the NDCs in NADAC don't match a package in the
+          current FDA directory. Products that have been discontinued drop out of the FDA's file but still have years of NADAC prices, and
+          some packages just never show up on both sides. Rather than force a constraint between the two, I kept them independent, which
+          is why NADAC Search is still there: it never loses a price because the FDA doesn't know about the package.
+        </p>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>How It's Hosted</Typography>
+        <p>
+          Everything runs on a Raspberry Pi in my basement: the PostgreSQL database, the .NET API, and the React site. The Pi is also
+          a self-hosted GitHub Actions runner, so merging to the main branch builds and deploys the new version automatically. A
+          scheduled job on the Pi downloads each week's NADAC file and loads it, so the prices stay current without me having to
+          do anything.
+        </p>
+        <p>
+          For now, monitoring is pretty basic. I check the logs every few days to make sure everything is running right, and my home
+          network alerts me if the Pi goes down. I don't have anything more advanced yet to confirm that the site is up or that the
+          jobs ran without errors, but I intend to add that eventually. So far the jobs have failed only once: CMS posted a weekly
+          NADAC file with a different date format in the file name. I emailed their contact address, and they replied that it was a
+          mistake and corrected it. In the meantime, I added handling for the new format that can be turned on with an environment
+          variable. In theory, I could use that to respond to a failure like this automatically if it happens again.
+        </p>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I Built It</Typography>
+        <p>
+          The overarching goal of this project is to learn how to do these things. At work I write a lot of SQL for data extracts and
+          reporting, and outside of work I've built other tutorial projects to practice designing a database, building an ETL process,
+          writing an API, building a front end, and deploying a server. This is the first one I actually intend to keep in production
+          and show people.
+        </p>
+        <p>
+          That made the hardest part of the project deciding how much was enough to ship: figuring out the point where I had something
+          I could start showing people, rather than continuing to add one more feature. Everything here is self-taught through official
+          documentation, tutorials, and a handful of books, and I by no means claim to be an expert. I try to build things that will
+          still make sense to me two weeks later, and the app keeps growing as I learn.
+        </p>
+
+        <Divider />
+        <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Attributions</Typography>
+        <p>The price and drug data come from two public sources:</p>
+        <ol>
+          <li>
+            <a href="https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing/index.html" style={{ color: "grey" }} target="_blank" title="NADAC">National Average Drug Acquisition Cost (NADAC) - Centers for Medicare & Medicaid Services</a>
+          </li>
+          <li>
+            <a href="https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" style={{ color: "grey" }} target="_blank" title="FDA NDC Directory">National Drug Code Directory - U.S. Food and Drug Administration</a>
           </li>
         </ol>
         <p>
-          These skills are all "self-taught" through a combination of official tutorials found in documentation, other tutorials on YouTube, and a handful of books (especially "Eloquent JavaScript").
-          I've attempted to follow SOLID principles, but I by no means claim to be an expert. I try to create things that make sense to me two weeks later, and the SOLID principles have added structure to these attempts.
+          DrugPricing is a personal learning project and is not affiliated with or endorsed by CMS or the FDA. NADAC is a survey-based
+          estimate of what retail community pharmacies pay to acquire a drug. It is not what a patient pays, a retail price, or a
+          reimbursement rate. The data may be incomplete or out of date, and nothing here is medical, financial, or pricing advice.
         </p>
-
-        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Ideas & Challenges</Typography>
-        <p>There were some key points in this project that I'd like to use to explain my thought process in designing this tool.</p>
-        <ol>
-          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Optimizing the NDC Description Search</li></Typography>
-          <p>My original intention was to keep the models for the server and database as close to the source data as possible. I generally achieved this
-            but found that I was initially slowing down my database calls for searches on the NdcDescription field, given that there are weekly entries covering multiple years for
-            each package in the NADAC data. Therefore, the database was scanning millions of rows for every search, which meant operations were slower than I wanted them to be. I struggled to
-            find a way to optimize this because I was focused on finding some sort of built in way with PostgreSQL to speed it up. It eventually occured to me that my problem wasn't that my text search was slow
-            it was that I was searching too much repetative text. At that point I added a new DrugPackage model to represent each unqiue combination of NDC and NdcDescription in the NADAC data,
-            which could be joined to the NadacPrice table using NDC as a foreign key. Now searches were much faster, quickly scanning through the DrugPackage table to find the NDCs needed to generate
-            results on the NadacPrice table. Swapping to this strategy was simple and reduced searches on my localhost from over 300ms to around 3ms.
-          </p>
-          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Integrating FDA Data</li></Typography>
-          <p>
-            The FDA publishes some data about drug products and packages that I think allow for some neat ways to search and filter the NADAC data.
-            Unfortuntately, there are some significant gaps between the NDCs in the NADAC data and the package NDCs in the FDA data. I believe that most of these
-            gaps are found in OTC drugs, but I did not want to force a foreign key contraint between NADAC and FDA data. In short, I want users to be able to search
-            all of the NADAC data, not just packages that match the FDA database. As a result I currently have two separate sets of tools: one for searching the relatively barebones
-            NADAC data, and a another for more detailed searching and filtering of the FDA data with all relevant pricing. In the future, I'd like to dig into these gaps more
-            and try to come up with a better integreation of the data sources, if possible. For now on the backend, it's a simple join from FdaPackage to NadacPrice whenever
-            the FDA search returns results. I did have to standardize the Package NDCs from the FDA data data to match the format in the NADAC data.
-          </p>
-        </ol>
-        <Divider />
-        <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Attributions</Typography>
-        <p>The medicine and bar graph icons are a free resouce from Flaticon, and are available here: </p>
+        <p>The medicine and bar graph icons are a free resource from Flaticon, and are available here: </p>
         <ol>
           <li>
             <a href="https://www.flaticon.com/free-icons/medicine" style={{ color: "grey" }} target="_blank" title="medicine icons">Medicine icons created by Freepik - Flaticon</a>
