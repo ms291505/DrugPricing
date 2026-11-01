@@ -44,7 +44,8 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_W
   const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    // Grows when its card fills the grid row (ExplorerGridItem `fill`); the rows spread out.
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
         <Typography variant="caption" color="text.secondary">{caption}</Typography>
         <ToggleButtonGroup
@@ -62,6 +63,7 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_W
       <UnitSplit
         nadacPrices={nadacPrices}
         dateWindow={dateWindow}
+        grow
         renderChart={(unitPrices, pricingUnit) => (
           <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} title={title} colors={colors} barValue={value} />
         )}
@@ -115,12 +117,15 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   });
 
   return (<>
-    <Box {...readout.focusProps}>
+    {/* The box sets the height: its rows' height, or more when the card fills a taller row. The
+        chart is absolutely positioned inside it so its own measured height never feeds back into
+        the row's: in flow, a chart that grew once would hold the row at that height. */}
+    <Box {...readout.focusProps} sx={{ position: "relative", flexGrow: 1, minHeight: rows.length * BAR_ROW_HEIGHT + 40 }}>
       <BarChart
         layout="vertical"
         data={rows}
         margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
-        style={{ width: "100%", height: rows.length * BAR_ROW_HEIGHT + 40 }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         responsive
         aria-label={`${title}, USD per ${unit}`}
         aria-describedby={descriptionId}

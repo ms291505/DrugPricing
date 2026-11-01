@@ -63,6 +63,7 @@ export default function NadacSearchViz() {
         <Grid container spacing={1}>
           <Grid size={HALF_WIDTH_GRID_SIZE}>
             <ExplorerGridItem
+              fill
               title={barTitle}
               subtitle={autoChartSubtitle}
               actions={<PinButton

@@ -20,6 +20,11 @@ type Props = {
   highlighted?: boolean,
   /** The heading is focusable (tabIndex -1) so new cards can receive focus. */
   headingRef?: Ref<HTMLHeadingElement>,
+  /**
+   * Stretch to the height of the grid row and give the extra space to the content, which must
+   * grow into it (BarViz does). Ignored while collapsed.
+   */
+  fill?: boolean,
 }
 
 /**
@@ -39,9 +44,11 @@ export default function ExplorerGridItem({
   headingLevel = 2,
   highlighted = false,
   headingRef,
+  fill = false,
 }: Props) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? uncontrolledCollapsed;
+  const filling = fill && !collapsed;
   const handleCollapse = () => {
     if (onCollapsedChange) onCollapsedChange(!collapsed);
     else setUncontrolledCollapsed(!collapsed);
@@ -77,6 +84,8 @@ export default function ExplorerGridItem({
         gap: 1,
         outline: "2px solid transparent",
         outlineOffset: 2,
+        // Grid items stretch to the row, so the card can fill its item.
+        ...(filling && { height: "100%" }),
         ...(highlighted && {
           animation: `${pulse} 2s ease-out`,
           "@media (prefers-reduced-motion: reduce)": { animation: "none", outlineColor: highlightColor },
@@ -150,6 +159,14 @@ export default function ExplorerGridItem({
         timeout="auto"
         unmountOnExit
         id={contentId}
+        // Passes the card's extra height through Collapse's two wrappers to the content.
+        sx={filling ? {
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          "& > .MuiCollapse-wrapper": { flexGrow: 1 },
+          "& > .MuiCollapse-wrapper > .MuiCollapse-wrapperInner": { display: "flex", flexDirection: "column" },
+        } : undefined}
       >
         {children}
       </Collapse>

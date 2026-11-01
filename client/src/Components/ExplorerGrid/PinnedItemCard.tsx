@@ -116,6 +116,7 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
         headingLevel={3}
         headingRef={headingRef}
         highlighted={highlighted}
+        fill={item.kind === "chart" && item.chartType === "bar"}
         badges={<>
           <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
           {item.kind === "chart"
