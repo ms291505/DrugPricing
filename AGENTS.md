@@ -86,7 +86,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   `useMobileDrawer` (every tab tap on a phone), and `useWorkspaceActions` (stable). Code inside a
   tab or drawer row must not read the panes or the drawer state; don't bring back one catch-all
   value. `workspaceReducer` (`library/workspace.ts`) keeps the identity of every tab it doesn't
-  change, and `TabInstance`/`DrawerTab` are `memo`'d on that.
+  change, and `TabInstance`/`DrawerTab` are `memo`'d on that. `TabInstance` also memoizes its
+  page element, so showing or hiding a tab doesn't re-render the page.
 - Hidden panes use `content-visibility: hidden` (else `display: none`), all in one grid cell, so
   showing a tab reuses its layout and its charts see no resize. Split layouts would need their
   own grid.
@@ -109,11 +110,14 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **FDA filters on two layers, on purpose.** Search params decide what loads from the server;
   `FdaResultFilter` (exclusions, `applyFdaResultFilter` in `library/types.ts`) narrows it locally.
   The overlap is not a bug: filters that limit payload go on the server, filters for hunting
-  through results on the client. As of 2026-10, sample packages are filtered on both layers and
-  the no-price filter only on the server.
+  through results on the client. As of 2026-10, sample packages are filtered on both layers, and
+  the server excludes them by default, which leaves the client's "Include Sample Packages"
+  toggle disabled (known, not a new bug). The no-price filter exists only on the server.
 - **NADAC has no two-layer model yet.** Its Drug filter (`excludedNdcDescriptions` in
   `SearchContext`) feeds only Add Chart (`vizData`); the table and auto charts show
   `data.prices`. Parity is planned.
+- **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
+  (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
 
 ### UI conventions
@@ -159,7 +163,9 @@ bugs fail. `persist.test.ts` re-imports the module per test because it keeps mod
 
 `python drug_pricing_etl.py <dev|test|prod>` loads `.env.<mode>` (`config.py`) and asks whether
 to update FDA and/or NADAC. `nadac/update_nadac.py` and `fda/update_fda.py` orchestrate
-fetch → parse → load (→ `tombstone_fda.py`). Models are in `library/models.py` and mirror
+fetch → parse → load, then NADAC runs `update_drug_package` (it fills `DrugPackages`, which
+description search reads) and FDA runs `tombstone_fda.py`. `library/timing.py`'s `timed(label)`
+prints the `[timing] <stage>: <s>s (ok|failed)` lines in the cron log. Models are in `library/models.py` and mirror
 `server/Models/`; keep them in sync. Tests: `pytest` (models and parsing only).
 
 - **Connection ownership.** The two orchestrators own the connection, the run timestamp and the
@@ -172,7 +178,9 @@ fetch → parse → load (→ `tombstone_fda.py`). Models are in `library/models
   the old parse time).
 - **FDA duplicates**: one file can have several rows per `ProductNdc`; `load_fda_products.py`
   keeps one per group (`DISTINCT ON`, latest `StartMarketingDate`), which inherits all the
-  group's packages. Packages are filtered on loaded `product_ndc`, never `product_id`.
+  group's packages. Packages are filtered on loaded `product_ndc`, never `product_id`. Groups
+  that disagree on dosage form, product type or ingredients are logged as a warning and merged
+  anyway (~11 as of the 2026-09 file): FDA data rot, not a code fault.
 - Each NADAC file is cumulative year to date (~1.2M rows by late year): keep
   `NADAC_FILTER_BEFORE_INSERT` on. Files have appeared as early as ~6:17 AM Wednesday; a
   scheduled job should start early and retry every 30 minutes.
@@ -181,7 +189,9 @@ fetch → parse → load (→ `tombstone_fda.py`). Models are in `library/models
 
 A push to `main` runs `deploy.yml` on a self-hosted Raspberry Pi runner: it rsyncs `etl/` and
 the built client (both `--delete`), publishes the server (keeping its `appsettings.json`), and
-restarts the `drugpricing` service. Feature branches open PRs against `dev`; `dev` is merged
+restarts the `drugpricing` service. The client builds with the `.env.production` copied from
+`/home/ghrunner/config/drugpricing-client/`; check it when a deploy calls the wrong API.
+Feature branches open PRs against `dev`; `dev` is merged
 into `main` to ship. Never target `main` from a feature branch.
 
 ## Conventions
@@ -212,4 +222,5 @@ to it rather than fixing them inside unrelated work.
 - `NadacService.ValidateNdc` is never called: `ndc=1` returns 47,072 rows for one week.
 - No server tests; client tests cover `library/` only; ETL fetch, load and tombstone are untested.
 - `NadacPrice.loaded_at` defaults to `datetime.now()` at import time (harmless; nothing keys off
-  it).
+  it). Don't copy it: the FDA models dropped that default because tombstoning needs an explicit
+  per-run timestamp.

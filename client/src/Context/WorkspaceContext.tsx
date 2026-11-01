@@ -40,7 +40,10 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const { tabs, layoutMode, paneAssignment } = workspace;
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
 
-  // Read by `removeTab`, which must stay stable so reading the actions doesn't re-render.
+  // Read by `removeTab`, which must stay stable so reading the actions doesn't re-render. It
+  // updates after a commit, while the reducer picks its replacement from the latest state, so
+  // `removeTab`'s return value matches the reducer only for one tab change per commit. Every UI
+  // path closes one tab per event; a batch of closes would need to pick the replacement here.
   const tabsRef = useRef(tabs);
 
   // Collection tabs register a receiver for items sent from other tabs. Items sent to a tab that
