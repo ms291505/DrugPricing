@@ -9,71 +9,69 @@ export default function About() {
       <Box>
         <Typography component="h2" variant="h5">About</Typography>
         <p>
-          This demo website showcases skills that I've developed over the last few years specific to full stack webapp development and deployment.
-          The website is a tool for users to search and chart drug pricing data over time. I chose NADAC because it is easily available,
-          extensive, and covers about 5 years, allowing for some interesting visualizations.
-        </p>
-        <ol>
-          <li>Python, JavaScript (TypeScript), and C#</li>
-          <li>React, including some popular libraries:</li>
-          <ul>
-            <li>Material UI</li>
-            <li>Tanstack Query</li>
-            <li>React Router</li>
-          </ul>
-          <li>.NET, including:</li>
-          <ul>
-            <li>Entity Framework Core</li>
-          </ul>
-          <li>Administering a PostgreSQL Database
-            <ul>
-              <li>
-                At work, I frequently write queries for data extracts and reporting, but have never written to or administered a DB professionally.
-              </li>
-            </ul>
-          </li>
-          <li>Data Transformation and Loading
-            <ul>
-              <li>
-                Creating a process that's easy to manage using to download data from publicly available APIs, filter and validate records, and insert fresh data into a database.
-              </li>
-              <li>
-                Currently, I run the transformations on my developer machine and then write to the production database from there. Eventually, I'd like to set up a weekly cron job to update the NADAC data each week.
-              </li>
-            </ul>
-          </li>
-        </ol>
-        <p>
-          These skills are all "self-taught" through a combination of official tutorials found in documentation, other tutorials on YouTube, and a handful of books (especially "Eloquent JavaScript").
-          I've attempted to follow SOLID principles, but I by no means claim to be an expert. I try to create things that make sense to me two weeks later, and the SOLID principles have added structure to these attempts.
+          DrugPricing is a tool for looking up what US pharmacies pay for drugs and how those prices change over time. It is built on
+          NADAC (National Average Drug Acquisition Cost), a weekly price survey published by CMS. I chose NADAC because it is publicly available,
+          covers tens of thousands of drug packages, and has several years of history, which makes for some interesting charts.
         </p>
 
-        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Ideas & Challenges</Typography>
-        <p>There were some key points in this project that I'd like to use to explain my thought process in designing this tool.</p>
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Two Tools, Two Data Sources</Typography>
+        <p>
+          The app is split into two search tools that answer different questions:
+        </p>
         <ol>
-          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Optimizing the NDC Description Search</li></Typography>
-          <p>My original intention was to keep the models for the server and database as close to the source data as possible. I generally achieved this
-            but found that I was initially slowing down my database calls for searches on the NdcDescription field, given that there are weekly entries covering multiple years for
-            each package in the NADAC data. Therefore, the database was scanning millions of rows for every search, which meant operations were slower than I wanted them to be. I struggled to
-            find a way to optimize this because I was focused on finding some sort of built in way with PostgreSQL to speed it up. It eventually occured to me that my problem wasn't that my text search was slow
-            it was that I was searching too much repetative text. At that point I added a new DrugPackage model to represent each unqiue combination of NDC and NdcDescription in the NADAC data,
-            which could be joined to the NadacPrice table using NDC as a foreign key. Now searches were much faster, quickly scanning through the DrugPackage table to find the NDCs needed to generate
-            results on the NadacPrice table. Swapping to this strategy was simple and reduced searches on my localhost from over 300ms to around 3ms.
-          </p>
-          <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600 }}><li>Integrating FDA Data</li></Typography>
-          <p>
-            The FDA publishes some data about drug products and packages that I think allow for some neat ways to search and filter the NADAC data.
-            Unfortuntately, there are some significant gaps between the NDCs in the NADAC data and the package NDCs in the FDA data. I believe that most of these
-            gaps are found in OTC drugs, but I did not want to force a foreign key contraint between NADAC and FDA data. In short, I want users to be able to search
-            all of the NADAC data, not just packages that match the FDA database. As a result I currently have two separate sets of tools: one for searching the relatively barebones
-            NADAC data, and a another for more detailed searching and filtering of the FDA data with all relevant pricing. In the future, I'd like to dig into these gaps more
-            and try to come up with a better integreation of the data sources, if possible. For now on the backend, it's a simple join from FdaPackage to NadacPrice whenever
-            the FDA search returns results. I did have to standardize the Package NDCs from the FDA data data to match the format in the NADAC data.
-          </p>
+          <li>
+            <strong>NADAC Search</strong> is the simple one. Type part of a drug description or an NDC, pick a date range, and you get every
+            matching package with its price history. It searches all of the NADAC data and nothing else.
+          </li>
+          <li>
+            <strong>FDA Search</strong> is for more advanced filtering. It searches the FDA's NDC Directory, which describes each product and
+            package in much more detail than NADAC does (brand and generic names, dosage form, route, labeler, and so on), and then pulls in the
+            NADAC prices for whatever matches. This is the tool to use when you want to narrow a broad search down, or compare products with
+            each other rather than look up a single package.
+          </li>
         </ol>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Joining the Data</Typography>
+        <p>
+          Having two sources means the data has to be joined, and that turned out to be the hardest part of the project. The only thing
+          NADAC and the FDA have in common is the NDC (National Drug Code), and they don't write it the same way. The FDA publishes dashed,
+          10-digit codes in three different layouts, while NADAC uses 11-digit codes without dashes. I standardize both to the same 11-digit
+          form so that a package can be matched between them.
+        </p>
+        <p>
+          Even after that, the two sources don't line up completely. Roughly a quarter of the NDCs in NADAC don't match a package in the
+          current FDA directory. Products that have been discontinued drop out of the FDA's file but still have years of NADAC prices, and
+          some packages just never show up on both sides. Rather than force a constraint between the two, I kept them independent. That
+          is why there are two tools: NADAC Search never loses a price because the FDA doesn't know about the package, and FDA Search
+          trades that completeness for much better filtering.
+        </p>
+        <p>
+          The FDA data has its own quirks too. A product's ID changes every time its record is updated, so I key products on the
+          product NDC instead, and a single file can list the same product more than once with different packages, which the
+          load has to merge. A product usually has several packages with their own prices, so charts at the product level show the
+          average across packages along with their range.
+        </p>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>How It's Hosted</Typography>
+        <p>
+          Everything runs on a Raspberry Pi at my house: the PostgreSQL database, the .NET API, and the React site. The Pi is also
+          a self-hosted GitHub Actions runner, so merging to the main branch builds and deploys the new version automatically. A
+          scheduled job on the Pi downloads each week's NADAC file and loads it, so the prices stay current without me having to
+          do anything.
+        </p>
+
+        <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I Built It</Typography>
+        <p>
+          The overarching goal of this project is to learn how to do these things. At work I write a lot of SQL for data extracts and
+          reporting, but I had never designed a database, built an ETL process, written an API, built a front end, or deployed and
+          maintained a server on my own. This project is how I'm teaching myself each of those pieces, end to end, using official
+          documentation, tutorials, and a handful of books (especially "Eloquent JavaScript"). I by no means claim to be an expert. I try
+          to build things that will still make sense to me two weeks later, and the app keeps growing as I learn.
+        </p>
+
         <Divider />
         <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Attributions</Typography>
-        <p>The medicine and bar graph icons are a free resouce from Flaticon, and are available here: </p>
+        <p>The medicine and bar graph icons are a free resource from Flaticon, and are available here: </p>
         <ol>
           <li>
             <a href="https://www.flaticon.com/free-icons/medicine" style={{ color: "grey" }} target="_blank" title="medicine icons">Medicine icons created by Freepik - Flaticon</a>
