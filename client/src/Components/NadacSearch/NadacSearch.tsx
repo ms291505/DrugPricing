@@ -12,7 +12,7 @@ import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import useAppInit from "../../hooks/useAppInit.ts";
 import { toDateInput, windowEndingAt } from "../../library/dates.ts";
-import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceContexts.ts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";

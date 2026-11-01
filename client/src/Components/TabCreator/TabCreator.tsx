@@ -1,5 +1,5 @@
 import { Box, Typography, type SxProps, } from "@mui/material";
-import { useWorkspaceActions } from "../../Context/WorkspaceContext";
+import { useWorkspaceActions } from "../../Context/workspaceContexts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import useMobile from "../../hooks/useMobile";
 import type { DescriptionCardProps } from "../TabCreator/DescriptionCard";

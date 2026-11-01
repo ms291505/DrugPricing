@@ -7,7 +7,8 @@ export type WorkspaceState = PersistedWorkspace;
 
 export type WorkspaceAction =
   | { type: "add", tab: WorkspaceTab }
-  | { type: "remove", id: string }
+  /** `fallback` replaces the tab if it is the only one; the caller creates it, so this stays pure. */
+  | { type: "remove", id: string, fallback: WorkspaceTab }
   | { type: "rename", id: string, title: string }
   | { type: "changeType", id: string, tabType: TabType, title: string }
   | { type: "setLayoutMode", value: SetStateAction<LayoutMode> }
@@ -17,13 +18,14 @@ const resolve = <T,>(value: SetStateAction<T>, prev: T) =>
   typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
 
 /**
- * The tab that takes over when `id` closes: the next one, or the previous one if it was last.
- * The reducer gives it the closed tab's pane, and the drawer moves keyboard focus to its row.
+ * The tab that takes over when `id` closes: the next one, or the previous one if it was last,
+ * or `fallbackId` (the new tab that replaces it) if it was the only one. The reducer gives it the
+ * closed tab's pane, and the drawer moves keyboard focus to its row. Null for a missing tab.
  */
-export function replacementTabId(tabs: WorkspaceTab[], id: string): string | null {
+export function replacementTabId(tabs: WorkspaceTab[], id: string, fallbackId: string): string | null {
   const idx = tabs.findIndex(t => t.id === id);
   if (idx < 0) return null;
-  return tabs[idx + 1]?.id ?? tabs[idx - 1]?.id ?? null;
+  return tabs[idx + 1]?.id ?? tabs[idx - 1]?.id ?? fallbackId;
 }
 
 /**
@@ -31,6 +33,9 @@ export function replacementTabId(tabs: WorkspaceTab[], id: string): string | nul
  * tab list. Every action keeps the identity of the tabs it doesn't change: memoized panes
  * (`TabInstance`, `DrawerTab`) skip rendering on that, so a new object for an unchanged tab
  * re-renders its whole page on every switch.
+ *
+ * It never returns a workspace without tabs: closing the only tab leaves the new tab the action
+ * brings.
  */
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
@@ -38,10 +43,11 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return { ...state, tabs: [...state.tabs, action.tab] };
     case "remove": {
       if (!state.tabs.some(t => t.id === action.id)) return state;
-      const replacement = replacementTabId(state.tabs, action.id);
+      const replacement = replacementTabId(state.tabs, action.id, action.fallback.id);
+      const tabs = state.tabs.filter(t => t.id !== action.id);
       return {
         ...state,
-        tabs: state.tabs.filter(t => t.id !== action.id),
+        tabs: tabs.length > 0 ? tabs : [action.fallback],
         paneAssignment: state.paneAssignment.map(pane => pane === action.id ? replacement : pane),
       };
     }

@@ -1,7 +1,7 @@
 import { Drawer, } from "@mui/material";
 import { CONSTANT } from "../../library/constants.ts";
 import DrawerContent from "./DrawerContent.tsx";
-import { useMobileDrawer, useWorkspaceActions } from "../../Context/WorkspaceContext.tsx";
+import { useMobileDrawer, useWorkspaceActions } from "../../Context/workspaceContexts.ts";
 
 export default function WorkspaceDrawer() {
   const { mobileDrawerIsOpen } = useMobileDrawer();

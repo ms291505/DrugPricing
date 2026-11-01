@@ -7,7 +7,7 @@ import { useState } from "react";
 import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
-import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext";
+import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceContexts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { defaultTitleFor } from "../../library/tabType.ts";
 import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/types.ts";

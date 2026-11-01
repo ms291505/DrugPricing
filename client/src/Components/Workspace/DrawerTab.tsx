@@ -1,4 +1,4 @@
-import { useWorkspaceActions } from "../../Context/WorkspaceContext"
+import { useWorkspaceActions } from "../../Context/workspaceContexts"
 import type { WorkspaceTab } from "../../library/tabType.ts";
 import { Box, IconButton, ButtonBase, TextField, } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -11,13 +11,12 @@ import useTabRename from "../../hooks/useTabRename.ts";
 type Props = {
   tab: WorkspaceTab,
   selected: boolean,
-  canClose: boolean,
   /** Stable: `DrawerTabList` removes the tab and moves focus to the row that takes over. */
   onClose: (id: string) => void,
 }
 
 // Memoized: a tab switch re-renders only the two tabs whose `selected` changed.
-export default memo(function DrawerTab({ tab, selected, canClose, onClose }: Props) {
+export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
   // Destructured: passing `tabRename.returnFocusRef` as a `ref` makes the React Compiler lint
   // treat the whole object as a ref and flag every other read of it during render.
   const { returnFocusRef, ...tabRename } = useTabRename(tab.id, tab.title);
@@ -168,7 +167,7 @@ export default memo(function DrawerTab({ tab, selected, canClose, onClose }: Pro
       }}
     >
       <MenuItem onClick={onClickRename} >Rename</MenuItem>
-      <MenuItem disabled={!canClose} onClick={handleCloseTab} >Close Tab</MenuItem>
+      <MenuItem onClick={handleCloseTab} >Close Tab</MenuItem>
     </Menu>
   </>)
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useWorkspaceActions } from "../Context/WorkspaceContext";
+import { useWorkspaceActions } from "../Context/workspaceContexts";
 
 export default function useTabRename(id: string, title: string) {
   const [active, setActive] = useState(false);

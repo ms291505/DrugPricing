@@ -1,0 +1,137 @@
+# Charts and explorer cards
+
+Design rules for the cards on the search pages and the recharts charts they draw. Read this
+before changing anything in `Components/Charts/`, `Components/ExplorerGrid/`, or the chart
+helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matter everywhere.
+
+## Explorer items: system vs. pinned
+
+- *System* items (the results table, auto charts, price-change charts) are derived from the
+  current search on every render and never stored.
+- *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
+  `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never touch
+  them. Don't clear them on search, and don't write system charts into them. The Pinned section
+  renders whatever the search state (on FDA it sits in `FdaSearch`, outside the `isSuccess`
+  gate), so pins show while a search is missing, loading, or failing.
+- An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
+  today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
+  `points: [ms, price][]`), plain JSON so it persists. `fromChartSeries` turns it back into
+  `ChartPrice[]`.
+- **Chart dates are a view setting, not a filter.** A chart item keeps *every* date of its series
+  and stores the dates it shows as `dateWindow` (`DateWindow` in `library/dates.ts`: ms,
+  inclusive, a null end is open), which the card's dates chip can widen later. `UnitSplit` clips
+  to the window, and `LineViz` stretches the x-axis across all of it, so a late series shows a gap.
+- The Page Tools "Chart dates" control (`ChartDatesControl`) sets `chartDates`: fixed dates, or a
+  **recent** preset ("Last year", "6 months", …) stored as the preset so it follows new weeks.
+  `useChartWindow` resolves it against the current result (presets count back from its last
+  date). Auto charts show the resolved window; Add Chart and Pin start new items at it, as fixed
+  dates. It is not part of `FdaResultFilter`, doesn't touch the results table or which changes
+  are flagged, and a new search keeps it.
+- Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
+  (`changeSpan`, stored on pinned copies too) and toggle to the full history. Only changes whose
+  new price starts inside the chart dates get a card (`priceChangesInWindow`); a note counts the
+  rest, and past `MAX_AUTO_PRICE_CHANGE_CHARTS` it gives the count instead of charting them.
+- **"Match scale" is per chart.** A pinned line chart's menu toggles `ChartItem.matchScale`; the
+  matched charts in one unit share a fitted axis (`matchedPriceRange`) and show a "Matched scale"
+  chip. New pins start unmatched. A tab-wide switch put $0.25 metformin on humira's $0–$8K axis,
+  so don't match charts the user didn't choose.
+- An item's `source` (provenance chip) is computed by `createChartItem` from its data against the
+  whole unfiltered result (`ChartOrigin.resultPrices`), never from filter state, so it stays true
+  once stored. `filtered` compares whole series, not windows. What a series is is stored as
+  `seriesKind` (`"product" | "package" | "ndc"`); wording comes from one table in
+  `explorerItems.ts`.
+- Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
+  `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+- FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
+  what Add Chart filters on. `setFdaResultDetailLevel` clears the selection on every level change.
+
+## Chart data
+
+- Charts take `ChartPrice[]`, which `NadacPrice` satisfies. A series is one `ndc`. At FDA product
+  level that is the *product* NDC, so several packages share a series and can disagree on a date:
+  `createLineVizData` averages them per date and keeps their min–max as `rangeKey(ndc)`.
+- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
+  chart with its unit. Unit charts share one date axis.
+- Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
+- Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
+  time"), the subtitle the count and dates. Price-change cards name the percent, date and package.
+
+## Axes and labels
+
+- `fittedPriceAxis` (`chartScale.ts`) makes the visible span at least
+  `max / MAX_AXIS_EXAGGERATION` (4: a 10% change fills at most 40% of the height), centers it,
+  never goes below $0, and rounds to round ticks. Line charts and Match scale use it; bar lengths
+  start at $0 (`zeroBasedAxis`). The author considers small changes drawn big misleading.
+- Tick labels: `priceTickFormatter` (precision follows the step). Value labels: `formatPriceLabel`
+  (three significant digits under $1). Full prices in tooltips and tables: `formatPrice`.
+
+## Colors
+
+`palette.chart.series` has 10 color-blind-safe colors, each at least 3:1 on the card
+(`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
+so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
+page agrees. Add Chart and Pin store each series' `color`, since the result is gone after the next
+search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
+
+## Line charts
+
+- Steps (`type="stepAfter"`): a NADAC price holds until the next weekly file. One series has no
+  legend; the title names it.
+- **Package band.** When a line averages packages that differ in price, a band shades their
+  lowest to highest price, and one caption (`averagedLineCaption`) explains line and band. Neither
+  shows unless the band is visible: same-price packages have no range (`distinctRange`), and a
+  spread under 1% of the axis span is dropped (`visibleBandNdcs`). E.g. Humira 0074-0124's $9
+  spread is dropped on its own $5.5K–$8K axis and on the 7-product $2K–$7K axis. A dropped band
+  still shows its range in the tooltip (from `md` up), View data and the CSV. Bands are rare:
+  most products price every package the same per unit (liquids' bottle sizes are the exception).
+- **Price changes** are called out on the line: dots at the old and new price, the old price
+  continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined green
+  for a drop and `error` for a rise. The percent stays in the title. Spans pinned before prices
+  were stored get a dashed line labeled with the percent.
+- **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
+  (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown
+  series can't be hidden. Hiding never recolors. Hidden series leave the axis fit
+  (`linePriceAxis`), but a Match scale range stays.
+
+## Bar charts
+
+Horizontal and sorted. Each row shows the latest price or the average over the chart's dates
+(`BarValue`, a toggle stored on pinned bars) and the low–high range over the same dates, all from
+`summarizeSeries`, which uses the per-date values the line draws (at product level, the averaged
+line, never the spread between packages). The `barStyle` setting draws a row as a `dot` on a
+fitted axis (default) or a `bar` from $0 with a gray range track. Rows are drawn in the `Bar`
+`shape`. Don't use recharts' `ErrorBar` (stale scale, ranges at half price) or
+`allowDataOverflow` on the value axis (clips the value labels).
+
+## Tooltips
+
+`LineTooltip`/`BarTooltip`, not recharts' default list, and they must work on a ~350px phone
+chart under a finger. The line tooltip gives the date and unit once, then swatch, NDC and price
+per series; descriptions, ranges and package counts show from `md` up. On a phone the line tooltip
+stays at the top; the bar tooltip goes above the plot. The box (`useChartTheme().tooltip`) is
+capped at `min(360px, 100vw − 64px)`. Check new tooltip lines at phone width.
+
+## Accessibility
+
+- Each unit chart's SVG keeps recharts' `role="application"` (never `role="img"`, which broke its
+  name and arrow keys), with `aria-label` "<title>, USD per <unit>" and `aria-describedby` to a
+  hidden summary (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts'
+  store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts).
+- `useChartReadout`: a hidden `role="status"` region, present and empty from the first render,
+  speaks the active point 300ms after the last key while the SVG has focus; pointer movement
+  silences it. Keep only a primitive key of `useActiveTooltipDataPoints` in state (the rows are
+  rebuilt each render, and storing one loops). Text comes from `chartReadout.ts`, whose
+  `tooltipRows` the line tooltip uses too.
+
+## View data and CSV
+
+`ChartData` under every chart shows every series, whatever the legend hides, over the chart's
+dates: line rows are the drawn per-date values, bar rows the `summarizeSeries` rows. The table
+shows a range only when its ends print differently. The CSV (`chartCsv.ts`) keeps every range,
+uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards text fields against
+formula injection.
+
+## Animations
+
+Off (`isAnimationActive={false}`): recharts morphs the old line into the new one point by point,
+which drew made-up prices when the dates changed.

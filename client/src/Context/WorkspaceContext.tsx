@@ -1,62 +1,21 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type SetStateAction } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState, type SetStateAction } from "react";
 import type { LayoutMode } from "../library/types";
-import { workspaceReducer, type WorkspaceState } from "../library/workspace";
+import { replacementTabId, workspaceReducer, type WorkspaceState } from "../library/workspace";
 import { defaultTitleFor, type TabType, type WorkspaceTab } from "../library/tabType";
 import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
 import type { ExplorerItem } from "../library/explorerItems";
+import {
+  MobileDrawerContext,
+  WorkspaceActionsContext,
+  WorkspacePanesContext,
+  WorkspaceTabsContext,
+  type WorkspaceActions,
+} from "./workspaceContexts";
 
-// The workspace is split into several contexts so a component re-renders only for the state it
-// reads. Switching tabs changes only the panes (and, on a phone, the drawer), so hidden tabs,
-// which read the tab list and the actions, don't re-render. Don't merge these back into one
-// catch-all value.
-
-type WorkspacePanes = {
-  layoutMode: LayoutMode;
-  paneAssignment: Array<string | null>;
-};
-
-type MobileDrawerState = {
-  mobileDrawerIsOpen: boolean;
-};
-
-/** Never change identity, so reading them doesn't re-render a component. */
-type WorkspaceActions = {
-  addTab: (type: TabType, title?: string) => string;
-  removeTab: (id: string) => void;
-  renameTab: (id: string, title: string) => void;
-  changeTabType: (id: string, type: TabType) => void;
-  setLayoutMode: (value: SetStateAction<LayoutMode>) => void;
-  setPaneAssigment: (value: SetStateAction<Array<string | null>>) => void;
-  setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
-  addToCollection: (item: ExplorerItem, id?: string) => void;
-  /** Lets a collection tab receive items; returns the unregister function. */
-  registerTab: (id: string, receive: (item: ExplorerItem) => void) => () => void;
-};
-
-const WorkspaceTabsContext = createContext<Array<WorkspaceTab>>([]);
-
-const WorkspacePanesContext = createContext<WorkspacePanes>({
-  layoutMode: "single",
-  paneAssignment: [null],
-});
-
-const MobileDrawerContext = createContext<MobileDrawerState>({
-  mobileDrawerIsOpen: false,
-});
-
-const WorkspaceActionsContext = createContext<WorkspaceActions>({
-  addTab: () => "",
-  removeTab: () => { },
-  renameTab: () => { },
-  changeTabType: () => { },
-  setLayoutMode: () => { },
-  setPaneAssigment: () => { },
-  setMobileDrawerIsOpen: () => { },
-  addToCollection: () => { },
-  registerTab: () => () => { },
-});
+// The contexts and their hooks are in `workspaceContexts.ts`. Export only the provider from here,
+// so Fast Refresh can update it in place and keep the workspace state.
 
 function createNewTab(): WorkspaceTab {
   return {
@@ -67,6 +26,7 @@ function createNewTab(): WorkspaceTab {
 }
 
 // Restore the workspace saved in localStorage, if any; otherwise start with one blank tab.
+// A saved workspace without tabs doesn't load (`isPersistedWorkspace`).
 function initWorkspace(): WorkspaceState {
   const tab = createNewTab();
   const workspace = loadWorkspace() ?? { tabs: [tab], layoutMode: "single" as LayoutMode, paneAssignment: [tab.id] };
@@ -79,6 +39,12 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const [workspace, dispatch] = useReducer(workspaceReducer, undefined, initWorkspace);
   const { tabs, layoutMode, paneAssignment } = workspace;
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
+
+  // Read by `removeTab`, which must stay stable so reading the actions doesn't re-render. It
+  // updates after a commit, while the reducer picks its replacement from the latest state, so
+  // `removeTab`'s return value matches the reducer only for one tab change per commit. Every UI
+  // path closes one tab per event; a batch of closes would need to pick the replacement here.
+  const tabsRef = useRef(tabs);
 
   // Collection tabs register a receiver for items sent from other tabs. Items sent to a tab that
   // hasn't registered yet (one just created) wait in `pending` until it does.
@@ -94,6 +60,10 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     },
     []
   );
+
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
 
   useEffect(() => {
     saveWorkspace(workspace);
@@ -122,8 +92,11 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   }, []);
 
   const removeTab = useCallback((id: string) => {
-    dispatch({ type: "remove", id });
+    // Used only if `id` is the only tab: a workspace always has one.
+    const fallback = createNewTab();
+    dispatch({ type: "remove", id, fallback });
     removeTabState(id);
+    return replacementTabId(tabsRef.current, id, fallback.id);
   }, []);
 
   const renameTab = useCallback((id: string, title: string) => {
@@ -182,16 +155,3 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     </WorkspaceActionsContext.Provider>
   );
 }
-
-/** Every tab in the workspace. Changes only when a tab is added, removed, renamed or retyped. */
-export const useWorkspaceTabs = () => useContext(WorkspaceTabsContext);
-
-export const useWorkspaceTab = (id: string) => useWorkspaceTabs().find(t => t.id === id);
-
-/** Which tabs are shown. Changes on every tab switch, so hidden tabs must not read it. */
-export const useWorkspacePanes = () => useContext(WorkspacePanesContext);
-
-/** Changes on every tab tap on a phone; only the drawer itself and its button read it. */
-export const useMobileDrawer = () => useContext(MobileDrawerContext);
-
-export const useWorkspaceActions = () => useContext(WorkspaceActionsContext);
