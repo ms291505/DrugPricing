@@ -115,10 +115,15 @@ in the code until then. It is an early step toward this rework.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
   unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
-  (`DrawerTabList` focuses the row of `replacementTabId` after a close). Give the FAB the same
+  (`DrawerTabList` focuses the row of the tab `removeTab` returns). Give the FAB the same
   treatment: after Close, focus the replacement tab's FAB, or its drawer row when that tab is a
   blank "new" tab with no FAB. After Minimize, the pane is empty, so focus its drawer row. On a
   phone the drawer is closed, so a drawer row isn't a target there. Small.
+- **`SettingsContext.tsx` isn't a Fast Refresh boundary.** It exports the context next to the
+  provider, so every hot update of it or of `library/settings.ts` re-creates the context and
+  re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
+  incompatible)`). Move the context and its hook out of the provider's module, as
+  `Context/workspaceContexts.ts` does for the workspace, with a null default. Dev-only, small.
 - **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
   the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
   bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint

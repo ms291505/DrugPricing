@@ -1,7 +1,7 @@
 
 import { theme } from "../../theme.ts";
 import { Box, Fab, Menu, MenuItem, MenuList, TextField, } from "@mui/material";
-import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
 import { useId, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { CONSTANT } from "../../library/constants.ts";
@@ -58,8 +58,6 @@ export default function TabContextFab() {
     handleCloseTabConextMenu();
     tabRename.start();
   }
-
-  const closeTabDisabled = tabs.length === 1;
 
   return (<>
     <Fab
@@ -156,7 +154,7 @@ export default function TabContextFab() {
       <MenuList >
         <MenuItem onClick={handleClickRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
         <MenuItem onClick={handleMinimizeTab} sx={{ justifyContent: "center" }}>Minimize Tab</MenuItem>
-        <MenuItem disabled={closeTabDisabled} onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
+        <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
         <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>New Tab</MenuItem>
       </MenuList>
     </Menu>

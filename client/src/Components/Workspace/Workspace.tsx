@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext";
+import { useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts";
 import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
 import MobileDrawerFab from "./MobileDrawerFab";

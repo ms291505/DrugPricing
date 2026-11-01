@@ -1,11 +1,10 @@
-import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/WorkspaceContext.tsx";
+import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
 import { Box, Typography, Paper, Button } from "@mui/material";
 import { useCallback, useEffect, useRef } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import NavButton from "../DrugPricingBar/NavButton.tsx";
 import TabButton from "./TabButton.tsx";
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
-import { replacementTabId } from "../../library/workspace.ts";
 
 export default function DrawerContent() {
   const { addTab, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
@@ -68,14 +67,10 @@ function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
   const { removeTab } = useWorkspaceActions();
 
   const listRef = useRef<HTMLDivElement>(null);
-  // Read by `closeTab`, which must stay stable so the memoized rows don't re-render on every
-  // add, close, or rename.
-  const tabsRef = useRef(tabs);
   // The tab whose row takes focus once the closed tab's row is gone.
   const focusAfterClose = useRef<string | null>(null);
 
   useEffect(() => {
-    tabsRef.current = tabs;
     const id = focusAfterClose.current;
     if (id === null) return;
     focusAfterClose.current = null;
@@ -84,10 +79,11 @@ function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
   }, [tabs]);
 
   // The closed row unmounts with its menu and the button the menu would return focus to, which
-  // would leave focus on <body>. Focus moves to the tab that takes over its pane instead.
+  // would leave focus on <body>. Focus moves to the tab that takes over its pane instead, which
+  // is a new blank tab when the closed one was the only tab. Stable, so the memoized rows don't
+  // re-render on every add, close, or rename.
   const closeTab = useCallback((id: string) => {
-    focusAfterClose.current = replacementTabId(tabsRef.current, id);
-    removeTab(id);
+    focusAfterClose.current = removeTab(id);
   }, [removeTab]);
 
   return (
@@ -108,7 +104,6 @@ function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
           key={t.id}
           tab={t}
           selected={paneAssignment.includes(t.id)}
-          canClose={tabs.length > 1}
           onClose={closeTab}
         />
       ))}

@@ -130,7 +130,7 @@ There is currently no server test project.
 | Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `seriesVisibility.ts`, `chartSummary.ts`, `chartReadout.ts`, `chartCsv.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
 | Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), the charts' screen-reader readout (`useChartReadout`), and UI (`useMobile`, `useScrolled`) |
-| Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
+| Global state | `src/Context/` — `WorkspaceContext` (provider; its contexts and hooks are in `workspaceContexts.ts`), `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` (including the chart series palette, `palette.chart.series`) |
 
 Feature folders under `src/Components/`:
@@ -139,7 +139,18 @@ Feature folders under `src/Components/`:
   tabs, `layoutMode`, and `paneAssignment`); `TabInstance` renders a tab's provider and
   content by `TabType`, resolved in `src/library/tabTypeRegistry.ts`. Hidden tabs stay
   mounted, so per-tab state survives switching tabs.
-  - **A tab switch must not re-render hidden tabs.** `WorkspaceContext` is split into narrow
+  - **A workspace always has a tab.** Startup falls back to one blank tab when nothing valid is
+    saved (a saved workspace without tabs doesn't load), and closing the only tab replaces it with
+    a blank one: `removeTab` passes the reducer a `fallback` tab and returns the id of the tab
+    that takes over the pane, which the drawer focuses.
+  - **Keep the imports acyclic and the provider modules component-only.** The registry imports
+    every page, so it lives apart from `library/tabType.ts` (types, default titles), which imports
+    no components. The workspace contexts and hooks live in `Context/workspaceContexts.ts`, with
+    null defaults that throw outside the provider, and `WorkspaceContext.tsx` exports only the
+    provider. Both keep hot updates working in dev: a cycle through the registry failed them
+    with "Cannot access 'FdaTabProvider' before initialization", and a provider module that also
+    exports hooks re-creates its contexts on every edit.
+  - **A tab switch must not re-render hidden tabs.** The workspace context is split into narrow
     hooks: `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every
     switch), `useMobileDrawer` (changes on every tab tap on a phone), and `useWorkspaceActions`
     (stable functions). Code inside a tab or a drawer tab must not read `useWorkspacePanes` or
@@ -410,8 +421,8 @@ npm test         # vitest run
 Tests are Vitest unit tests next to the code they test (`src/library/*.test.ts`): dates and
 windows, axis scales and tick formats (including the exaggeration cap), series colors, line data
 (package averages, bands and their caption), NADAC search validity and tab titles, bar summaries, chart titles, chart text summaries, the readout and tooltip rows, legend visibility, the data table and CSV, the palette's contrast, chart item provenance, Match scale, and `persist.ts` (loading saved state, pruning,
-the multi-window read-only switch), and the workspace reducer (closing a tab, and that unchanged
-tabs keep their identity). `persist.test.ts` re-imports the module for each test
+the multi-window read-only switch), and the workspace reducer (closing a tab, including the only one, and that
+unchanged tabs keep their identity). `persist.test.ts` re-imports the module for each test
 because it keeps module state. They run in
 the Node environment (no DOM) with `TZ=America/Chicago` set in `vite.config.ts`, so a
 local-time date bug fails them. There are no component tests yet.
