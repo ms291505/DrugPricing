@@ -20,7 +20,7 @@ import useChartWindow from "../../hooks/useChartWindow";
 
 export default function VizTools() {
   const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
-  const { addUnpinnedItem } = useExplorerItems();
+  const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
   // The auto charts show the whole result (the Drug filter only feeds Add Chart), so it is also
@@ -34,7 +34,7 @@ export default function VizTools() {
     const chartData = vizData.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
     if (chartData.length === 0) return;
 
-    addUnpinnedItem(createChartItem({
+    addItem("unpinned", createChartItem({
       chartType,
       prices: chartData,
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),

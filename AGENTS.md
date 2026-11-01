@@ -129,7 +129,7 @@ There is currently no server test project.
 | API calls | `src/api/` — `api.ts` (base URL/helpers), `nadacEndpoints.ts`, `fdaEndpoints.ts`, `appInitEndpoints.ts`, `types.ts` (wire types + mappers) |
 | Domain types + transforms | `src/library/` — `types.ts`, `explorerItems.ts`, `persist.ts`, `dates.ts`, `createLineVizData.ts`, `chartSeries.ts`, `chartScale.ts`, `chartTitles.ts`, `seriesColors.ts`, `seriesSummary.ts`, `seriesVisibility.ts`, `chartSummary.ts`, `chartReadout.ts`, `chartCsv.ts`, `ndc.ts`, `flagNadacPriceChange.ts`, `fdaDataToNadacPrices.ts` |
 | Shared constants | `src/library/constants.ts` |
-| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), the charts' screen-reader readout (`useChartReadout`), and UI (`useMobile`, `useScrolled`) |
+| Hooks | `src/hooks/` — React Query (`useNadacSearch.ts`, `useFdaSearch.ts`, `useAppInit.ts`), chart origin for new added and pinned items (`useFdaChartOrigin`, `useNadacChartOrigin`), the resolved chart dates (`useChartWindow`), the page's series colors (`useSeriesColors`), chart styling (`useChartTheme`), the charts' screen-reader readout (`useChartReadout`), and UI (`useMobile`, `useScrolled`) |
 | Global state | `src/Context/` — `WorkspaceContext`, `TabInstanceContext`, `SearchContext`, `FdaSearchContext`, `ExplorerItemsContext`, `GlobalModalContext`, `SettingsContext` (app-wide settings); per-tab provider stacks in `TabProviders.tsx` |
 | Theme | `src/theme.ts` (including the chart series palette, `palette.chart.series`) |
 
@@ -154,12 +154,12 @@ Feature folders under `src/Components/`:
     see no resize on show. This assumes one visible pane: split layouts (`"split-2"`,
     `"split-4"`, unused so far) would need their own grid.
 - `NadacSearch/` — NADAC search, its results table (`TableViz`), and its tools panel (`VizTools`).
-- `Charts/` — the recharts charts both search pages and pinned cards draw with: `LineViz`,
+- `Charts/` — the recharts charts both search pages and their added and pinned cards draw with: `LineViz`,
   `BarViz`, and `UnitSplit`, which splits by pricing unit and clips to the chart's dates;
   `SeriesLegend` and `ChartData` (View data / Download CSV) are drawn by `LineViz`/`BarViz`.
 - `FDA/` — FDA product/package explorer, tables, column defs, and filters.
 - `ExplorerGrid/` — the card system both search pages share: `ExplorerGridItem` (card shell),
-  `ItemSection`/`ItemCard`/`PinnedChartDates`, `PinButton`, `AddChartControl`, `ChartDatesControl`,
+  `ItemSection`/`ItemCard`/`ItemChartDates`, `PinButton`/`PinIconButton`, `AddChartControl`, `ChartDatesControl`,
   `ChartItemBody`.
 - `DrugPricingBar/`, `GlobalModal/`, `About/`, `OnBoarding/`, `DataPane/`,
   `TabCreator/`, `ui/` — supporting UI.
@@ -171,14 +171,16 @@ Notes:
   - *System* items (the results table, auto charts, price-change charts) are derived from the
     current search on every render and never stored.
   - *Added* (unpinned) items are what Add Chart makes: snapshots in `ExplorerItemsContext`
-    (`unpinnedItems`), shown in the "Added charts" section. They are not saved, and a new search
+    (`items.unpinned`), shown in the "Added charts" section. They are not saved, and a new search
     clears them (`clearUnpinnedItems`, called where each page starts a search). The pin button
-    on an added card moves it to Pinned (`pinItem`) with its dates, width, and Match scale.
+    on an added card moves it to Pinned (`pinItem`) with its dates and width; Match scale
+    resets, because a match only holds within its section.
   - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
     `TabProviders.tsx`). The pin button on an auto chart or an added chart creates them; new
     searches and filter changes never touch them. Don't clear them on search, and don't write
     system charts into them. Only pinned items are saved with the tab.
-  - Both sections are one component, `ItemSection` (`pinned` prop), with one card, `ItemCard`.
+  - Both sections are one component, `ItemSection` (`list` prop, an `ItemList`:
+    `"pinned" | "unpinned"`), with one card, `ItemCard`. `addItem` takes the list.
     They render on both pages regardless of search state (on the FDA page they sit in
     `FdaSearch`, outside the `isSuccess` gate), so they show while a search is missing,
     loading, or failing.

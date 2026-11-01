@@ -5,6 +5,14 @@ import type { PersistedExplorerState } from "../library/persist";
 
 const HIGHLIGHT_MS = 2000;
 
+/**
+ * A tab's two lists of user charts.
+ * - `pinned`: pinned from auto charts or added charts. New searches and filter changes never
+ *   touch them, and they are saved with the tab.
+ * - `unpinned` ("Added charts"): made with Add Chart. Not saved, and a new search clears them.
+ */
+export type ItemList = "pinned" | "unpinned";
+
 type Highlight = {
   id: string,
   /**
@@ -15,11 +23,8 @@ type Highlight = {
 };
 
 type ExplorerItemsContextType = {
-  pinnedItems: ExplorerItem[];
-  /** Charts made with Add Chart that the user hasn't pinned. Not saved; a new search clears them. */
-  unpinnedItems: ExplorerItem[];
-  addItem: (item: ExplorerItem, options?: { focus?: boolean }) => void;
-  addUnpinnedItem: (item: ExplorerItem, options?: { focus?: boolean }) => void;
+  items: Record<ItemList, ExplorerItem[]>;
+  addItem: (list: ItemList, item: ExplorerItem, options?: { focus?: boolean }) => void;
   /** Moves an unpinned item to the end of the pinned items. */
   pinItem: (id: string) => void;
   clearUnpinnedItems: () => void;
@@ -27,7 +32,7 @@ type ExplorerItemsContextType = {
   removeItem: (id: string) => void;
   /** Moves an item up (-1) or down (+1) one place within its own list. */
   moveItem: (id: string, delta: -1 | 1) => void;
-  setAllCollapsed: (pinned: boolean, collapsed: boolean) => void;
+  setAllCollapsed: (list: ItemList, collapsed: boolean) => void;
   /** The item just added, briefly, so its card can draw attention to itself. */
   highlight: Highlight | null;
   /** The Page Tools chart dates. `useChartWindow` resolves them against the current search. */
@@ -35,11 +40,11 @@ type ExplorerItemsContextType = {
   setChartDates: (chartDates: ChartDates) => void;
 };
 
+const NO_ITEMS: Record<ItemList, ExplorerItem[]> = { pinned: [], unpinned: [] };
+
 export const ExplorerItemsContext = createContext<ExplorerItemsContextType>({
-  pinnedItems: [],
-  unpinnedItems: [],
+  items: NO_ITEMS,
   addItem: () => { },
-  addUnpinnedItem: () => { },
   pinItem: () => { },
   clearUnpinnedItems: () => { },
   updateItem: () => { },
@@ -57,15 +62,10 @@ type ProviderProps = {
   initial?: PersistedExplorerState,
 };
 
-// Both lists live in one state so moving an item between them is a single update. Each update
-// keeps the identity of a list it doesn't change, so saving and Match scale skip it.
-type Items = {
-  pinned: ExplorerItem[],
-  unpinned: ExplorerItem[],
-};
+type Items = Record<ItemList, ExplorerItem[]>;
 
 /** Applies `update` to whichever list holds `id`. */
-const inListOf = (items: Items, id: string, update: (list: ExplorerItem[]) => ExplorerItem[]): Items => {
+const updateListHolding = (items: Items, id: string, update: (list: ExplorerItem[]) => ExplorerItem[]): Items => {
   if (items.pinned.some(item => item.id === id)) return { ...items, pinned: update(items.pinned) };
   if (items.unpinned.some(item => item.id === id)) return { ...items, unpinned: update(items.unpinned) };
   return items;
@@ -74,6 +74,9 @@ const inListOf = (items: Items, id: string, update: (list: ExplorerItem[]) => Ex
 /**
  * Holds one tab's pinned and unpinned items and the chart settings both search pages share. Each
  * search tab type wraps its own provider with this.
+ *
+ * Both lists live in one state so moving an item between them is a single update. Each update
+ * keeps the identity of a list it doesn't change, so saving and Match scale skip it.
  */
 export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
   const [items, setItems] = useState<Items>(() => ({ pinned: initial?.pinnedItems ?? [], unpinned: [] }));
@@ -81,46 +84,46 @@ export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
   const [highlight, setHighlight] = useState<Highlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const flash = useCallback((id: string, focus: boolean) => {
+  const highlightItem = useCallback((id: string, focus: boolean) => {
     setHighlight({ id, focus });
     clearTimeout(highlightTimer.current);
     highlightTimer.current = setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
   }, []);
 
-  const addItem = useCallback((item: ExplorerItem, options?: { focus?: boolean }) => {
-    setItems(prev => ({ ...prev, pinned: [...prev.pinned, item] }));
-    flash(item.id, options?.focus ?? false);
-  }, [flash]);
-
-  const addUnpinnedItem = useCallback((item: ExplorerItem, options?: { focus?: boolean }) => {
-    setItems(prev => ({ ...prev, unpinned: [...prev.unpinned, item] }));
-    flash(item.id, options?.focus ?? false);
-  }, [flash]);
+  const addItem = useCallback((list: ItemList, item: ExplorerItem, options?: { focus?: boolean }) => {
+    setItems(prev => ({ ...prev, [list]: [...prev[list], item] }));
+    highlightItem(item.id, options?.focus ?? false);
+  }, [highlightItem]);
 
   // The card moves to another section and loses focus with it, so focus follows it there.
+  // Match scale is per section, so the chart starts unmatched among the pins: it was matched
+  // against added charts, not against these.
   const pinItem = useCallback((id: string) => {
     setItems(prev => {
       const item = prev.unpinned.find(item => item.id === id);
       if (!item) return prev;
-      return { pinned: [...prev.pinned, item], unpinned: prev.unpinned.filter(item => item.id !== id) };
+      return {
+        pinned: [...prev.pinned, { ...item, matchScale: false }],
+        unpinned: prev.unpinned.filter(item => item.id !== id),
+      };
     });
-    flash(id, true);
-  }, [flash]);
+    highlightItem(id, true);
+  }, [highlightItem]);
 
   const clearUnpinnedItems = useCallback(() => {
     setItems(prev => prev.unpinned.length === 0 ? prev : { ...prev, unpinned: [] });
   }, []);
 
   const updateItem = useCallback((id: string, update: (item: ExplorerItem) => ExplorerItem) => {
-    setItems(prev => inListOf(prev, id, list => list.map(item => item.id === id ? update(item) : item)));
+    setItems(prev => updateListHolding(prev, id, list => list.map(item => item.id === id ? update(item) : item)));
   }, []);
 
   const removeItem = useCallback((id: string) => {
-    setItems(prev => inListOf(prev, id, list => list.filter(item => item.id !== id)));
+    setItems(prev => updateListHolding(prev, id, list => list.filter(item => item.id !== id)));
   }, []);
 
   const moveItem = useCallback((id: string, delta: -1 | 1) => {
-    setItems(prev => inListOf(prev, id, list => {
+    setItems(prev => updateListHolding(prev, id, list => {
       const from = list.findIndex(item => item.id === id);
       const to = from + delta;
       if (to < 0 || to >= list.length) return list;
@@ -130,18 +133,15 @@ export const ExplorerItemsProvider = ({ children, initial }: ProviderProps) => {
     }));
   }, []);
 
-  const setAllCollapsed = useCallback((pinned: boolean, collapsed: boolean) => {
-    const key = pinned ? "pinned" : "unpinned";
-    setItems(prev => ({ ...prev, [key]: prev[key].map(item => ({ ...item, collapsed })) }));
+  const setAllCollapsed = useCallback((list: ItemList, collapsed: boolean) => {
+    setItems(prev => ({ ...prev, [list]: prev[list].map(item => ({ ...item, collapsed })) }));
   }, []);
 
-  const { pinned: pinnedItems, unpinned: unpinnedItems } = items;
-
   const value = useMemo(() => ({
-    pinnedItems, unpinnedItems, addItem, addUnpinnedItem, pinItem, clearUnpinnedItems,
-    updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartDates, setChartDates,
-  }), [pinnedItems, unpinnedItems, addItem, addUnpinnedItem, pinItem, clearUnpinnedItems,
-    updateItem, removeItem, moveItem, setAllCollapsed, highlight, chartDates]);
+    items, addItem, pinItem, clearUnpinnedItems, updateItem, removeItem, moveItem, setAllCollapsed,
+    highlight, chartDates, setChartDates,
+  }), [items, addItem, pinItem, clearUnpinnedItems, updateItem, removeItem, moveItem, setAllCollapsed,
+    highlight, chartDates]);
 
   return (
     <ExplorerItemsContext.Provider value={value}>

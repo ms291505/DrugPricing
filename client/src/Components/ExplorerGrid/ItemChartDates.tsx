@@ -17,10 +17,10 @@ type Props = {
 }
 
 /**
- * A pinned chart's dates: a chip showing them that opens a date picker. A pinned chart's data
- * never changes, so presets are stored as the fixed dates they mean for it.
+ * A user chart's dates (pinned or added): a chip showing them that opens a date picker. Its data
+ * is a snapshot that never changes, so presets are stored as the fixed dates they mean for it.
  */
-export default function PinnedChartDates({ item, title, anchor, onOpen, onClose }: Props) {
+export default function ItemChartDates({ item, title, anchor, onOpen, onClose }: Props) {
   const { updateItem } = useExplorerItems();
   const dialogId = useId();
   const open = anchor !== null;

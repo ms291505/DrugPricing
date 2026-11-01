@@ -8,19 +8,17 @@ import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
-import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
-import toast from "react-hot-toast";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { useExplorerItems, type ItemList } from "../../Context/ExplorerItemsContext";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
-import PinnedChartDates from "./PinnedChartDates";
+import ItemChartDates from "./ItemChartDates";
+import PinIconButton from "./PinIconButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   item: ExplorerItem,
-  /** False for an Add Chart chart, which gets a pin button. */
-  pinned: boolean,
+  list: ItemList,
   index: number,
   count: number,
   /** Shared price range per pricing unit across the section's matched line charts ("Match scale"). */
@@ -30,7 +28,7 @@ type Props = {
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** A user chart, pinned or added, drawn from its stored snapshot. */
-export default function ItemCard({ item, pinned, index, count, priceRanges }: Props) {
+export default function ItemCard({ item, list, index, count, priceRanges }: Props) {
   const { updateItem, removeItem, moveItem, pinItem, highlight } = useExplorerItems();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
@@ -62,20 +60,11 @@ export default function ItemCard({ item, pinned, index, count, priceRanges }: Pr
   const isLineChart = item.kind === "chart" && item.chartType === "line";
   const matched = isLineChart && item.matchScale === true;
 
-  const handlePin = () => {
-    pinItem(item.id);
-    toast.success(`Pinned "${title}"`);
-  };
-
   const actions = (
     <>
-      {pinned
-        ? null
-        : <Tooltip title="Pin to this tab">
-          <IconButton size="small" onClick={handlePin} aria-label={`Pin ${title}`}>
-            <PushPinOutlinedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+      {list === "unpinned"
+        ? <PinIconButton title={title} tooltip="Pin to this tab" onPin={() => pinItem(item.id)} />
+        : null
       }
       <Tooltip title="Item actions">
         <IconButton
@@ -138,7 +127,7 @@ export default function ItemCard({ item, pinned, index, count, priceRanges }: Pr
         badges={<>
           <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
           {item.kind === "chart"
-            ? <PinnedChartDates
+            ? <ItemChartDates
               item={item}
               title={title}
               anchor={datesAnchor}

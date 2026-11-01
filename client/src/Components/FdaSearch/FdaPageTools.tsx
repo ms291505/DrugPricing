@@ -23,7 +23,7 @@ export default function FdaPageTools({ displayHeader }: Props) {
 
   const { fdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
-  const { addUnpinnedItem } = useExplorerItems();
+  const { addItem } = useExplorerItems();
 
   const origin = useFdaChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
@@ -65,7 +65,7 @@ export default function FdaPageTools({ displayHeader }: Props) {
 
     if (chartData.length === 0) return;
 
-    addUnpinnedItem(createChartItem({
+    addItem("unpinned", createChartItem({
       chartType,
       prices: chartData,
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartData)),

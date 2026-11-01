@@ -57,7 +57,7 @@ export const BlankTabProvider = ({ children }: TabProviderProps) => (
 
 function SaveFdaTab({ tabId }: { tabId: string }) {
   const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
-  const { pinnedItems, chartDates } = useExplorerItems();
+  const { items, chartDates } = useExplorerItems();
 
   useEffect(() => {
     saveTabState(tabId, {
@@ -65,37 +65,37 @@ function SaveFdaTab({ tabId }: { tabId: string }) {
       searchParams: fdaSearchParams,
       resultFilter: fdaResultFilter,
       detailLevel: fdaResultDetailLevel,
-      pinnedItems,
+      pinnedItems: items.pinned,
       chartDates,
     });
-  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, pinnedItems, chartDates]);
+  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, items.pinned, chartDates]);
 
   return null;
 }
 
 function SaveNadacTab({ tabId }: { tabId: string }) {
   const { searchParams, excludedNdcDescriptions } = useSearchContext();
-  const { pinnedItems, chartDates } = useExplorerItems();
+  const { items, chartDates } = useExplorerItems();
 
   useEffect(() => {
     saveTabState(tabId, {
       type: "nadac",
       searchParams,
       excludedNdcDescriptions,
-      pinnedItems,
+      pinnedItems: items.pinned,
       chartDates,
     });
-  }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems, chartDates]);
+  }, [tabId, searchParams, excludedNdcDescriptions, items.pinned, chartDates]);
 
   return null;
 }
 
 function SaveCollectionTab({ tabId }: { tabId: string }) {
-  const { pinnedItems, chartDates } = useExplorerItems();
+  const { items, chartDates } = useExplorerItems();
 
   useEffect(() => {
-    saveTabState(tabId, { type: "collection", pinnedItems, chartDates });
-  }, [tabId, pinnedItems, chartDates]);
+    saveTabState(tabId, { type: "collection", pinnedItems: items.pinned, chartDates });
+  }, [tabId, items.pinned, chartDates]);
 
   return null;
 }

@@ -10,7 +10,7 @@ export default function Collection() {
   const { id: tabId } = useTabInstanceContext();
   const { addItem } = useExplorerItems();
   useEffect(
-    () => registerTab(tabId, item => addItem(item)),
+    () => registerTab(tabId, item => addItem("pinned", item)),
     [tabId, registerTab, addItem]
   );
   return (
@@ -18,7 +18,7 @@ export default function Collection() {
       <Box>
         This is a collection.
       </Box>
-      <ItemSection pinned />
+      <ItemSection list="pinned" />
     </Box>
   )
 }

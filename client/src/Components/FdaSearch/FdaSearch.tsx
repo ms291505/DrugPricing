@@ -21,8 +21,8 @@ export default function FdaSearch() {
       {/* Outside the isSuccess gate: added and pinned charts render from their snapshots, so
           they show even when the tab's search is missing, still loading, or failing. */}
       <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-        <ItemSection pinned={false} />
-        <ItemSection pinned />
+        <ItemSection list="unpinned" />
+        <ItemSection list="pinned" />
       </Box>
     </Box>
   )

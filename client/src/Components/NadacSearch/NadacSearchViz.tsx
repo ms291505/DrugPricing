@@ -26,7 +26,8 @@ export default function NadacSearchViz() {
   const [barValue, setBarValue] = useState<BarValue>("latest");
 
   // System charts are derived from the current result on every render, like the FDA page's.
-  // User charts live in the tab's pinned items and are not touched by a new search.
+  // User charts live in ExplorerItemsContext: added charts (cleared by a new search) and pinned
+  // charts (never touched by one).
   const prices = data?.prices ?? [];
   const showAutoCharts = shouldAutoChart(prices);
   // The auto charts show the whole result, so it is also the visible set.
@@ -96,8 +97,8 @@ export default function NadacSearchViz() {
         </Grid>
         : null
       }
-      <ItemSection pinned={false} />
-      <ItemSection pinned />
+      <ItemSection list="unpinned" />
+      <ItemSection list="pinned" />
     </Box>
   )
 }
