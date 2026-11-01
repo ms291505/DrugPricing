@@ -19,11 +19,12 @@ export const rangeKey = (ndc: Ndc) => ndc + RANGE_KEY_SUFFIX;
  *
  * Several rows can share an NDC on one date (product level merges a product's packages under
  * the product NDC). Those are averaged into one point, and their min–max spread is kept under
- * `rangeKey(ndc)` so the chart can show it instead of hiding it.
+ * `rangeKey(ndc)` for the band, the tooltip, View data and the CSV.
  *
  * @param nadacPrices - prices, all in one pricing unit
  * @returns rows sorted by date; the NDCs whose packages differ at the precision shown on at least
- * one date (a band worth drawing); and per NDC, the most prices on one date (its package count)
+ * one date (band candidates: `visibleBandNdcs` also drops bands too thin to see); and per NDC, the
+ * most prices on one date (its package count)
  */
 export function createLineVizData(nadacPrices: ChartPrice[]) {
   const byDate = nadacPrices.reduce<Accumulator>((acc, { asOfDate, ndc, nadacPerUnit }) => {
@@ -61,8 +62,8 @@ const MIN_BAND_SHARE = 0.01;
 
 /**
  * The series whose package band would be visible on a price axis: a $9 spread on a $2K–$7K axis
- * is under a pixel, and a caption about shading nobody can see only confuses. The tooltip and
- * View data still give every series' package range.
+ * is under a pixel, and a caption about shading nobody can see only confuses. A band dropped for
+ * being too thin still shows its range in the tooltip (from `md` up), View data and the CSV.
  *
  * @param rows - from `createLineVizData`
  * @param bandNdcs - the series to check, e.g. the shown ones in `rangeNdcs`
@@ -81,14 +82,14 @@ export function visibleBandNdcs(rows: LineVizRow[], bandNdcs: Ndc[], domain: [nu
  * row: what the line is, and what the band behind it is. With several lines, it names the one
  * that averages, so the caption isn't read as being about every line.
  *
- * @param bandNdcs - the shown series with a band (see `rangeNdcs`)
+ * @param bandNdcs - the shown series whose band is drawn (`visibleBandNdcs`)
  * @param shownCount - how many series the chart shows
  * @param packageCounts - from `createLineVizData`
  */
 export function averagedLineCaption(bandNdcs: Ndc[], shownCount: number, packageCounts: Map<Ndc, number>): string | null {
   if (bandNdcs.length === 0) return null;
   const band = "shaded: their lowest to highest price on each date";
-  if (bandNdcs.length > 1) return `Shaded lines: average of each product's packages · ${band}`;
+  if (bandNdcs.length > 1) return `Lines with shading: average of each product's packages · ${band}`;
   const [ndc] = bandNdcs;
   const line = shownCount === 1 ? "Line" : ndc;
   return `${line}: average of ${packageCounts.get(ndc)} packages · ${band}`;

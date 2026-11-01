@@ -4,7 +4,7 @@ import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
 import React, { useState, useEffect } from "react";
-import { DEFAULT_NADAC_SEARCH_MONTHS, MIN_NDC_DESCRIPTION_LENGTH, MIN_NDC_LENGTH } from "../../library/constants.ts";
+import { DEFAULT_NADAC_SEARCH_MONTHS } from "../../library/constants.ts";
 import { useSearchContext } from "../../Context/NadacSearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
@@ -15,6 +15,7 @@ import { toDateInput, windowEndingAt } from "../../library/dates.ts";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/WorkspaceContext.tsx";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
+import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
@@ -41,7 +42,7 @@ export default function NadacSearch() {
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
   const searchNdc = toStoredNadacNdc(ndc);
 
-  const isValidSearch = ndcDescription.length >= MIN_NDC_DESCRIPTION_LENGTH || searchNdc.length >= MIN_NDC_LENGTH;
+  const isValidSearch = isValidNadacSearch(ndcDescription, searchNdc);
 
   const nadacSearchQuery = useNadacSearch();
 
@@ -58,10 +59,8 @@ export default function NadacSearch() {
   }, [nadacSearchQuery.data, setData]);
 
   const handleSearch = () => {
-    if (canChangeName) {
-      const description = ndcDescription.trim();
-      renameTab(id, description.length >= MIN_NDC_DESCRIPTION_LENGTH ? description.toUpperCase() : `NDC ${searchNdc}`);
-    }
+    const title = nadacTabTitle(ndcDescription, searchNdc);
+    if (canChangeName && title) renameTab(id, title);
 
     setSearchParams({
       ndcDescription: ndcDescription,

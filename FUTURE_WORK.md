@@ -58,7 +58,8 @@ anything new. Decided in an interview about the notes under **Ideas**, to ship a
 1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
    first (3 tabs × about 10 pins), then:
    - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (a change of
-     the page dates, or the 2s add highlight, re-renders every pinned chart today);
+     the page dates, or the 2s add highlight, re-renders every pinned chart today). The split
+     settles the Cleanups item about the context's name: name the new contexts for their jobs;
    - memoize each chart's derived data;
    - debounce the tab-state saves, which stringify every pin's full history on each change;
    - mount charts only near the viewport.
@@ -73,8 +74,9 @@ anything new. Decided in an interview about the notes under **Ideas**, to ship a
    - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
      preset keeps the typed dates, so Custom can be switched back on.
    - Add Chart becomes **Chart selected** (Line/Bar) on the results table.
-   - NADAC's Drug filter narrows the table and the auto charts too, like FDA's filters (this is
-     the parity item below).
+   - NADAC's Drug filter narrows the table and the auto charts too, like FDA's filters.
+   - This settles two Cleanups items, "Page Tools is cramped at 1024px" and "One Page Tools
+     shell for both pages". Delete them with it.
 3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
    values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
    and its own scroll.
@@ -106,6 +108,7 @@ in the code until then. It is an early step toward this rework.
 - **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
   chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
   chart-settings context) so its name matches its job. It's a pure rename across about 15 files.
+  Step 1 of the usability round (under **Decided**) splits this context, so do it there.
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
@@ -119,7 +122,8 @@ in the code until then. It is an early step toward this rework.
 - **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
   the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
   bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint
-  that accounts for the drawer, or Page Tools should move above the cards there.
+  that accounts for the drawer, or Page Tools should move above the cards there. Superseded by
+  step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
 - **The FDA search toast belongs to the fetch, not the search.** `useFdaSearch` wraps its
@@ -138,7 +142,8 @@ in the code until then. It is an early step toward this rework.
   the `data`/`setData` state and a render with stale data.
 - **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
 - **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
-  Chart dates but duplicate the panel layout, heading and section styles.
+  Chart dates but duplicate the panel layout, heading and section styles. Superseded by step 2
+  of the usability round: one Results section on both pages.
 
 ## Ideas
 
@@ -203,7 +208,8 @@ workspace tab (see the link format under **Decided**). Two consequences for curr
 ### Notes from user testing (2026-10-17)
 
 On this date I used the web app and took notes on improvements I'd like to see as a user.
-What was decided from them is under **Decided: Usability round** above.
+What was decided from them is under **Decided** above, in "Usability round from the
+user-testing notes".
 
 - Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
 - The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?

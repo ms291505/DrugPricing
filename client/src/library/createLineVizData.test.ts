@@ -31,6 +31,15 @@ describe("createLineVizData", () => {
     expect(packageCounts.get("P")).toBe(2);
     expect(packageCounts.get("A")).toBe(1);
   });
+
+  it("keeps a series with a printable spread on any one date", () => {
+    const { rangeNdcs } = createLineVizData([
+      // Too small to print on the first date, a real spread on the second.
+      price("P", "2025-01-01", 5.5128), price("P", "2025-01-01", 5.5131),
+      price("P", "2025-02-01", 5), price("P", "2025-02-01", 6),
+    ]);
+    expect([...rangeNdcs]).toEqual(["P"]);
+  });
 });
 
 describe("averagedLineCaption", () => {
@@ -43,7 +52,7 @@ describe("averagedLineCaption", () => {
 
   it("names the series that averages when the chart shows several", () => {
     expect(averagedLineCaption(["P"], 7, counts)).toMatch(/^P: average of 3 packages · /);
-    expect(averagedLineCaption(["P", "Q"], 7, counts)).toMatch(/^Shaded lines: average of each product's packages · /);
+    expect(averagedLineCaption(["P", "Q"], 7, counts)).toMatch(/^Lines with shading: average of each product's packages · /);
   });
 
   it("says nothing without a band", () => {
@@ -64,5 +73,23 @@ describe("visibleBandNdcs", () => {
 
   it("keeps them on an axis fitted close enough", () => {
     expect(visibleBandNdcs(rows, ["A"], [6700, 6760])).toEqual(["A"]);
+  });
+
+  it("keeps a band visible on any one date", () => {
+    const { rows } = createLineVizData([
+      // A visible spread, a thin one, and a date with one package and no range.
+      price("C", "2025-01-01", 2500), price("C", "2025-01-01", 3500),
+      price("C", "2025-02-01", 3000), price("C", "2025-02-01", 3009),
+      price("C", "2025-03-01", 3000),
+    ]);
+    expect(visibleBandNdcs(rows, ["C"], [2000, 7000])).toEqual(["C"]);
+  });
+
+  it("drops a series whose only dates without a range sit beside thin spreads", () => {
+    const { rows } = createLineVizData([
+      price("D", "2025-01-01", 3000), price("D", "2025-01-01", 3009),
+      price("D", "2025-02-01", 3000),
+    ]);
+    expect(visibleBandNdcs(rows, ["D"], [2000, 7000])).toEqual([]);
   });
 });
