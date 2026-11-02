@@ -141,6 +141,8 @@ in the code until then. It is an early step toward this rework.
   whether the NADAC search, which has no toast, should get the same one.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
+- **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
+  and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 
 ### For the NADAC/FDA parity plan
 
