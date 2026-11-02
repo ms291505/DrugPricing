@@ -105,7 +105,7 @@ in the code until then. It is an early step toward this rework.
 ### Each a small PR of its own
 
 - **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
-  (`applyFdaResultFilter`, `summarizeNadacPrices`, `validateTabTitle`). Split it by domain
+  (`applyFdaResultFilter`, `validateTabTitle`). Split it by domain
   (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
 - **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
   chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
@@ -141,6 +141,10 @@ in the code until then. It is an early step toward this rework.
   whether the NADAC search, which has no toast, should get the same one.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
+- **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
+  `> 0.05` compares $/each with $/mL (`ResultTables/priceColumns.tsx`). Sorting already groups by
+  unit (`compareUnitPrices`). Make the filters unit-aware (a custom filter operator that also
+  picks the unit), or set `filterable: false` on the three price columns.
 - **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 

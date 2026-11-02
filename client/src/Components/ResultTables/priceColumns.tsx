@@ -1,4 +1,4 @@
-import type { GridApiCommon, GridColDef, GridComparatorFn, GridSortCellParams } from "@mui/x-data-grid";
+import type { GridApiCommon, GridColDef, GridComparatorFn, GridSortCellParams, GridSortDirection } from "@mui/x-data-grid";
 import { Box, Tooltip } from "@mui/material";
 import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import { compareUnitPrices, latestSummary, pricingUnitLabel } from "../../library/prices";
@@ -17,15 +17,19 @@ const unitPrice = (value: number | undefined, row: PricedRow) => value === undef
   ? NO_PRICE
   : `${formatPrice(value)}/${pricingUnitLabel(singleUnit(row)!.pricingUnit)}`;
 
-/** Sorts a price column by unit first, so rows in different units never interleave. */
-const byUnitThenPrice: GridComparatorFn<number | undefined> = (a, b, cellA, cellB) => {
-  const withUnit = (value: number | undefined, cell: GridSortCellParams) => {
-    const row = (cell.api as GridApiCommon).getRow<PricedRow>(cell.id);
-    const summary = row ? singleUnit(row) : undefined;
-    return value === undefined || !summary ? undefined : { pricingUnit: summary.pricingUnit, price: value };
-  };
-  return compareUnitPrices(withUnit(a, cellA), withUnit(b, cellB));
+const withUnit = (value: number | undefined, cell: GridSortCellParams) => {
+  const row = (cell.api as GridApiCommon).getRow<PricedRow>(cell.id);
+  const summary = row ? singleUnit(row) : undefined;
+  return value === undefined || !summary ? undefined : { pricingUnit: summary.pricingUnit, price: value };
 };
+
+/**
+ * Sorts a price column by unit first, so rows in different units never interleave, with rows
+ * lacking a single-unit price last in both directions. MUI's `sortComparator` can't do that: it
+ * negates the comparator for a descending sort, which would move those rows to the top.
+ */
+const byUnitThenPrice = (direction: GridSortDirection): GridComparatorFn<number | undefined> =>
+  (a, b, cellA, cellB) => compareUnitPrices(withUnit(a, cellA), withUnit(b, cellB), direction === "desc" ? "desc" : "asc");
 
 type PriceColumnOptions = {
   /** Where to find the prices of a mixed-unit row, added to its tooltip. */
@@ -52,7 +56,7 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
       width: 125,
       valueGetter: (_, row) => singleUnit(row)?.latest,
       valueFormatter: unitPrice,
-      sortComparator: byUnitThenPrice,
+      getSortComparator: byUnitThenPrice,
       renderCell: ({ row, formattedValue }) => row.priceSummaries.length > 1
         ? <MixedUnits pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
         : formattedValue as string,
@@ -75,7 +79,7 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
         width: 115,
         valueGetter: (_, row) => singleUnit(row)?.min,
         valueFormatter: unitPrice,
-        sortComparator: byUnitThenPrice,
+        getSortComparator: byUnitThenPrice,
       },
       {
         field: "maxPrice",
@@ -85,7 +89,7 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
         width: 115,
         valueGetter: (_, row) => singleUnit(row)?.max,
         valueFormatter: unitPrice,
-        sortComparator: byUnitThenPrice,
+        getSortComparator: byUnitThenPrice,
       },
     ],
   };

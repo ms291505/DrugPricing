@@ -153,10 +153,12 @@ export function latestSummary<S extends PriceSummary>(summaries: S[]): S | undef
 export type UnitPrice = { pricingUnit: string, price: number };
 
 /**
- * Orders prices by unit, then by price, so a sort never ranks $/each against $/mL. A missing price
- * sorts first, as MUI's number sort puts empty cells.
+ * Orders prices by unit, then by price, so a sort never ranks $/each against $/mL. `desc` reverses
+ * both. A missing price (no prices, or several units) sorts last either way: most FDA rows have
+ * none, and they would bury the priced ones.
  */
-export function compareUnitPrices(a: UnitPrice | undefined, b: UnitPrice | undefined): number {
-  if (!a || !b) return (a ? 1 : 0) - (b ? 1 : 0);
-  return a.pricingUnit.localeCompare(b.pricingUnit) || a.price - b.price;
+export function compareUnitPrices(a: UnitPrice | undefined, b: UnitPrice | undefined, direction: "asc" | "desc"): number {
+  if (!a || !b) return (a ? 0 : 1) - (b ? 0 : 1);
+  const order = a.pricingUnit.localeCompare(b.pricingUnit) || a.price - b.price;
+  return direction === "desc" ? -order : order;
 }

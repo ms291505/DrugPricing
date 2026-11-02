@@ -115,23 +115,21 @@ describe("latestSummary", () => {
 });
 
 describe("compareUnitPrices", () => {
-  const sort = (prices: Array<{ pricingUnit: string, price: number } | undefined>) => [...prices].sort(compareUnitPrices);
+  const each = (price: number) => ({ pricingUnit: "each", price });
+  const ml = (price: number) => ({ pricingUnit: "milliliter", price });
+  const sort = (prices: Array<{ pricingUnit: string, price: number } | undefined>, direction: "asc" | "desc") =>
+    [...prices].sort((a, b) => compareUnitPrices(a, b, direction));
 
   it("sorts each before mL regardless of price, then by price", () => {
-    expect(sort([
-      { pricingUnit: "milliliter", price: 0.1 },
-      { pricingUnit: "each", price: 5 },
-      { pricingUnit: "each", price: 0.4 },
-    ])).toEqual([
-      { pricingUnit: "each", price: 0.4 },
-      { pricingUnit: "each", price: 5 },
-      { pricingUnit: "milliliter", price: 0.1 },
-    ]);
+    expect(sort([ml(0.1), each(5), each(0.4)], "asc")).toEqual([each(0.4), each(5), ml(0.1)]);
   });
 
-  it("puts missing prices first", () => {
-    expect(compareUnitPrices(undefined, { pricingUnit: "each", price: 1 })).toBeLessThan(0);
-    expect(compareUnitPrices({ pricingUnit: "each", price: 1 }, undefined)).toBeGreaterThan(0);
-    expect(compareUnitPrices(undefined, undefined)).toBe(0);
+  it("reverses units and prices descending", () => {
+    expect(sort([each(0.4), ml(0.1), each(5)], "desc")).toEqual([ml(0.1), each(5), each(0.4)]);
+  });
+
+  it("puts missing prices last in both directions", () => {
+    expect(sort([undefined, each(2), undefined, each(1)], "asc")).toEqual([each(1), each(2), undefined, undefined]);
+    expect(sort([undefined, each(1), undefined, each(2)], "desc")).toEqual([each(2), each(1), undefined, undefined]);
   });
 });
