@@ -7,11 +7,11 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { barDataRows, csvFileName, downloadCsv, lineDataRows } from "../../library/chartCsv";
 import { visuallyHidden } from "@mui/utils";
-import { pricingUnitLabel } from "../../library/chartSeries";
+import { pricingUnitLabel } from "../../library/prices";
 import { distinctRange, formatPrice } from "../../library/chartScale";
 import useMobile from "../../hooks/useMobile";
 import { formatDate, type DateBounds, type DateWindow } from "../../library/dates";
-import type { BarValue } from "../../library/seriesSummary";
+import type { BarValue } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
 
 type Props = {

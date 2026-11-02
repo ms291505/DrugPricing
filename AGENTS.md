@@ -66,7 +66,18 @@ in `TabProviders.tsx`) · `src/theme.ts` (including `palette.chart.series`) ·
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
-both pages share), plus supporting UI.
+both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
+supporting UI.
+
+### Result tables
+
+Each table is one file in `ResultTables/` that takes its search's data and `loading` as props,
+lists its columns, and renders `ResultTable` (paging, Add Chart selection). The page that owns the
+query also owns the table's `Paper`. Rows are built in `library/resultRows.ts` (tested): each
+carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
+same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
+sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
+on a phone it must show without scrolling.
 
 ### Workspace
 
@@ -101,8 +112,11 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   Every display goes through the UTC helpers in `library/dates.ts`; local formatting shows the
   day before in the Americas.
 - **Never assume one price per NDC per date.** At FDA product level, several packages share a
-  series; charts average them (`createLineVizData`).
-- **Never put two pricing units on one axis** (`UnitSplit`).
+  series; charts and tables average them per date (`seriesByDate` in `library/prices.ts`, which
+  holds the price math both share).
+- **Never put two pricing units on one axis** (`UnitSplit`) **or in one figure.** A few products
+  (19 as of 2026-11, EA and GM) have packages priced in different units; the FDA product table
+  shows them as "Mixed units" with their latest price date (`summarizeByUnit`).
 - **Price axes may exaggerate a change at most `MAX_AXIS_EXAGGERATION` times** (`fittedPriceAxis`);
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items

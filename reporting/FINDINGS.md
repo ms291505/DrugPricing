@@ -228,6 +228,29 @@ different NADAC prices):
   for example dapagliflozin from 2026-05-27 or sitagliptin from 2026-08-05.
 - **Flat for years, then a cliff:** Lantus, NovoLog, Eliquis, Jardiance.
 
+## 7. Products priced in more than one unit (`sql/product_mixed_pricing_units.sql`)
+
+As of the 2026-10-14 file, 19 of about 21,600 priced FDA products have packages that NADAC
+prices in two units, always `EA` and `GM`: a single-dose packet per each next to a bulk powder,
+ointment or pump per gram. No package changes unit. The client never combines units, so these
+products show "Mixed units" in the FDA product table, with their latest price date, and their
+charts split into one chart per unit. Package level shows each package's own price.
+
+| Brand Name search | Product NDCs | Per each | Per gram | Why it's useful |
+| --- | --- | --- | --- | --- |
+| `prevalite` | `0245-0036` | $0.83 packet (2 packages) | $0.17 powder | One product, both units current |
+| `cholestyramine` | `24658-266`, `27241-134`, `33342-293`, `49884-465`, `49884-466`, `67877-298`, `68094-906`, `68382-528`, `68382-529` | $0.83 packet | $0.09-0.28 powder | Eight mixed products (Prevalite is the ninth) next to single-unit ones |
+| `colestipol` | `59762-0260` | $2.86 packet, last priced 2025-05-14 | $0.27 granules | One unit stopped: the product row shows the per-gram date, its packet packages the older one |
+| `bacitracin` | `45802-060`, `68001-477` | $0.12, last priced 2026-01-14 | $0.07-0.12 | Same, on an ointment |
+| `imiquimod` | `51672-4174` | $36.23 (3.75% cream packet) | $113.12 (pump) | Other imiquimod products use one unit |
+| `polyethylene glycol` | `45802-868`, `69230-324` | $1.22 packet | $0.02-0.03 (3 sizes) | Package spread within the per-gram unit too |
+| `clearlax` | `46122-014` | $1.22 packet | $0.02-0.03 | Store brand of the same powder |
+| `triple antibiotic` | `0904-8805`, `45802-143` | $0.13 packet | $0.09-0.12 | |
+
+Per each and per gram can't be compared directly (see "A pricing unit is not a dose" above):
+$0.83 per cholestyramine packet against $0.09/g is the same price if a packet holds about 9 g of
+powder, so neither unit is the cheap one without knowing the fill.
+
 ## Data quality note
 
 In 2026-10 the dev DB was missing every 11-character NDC (5-digit labelers, ~81% of rows) for

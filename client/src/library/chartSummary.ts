@@ -1,8 +1,8 @@
 import { createLineVizData } from "./createLineVizData";
 import { formatPrice } from "./chartScale";
 import { dateBounds, formatDate } from "./dates";
-import { summarizeSeries, type BarValue, type SeriesSummary } from "./seriesSummary";
-import type { ChartChangeSpan } from "./explorerItems";
+import { summarizePrices, type PriceSummary } from "./prices";
+import type { BarValue, ChartChangeSpan } from "./explorerItems";
 import type { ChartPrice } from "./types";
 
 /*
@@ -19,7 +19,7 @@ const seriesDates = (count: number, prices: ChartPrice[]) => {
 };
 
 /** "0074-4339 at $6,745.00", with the date when the series stopped before the chart's last date. */
-function latestOf(summary: SeriesSummary, lastDate: number): string {
+function latestOf(summary: PriceSummary, lastDate: number): string {
   const stopped = summary.latestDate < lastDate ? ` (last priced ${formatDate(summary.latestDate)})` : "";
   return `${summary.ndc} at ${formatPrice(summary.latest)}${stopped}`;
 }
@@ -86,7 +86,7 @@ function changeSentence(span: ChartChangeSpan): string {
  * @param prices - one pricing unit, already clipped to the chart's dates
  */
 export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeSpan): string {
-  const summaries = summarizeSeries(prices);
+  const summaries = summarizePrices(prices);
   const lastDate = Math.max(...summaries.map(summary => summary.latestDate));
   const sentences: string[] = [];
 
@@ -119,10 +119,10 @@ export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeS
  * @param prices - one pricing unit, already clipped to the chart's dates
  */
 export function barChartSummary(prices: ChartPrice[], barValue: BarValue): string {
-  const rows = summarizeSeries(prices).sort((a, b) => b[barValue] - a[barValue]);
+  const rows = summarizePrices(prices).sort((a, b) => b[barValue] - a[barValue]);
   if (rows.length === 0) return "";
   const basis = barValue === "latest" ? "latest price" : "average price";
-  const row = (summary: SeriesSummary) => `${summary.ndc} at ${formatPrice(summary[barValue])}`;
+  const row = (summary: PriceSummary) => `${summary.ndc} at ${formatPrice(summary[barValue])}`;
   const sentences = [
     `Rows show each series' ${basis}, highest first. ${seriesDates(rows.length, prices)}`,
     rows.length === 1

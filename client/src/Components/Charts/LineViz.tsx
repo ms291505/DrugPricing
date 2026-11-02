@@ -4,7 +4,7 @@ import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
 import { averagedLineCaption, createLineVizData, rangeKey, visibleBandNdcs, type LineVizRow } from "../../library/createLineVizData.ts";
-import { pricingUnitLabel } from "../../library/chartSeries.ts";
+import { pricingUnitLabel } from "../../library/prices.ts";
 import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";

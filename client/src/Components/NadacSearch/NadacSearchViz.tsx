@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper"
 import Grid from "@mui/material/Grid";
-import TableViz from "./TableViz";
+import { NadacResultTable } from "../ResultTables";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch";
@@ -16,7 +16,7 @@ import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import useChartWindow from "../../hooks/useChartWindow";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
-import type { BarValue } from "../../library/seriesSummary";
+import type { BarValue } from "../../library/explorerItems";
 
 // Memoized (it takes no props) so the search form's keystrokes and changes to the workspace's
 // tab list, such as a rename after a search, don't re-render every NADAC tab's results.
@@ -56,7 +56,7 @@ export default memo(function NadacSearchViz() {
         </Grid>
         <Grid size={{ xs: 12, sm: 9 }}>
           <Paper sx={{ p: 1 }}>
-            <TableViz nadacPrices={prices} loading={isLoading} />
+            <NadacResultTable nadacPrices={prices} loading={isLoading} />
           </Paper>
         </Grid>
       </Grid>

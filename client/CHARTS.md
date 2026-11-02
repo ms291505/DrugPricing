@@ -49,7 +49,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 - Charts take `ChartPrice[]`, which `NadacPrice` satisfies. A series is one `ndc`. At FDA product
   level that is the *product* NDC, so several packages share a series and can disagree on a date:
-  `createLineVizData` averages them per date and keeps their min–max as `rangeKey(ndc)`.
+  `seriesByDate` (`library/prices.ts`) averages them per date, and `createLineVizData` draws that
+  average and keeps the packages' min–max as `rangeKey(ndc)`.
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
 - Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
@@ -97,7 +98,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 Horizontal and sorted. Each row shows the latest price or the average over the chart's dates
 (`BarValue`, a toggle stored on pinned bars) and the low–high range over the same dates, all from
-`summarizeSeries`, which uses the per-date values the line draws (at product level, the averaged
+`summarizePrices` (`library/prices.ts`), which uses the per-date values the line draws (at product level, the averaged
 line, never the spread between packages). The `barStyle` setting draws a row as a `dot` on a
 fitted axis (default) or a `bar` from $0 with a gray range track. Rows are drawn in the `Bar`
 `shape`. Don't use recharts' `ErrorBar` (stale scale, ranges at half price) or
@@ -126,7 +127,7 @@ capped at `min(360px, 100vw − 64px)`. Check new tooltip lines at phone width.
 ## View data and CSV
 
 `ChartData` under every chart shows every series, whatever the legend hides, over the chart's
-dates: line rows are the drawn per-date values, bar rows the `summarizeSeries` rows. The table
+dates: line rows are the drawn per-date values, bar rows the `summarizePrices` rows. The table
 shows a range only when its ends print differently. The CSV (`chartCsv.ts`) keeps every range,
 uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards text fields against
 formula injection.

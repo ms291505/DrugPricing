@@ -16,7 +16,7 @@ import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 import useChartWindow from "../../hooks/useChartWindow";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
-import type { BarValue } from "../../library/seriesSummary";
+import type { BarValue } from "../../library/explorerItems";
 import PriceChangeCard from "./PriceChangeCard";
 import ExplorerGrid, { ExplorerGridItem } from "../ExplorerGrid";
 

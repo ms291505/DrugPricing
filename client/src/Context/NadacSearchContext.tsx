@@ -15,8 +15,8 @@ type NadacSearchContextType = {
   /** Clears the Drug page filter; a new search starts unfiltered. */
   clearNdcDescriptionFilter: () => void;
   ndcDescriptions: string[];
-  newChartRows: GridRowSelectionModel;
-  setNewChartRows: React.Dispatch<React.SetStateAction<GridRowSelectionModel>>;
+  selectedRows: GridRowSelectionModel;
+  setSelectedRows: React.Dispatch<React.SetStateAction<GridRowSelectionModel>>;
   searchParams: NadacSearchParams | null;
   setSearchParams: React.Dispatch<React.SetStateAction<NadacSearchParams | null>>;
   /** False while the tab hasn't been shown yet; `useNadacSearch` waits for it. */
@@ -32,8 +32,8 @@ export const NadacSearchContext = createContext<NadacSearchContextType>({
   excludedNdcDescriptions: [],
   clearNdcDescriptionFilter: () => { },
   ndcDescriptions: [],
-  newChartRows: { type: "include", ids: new Set() },
-  setNewChartRows: () => { },
+  selectedRows: { type: "include", ids: new Set() },
+  setSelectedRows: () => { },
   searchParams: null,
   setSearchParams: () => { },
   searchEnabled: true,
@@ -53,7 +53,7 @@ type ProviderProps = {
 
 export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
-  const [newChartRows, setNewChartRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
   const [searchParams, setSearchParams] = useState<NadacSearchParams | null>(initial?.searchParams ?? null);
   const [excludedNdcDescriptions, setExcludedNdcDescriptions] = useState<string[]>(initial?.excludedNdcDescriptions ?? []);
 
@@ -89,8 +89,8 @@ export const NadacSearchContextProvider = ({ children, initial, searchEnabled = 
       excludedNdcDescriptions,
       clearNdcDescriptionFilter,
       ndcDescriptions,
-      newChartRows,
-      setNewChartRows,
+      selectedRows,
+      setSelectedRows,
       setSearchParams,
       searchParams,
       searchEnabled,

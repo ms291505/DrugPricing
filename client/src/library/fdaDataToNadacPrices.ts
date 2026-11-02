@@ -37,11 +37,3 @@ export default function fdaSearchResulsToNadacPrices(
 
   return fdaProductsToNadacPrices(applyFdaResultFilter(data, fdaResultFilter).products, fdaResultDetailLevel);
 }
-
-export function fdaProductHasNadacPrices(
-  product: FdaProductDetail | undefined,
-) {
-  if (product === undefined) return false;
-  const prices = product.fdaPackageDetails.flatMap(pack => pack.nadacPrices.flatMap(price => price));
-  return prices.length > 0;
-}

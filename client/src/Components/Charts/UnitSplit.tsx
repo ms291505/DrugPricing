@@ -1,7 +1,7 @@
 import { Box, Chip, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import type { ChartPrice } from "../../library/types";
-import { pricingUnitLabel, splitByPricingUnit } from "../../library/chartSeries";
+import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
 import { clipToWindow, FULL_WINDOW, type DateWindow } from "../../library/dates";
 
 type Props = {
