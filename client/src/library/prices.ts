@@ -107,14 +107,18 @@ export function summarizePrices(prices: ChartPrice[]): PriceSummary[] {
 export type UnitPriceSummary = PriceSummary & { pricingUnit: string };
 
 /**
- * Summarizes one series (e.g. an FDA product or package) per pricing unit, since units never mix.
- * Almost every series has one unit, but a few products have packages priced in different units
- * (cholestyramine packets per each, its canisters per gram).
+ * Summarizes each series per pricing unit, since units never mix. Almost every series has one
+ * unit, but a few FDA products have packages priced in different units (cholestyramine packets
+ * per each, its canisters per gram).
  *
- * @param prices - the series' prices, all keyed to one NDC
- * @returns one summary per unit, in the order units first appear; empty when there are no prices
+ * @returns each series' summaries, one per unit, keyed by NDC in the order series first appear
  */
-export function summarizeByUnit(prices: ChartPrice[]): UnitPriceSummary[] {
-  return splitByPricingUnit(prices).map(({ pricingUnit, nadacPrices }) =>
-    ({ ...summarizePrices(nadacPrices)[0], pricingUnit }));
+export function summarizeByUnit(prices: ChartPrice[]): Map<Ndc, UnitPriceSummary[]> {
+  const summaries = new Map<Ndc, UnitPriceSummary[]>(prices.map(price => [price.ndc, []]));
+  for (const { pricingUnit, nadacPrices } of splitByPricingUnit(prices)) {
+    for (const summary of summarizePrices(nadacPrices)) {
+      summaries.get(summary.ndc)!.push({ ...summary, pricingUnit });
+    }
+  }
+  return summaries;
 }

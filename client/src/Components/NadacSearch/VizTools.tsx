@@ -19,7 +19,7 @@ import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 import useChartWindow from "../../hooks/useChartWindow";
 
 export default function VizTools() {
-  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, newChartRows, vizData } = useSearchContext();
+  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, selectedRows, vizData } = useSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
@@ -30,7 +30,7 @@ export default function VizTools() {
   const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
 
   const handleAddChart = (chartType: ChartType) => {
-    const ndcs = new Set([...newChartRows.ids].map(String));
+    const ndcs = new Set([...selectedRows.ids].map(String));
     const chartData = vizData.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
     if (chartData.length === 0) return;
 
@@ -88,7 +88,7 @@ export default function VizTools() {
       </Box>
       <Divider />
       <ChartDatesControl value={chartDates} onChange={setChartDates} bounds={bounds} />
-      <AddChartControl selectedCount={newChartRows.ids.size} onAdd={handleAddChart} />
+      <AddChartControl selectedCount={selectedRows.ids.size} onAdd={handleAddChart} />
     </Paper>
   )
 }

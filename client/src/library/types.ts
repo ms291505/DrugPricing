@@ -27,44 +27,6 @@ export type NadacPriceChange = {
   percentage: number,
 }
 
-export type DrugSummary = {
-  ndc: string,
-  ndcDescription: string,
-  averagePrice: number,
-  pricingUnit: string,
-  minPrice: number,
-  maxPrice: number
-}
-
-export const summarizeNadacPrices = (nadacPrices: NadacPrice[]) => {
-
-  const drugSummaries: DrugSummary[] = Object.entries(
-    nadacPrices.reduce((acc, item) => {
-      if (!acc[item.ndc]) {
-        acc[item.ndc] = {
-          total: 0, count: 0, ndcDescription: item.ndcDescription, pricingUnit: item.pricingUnit, minPrice: Infinity, maxPrice: 0
-        };
-      }
-      acc[item.ndc].total += item.nadacPerUnit;
-      acc[item.ndc].count += 1;
-
-      acc[item.ndc].minPrice = Math.min(acc[item.ndc].minPrice, item.nadacPerUnit);
-      acc[item.ndc].maxPrice = Math.max(acc[item.ndc].maxPrice, item.nadacPerUnit);
-
-      return acc;
-    }, {} as Record<string, { total: number; count: number; ndcDescription: string; pricingUnit: string; minPrice: number; maxPrice: number; }>)
-  ).map(([ndc, { total, count, ndcDescription, pricingUnit, minPrice, maxPrice }]) => ({
-    ndc,
-    averagePrice: total / count,
-    ndcDescription,
-    pricingUnit,
-    minPrice,
-    maxPrice
-  }));
-
-  return drugSummaries;
-}
-
 /**
  * The fields a chart reads from a price. Both live search results (`NadacPrice`) and pinned
  * chart snapshots (see `explorerItems.ts`) provide them.
@@ -120,14 +82,6 @@ export type FdaPackageDetail = {
   samplePackage: boolean,
   ndcPackageCodeStripped: string,
   nadacPrices: NadacPrice[]
-}
-
-export type FdaPackageResultInfo = FdaPackageDetail &
-{
-  productNdc: string,
-  dosageFormName: string,
-  routeName: string[],
-  labelerName: string,
 }
 
 export type FdaProductDetail = {

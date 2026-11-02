@@ -66,7 +66,16 @@ in `TabProviders.tsx`) · `src/theme.ts` (including `palette.chart.series`) ·
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
-both pages share), plus supporting UI.
+both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
+supporting UI.
+
+### Result tables
+
+Each table is one file in `ResultTables/` that builds its rows and lists its columns, then renders
+`ResultTable` (paging, loading, Add Chart selection). Rows carry `priceSummaries`
+(`summarizeByUnit`, from the prices the row's chart would draw), and `createPriceColumns`
+(`priceColumns.tsx`) shows them. A row without prices can't be selected. Keep Latest Price
+second or third: on a phone it must show without scrolling.
 
 ### Workspace
 

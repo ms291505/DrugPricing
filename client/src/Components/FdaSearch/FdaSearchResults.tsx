@@ -1,20 +1,9 @@
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import FdaPackageTable from "./FdaPackageTable";
-import FdaProductTable from "./FdaProductTable";
+import { FdaPackageResultTable, FdaProductResultTable } from "../ResultTables";
 
 export default function FdaSearchResults() {
 
   const { fdaResultDetailLevel } = useFdaSearchContext();
 
-  return (
-    <>
-      {
-        fdaResultDetailLevel === "product" ?
-          <FdaProductTable />
-          : fdaResultDetailLevel === "package"
-            ? <FdaPackageTable />
-            : null
-      }
-    </>
-  )
+  return fdaResultDetailLevel === "product" ? <FdaProductResultTable /> : <FdaPackageResultTable />;
 }

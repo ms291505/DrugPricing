@@ -49,24 +49,28 @@ describe("summarizePrices", () => {
 });
 
 describe("summarizeByUnit", () => {
-  const priceIn = (pricingUnit: string, iso: string, nadacPerUnit: number): ChartPrice =>
-    ({ ...price("P", iso, nadacPerUnit), pricingUnit });
+  const priceIn = (ndc: string, pricingUnit: string, iso: string, nadacPerUnit: number): ChartPrice =>
+    ({ ...price(ndc, iso, nadacPerUnit), pricingUnit });
 
-  it("is empty for a series without prices", () => {
-    expect(summarizeByUnit([])).toEqual([]);
+  it("is empty without prices", () => {
+    expect(summarizeByUnit([]).size).toBe(0);
   });
 
-  it("summarizes the series with its pricing unit", () => {
-    const summaries = summarizeByUnit([price("P", "2025-01-01", 10), price("P", "2025-01-01", 20), price("P", "2025-02-01", 30)]);
-    expect(summaries).toHaveLength(1);
-    expect(summaries[0]).toMatchObject({ ndc: "P", latest: 30, average: 22.5, min: 15, max: 30, packages: 2, pricingUnit: "each" });
-  });
-
-  it("summarizes each unit on its own, never averaging across units", () => {
+  it("summarizes each series with its pricing unit, in the order series first appear", () => {
     const summaries = summarizeByUnit([
-      priceIn("milliliter", "2025-01-01", 1), priceIn("each", "2025-02-01", 100), priceIn("milliliter", "2025-03-01", 3),
+      price("B", "2025-01-01", 5),
+      price("P", "2025-01-01", 10), price("P", "2025-01-01", 20), price("P", "2025-02-01", 30),
     ]);
-    expect(summaries.map(s => [s.pricingUnit, s.latest, s.min, s.max, s.latestDate])).toEqual([
+    expect([...summaries.keys()]).toEqual(["B", "P"]);
+    expect(summaries.get("P")).toHaveLength(1);
+    expect(summaries.get("P")![0]).toMatchObject({ latest: 30, average: 22.5, min: 15, max: 30, packages: 2, pricingUnit: "each" });
+  });
+
+  it("summarizes each unit of a series on its own, never averaging across units", () => {
+    const summaries = summarizeByUnit([
+      priceIn("P", "milliliter", "2025-01-01", 1), priceIn("P", "each", "2025-02-01", 100), priceIn("P", "milliliter", "2025-03-01", 3),
+    ]);
+    expect(summaries.get("P")!.map(s => [s.pricingUnit, s.latest, s.min, s.max, s.latestDate])).toEqual([
       ["milliliter", 3, 1, 3, Date.parse("2025-03-01")],
       ["each", 100, 100, 100, Date.parse("2025-02-01")],
     ]);

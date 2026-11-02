@@ -69,9 +69,9 @@ anything new. Decided in an interview about the notes under **Ideas**, to ship a
    change pins.
    - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
      Max** columns in every results table (from `summarizePrices`, so they match the bar chart;
-     "—" for no prices in the window), and for the auto charts. The FDA tables have Latest,
-     Min and Max already (`priceSummaryColumns.tsx`, Average left out on purpose), over all
-     loaded dates; NADAC's table doesn't. Rows stay when they have no
+     "—" for no prices in the window), and for the auto charts. Every table has Latest,
+     Min and Max already (`ResultTables/priceColumns.tsx`, Average left out on purpose), over
+     all loaded dates. Rows stay when they have no
      prices in the window.
    - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
      preset keeps the typed dates, so Custom can be switched back on.

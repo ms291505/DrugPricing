@@ -18,15 +18,15 @@ const price = (value: number | undefined) => value === undefined ? NO_PRICE : fo
 const singleUnit = (row: PricedRow) => row.priceSummaries.length === 1 ? row.priceSummaries[0] : undefined;
 
 /**
- * The FDA tables' price columns. `latest` goes near the left so a phone shows it without
- * scrolling, and carries the unit; `history` sits further right.
+ * The price columns every result table shares. `latest` goes near the left so a phone shows it
+ * without scrolling, and carries the unit; `history` sits further right.
  *
  * A row priced in several units (a few products whose packages differ, e.g. packets per each and
  * canisters per gram) shows "Mixed units" instead of prices, and still its latest price date.
  *
  * @param mixedUnitsHint - where to find the prices of a mixed-unit row, added to its tooltip
  */
-export function createPriceSummaryColumns<R extends PricedRow>(mixedUnitsHint?: string): { latest: GridColDef<R>, history: GridColDef<R>[] } {
+export function createPriceColumns<R extends PricedRow>(mixedUnitsHint?: string): { latest: GridColDef<R>, history: GridColDef<R>[] } {
   return {
     latest: {
       field: "latestPrice",
