@@ -3,9 +3,9 @@ import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import type { ChartPrice } from "../../library/types";
-import { pricingUnitLabel } from "../../library/chartSeries";
+import { pricingUnitLabel, type BarValue } from "../../library/chartSeries";
 import { fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
-import { summarizeSeries, type BarValue, type SeriesSummary } from "../../library/seriesSummary";
+import { summarizePrices, type PriceSummary } from "../../library/prices";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
@@ -85,7 +85,7 @@ type UnitBarChartProps = {
   barValue: BarValue,
 }
 
-type BarRow = SeriesSummary & { value: number };
+type BarRow = PriceSummary & { value: number };
 
 const BAR_ROW_HEIGHT = 40;
 /** Room right of the plot for value labels. */
@@ -98,7 +98,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   const unit = pricingUnitLabel(pricingUnit);
   const descriptionId = useId();
 
-  const rows: BarRow[] = summarizeSeries(nadacPrices)
+  const rows: BarRow[] = summarizePrices(nadacPrices)
     .map(summary => ({ ...summary, value: summary[barValue] }))
     .sort((a, b) => b.value - a.value);
 

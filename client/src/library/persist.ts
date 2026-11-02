@@ -7,7 +7,7 @@ import {
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type { ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
-import type { BarValue } from "./seriesSummary";
+import type { BarValue } from "./chartSeries";
 import { DEFAULT_SETTINGS, type AppSettings, type BarStyle } from "./settings";
 
 /*

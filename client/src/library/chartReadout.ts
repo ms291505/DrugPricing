@@ -1,7 +1,8 @@
 import { rangeKey, type LineVizRow } from "./createLineVizData";
 import { distinctRange, formatPrice } from "./chartScale";
 import { formatDate } from "./dates";
-import type { BarValue, SeriesSummary } from "./seriesSummary";
+import type { BarValue } from "./chartSeries";
+import type { PriceSummary } from "./prices";
 
 /*
  * What a chart says about its active point: the tooltip draws it, and the screen-reader readout
@@ -34,7 +35,7 @@ export function lineAnnouncement(date: number, unit: string, rows: TooltipRow[])
 }
 
 /** "0074-0124: latest $6,745.00 on Oct 7, 2026, range $6,500.00 to $6,745.00, per each." */
-export function barAnnouncement(row: SeriesSummary, barValue: BarValue, unit: string): string {
+export function barAnnouncement(row: PriceSummary, barValue: BarValue, unit: string): string {
   const value = barValue === "latest"
     ? `latest ${formatPrice(row.latest)} on ${formatDate(row.latestDate)}`
     : `average ${formatPrice(row.average)}`;

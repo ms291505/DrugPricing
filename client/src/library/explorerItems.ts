@@ -1,5 +1,5 @@
 import type { ChartPrice } from "./types";
-import type { BarValue } from "./seriesSummary";
+import type { BarValue } from "./chartSeries";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**

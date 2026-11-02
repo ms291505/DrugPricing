@@ -1,19 +1,22 @@
 
 import { type GridColDef, } from "@mui/x-data-grid";
 import { type FdaPackageResultInfo, type FdaProductDetail } from "../../library/types";
+import { createPriceSummaryColumns, type PricedRow } from "./priceSummaryColumns";
 
-export function createFdaPackageTableColumns(products: FdaProductDetail[]): GridColDef<FdaPackageResultInfo>[] {
+export type FdaPackageRow = FdaPackageResultInfo & PricedRow;
+
+const PRICE_COLUMNS = createPriceSummaryColumns<FdaPackageRow>();
+
+export function createFdaPackageTableColumns(products: FdaProductDetail[]): GridColDef<FdaPackageRow>[] {
 
   return [
-    {
-      field: "productNdc",
-      headerName: "Product NDC"
-    },
+    // The full code, so a phone fits it and the latest price without scrolling.
     {
       field: "ndcPackageCode",
       headerName: "Package NDC",
-      valueGetter: (_, fdaPackage) => (fdaPackage.ndcPackageCode.split("-")[2]),
+      width: 125
     },
+    PRICE_COLUMNS.latest,
     {
       field: "brand name",
       headerName: "Brand Name",
@@ -21,6 +24,11 @@ export function createFdaPackageTableColumns(products: FdaProductDetail[]): Grid
         products.find(product => product.fdaPackageDetails.find(p => p.id === fdaPackage.id))?.proprietaryName
       ),
       width: 150,
+    },
+    ...PRICE_COLUMNS.history,
+    {
+      field: "productNdc",
+      headerName: "Product NDC"
     },
     {
       field: "generic name",

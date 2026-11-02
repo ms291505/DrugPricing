@@ -4,14 +4,15 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { applyFdaResultFilter, type FdaPackageResultInfo } from "../../library/types";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import { Paper } from "@mui/material";
-import { createFdaPackageTableColumns } from "./FdaPackageTableColumns";
+import { createFdaPackageTableColumns, type FdaPackageRow } from "./FdaPackageTableColumns";
 import { createPriceGatedCheckboxColumn } from "./createPriceGatedCheckboxColumn";
 import { useMemo } from "react";
+import { summarizeByUnit } from "../../library/prices";
 
 // Rows are keyed by package NDC so the selection matches the `ndc` of package-level prices.
 const getRowId = (p: FdaPackageResultInfo) => p.ndcPackageCode;
 const packageHasNadacPrices = (p: FdaPackageResultInfo) => p.nadacPrices.length > 0;
-const CHECKBOX_COLUMN = createPriceGatedCheckboxColumn(packageHasNadacPrices, "package");
+const CHECKBOX_COLUMN = createPriceGatedCheckboxColumn<FdaPackageRow>(packageHasNadacPrices, "package");
 const EMPTY_RESULT = { products: [] };
 
 export default function FdaPackageTable() {
@@ -23,7 +24,7 @@ export default function FdaPackageTable() {
   const data = fdaSearch.data ?? EMPTY_RESULT;
 
   // Memoized like the product table's rows: this table re-renders on every selection change.
-  const rows: FdaPackageResultInfo[] = useMemo(() =>
+  const rows: FdaPackageRow[] = useMemo(() =>
     applyFdaResultFilter(data, fdaResultFilter)
       .products.flatMap(product =>
         product.fdaPackageDetails.map(fdaPackage =>
@@ -33,11 +34,12 @@ export default function FdaPackageTable() {
           dosageFormName: product.dosageFormName,
           routeName: [...product.routeName],
           labelerName: product.labelerName,
+          priceSummaries: summarizeByUnit(fdaPackage.nadacPrices),
         }))
       ),
     [data, fdaResultFilter]);
 
-  const columns: GridColDef<FdaPackageResultInfo>[] = useMemo(
+  const columns: GridColDef<FdaPackageRow>[] = useMemo(
     () => [CHECKBOX_COLUMN, ...createFdaPackageTableColumns(data.products)],
     [data]);
 

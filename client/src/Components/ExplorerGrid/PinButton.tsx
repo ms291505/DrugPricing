@@ -5,7 +5,7 @@ import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { createChartItem, type ChartChangeSpan, type ChartOrigin, type ChartType } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
 import type { DateWindow } from "../../library/dates";
-import type { BarValue } from "../../library/seriesSummary";
+import type { BarValue } from "../../library/chartSeries";
 
 type Props = {
   title: string,

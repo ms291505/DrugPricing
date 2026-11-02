@@ -1,17 +1,26 @@
 import { type GridColDef, } from "@mui/x-data-grid";
 import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
+import { createPriceSummaryColumns, type PricedRow } from "./priceSummaryColumns";
 
-export const FDA_PRODUCT_TABLE_COLUMNS: GridColDef<FdaProductDetail>[] = [
+export type FdaProductRow = FdaProductDetail & PricedRow;
+
+const PRICE_COLUMNS = createPriceSummaryColumns<FdaProductRow>(
+  "Switch Detail Level to Package to see each package's price.",
+);
+
+export const FDA_PRODUCT_TABLE_COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "productNdc",
     headerName: "Product NDC",
-    width: 125
+    width: 110
   },
+  PRICE_COLUMNS.latest,
   {
     field: "proprietaryName",
     headerName: "Brand Name",
     width: 150
   },
+  ...PRICE_COLUMNS.history,
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",

@@ -11,7 +11,7 @@ import { pricingUnitLabel } from "../../library/chartSeries";
 import { distinctRange, formatPrice } from "../../library/chartScale";
 import useMobile from "../../hooks/useMobile";
 import { formatDate, type DateBounds, type DateWindow } from "../../library/dates";
-import type { BarValue } from "../../library/seriesSummary";
+import type { BarValue } from "../../library/chartSeries";
 import type { ChartPrice } from "../../library/types";
 
 type Props = {

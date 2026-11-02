@@ -1,4 +1,5 @@
 import { distinctRange } from "./chartScale";
+import { seriesByDate } from "./prices";
 import type { ChartPrice } from "./types";
 
 type DateNumber = number;
@@ -6,8 +7,6 @@ type Ndc = string;
 type Price = number;
 type PriceRange = [Price, Price];
 export type LineVizRow = { asOfDate: DateNumber } & Record<Ndc, Price | PriceRange>;
-
-type Accumulator = Record<DateNumber, Record<Ndc, Price[]>>;
 
 const RANGE_KEY_SUFFIX = "__range";
 
@@ -18,8 +17,8 @@ export const rangeKey = (ndc: Ndc) => ndc + RANGE_KEY_SUFFIX;
  * Transforms NADAC pricing rows into the shape the LineViz chart component expects.
  *
  * Several rows can share an NDC on one date (product level merges a product's packages under
- * the product NDC). Those are averaged into one point, and their min–max spread is kept under
- * `rangeKey(ndc)` for the band, the tooltip, View data and the CSV.
+ * the product NDC). `seriesByDate` averages them into one point; their min–max spread is kept
+ * under `rangeKey(ndc)` for the band, the tooltip, View data and the CSV.
  *
  * @param nadacPrices - prices, all in one pricing unit
  * @returns rows sorted by date; the NDCs whose packages differ at the precision shown on at least
@@ -27,33 +26,26 @@ export const rangeKey = (ndc: Ndc) => ndc + RANGE_KEY_SUFFIX;
  * most prices on one date (its package count)
  */
 export function createLineVizData(nadacPrices: ChartPrice[]) {
-  const byDate = nadacPrices.reduce<Accumulator>((acc, { asOfDate, ndc, nadacPerUnit }) => {
-    const dateKey = asOfDate.getTime();
-    acc[dateKey] ??= {};
-    (acc[dateKey][ndc] ??= []).push(nadacPerUnit);
-    return acc;
-  }, {});
-
+  const byDate = new Map<DateNumber, LineVizRow>();
   const rangeNdcs = new Set<Ndc>();
   const packageCounts = new Map<Ndc, number>();
 
-  const rows = Object.entries(byDate)
-    .map(([dateKey, pricesByNdc]) => {
-      const row: LineVizRow = { asOfDate: Number(dateKey) };
-      for (const [ndc, prices] of Object.entries(pricesByNdc)) {
-        row[ndc] = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-        packageCounts.set(ndc, Math.max(packageCounts.get(ndc) ?? 0, prices.length));
-        if (prices.length > 1) {
-          const range: PriceRange = [Math.min(...prices), Math.max(...prices)];
-          row[rangeKey(ndc)] = range;
-          // Packages that all cost the same leave a band with no height: nothing to explain.
-          if (distinctRange(range)) rangeNdcs.add(ndc);
-        }
+  for (const [ndc, datePrices] of seriesByDate(nadacPrices)) {
+    for (const { asOfDate, average, min, max, count } of datePrices) {
+      let row = byDate.get(asOfDate);
+      if (!row) byDate.set(asOfDate, row = { asOfDate });
+      row[ndc] = average;
+      packageCounts.set(ndc, Math.max(packageCounts.get(ndc) ?? 0, count));
+      if (count > 1) {
+        const range: PriceRange = [min, max];
+        row[rangeKey(ndc)] = range;
+        // Packages that all cost the same leave a band with no height: nothing to explain.
+        if (distinctRange(range)) rangeNdcs.add(ndc);
       }
-      return row;
-    })
-    .sort((a, b) => a.asOfDate - b.asOfDate);
+    }
+  }
 
+  const rows = [...byDate.values()].sort((a, b) => a.asOfDate - b.asOfDate);
   return { rows, rangeNdcs, packageCounts };
 }
 

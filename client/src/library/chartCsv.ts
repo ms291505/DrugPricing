@@ -1,7 +1,7 @@
 import { createLineVizData, rangeKey } from "./createLineVizData";
-import { splitByPricingUnit } from "./chartSeries";
+import type { BarValue } from "./chartSeries";
 import { clipToWindow, toDateInput, type DateWindow } from "./dates";
-import { summarizeSeries, type BarValue, type SeriesSummary } from "./seriesSummary";
+import { splitByPricingUnit, summarizePrices, type PriceSummary } from "./prices";
 import type { ChartPrice } from "./types";
 
 /*
@@ -19,7 +19,7 @@ export type LineDataRow = {
   range?: [number, number],
 };
 
-export type BarDataRow = SeriesSummary & { unit: string };
+export type BarDataRow = PriceSummary & { unit: string };
 
 const descriptions = (prices: ChartPrice[]) => new Map(prices.map(price => [price.ndc, price.ndcDescription]));
 
@@ -42,7 +42,7 @@ export function lineDataRows(prices: ChartPrice[], dateWindow: DateWindow): Line
 /** The bar chart's rows over the window, per unit, sorted like the chart. */
 export function barDataRows(prices: ChartPrice[], dateWindow: DateWindow, barValue: BarValue): BarDataRow[] {
   return splitByPricingUnit(clipToWindow(prices, dateWindow)).flatMap(({ pricingUnit, nadacPrices }) =>
-    summarizeSeries(nadacPrices)
+    summarizePrices(nadacPrices)
       .sort((a, b) => b[barValue] - a[barValue])
       .map(summary => ({ ...summary, unit: pricingUnit })));
 }

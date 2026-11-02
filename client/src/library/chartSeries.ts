@@ -31,6 +31,9 @@ export function splitByPricingUnit(nadacPrices: ChartPrice[]): PricingUnitGroup[
   return [...groups].map(([pricingUnit, prices]) => ({ pricingUnit, nadacPrices: prices }));
 }
 
+/** What a bar shows: the latest price, or the average over the chart's dates. */
+export type BarValue = "latest" | "average";
+
 const PRICING_UNIT_ABBREVIATIONS: Record<string, string> = {
   each: "each",
   milliliter: "mL",
