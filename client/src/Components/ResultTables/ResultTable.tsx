@@ -2,7 +2,7 @@ import { DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, ty
 import { Tooltip } from "@mui/material";
 import { useMemo } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
-import type { PricedRow } from "./priceColumns";
+import type { PricedRow } from "../../library/resultRows";
 
 type Props<R extends PricedRow> = {
   rows: R[],

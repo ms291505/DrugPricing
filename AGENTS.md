@@ -71,11 +71,13 @@ supporting UI.
 
 ### Result tables
 
-Each table is one file in `ResultTables/` that builds its rows and lists its columns, then renders
-`ResultTable` (paging, loading, Add Chart selection). Rows carry `priceSummaries`
-(`summarizeByUnit`, from the prices the row's chart would draw), and `createPriceColumns`
-(`priceColumns.tsx`) shows them. A row without prices can't be selected. Keep Latest Price
-second or third: on a phone it must show without scrolling.
+Each table is one file in `ResultTables/` that takes its search's data and `loading` as props,
+lists its columns, and renders `ResultTable` (paging, Add Chart selection). The page that owns the
+query also owns the table's `Paper`. Rows are built in `library/resultRows.ts` (tested): each
+carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
+same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
+sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
+on a phone it must show without scrolling.
 
 ### Workspace
 

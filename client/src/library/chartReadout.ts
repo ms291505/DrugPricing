@@ -1,7 +1,7 @@
 import { rangeKey, type LineVizRow } from "./createLineVizData";
 import { distinctRange, formatPrice } from "./chartScale";
 import { formatDate } from "./dates";
-import type { BarValue } from "./chartSeries";
+import type { BarValue } from "./explorerItems";
 import type { PriceSummary } from "./prices";
 
 /*

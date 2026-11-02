@@ -42,6 +42,17 @@ export function seriesByDate(prices: ChartPrice[]): Map<Ndc, DatePrice[]> {
   ]));
 }
 
+const PRICING_UNIT_ABBREVIATIONS: Record<string, string> = {
+  each: "each",
+  milliliter: "mL",
+  gram: "g",
+};
+
+/** Short unit for axis captions, tooltips and table cells: "each", "mL", "g". */
+export function pricingUnitLabel(pricingUnit: string): string {
+  return PRICING_UNIT_ABBREVIATIONS[pricingUnit] ?? pricingUnit;
+}
+
 export type PricingUnitGroup = {
   pricingUnit: string,
   nadacPrices: ChartPrice[],
@@ -83,10 +94,16 @@ export type PriceSummary = {
  */
 export function summarizePrices(prices: ChartPrice[]): PriceSummary[] {
   const series = seriesByDate(prices);
-  const labels = new Map<string, string>();
-  for (const price of prices) labels.set(price.ndc, price.ndcDescription);
+  // NADAC sometimes renames an NDC, and prices arrive in no set order: label each series with its
+  // description on its latest date (the first one seen on that date).
+  const labels = new Map<string, { label: string, asOfDate: number }>();
+  for (const price of prices) {
+    const asOfDate = price.asOfDate.getTime();
+    const current = labels.get(price.ndc);
+    if (!current || asOfDate > current.asOfDate) labels.set(price.ndc, { label: price.ndcDescription, asOfDate });
+  }
 
-  return [...labels].map(([ndc, label]) => {
+  return [...labels].map(([ndc, { label }]) => {
     const datePrices = series.get(ndc)!;
     const values = datePrices.map(datePrice => datePrice.average);
     const last = datePrices[datePrices.length - 1];
@@ -121,4 +138,25 @@ export function summarizeByUnit(prices: ChartPrice[]): Map<Ndc, UnitPriceSummary
     }
   }
   return summaries;
+}
+
+/**
+ * The summary priced most recently: a series' latest price date and description when it has
+ * several units. Undefined without summaries.
+ */
+export function latestSummary<S extends PriceSummary>(summaries: S[]): S | undefined {
+  return summaries.reduce<S | undefined>((latest, summary) =>
+    !latest || summary.latestDate > latest.latestDate ? summary : latest, undefined);
+}
+
+/** A price with its unit, for sorting prices in different units. */
+export type UnitPrice = { pricingUnit: string, price: number };
+
+/**
+ * Orders prices by unit, then by price, so a sort never ranks $/each against $/mL. A missing price
+ * sorts first, as MUI's number sort puts empty cells.
+ */
+export function compareUnitPrices(a: UnitPrice | undefined, b: UnitPrice | undefined): number {
+  if (!a || !b) return (a ? 1 : 0) - (b ? 1 : 0);
+  return a.pricingUnit.localeCompare(b.pricingUnit) || a.price - b.price;
 }

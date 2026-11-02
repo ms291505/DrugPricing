@@ -1,22 +1,10 @@
-import { Paper } from "@mui/material";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { applyFdaResultFilter, type FdaPackageDetail } from "../../library/types";
-import { summarizeByUnit } from "../../library/prices";
+import type { FdaProductDetail } from "../../library/types";
+import { fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
-import { createPriceColumns, type PricedRow } from "./priceColumns";
-
-/** A package with the product fields its columns show. */
-type FdaPackageRow = FdaPackageDetail & PricedRow & {
-  productNdc: string,
-  proprietaryName: string,
-  nonProprietaryName: string[],
-  dosageFormName: string,
-  routeName: string[],
-  labelerName: string,
-};
+import { createPriceColumns } from "./priceColumns";
 
 const PRICE_COLUMNS = createPriceColumns<FdaPackageRow>();
 
@@ -74,42 +62,27 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
 
 // Package NDC: the `ndc` of package-level prices.
 const getRowId = (row: FdaPackageRow) => row.ndcPackageCode;
-const EMPTY_ROWS: FdaPackageRow[] = [];
+
+type Props = {
+  /** The search's products after the page filter. */
+  products: FdaProductDetail[],
+  loading: boolean,
+}
 
 /** The FDA search's results at package level: one row per package. */
-export default function FdaPackageResultTable() {
-  const fdaSearch = useFdaSearch();
-  const { fdaResultFilter, selectedRows, setSelectedRows } = useFdaSearchContext();
-
-  // Memoized: the table re-renders on every selection change. A package's own prices are keyed by
-  // its stripped code, the NADAC join key.
-  const rows = useMemo(() => fdaSearch.data
-    ? applyFdaResultFilter(fdaSearch.data, fdaResultFilter).products.flatMap(product =>
-      product.fdaPackageDetails.map((fdaPackage): FdaPackageRow => ({
-        ...fdaPackage,
-        productNdc: product.productNdc,
-        proprietaryName: product.proprietaryName,
-        nonProprietaryName: product.nonProprietaryName,
-        dosageFormName: product.dosageFormName,
-        routeName: product.routeName,
-        labelerName: product.labelerName,
-        priceSummaries: summarizeByUnit(fdaPackage.nadacPrices).get(fdaPackage.ndcPackageCodeStripped) ?? [],
-      }))
-    )
-    : EMPTY_ROWS,
-    [fdaSearch.data, fdaResultFilter]);
+export default function FdaPackageResultTable({ products, loading }: Props) {
+  const { selectedRows, setSelectedRows } = useFdaSearchContext();
+  const rows = useMemo(() => fdaPackageRows(products), [products]);
 
   return (
-    <Paper elevation={3}>
-      <ResultTable
-        rows={rows}
-        columns={COLUMNS}
-        getRowId={getRowId}
-        rowNoun="package"
-        loading={fdaSearch.isLoading}
-        selection={selectedRows}
-        onSelectionChange={setSelectedRows}
-      />
-    </Paper>
+    <ResultTable
+      rows={rows}
+      columns={COLUMNS}
+      getRowId={getRowId}
+      rowNoun="package"
+      loading={loading}
+      selection={selectedRows}
+      onSelectionChange={setSelectedRows}
+    />
   );
 }

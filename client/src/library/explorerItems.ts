@@ -1,5 +1,4 @@
 import type { ChartPrice } from "./types";
-import type { BarValue } from "./chartSeries";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**
@@ -61,6 +60,9 @@ type ExplorerItemBase = {
 };
 
 export type ChartType = "line" | "bar";
+
+/** What a bar shows: the latest price, or the average over the chart's dates. */
+export type BarValue = "latest" | "average";
 
 /**
  * One series of a chart, trimmed to what the chart draws so it can be stored and restored.

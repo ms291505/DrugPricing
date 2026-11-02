@@ -3,7 +3,7 @@
 -- A package never changes unit, but a product can hold packages that NADAC prices differently:
 -- single-dose packets per each next to a bulk canister per gram. The client never combines
 -- units, so at product level these rows show "Mixed units" with their latest price date
--- (summarizeByUnit, ResultTables/priceColumns.tsx), and their charts split by unit (UnitSplit).
+-- (summarizeByUnit, library/resultRows.ts), and their charts split by unit (UnitSplit).
 -- Use them to test both.
 --
 -- One row per product and unit: how many listed packages NADAC prices in that unit, the last

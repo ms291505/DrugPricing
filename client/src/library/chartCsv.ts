@@ -1,5 +1,5 @@
 import { createLineVizData, rangeKey } from "./createLineVizData";
-import type { BarValue } from "./chartSeries";
+import type { BarValue } from "./explorerItems";
 import { clipToWindow, toDateInput, type DateWindow } from "./dates";
 import { splitByPricingUnit, summarizePrices, type PriceSummary } from "./prices";
 import type { ChartPrice } from "./types";

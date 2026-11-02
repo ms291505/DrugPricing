@@ -1,17 +1,15 @@
-import { Paper } from "@mui/material";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { applyFdaResultFilter, isFdaProductOtc, type FdaProductDetail } from "../../library/types";
-import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
-import { summarizeByUnit } from "../../library/prices";
+import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
+import { fdaProductRows, type FdaProductRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
-import { createPriceColumns, type PricedRow } from "./priceColumns";
+import { createPriceColumns } from "./priceColumns";
 
-type FdaProductRow = FdaProductDetail & PricedRow;
-
-const PRICE_COLUMNS = createPriceColumns<FdaProductRow>("Switch Detail Level to Package to see each package's price.");
+const PRICE_COLUMNS = createPriceColumns<FdaProductRow>({
+  mixedUnitsHint: "Switch Detail Level to Package to see each package's price.",
+  averagesPackages: true,
+});
 
 const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
@@ -72,34 +70,27 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
 
 // Product NDC: the `ndc` of product-level prices.
 const getRowId = (row: FdaProductRow) => row.productNdc;
-const EMPTY_ROWS: FdaProductRow[] = [];
+
+type Props = {
+  /** The search's products after the page filter. */
+  products: FdaProductDetail[],
+  loading: boolean,
+}
 
 /** The FDA search's results at product level: one row per product. */
-export default function FdaProductResultTable() {
-  const fdaSearch = useFdaSearch();
-  const { fdaResultFilter, selectedRows, setSelectedRows } = useFdaSearchContext();
-
-  // Prices come from the product's chart series (its packages averaged per date), after the page
-  // filter, so the table agrees with the product-level charts.
-  const rows = useMemo(() => fdaSearch.data
-    ? applyFdaResultFilter(fdaSearch.data, fdaResultFilter).products.map(product => ({
-      ...product,
-      priceSummaries: summarizeByUnit(fdaProductsToNadacPrices([product], "product")).get(product.productNdc) ?? [],
-    }))
-    : EMPTY_ROWS,
-    [fdaSearch.data, fdaResultFilter]);
+export default function FdaProductResultTable({ products, loading }: Props) {
+  const { selectedRows, setSelectedRows } = useFdaSearchContext();
+  const rows = useMemo(() => fdaProductRows(products), [products]);
 
   return (
-    <Paper elevation={3}>
-      <ResultTable
-        rows={rows}
-        columns={COLUMNS}
-        getRowId={getRowId}
-        rowNoun="product"
-        loading={fdaSearch.isLoading}
-        selection={selectedRows}
-        onSelectionChange={setSelectedRows}
-      />
-    </Paper>
+    <ResultTable
+      rows={rows}
+      columns={COLUMNS}
+      getRowId={getRowId}
+      rowNoun="product"
+      loading={loading}
+      selection={selectedRows}
+      onSelectionChange={setSelectedRows}
+    />
   );
 }

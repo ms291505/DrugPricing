@@ -2,8 +2,7 @@ import { createLineVizData } from "./createLineVizData";
 import { formatPrice } from "./chartScale";
 import { dateBounds, formatDate } from "./dates";
 import { summarizePrices, type PriceSummary } from "./prices";
-import type { BarValue } from "./chartSeries";
-import type { ChartChangeSpan } from "./explorerItems";
+import type { BarValue, ChartChangeSpan } from "./explorerItems";
 import type { ChartPrice } from "./types";
 
 /*

@@ -16,7 +16,7 @@ import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import useChartWindow from "../../hooks/useChartWindow";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
-import type { BarValue } from "../../library/chartSeries";
+import type { BarValue } from "../../library/explorerItems";
 
 // Memoized (it takes no props) so the search form's keystrokes and changes to the workspace's
 // tab list, such as a rename after a search, don't re-render every NADAC tab's results.

@@ -2,14 +2,9 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useSearchContext } from "../../Context/NadacSearchContext";
 import type { NadacPrice } from "../../library/types";
-import { summarizeByUnit } from "../../library/prices";
+import { nadacRows, type NadacRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
-import { createPriceColumns, type PricedRow } from "./priceColumns";
-
-type NadacRow = PricedRow & {
-  ndc: string,
-  ndcDescription: string,
-};
+import { createPriceColumns } from "./priceColumns";
 
 const PRICE_COLUMNS = createPriceColumns<NadacRow>();
 
@@ -39,11 +34,7 @@ type Props = {
 export default function NadacResultTable({ nadacPrices, loading }: Props) {
   const { selectedRows, setSelectedRows } = useSearchContext();
 
-  const rows = useMemo(() => [...summarizeByUnit(nadacPrices)].map(([ndc, priceSummaries]): NadacRow => ({
-    ndc,
-    ndcDescription: priceSummaries[0].label,
-    priceSummaries,
-  })), [nadacPrices]);
+  const rows = useMemo(() => nadacRows(nadacPrices), [nadacPrices]);
 
   return (
     <ResultTable
