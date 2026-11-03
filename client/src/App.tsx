@@ -14,6 +14,7 @@ import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { SettingsProvider } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
+import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
 import OnBoarding from "./Components/OnBoarding";
 import GlobalModal from "./Components/GlobalModal";
@@ -30,9 +31,7 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
-          <Toaster
-            position="bottom-center"
-          />
+          <AppToaster />
           <SettingsProvider>
             <GlobalModalContextProvider>
               <WorkspaceContextProvider>
@@ -44,6 +43,12 @@ export default function App() {
       </ThemeProvider>
     </BrowserRouter>
   );
+}
+
+// Phones keep the tab button at the bottom (`TabContextFab`), so toasts come from the top there.
+function AppToaster() {
+  const isMobile = useMobile();
+  return <Toaster position={isMobile ? "top-center" : "bottom-center"} />;
 }
 
 function AppShell() {
