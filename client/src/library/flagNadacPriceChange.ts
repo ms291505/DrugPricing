@@ -1,4 +1,4 @@
-import type { FdaProductDetail, NadacPrice, NadacPriceChange, FdaProductPriceChange } from "./types";
+import type { FdaProductDetail, NadacPrice, NadacPriceChange, PackagePriceChange } from "./types";
 import { inWindow, type DateWindow } from "./dates";
 
 export function flagNadacPriceChange(
@@ -40,17 +40,15 @@ export function flagNadacPriceChange(
 
 export function flagNadacPriceChangeForFdaProducts(
   fdaProducts: FdaProductDetail[],
-): FdaProductPriceChange[] {
-  const productPriceChanges: FdaProductPriceChange[] = [];
+): PackagePriceChange[] {
+  const productPriceChanges: PackagePriceChange[] = [];
 
   fdaProducts.map(product =>
     product.fdaPackageDetails.map(pkg => {
       const changes = flagNadacPriceChange(pkg.nadacPrices);
 
       changes.map(change => (productPriceChanges.push({
-        productNdc: product.productNdc,
         packageNdc: pkg.ndcPackageCode,
-        packageNdcStripped: pkg.ndcPackageCodeStripped,
         priceChange: change
       })))
     }))
@@ -58,7 +56,20 @@ export function flagNadacPriceChangeForFdaProducts(
   return productPriceChanges;
 }
 
-export function getAllPricesForFlaggedPackages(change: FdaProductPriceChange, prices: NadacPrice[]) {
+/** Flags the price changes in a NADAC search result, package by package. */
+export function flagNadacPriceChangesByPackage(prices: NadacPrice[]): PackagePriceChange[] {
+  const byNdc = new Map<string, NadacPrice[]>();
+  for (const price of prices) {
+    const packagePrices = byNdc.get(price.ndc);
+    if (packagePrices) packagePrices.push(price);
+    else byNdc.set(price.ndc, [price]);
+  }
+  // Each group is a new array, so the sort inside `flagNadacPriceChange` leaves `prices` alone.
+  return [...byNdc].flatMap(([ndc, packagePrices]) =>
+    flagNadacPriceChange(packagePrices).map(priceChange => ({ packageNdc: ndc, priceChange })));
+}
+
+export function getAllPricesForFlaggedPackages(change: PackagePriceChange, prices: NadacPrice[]) {
 
   const values = [...prices.filter(n => n.ndc === change.packageNdc)];
 
@@ -76,6 +87,6 @@ export function percentageChangeToString(percentage: number) {
  * The changes whose date (the first as-of date at the new price) is inside the chart dates, so
  * the price-change cards follow the page's "Chart dates" like the other auto charts.
  */
-export function priceChangesInWindow(changes: FdaProductPriceChange[], dateWindow: DateWindow): FdaProductPriceChange[] {
+export function priceChangesInWindow(changes: PackagePriceChange[], dateWindow: DateWindow): PackagePriceChange[] {
   return changes.filter(change => inWindow(change.priceChange.endDate.getTime(), dateWindow));
 }

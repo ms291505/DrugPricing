@@ -1,6 +1,5 @@
 
-import { theme } from "../../theme.ts";
-import { Box, Fab, Menu, MenuItem, MenuList, TextField, } from "@mui/material";
+import { alpha, Box, Fab, Menu, MenuItem, MenuList, TextField, useTheme, } from "@mui/material";
 import { useWorkspaceActions, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
 import { useId, useState } from "react";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
@@ -12,6 +11,8 @@ import useMobile from "../../hooks/useMobile.ts";
 export default function TabContextFab() {
 
   const { opacity, drawerWidth, tabContextFabHeight } = CONSTANT;
+
+  const theme = useTheme();
 
   const scrolled = useScrolled();
 
@@ -74,7 +75,8 @@ export default function TabContextFab() {
         left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
         transform: "translateX(-50%)",
         height: 40,
-        background: `rgba(205, 205, 205,${tabMenuOpen ? 1 : scrolled ? opacity : 1})`,
+        bgcolor: alpha(theme.palette.inverse.main, tabMenuOpen ? 1 : scrolled ? opacity : 1),
+        color: theme.palette.inverse.contrastText,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         width: tabContextFabHeight,

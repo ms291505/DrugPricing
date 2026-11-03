@@ -1,23 +1,23 @@
-import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, IconButton, Paper, } from "@mui/material"
-import { useGlobalModalContext, } from "../../Context/GlobalModalContext"
+import CloseIcon from '@mui/icons-material/Close';
+import { DialogTitle, IconButton } from "@mui/material"
 
-export default function TitleBar() {
+type Props = {
+  title: string,
+  onClose: () => void,
+}
 
-  const { setGlobalModal } = useGlobalModalContext();
-
+/**
+ * The dialog's header: its title, and the close button at the end of the same row. The button
+ * sits beside the title rather than in it, so the dialog's name (its title) doesn't end in
+ * "Close".
+ */
+export default function TitleBar({ title, onClose }: Props) {
   return (
-    <Paper>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "end"
-        }}
-      >
-        <IconButton size="small" aria-label="Close" onClick={() => setGlobalModal(null)}>
-          <CancelIcon fontSize="small" />
-        </IconButton>
-      </Box>
-    </Paper>
+    <>
+      <DialogTitle sx={{ pr: 7 }}>{title}</DialogTitle>
+      <IconButton aria-label="Close" onClick={onClose} sx={{ position: "absolute", top: 12, right: 12 }}>
+        <CloseIcon />
+      </IconButton>
+    </>
   )
 }

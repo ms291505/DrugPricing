@@ -18,4 +18,12 @@ describe("chart palette", () => {
       expect(contrast(color, theme.palette.background.paper), color).toBeGreaterThanOrEqual(3);
     }
   });
+
+  it("has distinct price change colors, each at least 3:1 against the card for the callout outline", () => {
+    const { rise, drop } = theme.palette.chart;
+    expect(rise).not.toBe(drop);
+    for (const color of [rise, drop]) {
+      expect(contrast(color, theme.palette.background.paper), color).toBeGreaterThanOrEqual(3);
+    }
+  });
 });

@@ -14,13 +14,13 @@ import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { SettingsProvider } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
+import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
 import OnBoarding from "./Components/OnBoarding";
 import GlobalModal from "./Components/GlobalModal";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden
-// ones included, would refetch at once (one "Searching…" toast per FDA tab), and the data only
-// changes weekly.
+// ones included, would refetch at once, and the data only changes weekly.
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, refetchOnReconnect: false } },
 });
@@ -31,9 +31,7 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
-          <Toaster
-            position="bottom-center"
-          />
+          <AppToaster />
           <SettingsProvider>
             <GlobalModalContextProvider>
               <WorkspaceContextProvider>
@@ -47,6 +45,12 @@ export default function App() {
   );
 }
 
+// Phones keep the tab button at the bottom (`TabContextFab`), so toasts come from the top there.
+function AppToaster() {
+  const isMobile = useMobile();
+  return <Toaster position={isMobile ? "top-center" : "bottom-center"} />;
+}
+
 function AppShell() {
   const location = useLocation();
   const isWorkspaceActive = location.pathname.startsWith('/workspace');
@@ -55,7 +59,7 @@ function AppShell() {
     <Container maxWidth="xl" sx={{ pb: 2 }}>
       <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
         <DrugPricingBar />
-        <Workspace />
+        <Workspace onScreen={isWorkspaceActive} />
       </Box>
       <GlobalModal />
 

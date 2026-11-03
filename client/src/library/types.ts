@@ -111,10 +111,10 @@ export type FdaProductSearchResult = {
   products: FdaProductDetail[]
 }
 
-export type FdaProductPriceChange = {
-  productNdc: string,
+/** A flagged price change and the package it's on, as its card titles it. */
+export type PackagePriceChange = {
+  /** As shown: dashed from the FDA, NADAC's stored form on a NADAC search. */
   packageNdc: string,
-  packageNdcStripped: string,
   priceChange: NadacPriceChange,
 }
 

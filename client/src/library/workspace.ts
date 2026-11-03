@@ -12,7 +12,9 @@ export type WorkspaceAction =
   | { type: "rename", id: string, title: string }
   | { type: "changeType", id: string, tabType: TabType, title: string }
   | { type: "setLayoutMode", value: SetStateAction<LayoutMode> }
-  | { type: "setPanes", value: SetStateAction<Array<string | null>> };
+  | { type: "setPanes", value: SetStateAction<Array<string | null>> }
+  /** Starts over with `tab` alone; the caller creates it, so this stays pure. */
+  | { type: "reset", tab: WorkspaceTab };
 
 const resolve = <T,>(value: SetStateAction<T>, prev: T) =>
   typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
@@ -71,5 +73,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return { ...state, layoutMode: resolve(action.value, state.layoutMode) };
     case "setPanes":
       return { ...state, paneAssignment: resolve(action.value, state.paneAssignment) };
+    case "reset":
+      return { tabs: [action.tab], layoutMode: "single", paneAssignment: [action.tab.id] };
   }
 }

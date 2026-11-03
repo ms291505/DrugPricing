@@ -3,6 +3,7 @@ import { tabTypeRegistry } from "../../library/tabTypeRegistry.ts";
 import { Box } from "@mui/material";
 import { memo, useMemo, useState } from "react";
 import { TabInstanceContextProvider } from "../../Context/TabInstanceContext.tsx";
+import { PageVisibleContext } from "../../Context/pageVisibility.ts";
 import TabContextFab from "./TabContextFab.tsx";
 import useMobile from "../../hooks/useMobile.ts";
 
@@ -17,12 +18,15 @@ const hiddenPaneSx = {
 
 type Props = {
   workspaceTab: WorkspaceTab,
+  /** Shown in a pane. */
   visible: boolean,
+  /** Shown in a pane while the workspace route is open: the user can see it. */
+  onScreen: boolean,
 }
 
 // Memoized: a tab switch re-renders only the tabs whose `visible` changed. `workspaceTab` keeps
 // its identity until the tab itself changes (WorkspaceContext).
-export default memo(function TabInstance({ workspaceTab, visible }: Props) {
+export default memo(function TabInstance({ workspaceTab, visible, onScreen }: Props) {
 
   const { id, type } = workspaceTab;
   const { Provider, Content } = tabTypeRegistry[type];
@@ -54,7 +58,10 @@ export default memo(function TabInstance({ workspaceTab, visible }: Props) {
           alignSelf: "start",
           ...(visible ? {} : hiddenPaneSx),
         }}>
-        {page}
+        {/* The page element is unchanged, so only the context's readers re-render. */}
+        <PageVisibleContext.Provider value={onScreen}>
+          {page}
+        </PageVisibleContext.Provider>
       </Box>
 
       {

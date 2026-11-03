@@ -39,15 +39,16 @@ export default function DrugPricingBar() {
             display: "flex",
             position: { xs: "static", md: "absolute" },
             left: { md: "50%" },
-            transform: { md: "translateX(-50%)" }
+            transform: { md: "translateX(-50%)" },
+            gap: 1,
           }}>
-            <NavButton to="/about">ABOUT</NavButton>
-            <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/nadac-search">NADAC</NavButton>
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/fda-search">FDA</NavButton>
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/workspace">Workspace</NavButton>
+            <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
+            <NavButton to="/about">ABOUT</NavButton>
           </Box>
         </Toolbar>
       </AppBar>

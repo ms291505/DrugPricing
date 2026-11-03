@@ -16,18 +16,24 @@ const BAR_STYLES: Array<{ value: BarStyle, label: string, description: string }>
   },
 ];
 
-/** App-wide settings: choices most people never change, kept out of Page Tools. */
+/**
+ * App-wide settings: choices most people never change, kept out of Page Tools. Shown in the
+ * Settings dialog, whose title names it; changes apply at once, so there's no Save button.
+ */
 export default function SettingsPanel() {
   const { settings, updateSettings } = useSettings();
-  const headingId = useId();
   const barStyleId = useId();
 
   return (
-    <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Typography component="h2" variant="h5" id={headingId}>Settings</Typography>
-      <Typography variant="body2" color="text.secondary">These apply to every tab and are saved in this browser.</Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Typography variant="body2" color="text.secondary">
+        Changes apply right away, to every tab, and are saved in this browser.
+      </Typography>
       <FormControl>
-        <FormLabel id={barStyleId}>Bar charts</FormLabel>
+        {/* A section heading, so it keeps the text color when an option has focus. */}
+        <FormLabel id={barStyleId} sx={{ typography: "subtitle2", color: "text.primary", "&.Mui-focused": { color: "text.primary" } }}>
+          Bar charts
+        </FormLabel>
         <RadioGroup
           aria-labelledby={barStyleId}
           value={settings.barStyle}

@@ -5,9 +5,10 @@ import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
+import ConfirmButton from "../ui/ConfirmButton.tsx";
 
 export default function DrawerContent() {
-  const { addTab, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
   const { setGlobalModal } = useGlobalModalContext();
 
   const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
@@ -15,6 +16,11 @@ export default function DrawerContent() {
   const onClick = () => {
     const newTabId = addTab("new");
     setPaneAssigment([newTabId]);
+    closeMobileDrawer();
+  }
+
+  const onClearWorkspace = () => {
+    clearWorkspace();
     closeMobileDrawer();
   }
 
@@ -38,7 +44,7 @@ export default function DrawerContent() {
           minHeight: 0,
         }}
       >
-        <DrawerTabList onAddTab={onClick} />
+        <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} />
       </Box>
       <Paper
         component="div"
@@ -55,7 +61,7 @@ export default function DrawerContent() {
 }
 
 // Only the tab list reads the panes, so a tab switch doesn't re-render the rest of the drawer.
-function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
+function DrawerTabList({ onAddTab, onClearWorkspace }: { onAddTab: () => void, onClearWorkspace: () => void }) {
   const tabs = useWorkspaceTabs();
   const { paneAssignment } = useWorkspacePanes();
   const { removeTab } = useWorkspaceActions();
@@ -102,6 +108,12 @@ function DrawerTabList({ onAddTab }: { onAddTab: () => void }) {
         />
       ))}
       <TabButton onClick={onAddTab} />
+      <ConfirmButton
+        color="error"
+        label="Clear workspace"
+        confirmLabel="Click again to clear"
+        onConfirm={onClearWorkspace}
+      />
     </Box>
   )
 }

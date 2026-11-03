@@ -1,13 +1,15 @@
 import Typography from "@mui/material/Typography"
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
+import Link from "@mui/material/Link";
 
-export default function About() {
+/** @param showHeading - false in a dialog, whose title already says "About" */
+export default function About({ showHeading = true }: { showHeading?: boolean }) {
 
   return (
     <>
       <Box>
-        <Typography component="h2" variant="h5">About</Typography>
+        {showHeading ? <Typography component="h2" variant="h5">About</Typography> : null}
         <p>
           DrugPricing is a tool for looking up what US pharmacies pay for drugs and how those prices change over time. It is built on
           NADAC (National Average Drug Acquisition Cost), a weekly price survey published by CMS. I chose NADAC because it is publicly available,
@@ -80,10 +82,10 @@ export default function About() {
         <p>The price and drug data come from two public sources:</p>
         <ol>
           <li>
-            <a href="https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing/index.html" style={{ color: "grey" }} target="_blank" title="NADAC">National Average Drug Acquisition Cost (NADAC) - Centers for Medicare & Medicaid Services</a>
+            <Link href="https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing/index.html" color="text.secondary" target="_blank" title="NADAC">National Average Drug Acquisition Cost (NADAC) - Centers for Medicare & Medicaid Services</Link>
           </li>
           <li>
-            <a href="https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" style={{ color: "grey" }} target="_blank" title="FDA NDC Directory">National Drug Code Directory - U.S. Food and Drug Administration</a>
+            <Link href="https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" color="text.secondary" target="_blank" title="FDA NDC Directory">National Drug Code Directory - U.S. Food and Drug Administration</Link>
           </li>
         </ol>
         <p>
@@ -94,10 +96,10 @@ export default function About() {
         <p>The medicine and bar graph icons are a free resource from Flaticon, and are available here: </p>
         <ol>
           <li>
-            <a href="https://www.flaticon.com/free-icons/medicine" style={{ color: "grey" }} target="_blank" title="medicine icons">Medicine icons created by Freepik - Flaticon</a>
+            <Link href="https://www.flaticon.com/free-icons/medicine" color="text.secondary" target="_blank" title="medicine icons">Medicine icons created by Freepik - Flaticon</Link>
           </li>
           <li>
-            <a href="https://www.flaticon.com/free-icons/graph" style={{ color: "grey" }} target="_blank" title="graph icons">Graph icons created by Bamicon - Flaticon</a>
+            <Link href="https://www.flaticon.com/free-icons/graph" color="text.secondary" target="_blank" title="graph icons">Graph icons created by Bamicon - Flaticon</Link>
           </li>
         </ol>
       </Box>

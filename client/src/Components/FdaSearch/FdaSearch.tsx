@@ -3,9 +3,10 @@ import FdaSearchTool from "./FdaSearchTool";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import FdaExplorer from "./FdaExplorer";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
+import QueryErrorToast from "../ui/QueryErrorToast";
 
 export default function FdaSearch() {
-  const { isSuccess } = useFdaSearch();
+  const { isSuccess, error } = useFdaSearch();
 
   return (
     <Box sx={{
@@ -16,6 +17,7 @@ export default function FdaSearch() {
       minHeight: 0,
       width: "100%",
     }}>
+      <QueryErrorToast error={error} />
       <FdaSearchTool />
       <FdaExplorer visible={isSuccess} />
       {/* Outside the isSuccess gate: pinned items render from their snapshots, so they show

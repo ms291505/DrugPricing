@@ -16,6 +16,7 @@ import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceCon
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
+import QueryErrorToast from "../ui/QueryErrorToast.tsx";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
@@ -87,6 +88,7 @@ export default function NadacSearch() {
   const isMobile = useMobile();
 
   return (<>
+    <QueryErrorToast error={nadacSearchQuery.error} />
     <Box sx={{
       display: "flex",
       flexDirection: "column",
