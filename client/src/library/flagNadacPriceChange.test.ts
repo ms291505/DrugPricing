@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { flagNadacPriceChangesByPackage, priceChangesInWindow } from "./flagNadacPriceChange";
 import { FULL_WINDOW } from "./dates";
-import type { FdaProductPriceChange, NadacPrice } from "./types";
+import type { NadacPrice, PackagePriceChange } from "./types";
 
 const day = (iso: string) => Date.parse(iso);
-const change = (start: string, end: string): FdaProductPriceChange => ({
-  productNdc: "0003-0893", packageNdc: "0003-0893-21", packageNdcStripped: "3089321",
+const change = (start: string, end: string): PackagePriceChange => ({
+  packageNdc: "0003-0893-21",
   priceChange: { packageNdc: "0003-0893-21", startDate: new Date(start), endDate: new Date(end), oldPrice: 9.69, newPrice: 5.52, percentage: -0.43 },
 });
 

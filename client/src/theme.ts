@@ -7,8 +7,10 @@ import { createTheme } from '@mui/material/styles';
  *
  * 1. Edit `COLORS`. Roles follow, since each is set from a named color below.
  * 2. If a color's job changes (a new accent, say), remap the role in `theme.palette`.
- * 3. For new chart series colors, keep the old list in `RETIRED_CHART_SERIES_COLORS`.
- * 4. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards.
+ * 3. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards.
+ *
+ * Pinned charts store their series colors, so new `CHART_SERIES_COLORS` don't reach old pins.
+ * If that matters, remap them once on load, in `persist.ts`'s per-field validation.
  */
 
 /** Chart colors: one per series slot, plus the outline of a price change callout. */
@@ -37,7 +39,10 @@ declare module '@mui/material/styles' {
  */
 const BORDER_RADIUS = 4;
 
-/** Every color in the app, named for how it looks. Only `theme` below reads these. */
+/**
+ * Every color in the app but the chart series (`CHART_SERIES_COLORS`), named for how it looks.
+ * Only `theme` below reads these.
+ */
 const COLORS = {
   cyan: "#3cbcd7",
   indigo: "#5568ca",
@@ -75,13 +80,6 @@ export const CHART_SERIES_COLORS = [
   "#4F9BE0", // blue
 ];
 
-/**
- * Earlier `CHART_SERIES_COLORS` lists, newest first. Pinned charts store their colors, so a pin
- * made before a palette change draws each stored color in the same slot of today's palette
- * (`seriesColorInPalette`). Add the outgoing list here whenever the series colors change.
- */
-export const RETIRED_CHART_SERIES_COLORS: string[][] = [];
-
 export const theme = createTheme({
   "palette": {
     "mode": "dark",
@@ -108,10 +106,6 @@ export const theme = createTheme({
     "info": {
       "main": COLORS.blue,
       "contrastText": COLORS.black
-    },
-    "common": {
-      "black": COLORS.black,
-      "white": COLORS.white
     },
     "background": {
       "default": COLORS.charcoal,

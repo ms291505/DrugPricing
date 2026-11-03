@@ -73,9 +73,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
 so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
 page agrees. Add Chart and Pin store each series' `color`, since the result is gone after the next
-search. Pass the page's map to `LineViz`/`BarViz` as `colors`. When the series colors change,
-the old list goes in `RETIRED_CHART_SERIES_COLORS`: a pinned chart draws a stored retired color
-in the same slot of today's palette (`seriesColorInPalette`).
+search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 ## Line charts
 

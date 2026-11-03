@@ -130,8 +130,9 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   the server excludes them by default, which leaves the client's "Include Sample Packages"
   toggle disabled (known, not a new bug). The no-price filter exists only on the server.
 - **NADAC has no two-layer model yet.** Its Drug filter (`excludedNdcDescriptions` in
-  `SearchContext`) feeds only Add Chart (`vizData`); the table and auto charts show
-  `data.prices`. Parity is planned.
+  `SearchContext`) feeds only Add Chart (`vizData`); the table, auto charts, price-change cards
+  and the "flagged" toast use `data.prices`, so they ignore it (FDA's follow `FdaResultFilter`).
+  Parity is planned.
 - **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
   (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
@@ -148,7 +149,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
   `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use
   roles only (`"text.secondary"` in `sx`, `theme.palette.divider` in code, via `useTheme`, never
-  by importing `theme`). ESLint rejects hex, `rgb()`/`hsl()` and named colors elsewhere in `src/`.
+  by importing `theme`). ESLint rejects hex, `rgb()`/`hsl()` and named colors elsewhere in `src/`
+  (tests are exempt).
   To retheme, edit `COLORS` and run `npm test`; the steps are at the top of `theme.ts`. Corners
   come from `BORDER_RADIUS` there (`shape.borderRadius`; `sx` `borderRadius: 1` is one unit).
 - **Global modal** (`setGlobalModal`) is an MUI `Dialog`: 600px (`maxWidth="sm"`), full screen

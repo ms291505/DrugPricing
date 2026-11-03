@@ -1,7 +1,4 @@
 import { useMemo } from "react";
-import { useTheme } from "@mui/material/styles";
-import { RETIRED_CHART_SERIES_COLORS } from "../../theme";
-import { seriesColorInPalette } from "../../library/seriesColors";
 import { fromChartSeries, itemTitle, type ChartItem } from "../../library/explorerItems";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import LineViz from "../Charts/LineViz";
@@ -17,14 +14,10 @@ type Props = {
 export default function ChartItemBody({ item, priceRanges }: Props) {
   const { updateItem } = useExplorerItems();
   const prices = useMemo(() => fromChartSeries(item.series), [item.series]);
-  const palette = useTheme().palette.chart.series;
-  // Charts pinned before colors were stored have none; theirs come from palette order. Colors
-  // from a retired palette move to today's, slot for slot.
+  // Charts pinned before colors were stored have none; theirs come from palette order.
   const colors = useMemo(
-    () => new Map(item.series.flatMap(series => series.color
-      ? [[series.ndc, seriesColorInPalette(series.color, palette, RETIRED_CHART_SERIES_COLORS)] as const]
-      : [])),
-    [item.series, palette]);
+    () => new Map(item.series.flatMap(series => series.color ? [[series.ndc, series.color] as const] : [])),
+    [item.series]);
 
   switch (item.chartType) {
     case "line":

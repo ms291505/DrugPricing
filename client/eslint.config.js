@@ -42,12 +42,12 @@ export default defineConfig([
     ignores: ['src/theme.ts', 'src/**/*.test.ts'],
     rules: {
       "no-restricted-syntax": ["error", ...[
-        "Literal[value=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]",
-        "TemplateElement[value.raw=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/]",
-        "Literal[value=/\\b(rgba?|hsla?)\\(/]",
-        "TemplateElement[value.raw=/\\b(rgba?|hsla?)\\(/]",
-        "Property[key.name=/^(color|bgcolor|background|backgroundColor|borderColor|outlineColor|fill|stroke)$/] > Literal[value=/^(white|black|gr[ae]y|red|green|blue|orange|yellow|purple|pink|brown)$/i]",
-        "JSXAttribute[name.name=/^(color|fill|stroke)$/] > Literal[value=/^(white|black|gr[ae]y|red|green|blue|orange|yellow|purple|pink|brown)$/i]",
+        // Hex colors, in strings or template literals.
+        ":matches(Literal[value=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/], TemplateElement[value.raw=/#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\\b/])",
+        // rgb(), rgba(), hsl(), hsla().
+        ":matches(Literal[value=/\\b(rgba?|hsla?)\\(/], TemplateElement[value.raw=/\\b(rgba?|hsla?)\\(/])",
+        // Named colors on a color property (sx, style) or attribute (JSX, SVG).
+        ":matches(Property[key.name=/^(color|bgcolor|background|backgroundColor|borderColor|outlineColor|fill|stroke)$/], JSXAttribute[name.name=/^(color|fill|stroke)$/]) > Literal[value=/^(white|black|gr[ae]y|red|green|blue|orange|yellow|purple|pink|brown)$/i]",
       ].map(selector => ({
         selector,
         message: "Name colors in src/theme.ts and use a theme role here (e.g. \"text.secondary\" or theme.palette.divider).",

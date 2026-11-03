@@ -45,6 +45,7 @@ export default memo(function NadacSearchViz() {
   const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
   // Every package's changes, like the FDA page's; a NADAC result is already package-level.
   const priceChanges = useMemo(() => flagNadacPriceChangesByPackage(data?.prices ?? []), [data]);
+  const packageCount = useMemo(() => new Set(data?.prices.map(price => price.ndc)).size, [data]);
 
   const labels = seriesLabels(prices);
   const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
@@ -120,6 +121,7 @@ export default memo(function NadacSearchViz() {
         </Grid>
         : null
       }
+      <SearchResultToast resultKey={resultKey} message={countMessage(packageCount, ["package", "packages"], "found")} />
       <SearchResultToast
         resultKey={resultKey}
         message={priceChanges.length > 0 ? countMessage(priceChanges.length, ["price change", "price changes"], "flagged") : null}

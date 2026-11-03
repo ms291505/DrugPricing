@@ -6,8 +6,8 @@ import { createContext, useContext } from "react";
  * routes stay mounted. A standalone search page is mounted only on its own route, hence the
  * default.
  *
- * Kept apart from the components so only the few that read it (`QueryErrorToast`) re-render when
- * a tab is shown or hidden, never the page.
+ * Kept apart from the components so only the few that read it (`QueryErrorToast`,
+ * `SearchResultToast`) re-render when a tab is shown or hidden, never the page.
  */
 export const PageVisibleContext = createContext(true);
 

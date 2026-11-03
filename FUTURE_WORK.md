@@ -1,58 +1,15 @@
 # Future work
 
-Work that hasn't been done yet: directions the author has decided on, cleanups worth making, and
-feature ideas that should shape today's structure. Items say roughly how big they are and where
+Work that hasn't been done yet: directions the author has decided on, cleanups worth making,
+feature ideas that should shape today's structure, and the author's own notes. Items say roughly how big they are and where
 they fit. When something is done, delete it here. The code and its PR are the record.
 
 ## Decided
 
-### Retire the standalone search routes (2026-10-10)
-
-All work is meant to happen in the workspace. `/fda-search` and `/nadac-search` are left over
-from earlier versions of the app. They were handy for testing a search page outside the
-workspace, but they should go away. What removing them touches:
-
-- `App.tsx`: the two `<Route>`s, and the `FdaTabProvider`/`NadacTabProvider`/`STANDALONE_TAB_IDS`
-  imports that only they use.
-- `DrugPricingBar.tsx`: the NADAC and FDA nav buttons.
-- `library/persist.ts`: `STANDALONE_TAB_IDS` and its entry in `pruneStoredState`'s keep set.
-  Once the ids are gone, the next load prunes their saved state
-  (`drugpricing.v1.tab.page-fda`/`page-nadac`) on its own, so no cleanup code is needed.
-- `AGENTS.md`: the persistence notes that mention the standalone pages.
-- **Replace them with a route shortcut (decided 2026-10-10):** `/workspace?new=fda` (or
-  `?new=nadac`) opens a fresh workspace tab of that type and shows it, so agents and Chrome checks
-  still get a one-URL way to a search page. After creating the tab, replace the URL with plain
-  `/workspace` (`navigate(..., { replace: true })`). Otherwise every reload, with the workspace
-  persisted, adds another tab. Dev runs under `StrictMode`, which runs effects twice, so guard
-  against creating two tabs (e.g. a ref, or create the tab while reading the initial
-  workspace rather than in an effect). Ignore unknown types. Testing restore after a reload then
-  happens on that workspace tab, which is closer to real use than the standalone pages were.
-- **Build it as a public link format, not a dev shortcut.** The author wants the same links
-  later for content: a blog post that opens a tab with a search already run, or links from a
-  "popular searches" / "recent movers" list. So:
-  - Let a link carry the search as well as the type, in readable params
-    (`/workspace?new=fda&name=eliquis`, `?new=nadac&ndc=3089321&from=2025-10-07`), not a JSON
-    blob. A blog link should read as what it opens.
-  - Treat the params as a contract. Published links can't be updated, so old params must keep
-    working (add new ones, never repurpose them), like the storage `VERSION` rule.
-  - URL input is untrusted. Validate it with the same per-field validators `persist.ts` uses for
-    saved tab state, and fall back to a blank tab of that type.
-  - Consider focusing an existing tab with the same search instead of adding a duplicate, so
-    following the same link twice doesn't stack up tabs.
-- **Phones have no navigation off the workspace.** The app bar is hidden below `md`, so
-  `/about` and `/welcome` (and today the standalone pages) offer no way back to the workspace or
-  to Settings. Once only those two routes remain, give them a phone header with a link back to
-  the workspace.
-- With only the workspace, `/about` and `/welcome` left, `AppShell`'s "keep the workspace mounted
-  but hidden" switch may simplify. Check before changing: it exists so workspace tabs keep their
-  state while About is open.
-
-Size: small to medium. A PR of its own, or folded into the NADAC/FDA parity plan.
-
 ### Usability round from the user-testing notes (2026-11-01)
 
 Goal: make the core flow usable (search, results table, chart and compare) before adding
-anything new. Decided in an interview about the notes under **Ideas**, to ship as focused PRs to
+anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
 `dev` in this order:
 
 1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
@@ -90,16 +47,6 @@ anything new. Decided in an interview about the notes under **Ideas**, to ship a
 
 Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
 
-### Workspace rework (2026-11-01)
-
-A later plan, not this round. Every tab starts as a blank slate:
-
-- a search (run from a modal) adds a results table to the tab;
-- charts are added from results tables.
-
-The Collections proof of concept (`Components/Collection/`, disabled in the tab creator) stays
-in the code until then. It is an early step toward this rework.
-
 ## Cleanups
 
 ### Each a small PR of its own
@@ -133,12 +80,6 @@ in the code until then. It is an early step toward this rework.
   step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes.
-- **The FDA search toast belongs to the fetch, not the search.** `useFdaSearch` wraps its
-  `queryFn` in `toast.promise`, so any refetch shows "Searching FDA products…", not only a search
-  the user ran. Refetch on focus and on reconnect are off for now (PR 12), which hides the burst
-  of one toast per FDA tab. Show the toast only for a search the user starts (from
-  `FdaSearchTool`'s submit, or by watching the query's fetch only after a submit), and decide
-  whether the NADAC search, which has no toast, should get the same one.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
@@ -208,7 +149,7 @@ top few and "and N more"; View data still has the full table.
 ### Popular searches and recent movers
 
 The author would like to show popular searches or recent price movers, linking each to a
-workspace tab (see the link format under **Decided**). Two consequences for current structure:
+workspace tab (see **Linkable search results**). Two consequences for current structure:
 
 - **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
   and NADAC result). A "recent movers" list across all drugs needs it on the server, most likely computed
@@ -218,11 +159,33 @@ workspace tab (see the link format under **Decided**). Two consequences for curr
 - **"Popular searches" needs search counts,** which nothing records today. That is a server
   addition, and a privacy decision about what gets logged.
 
+### Linkable search results
+
+Links that open a workspace tab with a search already run, for people to look at or start a tab
+from: a blog post with example searches, or entries in a "popular searches" / "recent movers"
+list. Something like `/workspace?new=fda&name=eliquis` or
+`?new=nadac&ndc=3089321&from=2025-10-07`. If it gets built:
+
+- Readable params, not a JSON blob: a link should read as what it opens.
+- The params are a contract. Published links can't be updated, so old params must keep working
+  (add new ones, never repurpose them), like the storage `VERSION` rule.
+- URL input is untrusted. Validate it with the per-field validators `persist.ts` uses for saved
+  tab state, and fall back to a blank tab of that type.
+- Replace the URL with plain `/workspace` after creating the tab (`navigate(..., { replace: true })`),
+  or every reload adds another tab. Dev's `StrictMode` runs effects twice, so guard against
+  creating two.
+- Following the same link twice could focus the existing tab instead of adding a duplicate.
+
+## Author's notes
+
+The author's own notes from using the app and thinking ahead. They aren't decisions: ask the
+author before planning work from them.
+
 ### Notes from user testing (2026-10-17)
 
 On this date I used the web app and took notes on improvements I'd like to see as a user.
-What was decided from them is under **Decided** above, in "Usability round from the
-user-testing notes".
+What was decided from them is under **Decided**, in "Usability round from the user-testing
+notes".
 
 - Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
 - The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?
@@ -233,7 +196,7 @@ user-testing notes".
 - I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:
   - When something is mixed units, it should probably just be different explorer items (aka completely different charts) instead of a split chart as one item. A toast can explain why multiple charts were added. This makes it easier to compare the per each version of Wegovy to Rybelsus.
 
-### Workspace Redo (11-01-2026)
+### Workspace redo (2026-11-01)
 
 The Workspace has gone in a direction that probably isn't the best place to be. A shouldn't be a search. A tab should be a collection of results and charts
 created by a user and stored for comparison. A search is really a tool. People can use the app and simply perform a search and look around a bit, that would be the
@@ -249,3 +212,6 @@ Eventually we can add "starting points" for tabs a user might want to see or sta
 
 The current Collection might be a good starting point, but it just uses PinnedSection and has a wonky mailbox design to get items to it. The whole workspace
 context needs to be rethought, so probably no need to stick to this mailbox design. However, users should be able to create a workspace tab from the basic search endpoints if they want to start there and then do something more complex. Because of that the workspace context probably needs to wrap around the whole app like it essentially does now.
+
+The Collections proof of concept (`Components/Collection/`, disabled in the tab creator) stays in
+the code until then. It is an early step toward this.

@@ -118,11 +118,6 @@ export type PackagePriceChange = {
   priceChange: NadacPriceChange,
 }
 
-export type FdaProductPriceChange = PackagePriceChange & {
-  productNdc: string,
-  packageNdcStripped: string,
-}
-
 export function isFdaProductOtc(productTypeName: string) {
   return productTypeName.toLocaleLowerCase() === "human otc drug";
 }

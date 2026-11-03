@@ -23,19 +23,15 @@ export default function SearchResultToast({ resultKey, message, kind = "success"
   const shownKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!visible) {
-      toast.dismiss(id);
-      return;
-    }
-    if (!resultKey || !message || shownKey.current === resultKey) return;
+    if (!visible || !resultKey || !message || shownKey.current === resultKey) return;
     shownKey.current = resultKey;
     if (kind === "success") toast.success(message, { id });
     // 20px, the size of the toast's own success and error icons.
     else toast(message, { id, icon: <FlagIcon sx={{ fontSize: 20 }} /> });
   }, [visible, resultKey, message, kind, id]);
 
-  // Leaving a standalone search page unmounts it.
-  useEffect(() => () => toast.dismiss(id), [id]);
+  // Down when the page is hidden, or unmounts (leaving a standalone search page).
+  useEffect(() => visible ? () => toast.dismiss(id) : undefined, [visible, id]);
 
   return null;
 }

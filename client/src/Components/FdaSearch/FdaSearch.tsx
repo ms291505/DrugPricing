@@ -4,15 +4,9 @@ import useFdaSearch from "../../hooks/useFdaSearch";
 import FdaExplorer from "./FdaExplorer";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
 import QueryErrorToast from "../ui/QueryErrorToast";
-import SearchResultToast from "../ui/SearchResultToast";
-import useNewSearchResult from "../../hooks/useNewSearchResult";
-import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { countMessage } from "../../library/searchToasts";
 
 export default function FdaSearch() {
-  const { data, isSuccess, error, dataUpdatedAt } = useFdaSearch();
-  const { fdaSearchParams } = useFdaSearchContext();
-  const resultKey = useNewSearchResult(fdaSearchParams, isSuccess, dataUpdatedAt);
+  const { isSuccess, error } = useFdaSearch();
 
   return (
     <Box sx={{
@@ -24,7 +18,6 @@ export default function FdaSearch() {
       width: "100%",
     }}>
       <QueryErrorToast error={error} />
-      <SearchResultToast resultKey={resultKey} message={data ? countMessage(data.products.length, ["product", "products"], "found") : null} />
       <FdaSearchTool />
       <FdaExplorer visible={isSuccess} />
       {/* Outside the isSuccess gate: pinned items render from their snapshots, so they show

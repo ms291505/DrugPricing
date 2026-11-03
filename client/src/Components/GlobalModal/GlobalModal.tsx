@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext"
 import About from "../About/About"
 import OnBoarding from "../OnBoarding/OnBoarding"
@@ -17,7 +17,6 @@ export default function GlobalModal() {
   }
 
   const { globalModal, setGlobalModal } = useGlobalModalContext();
-  const titleId = useId();
   // Full screen on a phone, as settings sheets are there; a centered card from `sm` up.
   const fullScreen = useMediaQuery(useTheme().breakpoints.down("sm"));
 
@@ -32,9 +31,9 @@ export default function GlobalModal() {
       // One width for every modal: 600px, comfortable for reading, and the full width below it.
       fullWidth
       maxWidth="sm"
-      aria-labelledby={titleId}
     >
-      <TitleBar id={titleId} title={globalModalRegistry[globalModal].label} onClose={handleClose} />
+      {/* MUI names the dialog by its `DialogTitle` (aria-labelledby). */}
+      <TitleBar title={globalModalRegistry[globalModal].label} onClose={handleClose} />
       {/* The modal owns the padding; its contents bring none of their own. */}
       <DialogContent dividers>
         {globalModalRegistry[globalModal].content}

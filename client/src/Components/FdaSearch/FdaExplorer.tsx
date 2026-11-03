@@ -62,6 +62,7 @@ export default function FdaExplorer({ visible = true }: Props) {
   const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
   return (<>
+    <SearchResultToast resultKey={resultKey} message={data ? countMessage(data.products.length, ["product", "products"], "found") : null} />
     {/* Counts every change the search flagged, charted or not: the cards' notes say why some aren't. */}
     <SearchResultToast
       resultKey={resultKey}
