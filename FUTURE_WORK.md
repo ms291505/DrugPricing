@@ -47,6 +47,17 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
 
 Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
 
+### Search autocomplete with misspelling suggestions (2026-11-02)
+
+Plan: [plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
+Description, FDA Brand Name and a new FDA Generic Name field, including likely corrections of
+misspellings ("eliqus" → ELIQUIS) under "Did you mean". Picking one fills the field; Search
+still runs the search. Built on pg_trgm: a materialized view of FDA names (refreshed by both ETL
+paths) and the existing trigram index on `DrugPackages`, served by two `suggest` endpoints.
+Labeler, dosage form and route fields are out of scope.
+
+Size: medium. One PR, or two (database + server, then client).
+
 ## Cleanups
 
 ### Each a small PR of its own
@@ -100,6 +111,13 @@ Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator
   of the usability round: one Results section on both pages.
 
 ## Ideas
+
+### Self-hosted observability (2026-11-03)
+
+Plan: [plans/observability.md](plans/observability.md). Instrument the API once with
+OpenTelemetry (exporter off until `OTEL_EXPORTER_OTLP_ENDPOINT` is set), have the ETL ping a
+self-hosted Healthchecks so a failed or missing weekly run alerts, and run a Grafana stack on the
+existing Pi with memory caps on every container. Measure the ETL's memory peak first.
 
 ### Percent-change charts for comparing trends across prices (2026-10-11)
 
