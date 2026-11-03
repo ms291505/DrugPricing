@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignSeriesColors, preferredSlots } from "./seriesColors";
+import { assignSeriesColors, preferredSlots, seriesColorInPalette } from "./seriesColors";
 
 const PALETTE = ["c0", "c1", "c2", "c3"];
 const result = ["A", "B", "C", "D", "E", "F"];
@@ -31,5 +31,20 @@ describe("assignSeriesColors", () => {
     const colors = assignSeriesColors(result, preferred, PALETTE);
     expect(colors.get("E")).toBe("c0");
     expect(colors.get("F")).toBe("c1");
+  });
+});
+
+describe("seriesColorInPalette", () => {
+  const CURRENT = ["#111111", "#222222"];
+  const RETIRED = [["#AAAAAA", "#BBBBBB"]];
+
+  it("moves a retired color to the same slot in the current palette, ignoring case", () => {
+    expect(seriesColorInPalette("#BBBBBB", CURRENT, RETIRED)).toBe("#222222");
+    expect(seriesColorInPalette("#aaaaaa", CURRENT, RETIRED)).toBe("#111111");
+  });
+
+  it("keeps current and unknown colors", () => {
+    expect(seriesColorInPalette("#222222", CURRENT, RETIRED)).toBe("#222222");
+    expect(seriesColorInPalette("#123456", CURRENT, RETIRED)).toBe("#123456");
   });
 });

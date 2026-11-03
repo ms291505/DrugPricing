@@ -327,7 +327,7 @@ function changeCallout(
         const y = (viewBox?.y ?? 0) - pillHeight / 2;
         return (
           <g>
-            <rect x={x} y={y} width={pillWidth} height={pillHeight} rx={4} fill={chartTheme.paper} stroke={color} />
+            <rect x={x} y={y} width={pillWidth} height={pillHeight} rx={chartTheme.radius} fill={chartTheme.paper} stroke={color} />
             <text x={x + pillWidth / 2} y={y + pillHeight / 2} dy="0.35em" textAnchor="middle" fill={chartTheme.textPrimary} fontSize={chartTheme.fontSize}>
               {text}
             </text>

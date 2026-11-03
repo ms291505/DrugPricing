@@ -5,6 +5,20 @@
  * no two visible series share a color while there are no more of them than palette colors.
  */
 
+/**
+ * A pinned chart's stored series color in the current palette: a color from a retired palette
+ * takes the same slot in `palette`, so pins follow a palette change. Others are kept.
+ */
+export function seriesColorInPalette(color: string, palette: string[], retired: string[][]): string {
+  const same = (c: string) => c.toLowerCase() === color.toLowerCase();
+  if (palette.some(same)) return color;
+  for (const old of retired) {
+    const slot = old.findIndex(same);
+    if (slot >= 0) return palette[slot % palette.length];
+  }
+  return color;
+}
+
 /** Each NDC's preferred palette slot: its position among the NDCs, in order of appearance. */
 export function preferredSlots(ndcs: Iterable<string>): Map<string, number> {
   const slots = new Map<string, number>();

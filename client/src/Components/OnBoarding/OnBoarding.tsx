@@ -1,13 +1,16 @@
 import { Box, Typography } from "@mui/material";
 import EliquisTable from "./EliquisTable";
 
-export default function OnBoarding() {
+/** @param showHeading - false in a dialog, whose title names it */
+export default function OnBoarding({ showHeading = true }: { showHeading?: boolean }) {
 
   return (<>
     <Box>
-      <Typography component="h2" variant="h5" sx={{ pb: 1 }}>
-        Welcome
-      </Typography>
+      {showHeading
+        ? <Typography component="h2" variant="h5" sx={{ pb: 1 }}>
+          Welcome
+        </Typography>
+        : null}
       <Box
         sx={{ pb: 3 }}
       >

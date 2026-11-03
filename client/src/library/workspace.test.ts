@@ -18,6 +18,12 @@ describe("workspaceReducer", () => {
     prev.tabs.forEach((t, i) => expect(next.tabs[i]).toBe(t));
   });
 
+  it("starts over with one tab, alone in a single pane", () => {
+    const fresh: WorkspaceTab = { id: "new", type: "new", title: "New Tab" };
+    const next = workspaceReducer({ ...workspace(["a", "b"]), layoutMode: "split-2" }, { type: "reset", tab: fresh });
+    expect(next).toEqual({ tabs: [fresh], layoutMode: "single", paneAssignment: ["new"] });
+  });
+
   describe("closing a tab", () => {
     const fallback: WorkspaceTab = { id: "new", type: "new", title: "New Tab" };
     const remove = (id: string) => ({ type: "remove" as const, id, fallback });

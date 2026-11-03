@@ -4,11 +4,11 @@ const StyledToolTip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip describeChild {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
   [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: '#f5f5f9',
-    color: 'rgba(0, 0, 0, 0.87)',
+    backgroundColor: theme.palette.inverse.light,
+    color: theme.palette.inverse.contrastText,
     maxWidth: 220,
     fontSize: theme.typography.pxToRem(12),
-    border: '1px solid #dadde9',
+    border: `1px solid ${theme.palette.inverse.border}`,
   },
 }));
 

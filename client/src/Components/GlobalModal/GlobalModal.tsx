@@ -1,62 +1,44 @@
-import { type ReactNode } from "react"
+import { useId, type ReactNode } from "react"
 import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext"
 import About from "../About/About"
 import OnBoarding from "../OnBoarding/OnBoarding"
-import { Modal, Box, } from "@mui/material"
-import { MAX_GLOBAL_MODAL_HEIGHT, MAX_GLOBAL_MODAL_WIDTH } from "../../library/constants"
+import { Dialog, DialogContent, useMediaQuery, useTheme, } from "@mui/material"
 import TitleBar from "./TitleBar"
 import SettingsPanel from "../Settings/SettingsPanel"
 
 export default function GlobalModal() {
 
+  // The dialog's title names it, so the contents leave out their own page heading.
   const globalModalRegistry: Record<GlobalModal, { label: string, content: ReactNode }> = {
-    about: { label: "About", content: <About /> },
-    onboarding: { label: "Welcome", content: <OnBoarding /> },
+    about: { label: "About", content: <About showHeading={false} /> },
+    onboarding: { label: "Welcome", content: <OnBoarding showHeading={false} /> },
     settings: { label: "Settings", content: <SettingsPanel /> },
-    help: { label: "Help", content: <OnBoarding /> },
+    help: { label: "Help", content: <OnBoarding showHeading={false} /> },
   }
 
   const { globalModal, setGlobalModal } = useGlobalModalContext();
+  const titleId = useId();
+  // Full screen on a phone, as settings sheets are there; a centered card from `sm` up.
+  const fullScreen = useMediaQuery(useTheme().breakpoints.down("sm"));
 
   const handleClose = () => setGlobalModal(null);
 
-  const open = globalModal ? true : false;
-
   if (!globalModal) return (null);
   return (
-    <>
-      <Modal
-        open={open}
-        onClose={handleClose}
-      >
-        {/* MUI's Modal root is role="presentation", so the dialog role and its name go here. */}
-        <Box
-          role="dialog"
-          aria-modal="true"
-          aria-label={globalModalRegistry[globalModal].label}
-          sx={{
-            // One width for every modal, whatever it shows, with 16px of screen at each edge
-            // on a phone. Without a width, `left: 50%` let the content size it, up to half the screen.
-            width: `min(${MAX_GLOBAL_MODAL_WIDTH}px, calc(100vw - 32px))`,
-            maxHeight: `min(${MAX_GLOBAL_MODAL_HEIGHT}px, calc(100dvh - 32px))`,
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: 'background.paper',
-            border: '2px solid #000',
-            boxShadow: 24,
-            display: "flex",
-            flexDirection: "column"
-          }}
-        >
-          <TitleBar />
-          {/* The modal owns the padding; its contents bring none of their own. */}
-          <Box sx={{ overflowY: "auto", overflowX: "hidden", p: { xs: 2, md: 3 }, minHeight: 0 }}>
-            {globalModalRegistry[globalModal].content}
-          </Box>
-        </Box>
-      </Modal>
-    </>
+    <Dialog
+      open
+      onClose={handleClose}
+      fullScreen={fullScreen}
+      // One width for every modal: 600px, comfortable for reading, and the full width below it.
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby={titleId}
+    >
+      <TitleBar id={titleId} title={globalModalRegistry[globalModal].label} onClose={handleClose} />
+      {/* The modal owns the padding; its contents bring none of their own. */}
+      <DialogContent dividers>
+        {globalModalRegistry[globalModal].content}
+      </DialogContent>
+    </Dialog>
   )
 }

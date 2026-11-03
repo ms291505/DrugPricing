@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Grid, Typography, } from "@mui/material";
+import { Grid, } from "@mui/material";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../Charts/BarViz";
@@ -8,8 +8,7 @@ import { applyFdaResultFilter, type FdaResultDetailLevel, } from "../../library/
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
 import LineViz from "../Charts/LineViz";
-import { flagNadacPriceChangeForFdaProducts, getAllPricesForFlaggedPackages, priceChangesInWindow } from "../../library/flagNadacPriceChange";
-import { HALF_WIDTH_GRID_SIZE, MAX_AUTO_PRICE_CHANGE_CHARTS } from "../../library/constants";
+import { flagNadacPriceChangeForFdaProducts } from "../../library/flagNadacPriceChange";
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
@@ -17,7 +16,10 @@ import useChartWindow from "../../hooks/useChartWindow";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue } from "../../library/explorerItems";
-import PriceChangeCard from "./PriceChangeCard";
+import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
+import SearchResultToast from "../ui/SearchResultToast";
+import useNewSearchResult from "../../hooks/useNewSearchResult";
+import { countMessage } from "../../library/searchToasts";
 import ExplorerGrid, { ExplorerGridItem } from "../ExplorerGrid";
 
 type Props = {
@@ -25,8 +27,9 @@ type Props = {
 }
 
 export default function FdaExplorer({ visible = true }: Props) {
-  const { data } = useFdaSearch();
-  const { fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const { data, isSuccess, dataUpdatedAt } = useFdaSearch();
+  const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const resultKey = useNewSearchResult(fdaSearchParams, isSuccess, dataUpdatedAt);
   const origin = useFdaChartOrigin();
   const { chartWindow } = useChartWindow(origin.resultPrices);
   const packageOrigin = useFdaChartOrigin("package");
@@ -53,28 +56,18 @@ export default function FdaExplorer({ visible = true }: Props) {
 
   const showAutoCharts = shouldAutoChart(nadacPrices);
 
-  // Price-change cards follow the chart dates like the other auto charts; each keeps its own focus.
-  const shownPriceChanges = useMemo(
-    () => priceChangesInWindow(productPriceChanges, chartWindow),
-    [productPriceChanges, chartWindow]);
-  const outsidePriceChanges = productPriceChanges.length - shownPriceChanges.length;
-  const tooManyPriceChanges = shownPriceChanges.length > MAX_AUTO_PRICE_CHANGE_CHARTS;
-  // Explains why price-changes the search found have no card.
-  const priceChangeNotes = [
-    tooManyPriceChanges
-      ? `${shownPriceChanges.length} price changes in these dates are too many to chart (up to ${MAX_AUTO_PRICE_CHANGE_CHARTS}). Narrow the dates or filter the results.`
-      : null,
-    outsidePriceChanges > 0
-      ? `${outsidePriceChanges === 1 ? "1 price change is" : `${outsidePriceChanges} price changes are`} outside the chart dates.`
-      : null,
-  ].filter(note => note !== null);
-
   const labels = seriesLabels(nadacPrices);
   const barVizTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
   const lineVizTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels);
   const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
-  return (
+  return (<>
+    {/* Counts every change the search flagged, charted or not: the cards' notes say why some aren't. */}
+    <SearchResultToast
+      resultKey={resultKey}
+      message={productPriceChanges.length > 0 ? countMessage(productPriceChanges.length, ["price change", "price changes"], "flagged") : null}
+      kind="flag"
+    />
     <ExplorerGrid visible={visible}>
       <Grid
         component="div"
@@ -144,29 +137,14 @@ export default function FdaExplorer({ visible = true }: Props) {
           </Grid>
           : null
       }
-      {priceChangeNotes.length > 0
-        ? <Grid size={12}>
-          <Typography variant="body2" color="text.secondary" sx={{ px: { xs: 1, md: 0 } }}>
-            {priceChangeNotes.join(" ")}
-          </Typography>
-        </Grid>
-        : null
-      }
-      {!tooManyPriceChanges
-        ?
-        shownPriceChanges.map((change) => (
-          <Grid size={HALF_WIDTH_GRID_SIZE} key={change.packageNdc + change.priceChange.startDate.getTime()}>
-            <PriceChangeCard
-              change={change}
-              prices={getAllPricesForFlaggedPackages(change, packageNadacPrices)}
-              origin={packageOrigin}
-              colors={packageColors}
-            />
-          </Grid>
-        ))
-        : null
-      }
+      <PriceChangeCards
+        changes={productPriceChanges}
+        prices={packageNadacPrices}
+        chartWindow={chartWindow}
+        origin={packageOrigin}
+        colors={packageColors}
+      />
     </ExplorerGrid>
-  )
+  </>)
 }
 

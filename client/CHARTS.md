@@ -27,7 +27,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   date). Auto charts show the resolved window; Add Chart and Pin start new items at it, as fixed
   dates. It is not part of `FdaResultFilter`, doesn't touch the results table or which changes
   are flagged, and a new search keeps it.
-- Price-change charts (`PriceChangeCard`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
+- Price-change charts (`PriceChangeCards`, on both search pages; NADAC flags each package of its
+  result with `flagNadacPriceChangesByPackage`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
   (`changeSpan`, stored on pinned copies too) and toggle to the full history. Only changes whose
   new price starts inside the chart dates get a card (`priceChangesInWindow`); a note counts the
   rest, and past `MAX_AUTO_PRICE_CHANGE_CHARTS` it gives the count instead of charting them.
@@ -72,7 +73,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
 so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
 page agrees. Add Chart and Pin store each series' `color`, since the result is gone after the next
-search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
+search. Pass the page's map to `LineViz`/`BarViz` as `colors`. When the series colors change,
+the old list goes in `RETIRED_CHART_SERIES_COLORS`: a pinned chart draws a stored retired color
+in the same slot of today's palette (`seriesColorInPalette`).
 
 ## Line charts
 
@@ -86,8 +89,8 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   still shows its range in the tooltip (from `md` up), View data and the CSV. Bands are rare:
   most products price every package the same per unit (liquids' bottle sizes are the exception).
 - **Price changes** are called out on the line: dots at the old and new price, the old price
-  continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined green
-  for a drop and `error` for a rise. The percent stays in the title. Spans pinned before prices
+  continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined in
+  `palette.chart.drop` or `chart.rise` (today the success and error colors). The percent stays in the title. Spans pinned before prices
   were stored get a dashed line labeled with the percent.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown

@@ -2,22 +2,22 @@ import { useState } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
-import PinButton from "../ExplorerGrid/PinButton";
+import ExplorerGridItem from "./ExplorerGridItem";
+import PinButton from "./PinButton";
 import LineViz from "../Charts/LineViz";
 import { percentageChangeToString } from "../../library/flagNadacPriceChange";
 import { priceChangeTitle } from "../../library/chartTitles";
 import { FULL_WINDOW, windowAround } from "../../library/dates";
 import { PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
 import type { ChartChangeSpan, ChartOrigin } from "../../library/explorerItems";
-import type { FdaProductPriceChange, NadacPrice } from "../../library/types";
+import type { NadacPrice, PackagePriceChange } from "../../library/types";
 
 type Props = {
-  change: FdaProductPriceChange,
+  change: PackagePriceChange,
   /** Every price of the changed package. */
   prices: NadacPrice[],
   origin: ChartOrigin,
-  /** The package-level page colors. */
+  /** The page's colors for packages. */
   colors: Map<string, string>,
 }
 

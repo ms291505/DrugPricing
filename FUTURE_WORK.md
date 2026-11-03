@@ -211,7 +211,7 @@ The author would like to show popular searches or recent price movers, linking e
 workspace tab (see the link format under **Decided**). Two consequences for current structure:
 
 - **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
-  result). A "recent movers" list across all drugs needs it on the server, most likely computed
+  and NADAC result). A "recent movers" list across all drugs needs it on the server, most likely computed
   after each NADAC load (ETL or a SQL view) and served by an endpoint. Then client and server
   must agree on the rule (the 10% threshold, consecutive as-of dates), so give it one written
   definition before there are two implementations.

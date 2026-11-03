@@ -3,7 +3,7 @@ import TextField from "@mui/material/TextField"
 import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { DEFAULT_NADAC_SEARCH_MONTHS } from "../../library/constants.ts";
 import { useSearchContext } from "../../Context/NadacSearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
@@ -16,6 +16,10 @@ import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceCon
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
+import QueryErrorToast from "../ui/QueryErrorToast.tsx";
+import SearchResultToast from "../ui/SearchResultToast.tsx";
+import useNewSearchResult from "../../hooks/useNewSearchResult.ts";
+import { countMessage } from "../../library/searchToasts.ts";
 
 export default function NadacSearch() {
   const { searchParams, setData, setSearchParams, clearNdcDescriptionFilter } = useSearchContext();
@@ -45,6 +49,10 @@ export default function NadacSearch() {
   const isValidSearch = isValidNadacSearch(ndcDescription, searchNdc);
 
   const nadacSearchQuery = useNadacSearch();
+  const resultKey = useNewSearchResult(searchParams, nadacSearchQuery.isSuccess, nadacSearchQuery.dataUpdatedAt);
+  const packageCount = useMemo(
+    () => new Set(nadacSearchQuery.data?.prices.map(price => price.ndc)).size,
+    [nadacSearchQuery.data]);
 
   const { renameTab } = useWorkspaceActions();
   const { id } = useTabInstanceContext();
@@ -87,6 +95,8 @@ export default function NadacSearch() {
   const isMobile = useMobile();
 
   return (<>
+    <QueryErrorToast error={nadacSearchQuery.error} />
+    <SearchResultToast resultKey={resultKey} message={countMessage(packageCount, ["package", "packages"], "found")} />
     <Box sx={{
       display: "flex",
       flexDirection: "column",

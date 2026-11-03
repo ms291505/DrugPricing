@@ -99,6 +99,12 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     return replacementTabId(tabsRef.current, id, fallback.id);
   }, []);
 
+  const clearWorkspace = useCallback(() => {
+    tabsRef.current.forEach(tab => removeTabState(tab.id));
+    pending.current.clear();
+    dispatch({ type: "reset", tab: createNewTab() });
+  }, []);
+
   const renameTab = useCallback((id: string, title: string) => {
     dispatch({ type: "rename", id, title });
   }, []);
@@ -136,8 +142,9 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setPaneAssigment,
     setMobileDrawerIsOpen,
     addToCollection,
+    clearWorkspace,
     registerTab,
-  }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment, addToCollection, registerTab]);
+  }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment, addToCollection, clearWorkspace, registerTab]);
 
   const panes = useMemo(() => ({ layoutMode, paneAssignment }), [layoutMode, paneAssignment]);
 

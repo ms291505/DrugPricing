@@ -61,7 +61,7 @@ dotnet ef migrations add <Name>
 `src/App.tsx` (router, theme, React Query) · `src/api/` (calls; `types.ts` maps wire types to
 domain types, including date strings to `Date`) · `src/library/` (domain types and pure logic,
 unit tested) · `src/hooks/` · `src/Context/` (global and per-tab state; per-tab provider stacks
-in `TabProviders.tsx`) · `src/theme.ts` (including `palette.chart.series`) ·
+in `TabProviders.tsx`) · `src/theme.ts` (every color; see Theme below) ·
 `src/library/constants.ts`.
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
@@ -87,6 +87,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **A workspace always has a tab.** Startup falls back to one blank tab, and closing the only tab
   leaves a blank one: `removeTab` passes the reducer a `fallback` and returns the tab that takes
   over the pane, which the drawer focuses.
+  "Clear workspace" (`clearWorkspace`, the reducer's `reset`) starts over with one blank tab and
+  deletes every tab's saved state; it takes two clicks (`ui/ConfirmButton`).
 - **Keep imports acyclic and provider modules component-only**, or dev hot updates break.
   `tabTypeRegistry.ts` imports every page, so `library/tabType.ts` (types, default titles)
   imports no components. The workspace contexts and hooks are in `Context/workspaceContexts.ts`
@@ -133,12 +135,27 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
   (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
+- **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
+  `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone
+  page while mounted. Errors (`QueryErrorToast`) come back each time the page is shown. Results
+  ("N products found") and flagged price changes (`SearchResultToast`) show once per new result,
+  waiting if it arrived while hidden, and never for the search a restored tab re-runs on load
+  (`useNewSearchResult`). App-wide toasts: failed storage writes, another window's changes, Pin.
 
 ### UI conventions
 
-- **Global modal** (`setGlobalModal`) owns its width (`min(700px, 100vw − 32px)`), height and
-  padding; its contents bring no `Container` or outer padding. The dialog role sits on the inner
-  box (MUI's `Modal` root is `role="presentation"`). The phone drawer closes before a modal opens.
+- **Theme:** `src/theme.ts` is the only place a color is written. It names each one once in
+  `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
+  `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use
+  roles only (`"text.secondary"` in `sx`, `theme.palette.divider` in code, via `useTheme`, never
+  by importing `theme`). ESLint rejects hex, `rgb()`/`hsl()` and named colors elsewhere in `src/`.
+  To retheme, edit `COLORS` and run `npm test`; the steps are at the top of `theme.ts`. Corners
+  come from `BORDER_RADIUS` there (`shape.borderRadius`; `sx` `borderRadius: 1` is one unit).
+- **Global modal** (`setGlobalModal`) is an MUI `Dialog`: 600px (`maxWidth="sm"`), full screen
+  below `sm`, its title and close button in one header row (`TitleBar`). It owns the width,
+  height and padding; its contents bring no `Container`, outer padding or page heading (`About`
+  and `OnBoarding` take `showHeading={false}`). Settings apply at once, so it has no Save button.
+  The phone drawer closes before a modal opens.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (today only `barStyle`), saved once under `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). New preferences go

@@ -19,8 +19,7 @@ import OnBoarding from "./Components/OnBoarding";
 import GlobalModal from "./Components/GlobalModal";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden
-// ones included, would refetch at once (one "Searching…" toast per FDA tab), and the data only
-// changes weekly.
+// ones included, would refetch at once, and the data only changes weekly.
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, refetchOnReconnect: false } },
 });
@@ -55,7 +54,7 @@ function AppShell() {
     <Container maxWidth="xl" sx={{ pb: 2 }}>
       <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
         <DrugPricingBar />
-        <Workspace />
+        <Workspace onScreen={isWorkspaceActive} />
       </Box>
       <GlobalModal />
 

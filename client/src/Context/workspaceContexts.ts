@@ -36,6 +36,8 @@ export type WorkspaceActions = {
   setPaneAssigment: (value: SetStateAction<Array<string | null>>) => void;
   setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
   addToCollection: (item: ExplorerItem, id?: string) => void;
+  /** Closes every tab and deletes their saved state, leaving one blank tab. */
+  clearWorkspace: () => void;
   /** Lets a collection tab receive items; returns the unregister function. */
   registerTab: (id: string, receive: (item: ExplorerItem) => void) => () => void;
 };

@@ -33,9 +33,10 @@ export default function useChartTheme() {
       textPrimary: theme.palette.text.primary,
       paper: theme.palette.background.paper,
       textSecondary: theme.palette.text.secondary,
-      rise: theme.palette.error.main,
-      drop: theme.palette.success.main,
+      rise: theme.palette.chart.rise,
+      drop: theme.palette.chart.drop,
       margin: { top: 8, right: 16, bottom: 0, left: 0 },
+      radius: theme.shape.borderRadius,
     };
   }, [theme]);
 }

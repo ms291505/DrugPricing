@@ -4,7 +4,8 @@ import TabInstance from "./TabInstance";
 import WorkspaceDrawer from "./WorkspaceDrawer";
 import MobileDrawerFab from "./MobileDrawerFab";
 
-export default function Workspace() {
+/** @param onScreen - false while another route is open; the workspace stays mounted, hidden. */
+export default function Workspace({ onScreen }: { onScreen: boolean }) {
   const tabs = useWorkspaceTabs();
   const { paneAssignment } = useWorkspacePanes();
   return (
@@ -27,7 +28,12 @@ export default function Workspace() {
         >
           {
             tabs.map(tab =>
-              <TabInstance key={tab.id} visible={paneAssignment.includes(tab.id)} workspaceTab={tab} />
+              <TabInstance
+                key={tab.id}
+                visible={paneAssignment.includes(tab.id)}
+                onScreen={onScreen && paneAssignment.includes(tab.id)}
+                workspaceTab={tab}
+              />
             )
           }
         </Box>
