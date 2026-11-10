@@ -15,7 +15,7 @@ type Props = {
 }
 
 /**
- * A button for a destructive action that takes two clicks: outlined at first, then filled and
+ * A button for a destructive action that takes two clicks: a quiet outline at first, then filled in its color and
  * asking to be clicked again. It backs off if the second click doesn't come within a few seconds
  * or focus leaves it (on iOS a tap doesn't focus a button, so there only the timeout applies).
  *
@@ -37,6 +37,8 @@ export default function ConfirmButton({ label, confirmLabel, onConfirm, color }:
     <Button
       color={color}
       variant={armed ? "contained" : "outlined"}
+      // Quiet until armed: a destructive action that is rarely used shouldn't be the loudest button.
+      sx={armed ? undefined : { color: "text.secondary", borderColor: "divider" }}
       onClick={(event) => {
         if (!armed) {
           armedAt.current = event.timeStamp;

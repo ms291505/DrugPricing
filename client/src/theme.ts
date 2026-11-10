@@ -12,7 +12,8 @@ import type { ColorMode } from './library/settings';
  * 3. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards, in both modes.
  *
  * There are two themes, picked in Settings (`colorMode`): the app's own dark theme, and MUI's
- * default light theme with only the custom roles (`chart`, `inverse`) added.
+ * default light theme with grey surfaces, a teal primary, flat bordered cards, and the custom
+ * roles (`chart`, `inverse`).
  *
  * Pinned charts store their series colors. A stored color from either palette is drawn in the
  * same slot of the current one (`themedSeriesColor`), so a pin follows the mode; a color from an
@@ -57,6 +58,7 @@ const COLORS = {
   yellow: "#f2f53d",
   orange: "#e6a04c",
   blue: "#52a0e0",
+  teal: "#17687a",
   black: "#000000",
   white: "#ffffff",
   charcoal: "#1e2628",
@@ -89,7 +91,7 @@ export const CHART_SERIES_COLORS = [
 
 /**
  * Light mode chart series colors: the same hues slot for slot, darkened to at least 3:1 against
- * white.
+ * `background.paper`.
  */
 export const LIGHT_CHART_SERIES_COLORS = [
   "#0072B2", // blue
@@ -162,13 +164,26 @@ export const darkTheme = createTheme({
   },
 });
 
-/** MUI's default light palette, for now. Its error and success colors mark price changes. */
+/** The highest elevation that in-page surfaces use (the app bar's); above it are overlays. */
+const MAX_FLAT_ELEVATION = 4;
+
+/** MUI's default light palette, for now, on grey surfaces. Its error and success colors mark price changes. */
 const lightBase = createTheme({ "palette": { "mode": "light" } }).palette;
 
 export const lightTheme = createTheme({
   ...SHARED_OPTIONS,
   "palette": {
     "mode": "light",
+    // The dark theme's cyan, deepened to read on a light page (6:1 as text on the cards).
+    "primary": {
+      "main": COLORS.teal,
+      "contrastText": COLORS.white
+    },
+    // Off-white cards on a grey page: softer than pure white, and the surfaces stand apart.
+    "background": {
+      "default": grey[200],
+      "paper": grey[50]
+    },
     // On a light page the "inverse" surfaces are dark.
     "inverse": {
       "main": grey[800],
@@ -177,6 +192,25 @@ export const lightTheme = createTheme({
       "contrastText": lightBase.common.white
     },
     "chart": { "series": LIGHT_CHART_SERIES_COLORS, "rise": lightBase.error.main, "drop": lightBase.success.main },
+  },
+  // Flat surfaces: cards and the app bar get a thin border in place of a drop shadow. Menus,
+  // popovers and dialogs (elevation 8 and up) keep their shadow, since they float over the page.
+  "components": {
+    "MuiPaper": {
+      "styleOverrides": {
+        "root": ({ ownerState, theme }) =>
+          ownerState.variant !== "outlined" && ownerState.elevation !== undefined
+            && ownerState.elevation > 0 && ownerState.elevation <= MAX_FLAT_ELEVATION
+            ? { boxShadow: "none", border: `1px solid ${theme.palette.divider}` }
+            : {},
+      },
+    },
+    "MuiButton": { "defaultProps": { "disableElevation": true } },
+    "MuiAppBar": {
+      "styleOverrides": {
+        "root": { borderWidth: "0 0 1px" },
+      },
+    },
   },
 });
 
