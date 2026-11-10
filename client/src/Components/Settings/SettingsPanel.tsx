@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Typography } from "@mui/material";
 import { useSettings } from "../../Context/SettingsContext";
-import type { BarStyle } from "../../library/settings";
+import type { BarStyle, ColorMode } from "../../library/settings";
 
 const BAR_STYLES: Array<{ value: BarStyle, label: string, description: string }> = [
   {
@@ -16,6 +16,14 @@ const BAR_STYLES: Array<{ value: BarStyle, label: string, description: string }>
   },
 ];
 
+const COLOR_MODES: Array<{ value: ColorMode, label: string }> = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+];
+
+/** A section heading, so it keeps the text color when an option has focus. */
+const SECTION_LABEL_SX = { typography: "subtitle2", color: "text.primary", "&.Mui-focused": { color: "text.primary" } };
+
 /**
  * App-wide settings: choices most people never change, kept out of Page Tools. Shown in the
  * Settings dialog, whose title names it; changes apply at once, so there's no Save button.
@@ -23,6 +31,7 @@ const BAR_STYLES: Array<{ value: BarStyle, label: string, description: string }>
 export default function SettingsPanel() {
   const { settings, updateSettings } = useSettings();
   const barStyleId = useId();
+  const colorModeId = useId();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -30,8 +39,27 @@ export default function SettingsPanel() {
         Changes apply right away, to every tab, and are saved in this browser.
       </Typography>
       <FormControl>
-        {/* A section heading, so it keeps the text color when an option has focus. */}
-        <FormLabel id={barStyleId} sx={{ typography: "subtitle2", color: "text.primary", "&.Mui-focused": { color: "text.primary" } }}>
+        <FormLabel id={colorModeId} sx={SECTION_LABEL_SX}>
+          Theme
+        </FormLabel>
+        <RadioGroup
+          row
+          aria-labelledby={colorModeId}
+          value={settings.colorMode}
+          onChange={(e) => updateSettings({ colorMode: e.target.value as ColorMode })}
+        >
+          {COLOR_MODES.map(mode => (
+            <FormControlLabel
+              key={mode.value}
+              value={mode.value}
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">{mode.label}</Typography>}
+            />
+          ))}
+        </RadioGroup>
+      </FormControl>
+      <FormControl>
+        <FormLabel id={barStyleId} sx={SECTION_LABEL_SX}>
           Bar charts
         </FormLabel>
         <RadioGroup

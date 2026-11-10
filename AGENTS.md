@@ -151,7 +151,11 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   roles only (`"text.secondary"` in `sx`, `theme.palette.divider` in code, via `useTheme`, never
   by importing `theme`). ESLint rejects hex, `rgb()`/`hsl()` and named colors elsewhere in `src/`
   (tests are exempt).
-  To retheme, edit `COLORS` and run `npm test`; the steps are at the top of `theme.ts`. Corners
+  There are two themes, `darkTheme` (the app's own) and `lightTheme` (MUI's default plus the
+  custom roles), picked by the `colorMode` setting (`THEMES`, applied in `App.tsx`). Pinned charts
+  store series colors, so `ChartItemBody` redraws them in the current palette's slot
+  (`themedSeriesColor`). To retheme, edit `COLORS` and run `npm test`; the steps are at the top of
+  `theme.ts`. Corners
   come from `BORDER_RADIUS` there (`shape.borderRadius`; `sx` `borderRadius: 1` is one unit).
 - **Global modal** (`setGlobalModal`) is an MUI `Dialog`: 600px (`maxWidth="sm"`), full screen
   below `sm`, its title and close button in one header row (`TitleBar`). It owns the width,
@@ -159,7 +163,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   and `OnBoarding` take `showHeading={false}`). Settings apply at once, so it has no Save button.
   The phone drawer closes before a modal opens.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
-  never change (today only `barStyle`), saved once under `drugpricing.v<VERSION>.settings` and
+  never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). New preferences go
   here, not in Page Tools.
 

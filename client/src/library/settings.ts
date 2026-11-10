@@ -11,10 +11,15 @@
  */
 export type BarStyle = "dot" | "bar";
 
+/** The app's color theme (`THEMES` in `theme.ts`). Dark is the app's own; light is MUI's default. */
+export type ColorMode = "dark" | "light";
+
 export type AppSettings = {
   barStyle: BarStyle,
+  colorMode: ColorMode,
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   barStyle: "dot",
+  colorMode: "dark",
 };

@@ -3,7 +3,7 @@ import NadacSearch from "./Components/NadacSearch";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box, CssBaseline } from "@mui/material";
-import { theme } from "./theme";
+import { THEMES } from "./theme";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
 import About from "./Components/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
@@ -12,7 +12,7 @@ import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
 import { STANDALONE_TAB_IDS } from "./library/persist";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
-import { SettingsProvider } from "./Context/SettingsContext";
+import { SettingsProvider, useSettings } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
 import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
@@ -28,21 +28,27 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <QueryClientProvider client={queryClient}>
-          <AppToaster />
-          <SettingsProvider>
+      <SettingsProvider>
+        <AppTheme>
+          <CssBaseline />
+          <QueryClientProvider client={queryClient}>
+            <AppToaster />
             <GlobalModalContextProvider>
               <WorkspaceContextProvider>
                 <AppShell />
               </WorkspaceContextProvider>
             </GlobalModalContextProvider>
-          </SettingsProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+          </QueryClientProvider>
+        </AppTheme>
+      </SettingsProvider>
     </BrowserRouter>
   );
+}
+
+/** The theme for the Settings color mode. */
+function AppTheme({ children }: { children: React.ReactNode }) {
+  const { colorMode } = useSettings().settings;
+  return <ThemeProvider theme={THEMES[colorMode]}>{children}</ThemeProvider>;
 }
 
 // Phones keep the tab button at the bottom (`TabContextFab`), so toasts come from the top there.

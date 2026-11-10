@@ -1,4 +1,6 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, type ThemeOptions } from '@mui/material/styles';
+import { grey } from '@mui/material/colors';
+import type { ColorMode } from './library/settings';
 
 /*
  * The app's theme, and the only file that names a color: ESLint rejects color literals anywhere
@@ -7,10 +9,15 @@ import { createTheme } from '@mui/material/styles';
  *
  * 1. Edit `COLORS`. Roles follow, since each is set from a named color below.
  * 2. If a color's job changes (a new accent, say), remap the role in `theme.palette`.
- * 3. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards.
+ * 3. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards, in both modes.
  *
- * Pinned charts store their series colors, so new `CHART_SERIES_COLORS` don't reach old pins.
- * If that matters, remap them once on load, in `persist.ts`'s per-field validation.
+ * There are two themes, picked in Settings (`colorMode`): the app's own dark theme, and MUI's
+ * default light theme with only the custom roles (`chart`, `inverse`) added.
+ *
+ * Pinned charts store their series colors. A stored color from either palette is drawn in the
+ * same slot of the current one (`themedSeriesColor`), so a pin follows the mode; a color from an
+ * older palette is drawn as stored. Changing a palette's colors therefore orphans old pins' colors:
+ * if that matters, remap them once on load, in `persist.ts`'s per-field validation.
  */
 
 /** Chart colors: one per series slot, plus the outline of a price change callout. */
@@ -64,8 +71,8 @@ const COLORS = {
 };
 
 /**
- * Chart series colors: Okabe-Ito (color-blind safe), lightened where needed and extended to 10.
- * Each is at least 3:1 against `background.paper`; `chartPalette.test.ts` checks it.
+ * Dark mode chart series colors: Okabe-Ito (color-blind safe), lightened where needed and
+ * extended to 10. Each is at least 3:1 against `background.paper`; `chartPalette.test.ts` checks it.
  */
 export const CHART_SERIES_COLORS = [
   "#56B4E9", // sky blue
@@ -80,7 +87,36 @@ export const CHART_SERIES_COLORS = [
   "#4F9BE0", // blue
 ];
 
-export const theme = createTheme({
+/**
+ * Light mode chart series colors: the same hues slot for slot, darkened to at least 3:1 against
+ * white.
+ */
+export const LIGHT_CHART_SERIES_COLORS = [
+  "#0072B2", // blue
+  "#B86E00", // orange
+  "#00866B", // bluish green
+  "#B5508F", // reddish purple
+  "#8C7E00", // olive
+  "#C24E00", // vermillion
+  "#7B5EC0", // purple
+  "#4E8A1F", // green
+  "#91693B", // brown
+  "#2F5FB8", // blue
+];
+
+/** Shared by both modes: everything but the palette. */
+const SHARED_OPTIONS: ThemeOptions = {
+  "spacing": 8,
+  "shape": {
+    "borderRadius": BORDER_RADIUS
+  },
+  "typography": {
+    "fontFamily": "\"DM Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+  },
+};
+
+export const darkTheme = createTheme({
+  ...SHARED_OPTIONS,
   "palette": {
     "mode": "dark",
     "primary": {
@@ -124,11 +160,38 @@ export const theme = createTheme({
     },
     "chart": { "series": CHART_SERIES_COLORS, "rise": COLORS.orange, "drop": COLORS.green },
   },
-  "spacing": 8,
-  "shape": {
-    "borderRadius": BORDER_RADIUS
-  },
-  "typography": {
-    "fontFamily": "\"DM Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"
+});
+
+/** MUI's default light palette, for now. Its error and success colors mark price changes. */
+const lightBase = createTheme({ "palette": { "mode": "light" } }).palette;
+
+export const lightTheme = createTheme({
+  ...SHARED_OPTIONS,
+  "palette": {
+    "mode": "light",
+    // On a light page the "inverse" surfaces are dark.
+    "inverse": {
+      "main": grey[800],
+      "light": grey[800],
+      "border": grey[600],
+      "contrastText": lightBase.common.white
+    },
+    "chart": { "series": LIGHT_CHART_SERIES_COLORS, "rise": lightBase.error.main, "drop": lightBase.success.main },
   },
 });
+
+export const THEMES: Record<ColorMode, typeof darkTheme> = { dark: darkTheme, light: lightTheme };
+
+const SERIES_PALETTES = [CHART_SERIES_COLORS, LIGHT_CHART_SERIES_COLORS];
+
+/**
+ * A stored series color as drawn in the current palette: a color from either mode's palette maps
+ * to the same slot of `palette`; any other color is kept.
+ */
+export function themedSeriesColor(color: string, palette: string[]): string {
+  for (const source of SERIES_PALETTES) {
+    const slot = source.indexOf(color);
+    if (slot >= 0) return palette[slot] ?? color;
+  }
+  return color;
+}
