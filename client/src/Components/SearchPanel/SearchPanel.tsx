@@ -1,12 +1,16 @@
 import { useId, useState, type ReactNode } from "react";
-import { Box, Button, CircularProgress, Collapse, Paper } from "@mui/material";
+import { Box, Button, CircularProgress, Collapse, Paper, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 type Props = {
   /** The form's accessible name, e.g. "NADAC search". */
   label: string,
-  /** The Search button: applies the load fields (the text terms and Dates). */
+  /** The Search button: applies the text terms. */
   onSearch: () => void,
+  /**
+   * The terms are enough to search on and aren't the search already on screen (or that search
+   * failed). Disabled otherwise, so the button lighting up is the hint to press it.
+   */
   canSearch: boolean,
   /** A search is loading or waiting: the button shows a spinner. */
   busy: boolean,
@@ -27,7 +31,8 @@ type Props = {
 
 /**
  * The frame of both search pages' panel, which is both the search and the filters (plan:
- * plans/search-filters.md). Text and Dates wait for Search; every other field applies at once.
+ * plans/search-filters.md). The text terms wait for Search, which sits beside them; every other
+ * field applies at once, whether or not it fetches.
  * Each page lists its own fields; the layout, spacing and breakpoints live here.
  */
 export default function SearchPanel({
@@ -36,6 +41,7 @@ export default function SearchPanel({
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
   const [moreOpen, setMoreOpen] = useState(false);
   const moreId = useId();
+  const filtersId = useId();
 
   return (
     <Paper
@@ -60,7 +66,14 @@ export default function SearchPanel({
       </Box>
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: { xs: 1, sm: 2 } }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>{dates}</Box>
-        <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 1 } }}>{refine}</Box>
+        <Box
+          role="group"
+          aria-labelledby={filtersId}
+          sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 1 } }}
+        >
+          <Typography variant="subtitle2" id={filtersId}>Filters</Typography>
+          {refine}
+        </Box>
       </Box>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
