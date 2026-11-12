@@ -1,8 +1,8 @@
 # One search-and-filter panel for NADAC and FDA
 
-Status: agreed with the author (2026-11-12). Steps 1–3 are built; step 2 also added an Include
-OTC box to the NADAC form, since NADAC now hides OTC. Step 3 also did most of step 4's docs
-(AGENTS.md, client/CHARTS.md). What was decided is at the end.
+Status: built (2026-11-12). Steps 1–3 are PRs 21–23; step 4, the docs, was mostly done in step 3. Step 2
+also added an Include OTC box to the NADAC form, since NADAC now hides OTC. What was decided is
+at the end, and what was left out on purpose is under "Not built" below.
 
 Step 3, as built (2026-11-12):
 
@@ -252,7 +252,7 @@ Each step is a PR to `dev` that leaves the app working.
    should show how many results they hide, as NADAC's Include OTC does ("(72 hidden)").
 4. **Docs**: AGENTS.md (the two-layer FDA note, the NADAC gap, NADAC search dates),
    `client/CHARTS.md` (Chart dates, price-change cards), FUTURE_WORK.md (delete what this
-   settles).
+   settles). Done, mostly in step 3.
 
 ## How this fits the other plans
 
