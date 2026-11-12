@@ -173,11 +173,13 @@ function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
   const defaults = createFdaCriteria();
   const get = field(raw, defaults);
   const proprietaryName = get("proprietaryName", isString);
-  const hasSearch = isValidFdaSearch(proprietaryName);
+  const nonProprietaryName = get("nonProprietaryName", isString);
+  const hasSearch = isValidFdaSearch(proprietaryName, nonProprietaryName);
   const exclusions = (key: "excludedProductNdcs" | "excludedDosageForms" | "excludedRoutes" | "excludedLabelers" | "excludedUnits") =>
     hasSearch ? get(key, isStringArray) : [];
   return {
     proprietaryName,
+    nonProprietaryName,
     dates: get("dates", isChartDates),
     includeOtc: get("includeOtc", isBoolean),
     includeSamplePackages: get("includeSamplePackages", isBoolean),
@@ -215,6 +217,7 @@ function legacyFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
   const filter = isObject(raw.resultFilter) ? raw.resultFilter : {};
   return readFdaCriteria({
     proprietaryName: params.proprietaryName,
+    nonProprietaryName: params.nonProprietaryName,
     // FDA searches loaded all history, and the page's chart dates picked what showed.
     dates: raw.chartDates,
     includeSamplePackages: params.includeSamplePackages,

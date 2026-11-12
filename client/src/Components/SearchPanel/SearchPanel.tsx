@@ -1,10 +1,16 @@
 import { useId, useState, type ReactNode } from "react";
-import { Box, Button, CircularProgress, Collapse, Paper, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Collapse, Divider, FormControl, FormGroup, FormLabel, Paper, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 type Props = {
   /** The form's accessible name, e.g. "NADAC search". */
   label: string,
+  /** Compact FDA layout with a heading, search hint, and a horizontal Include group. */
+  compact?: boolean,
+  heading?: string,
+  description?: string,
+  termsHint?: string,
+  refineLabel?: string,
   /** The Search button: applies the text terms. */
   onSearch: () => void,
   /**
@@ -36,7 +42,7 @@ type Props = {
  * Each page lists its own fields; the layout, spacing and breakpoints live here.
  */
 export default function SearchPanel({
-  label, onSearch, canSearch, busy, terms, dates, refine, moreFilters, moreFilterCount, canClear, onClear,
+  label, compact = false, heading, description, termsHint, refineLabel = "Filters", onSearch, canSearch, busy, terms, dates, refine, moreFilters, moreFilterCount, canClear, onClear,
 }: Props) {
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -53,27 +59,36 @@ export default function SearchPanel({
       }}
       sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.5, sm: 2 }, p: { xs: 1.5, sm: 2 }, width: "100%" }}
     >
+      {heading && <Box>
+        <Typography variant="h6" component="h1">{heading}</Typography>
+        {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
+      </Box>}
       <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, alignItems: { sm: "center" } }}>
         {terms}
         <Button
           type="submit"
           variant="contained"
           disabled={!canSearch || busy}
-          sx={{ width: { xs: "100%", sm: 100 }, height: { sm: 40 }, flexShrink: 0 }}
+          sx={{ width: { xs: "100%", sm: 100 }, height: { sm: 40, md: 56 }, flexShrink: 0 }}
         >
           {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
         </Button>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: { xs: 1, sm: 2 } }}>
+      {termsHint && <Typography variant="body2" color="text.secondary">{termsHint}</Typography>}
+      {compact && <Divider />}
+      <Box sx={{ display: "flex", flexDirection: compact ? "column" : { xs: "column", md: "row" }, gap: { xs: 1, sm: 2 } }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>{dates}</Box>
-        <Box
-          role="group"
-          aria-labelledby={filtersId}
-          sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 1 } }}
-        >
-          <Typography variant="subtitle2" id={filtersId}>Filters</Typography>
-          {refine}
-        </Box>
+        <FormControl component="fieldset" sx={{ flex: 1, minWidth: 0 }}>
+          <FormLabel component="legend" id={filtersId} sx={{ typography: "subtitle2", color: "text.primary" }}>
+            {refineLabel}
+          </FormLabel>
+          <FormGroup aria-labelledby={filtersId} sx={{
+            flexDirection: compact ? { xs: "column", sm: "row" } : "column",
+            columnGap: 3, rowGap: { xs: 0.5, sm: compact ? 0 : 1 },
+          }}>
+            {refine}
+          </FormGroup>
+        </FormControl>
       </Box>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -86,7 +101,7 @@ export default function SearchPanel({
           >
             More filters{!moreOpen && moreFilterCount > 0 ? ` (${moreFilterCount})` : ""}
           </Button>
-          <Button size="small" sx={{ ml: "auto" }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          <Button size="small" variant={compact ? "outlined" : "text"} sx={{ ml: "auto" }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
         </Box>
         <Collapse in={moreOpen} id={moreId}>
           <Box sx={{

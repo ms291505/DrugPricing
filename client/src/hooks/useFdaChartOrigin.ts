@@ -1,3 +1,4 @@
+import { fdaSearchLabel } from "../library/searchCriteria";
 import { useMemo } from "react";
 import { useFdaSearchContext } from "../Context/FdaSearchContext";
 import { fdaProductsToNadacPrices } from "../library/fdaDataToNadacPrices";
@@ -21,7 +22,7 @@ export default function useFdaChartOrigin(level?: FdaResultDetailLevel): ChartOr
     () => data ? fdaProductsToNadacPrices(data.products, seriesLevel) : EMPTY,
     [data, seriesLevel]);
 
-  const searchLabel = criteria.proprietaryName || "search";
+  const searchLabel = fdaSearchLabel(criteria);
 
   return { searchLabel, seriesKind: seriesLevel, resultPrices };
 }

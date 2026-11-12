@@ -6,6 +6,7 @@ import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 const TYPED_DELAY_MS = 600;
 
 type Props = {
+  label?: string,
   /** The search's dates, which apply at once. */
   value: ChartDates,
   onChange: (value: ChartDates) => void,
@@ -16,13 +17,13 @@ type Props = {
  * (today until app-init answers, as `resolveSearchDates` does), and the inputs are limited to the
  * loaded dates.
  */
-export default function DatesField({ value, onChange }: Props) {
+export default function DatesField({ value, onChange, label = "Dates" }: Props) {
   const { data: appInit } = useAppInit();
   const { forDisplay: lastAsOfDate } = useLastAsOfDate();
   const loadedDates = appInit ? { first: appInit.nadacDates.first, last: appInit.nadacDates.last } : null;
   return (
     <ChartDatesControl
-      label="Dates"
+      label={label}
       value={value}
       onChange={onChange}
       // Only `last` matters for the presets.
