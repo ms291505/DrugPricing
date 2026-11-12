@@ -36,6 +36,9 @@ Gotchas:
 - NADAC description search is an `ILIKE '%term%'` match on `DrugPackages.NdcDescriptionLower`.
   Trigram similarity is used only behind the stubbed advanced search, but a fresh DB still needs
   `CREATE EXTENSION IF NOT EXISTS pg_trgm;` for the `*_trgm_ops` indexes.
+- **Every `EF.Functions.ILike` on a search term goes through `LikePattern`** (`Data/LikePattern.cs`):
+  `EF.Functions.ILike(column, LikePattern.Contains(term), LikePattern.EscapeCharacter)`. Never
+  interpolate a term into a pattern: `_____` passes the minimum length and matches every row.
 - **`ProductNdc` is the FDA product key**, not `ProductId`, which the FDA reissues
   (`{ProductNdc}_{guid}`) on every change. Never join or upsert on `ProductId`.
 - **NADAC NDCs are stored without leading zeros** (`3089321` for `00003-0893-21`), the same as
