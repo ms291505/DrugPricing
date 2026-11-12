@@ -24,8 +24,9 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    <search>", holds a toolbar (Product/Package on FDA, and Chart selected), then the results
    table, then the auto charts. Pinned sits below it with a note that filters and dates don't
    change pins. Revised 2026-11-12: Dates and the filters sit in the search panel above it, not
-   in this toolbar, and this step is built as step 5 of
-   [plans/search-filters.md](plans/search-filters.md).
+   in this toolbar, Dates there decides which prices load (so the first two bullets below
+   describe the panel's Dates field, and there is no separate view window), and this step is
+   built as step 3 of [plans/search-filters.md](plans/search-filters.md).
    - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
      Max** columns in every results table (from `summarizePrices`, so they match the bar chart;
      "—" for no prices in the window), and for the auto charts. Every table has Latest,
@@ -53,15 +54,14 @@ Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator
 
 Plan: [plans/search-filters.md](plans/search-filters.md). Each page gets one panel that is both
 the search and the filter, the same on both pages, with a short default view and "More filters".
-Text terms go to the server and wait for Search; everything else (dates, the "Include OTC" /
-"Include sample packages" / "Include results without prices" checkboxes, NADAC's Brand/generic
-choice, the dosage form, route, labeler and drug lists) narrows the loaded result in the client
-and never fetches. Both pages become search panel, Results section, Pinned, with price changes
-flagged the same way. On the server: a slim per-NDC price format, all-history loads, response
-compression, caching for both searches, and FDA search on plain query params. No migration or
-ETL change.
+Text terms and Dates go to the server and wait for Search (narrowing the dates doesn't fetch);
+everything else (the "Include OTC" / "Include sample packages" / "Include results without
+prices" checkboxes, NADAC's Brand/generic choice, the dosage form, route, labeler and drug
+lists) narrows the loaded result in the client and never fetches. FDA searches start sending
+dates, so they stop loading all history. Both pages become search panel, Results section,
+Pinned, with price changes flagged the same way. No server changes.
 
-Size: large. Six PRs to `dev`, listed in the plan. It absorbs step 2 of the usability round and
+Size: large. Four PRs to `dev`, listed in the plan. It absorbs step 2 of the usability round and
 the items under **For the NADAC/FDA parity plan**; pinned-chart performance (step 1 of the
 usability round) should land first.
 
@@ -108,8 +108,8 @@ Size: medium. One PR, or two (database + server, then client).
   that accounts for the drawer, or Page Tools should move above the cards there. Superseded by
   step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
-  Settled by step 1 of [plans/search-filters.md](plans/search-filters.md): `search` takes over
-  from `advanced-search`, with plain query params.
+  Decide whether the simple endpoint stays as public API or goes. If it goes, its name is free
+  for `advanced-search` to take over with plain query params instead of `jsonString`.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
@@ -121,7 +121,7 @@ Size: medium. One PR, or two (database + server, then client).
 
 ### For the NADAC/FDA parity plan
 
-All three are part of [plans/search-filters.md](plans/search-filters.md) (steps 4 and 5).
+All three are part of [plans/search-filters.md](plans/search-filters.md) (steps 2 and 3).
 Delete them with it.
 
 - **The NADAC page copies query results into context** (`setData` in a `useEffect` in
@@ -133,6 +133,21 @@ Delete them with it.
   of the usability round: one Results section on both pages.
 
 ## Ideas
+
+### Smaller search responses (2026-11-12)
+
+Found while planning the search panel, and left out of it as out of scope. A price row is about
+490 bytes of JSON and a chart reads five of its sixteen fields; `metformin` is 7.7 MB (NADAC)
+and 8.2 MB (FDA) for 12 months, 29 MB for all FDA history. Nothing here is decided.
+
+- **Response compression** (`AddResponseCompression`): the server sends none today. Measure the
+  CPU cost on the Pi before choosing a level.
+- **A slim price format**: prices grouped per NDC (description, unit, OTC and classification
+  once, then `[date, price]` points), expanded back to today's shapes in `api/types.ts`.
+  Roughly a tenth of the bytes, by estimate. It would make loading all history cheap enough
+  that the search panel's Dates could stop fetching.
+- **Cache the FDA advanced search** on the server; it has no cache code (NADAC's missing
+  `_cache.Set` is under Known rough edges in AGENTS.md).
 
 ### Self-hosted observability (2026-11-03)
 
