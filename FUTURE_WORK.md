@@ -10,15 +10,9 @@ they fit. When something is done, delete it here. The code and its PR are the re
 
 Goal: make the core flow usable (search, results table, chart and compare) before adding
 anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
-`dev` in this order:
+`dev` in this order. Steps 1 (pinned-chart performance) and 2 (a Results section, built as
+[plans/search-filters.md](plans/search-filters.md)) are built.
 
-1. **Pinned-chart performance.** Built (2026-11-12): narrow pinned-item contexts, `memo`'d
-   cards and charts, hover kept out of React state, and charts drawn only near the viewport. Tab
-   saves stay undebounced: a 10-pin tab with two years of prices stringifies in about 1 ms.
-2. **A Results section replaces Page Tools on both pages.** Built as step 3 of
-   [plans/search-filters.md](plans/search-filters.md) (2026-11-12): the search panel holds Dates
-   (with Custom) and the filters, and the Results section the table, Chart selected and the auto
-   charts. The price columns cover the search's dates; Average stays out, as before.
 3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
    values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
    and its own scroll.
@@ -29,21 +23,6 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    toast says why there are several. Pins saved earlier with mixed units still render split.
 
 Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
-
-### One search-and-filter panel for NADAC and FDA (2026-11-12)
-
-Plan: [plans/search-filters.md](plans/search-filters.md). Each page gets one panel that is both
-the search and the filter, the same on both pages, with a short default view and "More filters".
-Text terms and Dates go to the server and wait for Search (narrowing the dates doesn't fetch);
-everything else (the "Include OTC" / "Include sample packages" / "Include results without
-prices" checkboxes, NADAC's Brand/generic choice, the dosage form, route, labeler and drug
-lists) narrows the loaded result in the client and never fetches. FDA searches start sending
-dates, so they stop loading all history. Both pages become search panel, Results section,
-Pinned, with price changes flagged the same way. No server changes.
-
-Size: large. Four PRs to `dev`, listed in the plan; steps 1–3 are built (step 3 also did most
-of step 4's docs). It absorbed step 2 of the usability round. Pinned-chart performance (step 1
-of the usability round) was moved after step 3 (author, 2026-11-12) and is built.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
