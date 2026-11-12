@@ -1,7 +1,7 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Box, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import {
-  ALL_DATES, fromDateInput, isFullWindow, isValidWindow, resolveChartDates, toDateInput,
+  ALL_DATES, formatWindow, fromDateInput, isFullWindow, isValidWindow, resolveChartDates, toDateInput,
   type ChartDates, type DateBounds, type DateWindow,
 } from "../../library/dates";
 
@@ -23,13 +23,17 @@ type Props = {
   /** An extra preset, e.g. the dates around a price change. */
   focusPreset?: { label: string, dateWindow: DateWindow },
   /**
-   * Adds a Custom preset: typed dates select it, and it keeps them while another preset is
-   * picked, so they can be switched back on.
+   * Adds a Custom preset, the only one that shows the date inputs: the others say their dates in
+   * a line of text. Custom keeps the typed dates while another preset is picked, so they can be
+   * switched back on.
    */
   customPreset?: boolean,
+  /**
+   * Typed dates apply once typing has paused this long, for when applying them is costly (a
+   * search): a date input reports a date at every keystroke ("0002", "0020", ... for a year).
+   */
+  typedDelayMs?: number,
   label?: string,
-  /** Shown under the label, e.g. when the dates apply. */
-  caption?: string,
 }
 
 const RECENT_PRESETS = [
@@ -59,7 +63,7 @@ const isCustom = (value: ChartDates) => value.kind === "window" && !isFullWindow
  * dates are fixed. Used by each pinned chart, and by the search panels' Dates (`DatesField`).
  */
 export default function ChartDatesControl({
-  value, onChange, bounds, inputBounds = bounds, focusPreset, customPreset = false, label = "Chart dates", caption,
+  value, onChange, bounds, inputBounds = bounds, focusPreset, customPreset = false, typedDelayMs = 0, label = "Chart dates",
 }: Props) {
   const labelId = useId();
 
@@ -93,31 +97,41 @@ export default function ChartDatesControl({
 
   const draftValid = isValidWindow({ start: fromDateInput(draft.start), end: fromDateInput(draft.end) });
 
+  // Typed dates waiting for a pause (`typedDelayMs`). A later keystroke or a preset replaces them.
+  const pending = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(pending.current), []);
+
   const handleDraftChange = (field: "start" | "end", text: string) => {
     const next = { ...draft, [field]: text };
     setDraft(next);
+    clearTimeout(pending.current);
     const nextWindow = { start: fromDateInput(next.start), end: fromDateInput(next.end) };
-    if (isValidWindow(nextWindow) && !sameWindow(nextWindow, shown)) {
+    if (!isValidWindow(nextWindow) || sameWindow(nextWindow, shown)) return;
+    const apply = () => {
       setCustomWindow(nextWindow);
       onChange({ kind: "window", dateWindow: nextWindow });
-    }
+    };
+    if (typedDelayMs > 0) pending.current = setTimeout(apply, typedDelayMs);
+    else apply();
   };
+
+  const showInputs = !customPreset || activePreset === "custom";
+  const shownText = showInputs ? null : formatWindow(shown, inputBounds ?? bounds);
 
   const inputLimits = inputBounds ? { min: toDateInput(inputBounds.first), max: toDateInput(inputBounds.last) } : {};
 
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-        <Typography variant="subtitle2" id={labelId}>{label}</Typography>
-        {caption ? <Typography variant="caption" color="text.secondary">{caption}</Typography> : null}
-      </Box>
+      <Typography variant="subtitle2" id={labelId}>{label}</Typography>
       <ToggleButtonGroup
         size="small"
         exclusive
         value={activePreset}
         onChange={(_, key: string | null) => {
           const preset = presets.find(p => p.key === key);
-          if (preset) onChange(preset.chartDates);
+          if (!preset) return;
+          clearTimeout(pending.current);
+          onChange(preset.chartDates);
         }}
         sx={{ flexWrap: "wrap" }}
       >
@@ -132,7 +146,8 @@ export default function ChartDatesControl({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-      <Box sx={{ display: "flex", gap: 1 }}>
+      {shownText ? <Typography variant="body2" color="text.secondary">{shownText}</Typography> : null}
+      {showInputs ? <Box sx={{ display: "flex", gap: 1 }}>
         <TextField
           size="small"
           type="date"
@@ -153,7 +168,7 @@ export default function ChartDatesControl({
           slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
           sx={{ flex: 1, minWidth: 0 }}
         />
-      </Box>
+      </Box> : null}
     </Box>
   );
 }

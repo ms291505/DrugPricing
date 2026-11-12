@@ -32,9 +32,9 @@ type Props = {
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
 export default memo(function FdaResults({ view }: Props) {
-  const { isLoading, isSuccess, dataUpdatedAt } = useFdaSearch();
+  const { isLoading, isSuccess } = useFdaSearch();
   const { loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
-  const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
+  const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden, history } = view;
   const origin = useFdaChartOrigin();
   const packageOrigin = useFdaChartOrigin("package");

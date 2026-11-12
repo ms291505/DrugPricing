@@ -3,21 +3,21 @@ import { type FdaResultDetailLevel, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import {
   applyFdaSearch, createFdaCriteria, fdaLoadRequest,
-  type FdaCriteria, type FdaLoad, type FdaLoadFields,
+  type FdaCriteria, type FdaLoad, type FdaTerms,
 } from "../library/searchCriteria";
 import useSearchLoad from "../hooks/useSearchLoad";
 
 export type FdaSearchContextType = {
-  /** The applied criteria. Refine fields apply at once; load fields change through `search`. */
+  /** The applied criteria. Every field applies at once but the text terms, which change through `search`. */
   criteria: FdaCriteria;
   setCriteria: Dispatch<SetStateAction<FdaCriteria>>;
-  /** The Search button: applies the form's load fields. */
-  search: (fields: FdaLoadFields) => void;
+  /** The Search button: applies the form's text terms. */
+  search: (fields: FdaTerms) => void;
   /** What the criteria ask for; its dates clip the result. See `useSearchLoad`. */
   requested: FdaLoad | null;
   /** What the query fetches: `requested`, or a wider load that holds it. */
   loaded: FdaLoad | null;
-  /** The load the user's last Search fetched or re-ran; the result toasts' key. */
+  /** What the user's last Search asked for; the result toasts' key. */
   lastSearch: FdaLoad | null;
   /** True while a Search waits for app-init. */
   waiting: boolean;

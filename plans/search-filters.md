@@ -4,6 +4,11 @@ Status: built (2026-11-12). Steps 1–3 are PRs 21–23; step 4, the docs, was m
 also added an Include OTC box to the NADAC form, since NADAC now hides OTC. What was decided is
 at the end, and what was left out on purpose is under "Not built" below.
 
+Changed since (2026-11-12): Dates no longer wait for Search. Only the text terms do; Dates apply
+at once like every other field, so the user never has to know what fetches. Search is disabled
+while the terms are the search on screen. Where the plan below says dates wait for Search, read
+this instead.
+
 Step 3, as built (2026-11-12):
 
 - **FDA dates snap like NADAC's.** As-of dates are weekly (all 249 gaps were 7 days), so the FDA

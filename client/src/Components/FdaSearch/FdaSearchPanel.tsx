@@ -4,7 +4,6 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useMobile from "../../hooks/useMobile";
 import useRenameAfterSearch from "../../hooks/useRenameAfterSearch";
-import type { ChartDates } from "../../library/dates";
 import {
   clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, isValidFdaSearch,
   type FdaExclusionKey,
@@ -27,36 +26,41 @@ type Props = {
 };
 
 /**
- * The FDA search panel. Brand name and Dates are a draft that Search applies; the other fields
- * write the applied criteria at once. The tab is named after its first search.
+ * The FDA search panel. Brand name is a draft that Search applies; every other field, Dates
+ * included, writes the applied criteria at once. Search is disabled while the draft is the search
+ * on screen, so it lights up when there is something to run. The tab is named after its first
+ * search.
  */
 export default function FdaSearchPanel({ view }: Props) {
   const { criteria, setCriteria, search, waiting } = useFdaSearchContext();
-  const { isLoading } = useFdaSearch();
+  const { isLoading, isError, refetch } = useFdaSearch();
   const renameAfterSearch = useRenameAfterSearch();
   const isMobile = useMobile();
 
   // A restored tab shows the search it re-ran.
   const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
-  const [dates, setDates] = useState<ChartDates>(criteria.dates);
+
+  const name = proprietaryName.trim();
+  const changed = name !== criteria.proprietaryName;
 
   const handleSearch = () => {
-    const name = proprietaryName.trim();
+    // The search on screen failed: applying the same name changes nothing, so run it again.
+    if (!changed) return void refetch();
     renameAfterSearch(name.toUpperCase());
-    search({ proprietaryName: name, dates });
+    search({ proprietaryName: name });
   };
 
   return (
     <SearchPanel
       label="FDA search"
       onSearch={handleSearch}
-      canSearch={isValidFdaSearch(proprietaryName)}
+      canSearch={isValidFdaSearch(proprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
       terms={
         <TextField size={isMobile ? "small" : "medium"} id="proprietaryName" name="proprietaryName" label="Brand name"
           value={proprietaryName} onChange={(e) => setProprietaryName(e.target.value)} sx={{ flex: 1, minWidth: 0 }} />
       }
-      dates={<DatesField value={dates} onChange={setDates} />}
+      dates={<DatesField value={criteria.dates} onChange={dates => setCriteria(prev => ({ ...prev, dates }))} />}
       refine={FDA_INCLUDE_KEYS.map(key => (
         <IncludeCheckbox
           key={key}

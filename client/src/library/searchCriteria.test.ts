@@ -95,20 +95,18 @@ describe("applying a search", () => {
     ...createNadacCriteria(), ndcDescription: "eliquis", includeOtc: true, brandGeneric: "brand" as const,
     excludedNdcDescriptions: ["X"], excludedUnits: ["each"],
   };
-  const threeMonths = { kind: "recent" as const, months: 3 };
 
   it("keeps every refine field for the same terms", () => {
-    expect(applyNadacSearch(applied, { ndcDescription: "eliquis", ndc: "", dates: threeMonths }))
-      .toEqual({ ...applied, dates: threeMonths });
+    expect(applyNadacSearch(applied, { ndcDescription: "eliquis", ndc: "" })).toEqual(applied);
   });
 
   it("clears the exclusion lists for new terms and keeps the fixed refine fields", () => {
-    expect(applyNadacSearch(applied, { ndcDescription: "humira", ndc: "", dates: applied.dates })).toEqual({
+    expect(applyNadacSearch(applied, { ndcDescription: "humira", ndc: "" })).toEqual({
       ...applied, ndcDescription: "humira", excludedNdcDescriptions: [], excludedUnits: [],
     });
 
     const fda: FdaCriteria = { ...createFdaCriteria(), proprietaryName: "eliquis", includeSamplePackages: true, excludedRoutes: ["ORAL"] };
-    expect(applyFdaSearch(fda, { proprietaryName: "humira", dates: fda.dates }))
+    expect(applyFdaSearch(fda, { proprietaryName: "humira" }))
       .toEqual({ ...fda, proprietaryName: "humira", excludedRoutes: [] });
   });
 });

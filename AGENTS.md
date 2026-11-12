@@ -133,8 +133,11 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   [client/CHARTS.md](client/CHARTS.md).
 - **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`): one
   object per search type, edited in one panel per page (`SearchPanel`). *Load* fields (text
-  terms, Dates) go to the server on Search; *refine* fields narrow the loaded result in the
-  client at once, never fetching. `nextLoad` keeps what's loaded when only the dates narrowed.
+  terms, Dates) go to the server; *refine* fields narrow the loaded result in the client, never
+  fetching. **The user never has to know which is which:** only the text terms wait for Search,
+  and every other field, Dates included, applies at once (typed dates after a short pause).
+  Search is disabled while the terms are the search on screen (unless it failed), so it lighting
+  up is the hint to press it. `nextLoad` keeps what's loaded when only the dates narrowed.
   Each page calls its view hook once (`useRefinedNadacSearch`/`useRefinedFdaSearch`) and passes
   the result down: the refined rows (`refineNadac`/`refineFda`), the dates shown, the
   from-results lists' options and the hidden counts. Chart provenance and colors read the loaded
@@ -153,9 +156,9 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
   `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone
   page while mounted. Errors (`QueryErrorToast`) come back each time the page is shown. Results
-  ("N products found") and flagged price changes (`SearchResultToast`) show once per new result,
+  ("N products found") and flagged price changes (`SearchResultToast`) show once per Search,
   waiting if it arrived while hidden, and never for the search a restored tab re-runs on load
-  (`useNewSearchResult`). App-wide toasts: failed storage writes, another window's changes, Pin.
+  or for a change of dates, fetched or not (`useNewSearchResult`). App-wide toasts: failed storage writes, another window's changes, Pin.
 
 ### UI conventions
 

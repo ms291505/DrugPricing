@@ -12,8 +12,11 @@ import {
  * plans/search-filters.md). Each field is in one of two groups, and the group alone decides
  * whether changing it fetches:
  *
- * - Load fields (the text terms and Dates) go to the server, and wait for the Search button.
- * - Refine fields narrow what loaded, in the client, and apply at once.
+ * - Load fields (the text terms and Dates) go to the server.
+ * - Refine fields narrow what loaded, in the client.
+ *
+ * The user is never asked to know which is which: only the text terms wait for the Search
+ * button, and every other field, Dates included, applies at once.
  *
  * A tab holds the applied criteria and the request it `loaded`. `loadRequest` turns criteria into
  * a request, `nextLoad` decides whether a new request needs a fetch, and `refine` is what every
@@ -54,9 +57,9 @@ export type FdaCriteria = {
   excludedUnits: string[],
 };
 
-/** The fields the Search button applies. */
-export type NadacLoadFields = Pick<NadacCriteria, "ndcDescription" | "ndc" | "dates">;
-export type FdaLoadFields = Pick<FdaCriteria, "proprietaryName" | "dates">;
+/** The text terms: the fields the Search button applies. */
+export type NadacTerms = Pick<NadacCriteria, "ndcDescription" | "ndc">;
+export type FdaTerms = Pick<FdaCriteria, "proprietaryName">;
 
 /** An exclusion-list field: a multi-select whose options come from the loaded result. */
 export type NadacExclusionKey = "excludedNdcDescriptions" | "excludedUnits";
@@ -156,17 +159,17 @@ export function nextLoad<T extends { dates: DateWindow }>(loaded: T | null, requ
 }
 
 /**
- * The applied criteria after Search: the load fields from the form, and the refine fields kept.
+ * The applied criteria after Search: the terms from the form, and every other field kept.
  * A search for new terms clears the exclusion lists, which name values from the old result; the
  * fixed refine fields (the Include checkboxes, brand/generic) carry over.
  */
-export function applyNadacSearch(applied: NadacCriteria, fields: NadacLoadFields): NadacCriteria {
+export function applyNadacSearch(applied: NadacCriteria, fields: NadacTerms): NadacCriteria {
   const next = { ...applied, ...fields };
   if (fields.ndcDescription === applied.ndcDescription && fields.ndc === applied.ndc) return next;
   return { ...next, ...clearedExclusions(NADAC_EXCLUSION_KEYS) };
 }
 
-export function applyFdaSearch(applied: FdaCriteria, fields: FdaLoadFields): FdaCriteria {
+export function applyFdaSearch(applied: FdaCriteria, fields: FdaTerms): FdaCriteria {
   const next = { ...applied, ...fields };
   if (fields.proprietaryName === applied.proprietaryName) return next;
   return { ...next, ...clearedExclusions(FDA_EXCLUSION_KEYS) };

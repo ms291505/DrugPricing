@@ -26,9 +26,9 @@ type Props = {
  * search, don't re-render every NADAC tab's results.
  */
 export default memo(function NadacResults({ view }: Props) {
-  const { isLoading, isSuccess, dataUpdatedAt } = useNadacSearch();
+  const { isLoading, isSuccess } = useNadacSearch();
   const { loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
-  const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
+  const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { prices, dateWindow, hidden, history } = view;
   const origin = useNadacChartOrigin();
   // The auto charts show the whole refined result, so it is also the visible set.
