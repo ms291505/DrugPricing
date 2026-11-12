@@ -197,7 +197,7 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(settingsKey, value));
 
     expect(onConflict).not.toHaveBeenCalled();
-    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar" });
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark" });
     persist.saveTabState("t1", fdaTab(null));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
@@ -205,19 +205,19 @@ describe("watchOtherWindows", () => {
 
 describe("settings", () => {
   it("defaults when nothing or something unreadable is saved", () => {
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot" });
-    localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie" } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
+    localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie", colorMode: "sepia" } }));
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
   });
 
   it("round-trips what saveSettings wrote", () => {
-    persist.saveSettings({ barStyle: "bar" });
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
   });
 
   it("survives pruning, which only removes tab state and old versions", () => {
-    persist.saveSettings({ barStyle: "bar" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
     persist.pruneStoredState([]);
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
   });
 });

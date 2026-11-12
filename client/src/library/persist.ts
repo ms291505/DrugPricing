@@ -7,7 +7,7 @@ import {
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
-import { DEFAULT_SETTINGS, type AppSettings, type BarStyle } from "./settings";
+import { DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -223,12 +223,14 @@ export function watchOtherWindows(onConflict: () => void): () => void {
 // --- Settings ------------------------------------------------------------------------------
 
 const isBarStyle = oneOf<BarStyle>(["dot", "bar"]);
+const isColorMode = oneOf<ColorMode>(["dark", "light"]);
 
 /** The app-wide settings, field by field, each falling back to its default. */
 export function loadSettings(): AppSettings {
   const raw = read(SETTINGS_KEY, isObject);
   return {
     barStyle: raw && isBarStyle(raw.barStyle) ? raw.barStyle : DEFAULT_SETTINGS.barStyle,
+    colorMode: raw && isColorMode(raw.colorMode) ? raw.colorMode : DEFAULT_SETTINGS.colorMode,
   };
 }
 
