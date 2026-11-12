@@ -112,15 +112,16 @@ A description search rarely mixes classes, because brand descriptions use the br
 | `metformin hcl 750`, `rivaroxaban 2.5` | Multi-word "contains" with a number |
 | NDC `00003-0893-21`, `3089321` | Dashed input is converted to the stored form (`toStoredNadacNdc`) |
 | `relion` | No results on either page: the empty state for a real-sounding name |
-| **`_____`** or **`%%%%%`** | **Bug, not yet fixed:** see below |
+| `_____`, `%%%%%` | No results (regression check for the wildcard fix below) |
+| `0.05%` | Only descriptions containing a literal `0.05%` (369 NDCs for one week, not 401) |
 
-**Unescaped LIKE wildcards.** The server builds its searches as `ILIKE '%{term}%'` without
-escaping `%` or `_` (`NadacRepository.cs:58`, `FdaProductRepository.cs:63`). Five
-underscores pass the 5-character minimum and match every row: one week of NADAC came back as
-14.7 MB. Over the default 12-month window that is roughly 50 times as much, and the FDA search
-returns every product. Don't run either against production. The fix is to escape `\`, `%` and
-`_` before building the pattern, or to use `EF.Functions.ILike(column, pattern, "\\")` with an
-escaped term.
+**LIKE wildcards (fixed in PR #22).** The server used to build its searches as
+`ILIKE '%{term}%'` without escaping `%` or `_`, so five underscores passed the 5-character
+minimum and matched every row: one week of NADAC came back as 14.7 MB, and the FDA search
+returned every product. Every `EF.Functions.ILike` on a search term now goes through
+`server/Data/LikePattern.cs`, which escapes `\`, `%` and `_`, so they match themselves. Keep
+`_____` and `%%%%%` as regression checks: they must come back empty. If one ever returns rows,
+stop before running it over a wide date range or against production.
 
 ## Sources
 
