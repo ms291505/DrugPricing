@@ -5,7 +5,7 @@ import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext"
 import { loadCollectionTabState, loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
 
 // Each search tab gets its own page context plus its own pinned items, restored from and saved
-// to storage under the tab's id. Restoring the search params re-runs the search.
+// to storage under the tab's id. Restoring the criteria re-runs the search.
 
 type TabProviderProps = {
   children: ReactNode,
@@ -56,36 +56,29 @@ export const BlankTabProvider = ({ children }: TabProviderProps) => (
 );
 
 function SaveFdaTab({ tabId }: { tabId: string }) {
-  const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
+  const { criteria, fdaResultDetailLevel } = useFdaSearchContext();
   const { pinnedItems, chartDates } = useExplorerItems();
 
   useEffect(() => {
     saveTabState(tabId, {
       type: "fda",
-      searchParams: fdaSearchParams,
-      resultFilter: fdaResultFilter,
+      criteria,
       detailLevel: fdaResultDetailLevel,
       pinnedItems,
       chartDates,
     });
-  }, [tabId, fdaSearchParams, fdaResultFilter, fdaResultDetailLevel, pinnedItems, chartDates]);
+  }, [tabId, criteria, fdaResultDetailLevel, pinnedItems, chartDates]);
 
   return null;
 }
 
 function SaveNadacTab({ tabId }: { tabId: string }) {
-  const { searchParams, excludedNdcDescriptions } = useSearchContext();
+  const { criteria } = useSearchContext();
   const { pinnedItems, chartDates } = useExplorerItems();
 
   useEffect(() => {
-    saveTabState(tabId, {
-      type: "nadac",
-      searchParams,
-      excludedNdcDescriptions,
-      pinnedItems,
-      chartDates,
-    });
-  }, [tabId, searchParams, excludedNdcDescriptions, pinnedItems, chartDates]);
+    saveTabState(tabId, { type: "nadac", criteria, pinnedItems, chartDates });
+  }, [tabId, criteria, pinnedItems, chartDates]);
 
   return null;
 }

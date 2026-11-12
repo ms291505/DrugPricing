@@ -8,7 +8,7 @@ export type NadacPrice = {
   pharmacyTypeIndicator?: string,
   isOtc: boolean,
   explanationCode: Array<string | number>,
-  classificationForRateSetting: string,
+  classificationForRateSetting: NadacClassification,
   correspondingGenericNadacPerUnit?: number,
   correspondingGenericEffectiveDate?: Date,
   asOfDate: Date,
@@ -16,6 +16,12 @@ export type NadacPrice = {
   loadedAt: Date,
   createdAt: Date
 };
+
+/**
+ * NADAC's `classificationForRateSetting`: `G` is generic, and `B`, `B_ANDA` and `B_BIO` are all
+ * brand. "unknown" for a value the client doesn't know.
+ */
+export type NadacClassification = "G" | "B" | "B_ANDA" | "B_BIO" | "unknown";
 
 export type NadacPriceChange = {
   packageNdc: string,
@@ -32,46 +38,6 @@ export type NadacPriceChange = {
  * chart snapshots (see `explorerItems.ts`) provide them.
  */
 export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit">;
-
-export type NadacSearchParams = {
-  ndcDescription: string;
-  ndc: string;
-  minDate: string;
-  maxDate: string;
-};
-
-export type FdaSearchParams = {
-  proprietaryName: string;
-};
-
-export type AdvancedFdaSearchParams = {
-  proprietaryName: string,
-  nonProprietaryName?: string,
-  dosageFormNames?: string[],
-  routeNames?: string[],
-  labelerName?: string,
-  productNdc?: string,
-
-  // FDA Package
-  includeSamplePackages: boolean,
-
-  // NadacPrice
-  includeResultsWNoPrices: boolean,
-  pricesAsOfDateStart?: string,
-  pricesAsOfDateEnd?: string,
-};
-
-export const validateAdvancedFdaSearchParams = (params: AdvancedFdaSearchParams) => {
-  const candidateParams = [params.nonProprietaryName, params.proprietaryName, params.productNdc];
-  const isValid = candidateParams.some(param => param !== undefined && param.trim() !== "")
-  return isValid;
-};
-
-export const defaultAdvFdaSearchParams: AdvancedFdaSearchParams = {
-  proprietaryName: "",
-  includeResultsWNoPrices: false,
-  includeSamplePackages: false,
-};
 
 export type FdaPackageDetail = {
   id: number,
@@ -120,61 +86,6 @@ export type PackagePriceChange = {
 
 export function isFdaProductOtc(productTypeName: string) {
   return productTypeName.toLocaleLowerCase() === "human otc drug";
-}
-
-export type ResultSelect = ((data: FdaProductSearchResult) => FdaProductSearchResult) | undefined;
-
-/**
- * The FDA results-page filter, stored as what the user *excluded*. Anything not excluded shows,
- * including results that are new since the filter was set (e.g. a restored tab's re-run search),
- * so nothing needs resetting when results arrive. A new search starts from `createFdaResultFilter()`.
- */
-export type FdaResultFilter = {
-  excludedProductNdcs: string[],
-  excludedDosageForms: string[],
-  excludedRoutes: string[],
-  excludedLabelers: string[],
-  excludeOtc: boolean,
-  excludeSamplePackages: boolean,
-}
-
-/** The list-valued parts of `FdaResultFilter`, each edited by a `SelectFilter`. */
-export type FdaResultFilterListKey = "excludedProductNdcs" | "excludedDosageForms" | "excludedRoutes" | "excludedLabelers";
-
-export function createFdaResultFilter(): FdaResultFilter {
-  return ({
-    excludedProductNdcs: [],
-    excludedDosageForms: [],
-    excludedRoutes: [],
-    excludedLabelers: [],
-    excludeOtc: false,
-    excludeSamplePackages: false,
-  })
-}
-
-export function applyFdaResultFilter(
-  data: FdaProductSearchResult,
-  filter: FdaResultFilter
-): FdaProductSearchResult {
-  return {
-    ...data,
-    products: data.products
-      .filter(p =>
-        !filter.excludedProductNdcs.includes(p.productNdc) &&
-        !filter.excludedDosageForms.includes(p.dosageFormName) &&
-        // A product shows while any of its routes is still included.
-        (p.routeName.length === 0 || p.routeName.some(r => !filter.excludedRoutes.includes(r))) &&
-        !(filter.excludeOtc && isFdaProductOtc(p.productTypeName)) &&
-        (!filter.excludeSamplePackages || p.fdaPackageDetails.some(pkg => pkg.samplePackage === false)) &&
-        !filter.excludedLabelers.includes(p.labelerName)
-      )
-      .map(p => ({
-        ...p,
-        fdaPackageDetails: filter.excludeSamplePackages
-          ? p.fdaPackageDetails.filter(pkg => pkg.samplePackage === false)
-          : p.fdaPackageDetails,
-      })),
-  };
 }
 
 export type FdaResultDetailLevel = "product" | "package";

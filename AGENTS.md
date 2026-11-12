@@ -123,16 +123,15 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items
   (derived from the search) are never stored. Details in [client/CHARTS.md](client/CHARTS.md).
-- **FDA filters on two layers, on purpose.** Search params decide what loads from the server;
-  `FdaResultFilter` (exclusions, `applyFdaResultFilter` in `library/types.ts`) narrows it locally.
-  The overlap is not a bug: filters that limit payload go on the server, filters for hunting
-  through results on the client. As of 2026-10, sample packages are filtered on both layers, and
-  the server excludes them by default, which leaves the client's "Include Sample Packages"
-  toggle disabled (known, not a new bug). The no-price filter exists only on the server.
-- **NADAC has no two-layer model yet.** Its Drug filter (`excludedNdcDescriptions` in
-  `SearchContext`) feeds only Add Chart (`vizData`); the table, auto charts, price-change cards
-  and the "flagged" toast use `data.prices`, so they ignore it (FDA's follow `FdaResultFilter`).
-  Parity is planned.
+- **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`, being
+  built in steps): one object per search type. *Load* fields (text terms, dates) go to the server
+  on Search; *refine* fields narrow the loaded result in the client at once, never fetching.
+  `nextLoad` keeps what's loaded when only the dates narrowed; `refineNadac`/`refineFda` are
+  what consumers read. Tabs hold them through `useSearchLoad`. FDA always loads sample and
+  no-price packages and hides them by default, and both pages hide OTC by default (Include
+  boxes). As of step 1 (2026-11): FDA still loads all history (its Dates aren't a load field
+  yet), FDA has no Include OTC control, and NADAC's page reads only the date-clipped result
+  (its Drug filter feeds only Add Chart, `vizData`), not `refineNadac`.
 - **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
   (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
@@ -169,7 +168,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 
 ### Persistence (`library/persist.ts`)
 
-The workspace and each search tab's state (search params, page filter, detail level, pinned
+The workspace and each search tab's state (search criteria, detail level, pinned
 items, chart dates) go to `localStorage` and are restored on load; a restored tab re-runs its
 search when first shown (`active` → `searchEnabled`). Selection and system-card collapse state
 aren't saved.
@@ -184,7 +183,9 @@ aren't saved.
 - **Several windows:** when another window writes a value this one didn't, `watchOtherWindows`
   makes this one read-only and asks for a reload, or pruning would delete the other's tabs.
 - Anything that resets state when data loads undoes a restore. Store restorable state so it
-  needs no reset: page filters store *exclusions*, and a new search clears them explicitly.
+  needs no reset: filters store *exclusions*, and a search for new terms clears them
+  explicitly (`apply*Search`). Tabs saved before criteria existed are read into criteria
+  (`legacy*Criteria` in `persist.ts`) instead of bumping `VERSION`.
 
 ```bash
 npm run dev      # Vite; copy .env.example to .env.development (VITE_API_URL)
@@ -253,7 +254,6 @@ to it rather than fixing them inside unrelated work.
 - `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
   FDA equivalent passes JSON in a query string.
 - Debug logging: `Console.WriteLine` in `FdaProductEndpoints`, `console.log` in `api.ts`.
-- `flagNadacPriceChange` sorts its input in place, mutating React Query's cache (harmless today).
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
 - `NadacService.ValidateNdc` is never called: `ndc=1` returns 47,072 rows for one week.

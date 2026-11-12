@@ -8,12 +8,12 @@ import useFdaSearch from "./useFdaSearch";
 const EMPTY: never[] = [];
 
 /**
- * What a chart made on an FDA search tab comes from. `resultPrices` is the whole search result at
- * `level` (default: the tab's detail level) before page filters, so a new item can tell how much
+ * What a chart made on an FDA search tab comes from. `resultPrices` is the whole loaded result at
+ * `level` (default: the tab's detail level) before it's refined, so a new item can tell how much
  * of it the chart shows.
  */
 export default function useFdaChartOrigin(level?: FdaResultDetailLevel): ChartOrigin {
-  const { fdaSearchParams, fdaResultDetailLevel } = useFdaSearchContext();
+  const { criteria, fdaResultDetailLevel } = useFdaSearchContext();
   const { data } = useFdaSearch();
   const seriesLevel = level ?? fdaResultDetailLevel;
 
@@ -21,10 +21,7 @@ export default function useFdaChartOrigin(level?: FdaResultDetailLevel): ChartOr
     () => data ? fdaProductsToNadacPrices(data.products, seriesLevel) : EMPTY,
     [data, seriesLevel]);
 
-  const searchLabel = fdaSearchParams?.proprietaryName
-    || fdaSearchParams?.nonProprietaryName
-    || fdaSearchParams?.productNdc
-    || "search";
+  const searchLabel = criteria.proprietaryName || "search";
 
   return { searchLabel, seriesKind: seriesLevel, resultPrices };
 }

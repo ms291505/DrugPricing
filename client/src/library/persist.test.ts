@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FULL_WINDOW } from "./dates";
-import { createFdaResultFilter } from "./types";
+import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
 type Persist = typeof import("./persist");
 
@@ -41,8 +41,12 @@ function loaded<T>(state: T | null): T {
 const saveRaw = (tabId: string, data: unknown) =>
   localStorage.setItem(persist.tabKey(tabId), JSON.stringify({ version: persist.VERSION, data }));
 
-const fdaSearch = { proprietaryName: "eliquis", includeSamplePackages: false, includeResultsWNoPrices: false };
-const nadacSearch = { ndcDescription: "eliquis", ndc: "", minDate: "2025-10-07", maxDate: "2026-10-07" };
+const fdaCriteria = { ...createFdaCriteria(), proprietaryName: "eliquis" };
+const nadacCriteria = { ...createNadacCriteria(), ndcDescription: "eliquis" };
+
+// Search state as tabs saved it before search criteria existed.
+const legacyFdaSearch = { proprietaryName: "eliquis", includeSamplePackages: true, includeResultsWNoPrices: false };
+const legacyNadacSearch = { ndcDescription: "eliquis", ndc: "", minDate: "2025-10-07", maxDate: "2026-10-07" };
 
 // A pinned chart as saved before charts had dates.
 const oldItem = {
@@ -56,8 +60,10 @@ describe("loading saved tab state", () => {
   it("round-trips what saveTabState wrote", () => {
     const state = {
       type: "nadac" as const,
-      searchParams: nadacSearch,
-      excludedNdcDescriptions: ["ELIQUIS 5 MG TABLET"],
+      criteria: {
+        ...nadacCriteria, includeOtc: true, brandGeneric: "generic" as const,
+        excludedNdcDescriptions: ["ELIQUIS 5 MG TABLET"], excludedUnits: ["each"],
+      },
       pinnedItems: [
         {
           ...oldItem, dateWindow: { start: 100, end: null },
@@ -74,7 +80,7 @@ describe("loading saved tab state", () => {
   });
 
   it("shows charts saved before chart dates existed over all dates", () => {
-    saveRaw("t1", { type: "fda", searchParams: null, pinnedItems: [oldItem] });
+    saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [oldItem] });
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
     expect(state.chartDates).toEqual({ kind: "window", dateWindow: FULL_WINDOW });
@@ -83,7 +89,7 @@ describe("loading saved tab state", () => {
 
   it("drops only the malformed items and fields", () => {
     saveRaw("t2", {
-      type: "fda", searchParams: null,
+      type: "fda", criteria: createFdaCriteria(),
       pinnedItems: [
         { ...oldItem, id: "bad-window", dateWindow: { start: "2025-01-01", end: null } },
         { ...oldItem, id: "bad-span", changeSpan: { start: 1 } },
@@ -99,19 +105,58 @@ describe("loading saved tab state", () => {
     expect(state.chartDates).toEqual({ kind: "window", dateWindow: FULL_WINDOW });
   });
 
-  it("keeps a page filter only alongside a valid search", () => {
-    const resultFilter = { ...createFdaResultFilter(), excludedRoutes: ["ORAL"] };
-    saveRaw("valid", { type: "fda", searchParams: fdaSearch, resultFilter });
-    saveRaw("invalid", { type: "fda", searchParams: { proprietaryName: 5 }, resultFilter });
-    expect(loaded(persist.loadFdaTabState("valid")).resultFilter).toEqual(resultFilter);
-    expect(loaded(persist.loadFdaTabState("invalid"))).toMatchObject({ searchParams: null, resultFilter: createFdaResultFilter() });
+  it("reads each criteria field on its own, falling back to its default", () => {
+    saveRaw("t1", {
+      type: "fda",
+      criteria: { ...fdaCriteria, includeOtc: "yes", dates: { kind: "recent", months: 0 }, excludedRoutes: ["ORAL"], excludedLabelers: [3] },
+    });
+    expect(loaded(persist.loadFdaTabState("t1")).criteria).toEqual({ ...fdaCriteria, excludedRoutes: ["ORAL"] });
 
-    saveRaw("nadac-invalid", { type: "nadac", searchParams: null, excludedNdcDescriptions: ["X"] });
-    expect(loaded(persist.loadNadacTabState("nadac-invalid")).excludedNdcDescriptions).toEqual([]);
+    saveRaw("t2", { type: "nadac", criteria: { ...nadacCriteria, brandGeneric: "branded", ndc: 5 } });
+    expect(loaded(persist.loadNadacTabState("t2")).criteria).toEqual(nadacCriteria);
+  });
+
+  it("keeps exclusion lists only alongside a search", () => {
+    saveRaw("fda", { type: "fda", criteria: { ...createFdaCriteria(), proprietaryName: "eli", excludedRoutes: ["ORAL"] } });
+    expect(loaded(persist.loadFdaTabState("fda")).criteria.excludedRoutes).toEqual([]);
+
+    saveRaw("nadac", { type: "nadac", criteria: { ...createNadacCriteria(), excludedNdcDescriptions: ["X"], includeOtc: true } });
+    expect(loaded(persist.loadNadacTabState("nadac")).criteria).toMatchObject({ excludedNdcDescriptions: [], includeOtc: true });
+  });
+
+  it("reads tabs saved before search criteria into criteria, with OTC hidden", () => {
+    saveRaw("fda", {
+      type: "fda",
+      searchParams: legacyFdaSearch,
+      resultFilter: {
+        excludedProductNdcs: ["1-1"], excludedDosageForms: ["TABLET"], excludedRoutes: [], excludedLabelers: ["L"],
+        excludeOtc: false, excludeSamplePackages: false,
+      },
+      chartDates: { kind: "recent", months: 6 },
+    });
+    expect(loaded(persist.loadFdaTabState("fda")).criteria).toEqual({
+      ...createFdaCriteria(),
+      proprietaryName: "eliquis",
+      dates: { kind: "recent", months: 6 },
+      includeSamplePackages: true,
+      excludedProductNdcs: ["1-1"], excludedDosageForms: ["TABLET"], excludedLabelers: ["L"],
+    });
+
+    saveRaw("nadac", { type: "nadac", searchParams: legacyNadacSearch, excludedNdcDescriptions: ["X"] });
+    expect(loaded(persist.loadNadacTabState("nadac")).criteria).toEqual({
+      ...createNadacCriteria(),
+      ndcDescription: "eliquis",
+      dates: { kind: "window", dateWindow: { start: Date.parse("2025-10-07"), end: Date.parse("2026-10-07") } },
+      excludedNdcDescriptions: ["X"],
+    });
+
+    // A tab that never searched: defaults, and no stray filter.
+    saveRaw("blank", { type: "nadac", searchParams: null, excludedNdcDescriptions: ["X"] });
+    expect(loaded(persist.loadNadacTabState("blank")).criteria).toEqual(createNadacCriteria());
   });
 
   it("ignores state of another tab type or another version", () => {
-    saveRaw("t3", { type: "nadac", searchParams: null });
+    saveRaw("t3", { type: "nadac", criteria: createNadacCriteria() });
     expect(persist.loadFdaTabState("t3")).toBeNull();
     localStorage.setItem(persist.tabKey("t4"), JSON.stringify({ version: persist.VERSION + 1, data: { type: "fda" } }));
     expect(persist.loadFdaTabState("t4")).toBeNull();
@@ -148,15 +193,15 @@ describe("watchOtherWindows", () => {
   const storageEvent = (key: string | null, newValue: string | null) =>
     Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue });
 
-  const fdaTab = (searchParams: typeof fdaSearch | null) => ({
-    type: "fda" as const, searchParams, resultFilter: createFdaResultFilter(), detailLevel: "product" as const,
+  const fdaTab = (criteria: typeof fdaCriteria) => ({
+    type: "fda" as const, criteria, detailLevel: "product" as const,
     pinnedItems: [], chartDates: { kind: "window" as const, dateWindow: FULL_WINDOW },
   });
 
   it("ignores another window re-saving what this window wrote", () => {
     const onConflict = vi.fn();
     persist.watchOtherWindows(onConflict);
-    persist.saveTabState("t1", fdaTab(null));
+    persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     window.dispatchEvent(storageEvent(persist.tabKey("t1"), localStorage.getItem(persist.tabKey("t1"))));
     expect(onConflict).not.toHaveBeenCalled();
   });
@@ -172,14 +217,14 @@ describe("watchOtherWindows", () => {
   it("stops writing and deleting after another window changes stored data", () => {
     const onConflict = vi.fn();
     persist.watchOtherWindows(onConflict);
-    persist.saveTabState("t1", fdaTab(null));
+    persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     const before = localStorage.getItem(persist.tabKey("t1"));
 
     window.dispatchEvent(storageEvent(persist.tabKey("t2"), "written elsewhere"));
     window.dispatchEvent(storageEvent(persist.tabKey("t3"), "written elsewhere"));
     expect(onConflict).toHaveBeenCalledTimes(1);
 
-    persist.saveTabState("t1", fdaTab(fdaSearch));
+    persist.saveTabState("t1", fdaTab(fdaCriteria));
     persist.removeTabState("t1");
     expect(localStorage.getItem(persist.tabKey("t1"))).toBe(before);
   });
@@ -198,7 +243,7 @@ describe("watchOtherWindows", () => {
 
     expect(onConflict).not.toHaveBeenCalled();
     expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark" });
-    persist.saveTabState("t1", fdaTab(null));
+    persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
 });
