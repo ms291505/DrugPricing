@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barAnnouncement, lineAnnouncement, lineReadoutHeight, READOUT_MAX_HEIGHT, rowAtIndex, tooltipRows } from "./chartReadout";
+import { barAnnouncement, barReadoutHeight, lineAnnouncement, lineReadoutHeight, READOUT_MAX_HEIGHT, rowAtIndex, tooltipRows } from "./chartReadout";
 import { rangeKey, type LineVizRow } from "./createLineVizData";
 
 const JAN_13 = Date.parse("2026-01-13");
@@ -49,6 +49,12 @@ describe("lineReadoutHeight", () => {
     expect(lineReadoutHeight(40, true)).toBe(READOUT_MAX_HEIGHT.compact);
   });
 
+  it("counts the frame, the gaps and each range line (2 series drew 126 px at 1440)", () => {
+    expect(lineReadoutHeight(2, false)).toBe(126);
+    expect(lineReadoutHeight(2, false, 1)).toBe(146);
+    expect(lineReadoutHeight(2, true, 1)).toBe(lineReadoutHeight(2, true));
+  });
+
   it("reserves a row even with no series", () => {
     expect(lineReadoutHeight(0, true)).toBe(lineReadoutHeight(1, true));
   });
@@ -64,5 +70,17 @@ describe("rowAtIndex", () => {
 
   it("finds nothing for a missing, empty, fractional or out-of-range index", () => {
     expect([undefined, null, "", "1.5", 1.5, 3, "x"].map(index => rowAtIndex(rows, index))).toEqual(Array(7).fill(undefined));
+  });
+});
+
+describe("barReadoutHeight", () => {
+  it("fits one row in full (an NDC row draws 86 px at 1440), and the packages line for a product", () => {
+    expect(barReadoutHeight(false, false)).toBe(86);
+    expect(barReadoutHeight(false, true) - barReadoutHeight(false, false)).toBe(24);
+  });
+
+  it("holds only the value line on a phone", () => {
+    expect(barReadoutHeight(true, true)).toBe(barReadoutHeight(true, false));
+    expect(barReadoutHeight(true, false)).toBeLessThan(barReadoutHeight(false, false));
   });
 });

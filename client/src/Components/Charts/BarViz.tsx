@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
@@ -11,7 +11,7 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
-import { barAnnouncement, rowAtIndex } from "../../library/chartReadout";
+import { barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
 import useLockedPoint from "../../hooks/useLockedPoint";
 import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock";
@@ -90,8 +90,6 @@ type UnitBarChartProps = {
 type BarRow = PriceSummary & { value: number };
 
 const BAR_ROW_HEIGHT = 40;
-/** The docked readout's reserved height: a full row's readout, so pointing at bars doesn't move them. */
-const BAR_READOUT_HEIGHT = { wide: 104, compact: 60 };
 /** The row highlight under the pointer, and on the locked row. */
 const ROW_HIGHLIGHT_OPACITY = 0.15;
 /** Room right of the plot for value labels. */
@@ -124,14 +122,21 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
 
   // The docked readout: the hovered bar, else the locked one, else a hint.
   const [dock, setDock] = useState<HTMLDivElement | null>(null);
-  const lock = useLockedPoint<string>(readout.currentKey);
+  const lock = useLockedPoint<string>(readout.currentKey, ndc => rows.some(row => row.ndc === ndc));
+  // Unlock unmounts with the lock: give focus back to the chart, not the page.
+  const focusBox = useRef<HTMLDivElement>(null);
+  const unlockAndFocus = () => {
+    lock.unlock();
+    focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
+  };
 
   return (<>
-    <ReadoutDock portalRef={setDock} minHeight={isMobile ? BAR_READOUT_HEIGHT.compact : BAR_READOUT_HEIGHT.wide} />
+    <ReadoutDock portalRef={setDock} minHeight={barReadoutHeight(isMobile, rows.some(row => row.packages > 1))} />
     {/* The box sets the height: its rows' height, or more when the card fills a taller row. The
         chart is absolutely positioned inside it so its own measured height never feeds back into
         the row's: in flow, a chart that grew once would hold the row at that height. */}
     <Box
+      ref={focusBox}
       {...readout.focusProps}
       onKeyDown={event => {
         readout.focusProps.onKeyDown();
@@ -180,7 +185,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
             const row = hovered ?? rows.find(r => r.ndc === lock.locked);
             const status: ReadoutStatus = hovered ? "hover" : row ? "locked" : "default";
             const color = row ? colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc)) : undefined;
-            return <BarReadout row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} status={status} onUnlock={lock.unlock} />;
+            return <BarReadout row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} status={status} onUnlock={unlockAndFocus} />;
           }}
         />
         <Bar

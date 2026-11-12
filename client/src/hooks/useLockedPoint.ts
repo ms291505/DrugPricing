@@ -5,16 +5,22 @@ import { useCallback, useState, type KeyboardEvent } from "react";
  * Click or tap locks the point under the pointer and a second click unlocks; Enter or Space lock
  * the point the arrow keys reached, and Esc unlocks.
  *
+ * A lock on a point the chart no longer has (a new search, or a filter hid it) counts as no lock,
+ * so the readout and hover come back on their own.
+ *
  * @param currentKey - the point the pointer or the keys last made active, if any
+ * @param has - whether the chart's current rows hold a point
  */
-export default function useLockedPoint<Key extends string | number>(currentKey: () => Key | undefined) {
-  const [locked, setLocked] = useState<Key | null>(null);
+export default function useLockedPoint<Key extends string | number>(
+  currentKey: () => Key | undefined,
+  has: (key: Key) => boolean,
+) {
+  const [stored, setStored] = useState<Key | null>(null);
+  const locked = stored !== null && has(stored) ? stored : null;
 
   /** Unlocks if locked, else locks `key` (when there is one). */
-  const toggle = useCallback((key: Key | undefined) => {
-    setLocked(prev => prev !== null ? null : key ?? null);
-  }, []);
-  const unlock = useCallback(() => setLocked(null), []);
+  const toggle = (key: Key | undefined) => setStored(locked !== null ? null : key ?? null);
+  const unlock = useCallback(() => setStored(null), []);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && locked !== null) {

@@ -6,6 +6,7 @@ import { themedSeriesColor } from "../../theme";
 import { fromChartSeries, itemTitle, type ChartItem } from "../../library/explorerItems";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import useNearViewport from "../../hooks/useNearViewport";
+import { barReadoutHeight, lineReadoutHeight } from "../../library/chartReadout";
 import useMobile from "../../hooks/useMobile";
 import LineViz from "../Charts/LineViz";
 import BarViz from "../Charts/BarViz";
@@ -31,10 +32,15 @@ export default memo(function ChartItemBody({ item, priceRanges }: Props) {
   const isMobile = useMobile();
 
   if (!near) {
+    // The readout above the plot reserves its height up front, so it can be counted here.
+    const readout = item.chartType === "bar"
+      ? barReadoutHeight(isMobile, false)
+      : lineReadoutHeight(new Set(item.series.map(series => series.ndc)).size, isMobile);
     return (
-      // About a drawn line chart's height, so the page shifts little as charts draw: its plot
-      // (sized as `LineViz` sizes it) and what goes around it.
+      // About a drawn line chart's height, so the page shifts little as charts draw: its readout,
+      // its plot (sized as `LineViz` sizes it) and what goes around it.
       <Box ref={ref} sx={{ display: "flex", flexDirection: "column" }}>
+        <Box sx={{ height: readout }} />
         <Box sx={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }} />
         <Box sx={{ height: AROUND_PLOT_PX }} />
         <Box sx={visuallyHidden}>Chart not drawn yet: it draws when scrolled into view.</Box>

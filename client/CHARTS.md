@@ -125,12 +125,14 @@ rendered there through `portal` (`DOCKED_TOOLTIP` keeps it showing between point
 re-renders only the readout, not the chart.
 
 - **What it shows:** the hovered point; else the locked one; else, on a line chart, the latest
-  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`, the
-  bar chart's `BAR_READOUT_HEIGHT`) so the plot doesn't move under the pointer, and past
+  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
+  `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
+  under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
   second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
-  header has an Unlock button. While locked the `Tooltip` is `active={false}`, so the pointer no
+  header has an Unlock button, which gives focus back to the chart. A lock on a point the rows
+  no longer hold (a new search, or a filter hid it) counts as no lock. While locked the `Tooltip` is `active={false}`, so the pointer no
   longer moves the readout, and the chart marks the point (a dashed line, or the row highlight).
   Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click the arrow
   keys no longer move the readout.

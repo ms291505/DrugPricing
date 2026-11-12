@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
@@ -140,16 +140,25 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 
   // The docked readout: the hovered date, else the locked one, else the latest.
   const [dock, setDock] = useState<HTMLDivElement | null>(null);
-  const lock = useLockedPoint<number>(readout.currentKey);
+  const dates = useMemo(() => new Set(vizData.map(row => row.asOfDate)), [vizData]);
+  const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date));
   const latestDate = vizData.at(-1)?.asOfDate;
+  // Unlock unmounts with the lock: give focus back to the chart, not the page.
+  const focusBox = useRef<HTMLDivElement>(null);
+  const unlockAndFocus = () => {
+    lock.unlock();
+    focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
+  };
+  const rangeCount = shownNdcs.filter(ndc => rangeNdcs.has(ndc)).length;
 
   const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
 
   return (<>
-    <ReadoutDock portalRef={setDock} minHeight={lineReadoutHeight(shownNdcs.length, isMobile)} />
+    <ReadoutDock portalRef={setDock} minHeight={lineReadoutHeight(shownNdcs.length, isMobile, rangeCount)} />
     <Box
+      ref={focusBox}
       {...readout.focusProps}
       onKeyDown={event => {
         readout.focusProps.onKeyDown();
@@ -202,7 +211,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
                 unit={unit}
                 rows={tooltipRows(row, shownNdcs)}
                 status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
-                onUnlock={lock.unlock}
+                onUnlock={unlockAndFocus}
                 colorFor={colorFor}
                 descriptionFor={isMobile ? undefined : descriptionFor}
               />
