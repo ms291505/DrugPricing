@@ -21,9 +21,11 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    - debounce the tab-state saves, which stringify every pin's full history on each change;
    - mount charts only near the viewport.
 2. **A Results section replaces Page Tools on both pages.** One framed section, "Results:
-   <search>", holds a toolbar (Dates, the filters, and Product/Package on FDA), then the results
+   <search>", holds a toolbar (Product/Package on FDA, and Chart selected), then the results
    table, then the auto charts. Pinned sits below it with a note that filters and dates don't
-   change pins.
+   change pins. Revised 2026-11-12: Dates and the filters sit in the search panel above it, not
+   in this toolbar, and this step is built as step 5 of
+   [plans/search-filters.md](plans/search-filters.md).
    - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
      Max** columns in every results table (from `summarizePrices`, so they match the bar chart;
      "—" for no prices in the window), and for the auto charts. Every table has Latest,
@@ -46,6 +48,22 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    toast says why there are several. Pins saved earlier with mixed units still render split.
 
 Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
+
+### One search-and-filter panel for NADAC and FDA (2026-11-12)
+
+Plan: [plans/search-filters.md](plans/search-filters.md). Each page gets one panel that is both
+the search and the filter, the same on both pages, with a short default view and "More filters".
+Text terms go to the server and wait for Search; everything else (dates, the "Include OTC" /
+"Include sample packages" / "Include results without prices" checkboxes, NADAC's Brand/generic
+choice, the dosage form, route, labeler and drug lists) narrows the loaded result in the client
+and never fetches. Both pages become search panel, Results section, Pinned, with price changes
+flagged the same way. On the server: a slim per-NDC price format, all-history loads, response
+compression, caching for both searches, and FDA search on plain query params. No migration or
+ETL change.
+
+Size: large. Six PRs to `dev`, listed in the plan. It absorbs step 2 of the usability round and
+the items under **For the NADAC/FDA parity plan**; pinned-chart performance (step 1 of the
+usability round) should land first.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
@@ -90,7 +108,8 @@ Size: medium. One PR, or two (database + server, then client).
   that accounts for the drawer, or Page Tools should move above the cards there. Superseded by
   step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
-  Decide whether the simple endpoint stays as public API or goes.
+  Settled by step 1 of [plans/search-filters.md](plans/search-filters.md): `search` takes over
+  from `advanced-search`, with plain query params.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
@@ -101,6 +120,9 @@ Size: medium. One PR, or two (database + server, then client).
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 
 ### For the NADAC/FDA parity plan
+
+All three are part of [plans/search-filters.md](plans/search-filters.md) (steps 4 and 5).
+Delete them with it.
 
 - **The NADAC page copies query results into context** (`setData` in a `useEffect` in
   `NadacSearch`), where the FDA page derives everything from `useQuery`. Deriving would remove
