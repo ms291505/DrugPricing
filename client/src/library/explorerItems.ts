@@ -113,6 +113,18 @@ export const itemTitle = (item: ExplorerItem) => item.title ?? item.defaultTitle
 
 const seriesKey = (ndc: string, unit: string) => ndc + "|" + unit;
 
+/**
+ * A new chart's prices with every loaded date of its series: the prices in `history` (the page's
+ * refined result over all loaded dates) whose series (NDC and unit) `prices` draws. The page
+ * shows only the search's dates, but after a narrowing that didn't fetch more is loaded; a chart
+ * item keeps every date of its series, so its dates chip can widen to them, and `filtered`
+ * compares whole series rather than reading the narrower dates as a filter.
+ */
+export function withLoadedHistory<T extends ChartPrice>(prices: T[], history: T[]): T[] {
+  const keys = new Set(prices.map(price => seriesKey(price.ndc, price.pricingUnit)));
+  return history.filter(price => keys.has(seriesKey(price.ndc, price.pricingUnit)));
+}
+
 /** Builds a chart snapshot from prices. Series are keyed by NDC and pricing unit. */
 export function toChartSeries(prices: ChartPrice[], colors?: Map<string, string>): ChartSeriesSnapshot[] {
   const series = new Map<string, ChartSeriesSnapshot>();

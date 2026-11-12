@@ -3,14 +3,6 @@ import type { DateWindow } from "../library/dates";
 import { nextLoad } from "../library/searchCriteria";
 import { useLastAsOfDate } from "./useAppInit";
 
-type Options = {
-  /**
-   * Whether the request needs the last as-of date (its date presets count back from it), so a
-   * search waits for app-init. False for a request that ignores it.
-   */
-  waitForAsOfDate?: boolean,
-};
-
 const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
@@ -24,7 +16,8 @@ const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringi
  * - `criteria`, the applied criteria. Refine fields are written with `setCriteria` and apply at
  *   once; load fields change only through `search`.
  * - `requested`, the request the criteria ask for. Its dates are the window the result is clipped
- *   to. Null without a search, and (unless `waitForAsOfDate` is false) until app-init settles.
+ *   to. Null without a search, and until app-init settles (its date presets count back from the
+ *   last as-of date).
  * - `loaded`, what the query fetches: `requested`, or a wider load that already holds it.
  * - `lastSearch`, the load the user's last Search fetched or re-ran: the key for the result
  *   toasts (`useNewSearchResult`). Null until then, so a restored tab's re-run, and narrowing it
@@ -35,10 +28,8 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
   initial: C,
   loadRequest: (criteria: C, lastAsOfDate: number) => L | null,
   applySearch: (applied: C, fields: F) => C,
-  { waitForAsOfDate = true }: Options = {},
 ) {
-  const asOfDates = useLastAsOfDate();
-  const lastAsOfDate = waitForAsOfDate ? asOfDates.forSearch : asOfDates.forDisplay;
+  const lastAsOfDate = useLastAsOfDate().forSearch;
   const [criteria, setCriteria] = useState(initial);
   // What the user's Searches have loaded; null until the first, when the load is `requested`.
   const [searchedLoad, setSearchedLoad] = useState<L | null>(null);

@@ -195,8 +195,9 @@ export type AdvancedFdaSearchRequest = {
 
   // NadacPrice
   includeResultsWNoPrices: boolean,
-  pricesAsOfDateStart?: string,
-  pricesAsOfDateEnd?: string,
+  /** "YYYY-MM-DD". The server keeps prices on or after it (strictly: see `widenToAsOfDates`). */
+  priceAsOfDateStart?: string,
+  priceAsOfDateEnd?: string,
 }
 
 export type AppInitResponse = {

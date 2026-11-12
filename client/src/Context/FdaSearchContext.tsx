@@ -5,7 +5,6 @@ import {
   applyFdaSearch, createFdaCriteria, fdaLoadRequest,
   type FdaCriteria, type FdaLoad, type FdaLoadFields,
 } from "../library/searchCriteria";
-import { ALL_DATES } from "../library/dates";
 import useSearchLoad from "../hooks/useSearchLoad";
 
 export type FdaSearchContextType = {
@@ -51,14 +50,6 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   searchEnabled: true,
 });
 
-/**
- * FDA searches load all history until Dates becomes a load field on this page (step 3 of
- * plans/search-filters.md, with the request's date parameter fix). Until then the page's Chart
- * dates pick what shows, so the criteria's dates are kept but not loaded.
- */
-const fdaLoadRequestAllDates = (criteria: FdaCriteria, lastAsOfDate: number) =>
-  fdaLoadRequest({ ...criteria, dates: ALL_DATES }, lastAsOfDate);
-
 type ProviderProps = {
   children: React.ReactNode,
   /** State restored from storage; the search re-runs from `criteria`. */
@@ -67,9 +58,8 @@ type ProviderProps = {
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  // The request ignores the as-of date until step 3, so a search needn't wait for app-init.
   const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
-    initial?.criteria ?? createFdaCriteria(), fdaLoadRequestAllDates, applyFdaSearch, { waitForAsOfDate: false });
+    initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });

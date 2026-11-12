@@ -1,7 +1,26 @@
 # One search-and-filter panel for NADAC and FDA
 
-Status: agreed with the author (2026-11-12). Steps 1 and 2 are built; step 2 also added an
-Include OTC box to the NADAC form, since NADAC now hides OTC. What was decided is at the end.
+Status: agreed with the author (2026-11-12). Steps 1–3 are built; step 2 also added an Include
+OTC box to the NADAC form, since NADAC now hides OTC. Step 3 also did most of step 4's docs
+(AGENTS.md, client/CHARTS.md). What was decided is at the end.
+
+Step 3, as built (2026-11-12):
+
+- **FDA dates snap like NADAC's.** As-of dates are weekly (all 249 gaps were 7 days), so the FDA
+  request is widened by 6 days each side (`widenToAsOfDates`) and the client snaps to as-of dates
+  (`fdaShownDates`). `snapToAsOfDates` now reaches at most 6 days, on both pages, so an NDC last
+  priced months before the start no longer pulls the start back after a narrowing.
+- **Hidden counts are table rows**: NDCs on NADAC; products or packages on FDA, by detail level.
+  When the filters hide every result, the empty table offers one Include box when it alone
+  would show them all, else **Clear filters** when the defaults would show some ("8 packages
+  hidden by filters", without the OTC the defaults hide), else **Show all** (every refine field
+  set to show everything, `showAll*`).
+- **New charts keep every loaded date of their series** (`withLoadedHistory`), as "Dates" above
+  says: after a narrowing that didn't fetch, a pin is no longer marked "filtered" for the dates.
+  A price-change card's full history is the search's dates, which is what it shows.
+- **Not built:** FDA's Product NDC *load* field (FDA "More" has the from-results Product NDC list),
+  the Average column (`priceColumns.tsx` leaves it out on purpose), and moving the form's draft
+  into the provider (it stays in each panel).
 
 ## Context
 

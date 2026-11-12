@@ -14,30 +14,16 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
 
 1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
    first (3 tabs × about 10 pins), then:
-   - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (a change of
-     the page dates, or the 2s add highlight, re-renders every pinned chart today). The split
-     settles the Cleanups item about the context's name: name the new contexts for their jobs;
+   - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (the 2s add
+     highlight re-renders every pinned chart today; the page's chart dates left it in
+     search-filters step 3, and `PinnedSection` is `memo`'d). Name the new contexts for their jobs;
    - memoize each chart's derived data;
    - debounce the tab-state saves, which stringify every pin's full history on each change;
    - mount charts only near the viewport.
-2. **A Results section replaces Page Tools on both pages.** One framed section, "Results:
-   <search>", holds a toolbar (Product/Package on FDA, and Chart selected), then the results
-   table, then the auto charts. Pinned sits below it with a note that filters and dates don't
-   change pins. Revised 2026-11-12: Dates and the filters sit in the search panel above it, not
-   in this toolbar, Dates there decides which prices load (so the first two bullets below
-   describe the panel's Dates field, and there is no separate view window), and this step is
-   built as step 3 of [plans/search-filters.md](plans/search-filters.md).
-   - Dates are the *results'* dates. They set the window for new **Latest / Average / Min /
-     Max** columns in every results table (from `summarizePrices`, so they match the bar chart;
-     "—" for no prices in the window), and for the auto charts. Every table has Latest,
-     Min and Max already (`ResultTables/priceColumns.tsx`, Average left out on purpose), over
-     all loaded dates. Rows stay when they have no
-     prices in the window.
-   - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
-     preset keeps the typed dates, so Custom can be switched back on.
-   - Add Chart becomes **Chart selected** (Line/Bar) on the results table.
-   - This settles two Cleanups items, "Page Tools is cramped at 1024px" and "One Page Tools
-     shell for both pages". Delete them with it.
+2. **A Results section replaces Page Tools on both pages.** Built as step 3 of
+   [plans/search-filters.md](plans/search-filters.md) (2026-11-12): the search panel holds Dates
+   (with Custom) and the filters, and the Results section the table, Chart selected and the auto
+   charts. The price columns cover the search's dates; Average stays out, as before.
 3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
    values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
    and its own scroll.
@@ -60,9 +46,9 @@ lists) narrows the loaded result in the client and never fetches. FDA searches s
 dates, so they stop loading all history. Both pages become search panel, Results section,
 Pinned, with price changes flagged the same way. No server changes.
 
-Size: large. Four PRs to `dev`, listed in the plan. It absorbs step 2 of the usability round and
-the items under **For the NADAC/FDA parity plan**; pinned-chart performance (step 1 of the
-usability round) should land first.
+Size: large. Four PRs to `dev`, listed in the plan; steps 1–3 are built (step 3 also did most
+of step 4's docs). It absorbed step 2 of the usability round. Pinned-chart performance (step 1
+of the usability round) was moved after step 3 (author, 2026-11-12).
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
@@ -81,10 +67,6 @@ Size: medium. One PR, or two (database + server, then client).
 
 - **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
   (`validateTabTitle`). Split it by domain (`nadac.ts`, `fda.ts`, `workspace.ts`).
-- **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
-  chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
-  chart-settings context) so its name matches its job. It's a pure rename across about 15 files.
-  Step 1 of the usability round (under **Decided**) splits this context, so do it there.
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
@@ -100,11 +82,6 @@ Size: medium. One PR, or two (database + server, then client).
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
   incompatible)`). Move the context and its hook out of the provider's module, as
   `Context/workspaceContexts.ts` does for the workspace, with a null default. Dev-only, small.
-- **Page Tools is cramped at 1024px with the permanent drawer.** The column is about 170px wide:
-  the From/To date inputs truncate, the OTC/Sample checkbox labels wrap to three lines, and the
-  bar chart beside it leaves a large empty area. The `md: 3`/`md: 9` split needs a breakpoint
-  that accounts for the drawer, or Page Tools should move above the cards there. Superseded by
-  step 2 of the usability round (the Results section replaces Page Tools).
 - **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
   Decide whether the simple endpoint stays as public API or goes. If it goes, its name is free
   for `advanced-search` to take over with plain query params instead of `jsonString`.
@@ -116,14 +93,6 @@ Size: medium. One PR, or two (database + server, then client).
   picks the unit), or set `filterable: false` on the three price columns.
 - **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
-
-### For the NADAC/FDA parity plan
-
-Part of [plans/search-filters.md](plans/search-filters.md) (step 3). Delete it with it.
-
-- **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
-  Chart dates but duplicate the panel layout, heading and section styles. Superseded by step 2
-  of the usability round: one Results section on both pages.
 
 ## Ideas
 

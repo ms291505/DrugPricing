@@ -7,15 +7,19 @@ import PinButton from "./PinButton";
 import LineViz from "../Charts/LineViz";
 import { percentageChangeToString } from "../../library/flagNadacPriceChange";
 import { priceChangeTitle } from "../../library/chartTitles";
-import { FULL_WINDOW, windowAround } from "../../library/dates";
+import { windowAround, type DateWindow } from "../../library/dates";
 import { PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
 import type { ChartChangeSpan, ChartOrigin } from "../../library/explorerItems";
 import type { NadacPrice, PackagePriceChange } from "../../library/types";
 
 type Props = {
   change: PackagePriceChange,
-  /** Every price of the changed package. */
+  /** Every price of the changed package in the search's dates. */
   prices: NadacPrice[],
+  /** The view's package-level `history`, for pins. */
+  history: () => NadacPrice[],
+  /** The search's dates: the full history shows them, so a pin of it shows what the card did. */
+  searchDates: DateWindow,
   origin: ChartOrigin,
   /** The page's colors for packages. */
   colors: Map<string, string>,
@@ -25,7 +29,7 @@ type Props = {
  * An auto chart for one flagged price change. It opens on the months around the change, with
  * the change shaded, and can widen to the package's full history. Pinning keeps the current view.
  */
-export default function PriceChangeCard({ change, prices, origin, colors }: Props) {
+export default function PriceChangeCard({ change, prices, history, searchDates, origin, colors }: Props) {
   const [showFullHistory, setShowFullHistory] = useState(false);
 
   const { startDate, endDate, percentage, oldPrice, newPrice } = change.priceChange;
@@ -35,7 +39,7 @@ export default function PriceChangeCard({ change, prices, origin, colors }: Prop
     from: oldPrice, to: newPrice,
   };
   const dateWindow = showFullHistory
-    ? FULL_WINDOW
+    ? searchDates
     : windowAround(changeSpan.start, changeSpan.end, PRICE_CHANGE_WINDOW_MONTHS);
 
   const title = priceChangeTitle(changeLabel, changeSpan.end, change.packageNdc);
@@ -59,6 +63,7 @@ export default function PriceChangeCard({ change, prices, origin, colors }: Prop
           title={title}
           chartType="line"
           prices={prices}
+          history={history}
           origin={origin}
           dateWindow={dateWindow}
           changeSpan={changeSpan}

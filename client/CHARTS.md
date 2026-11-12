@@ -9,10 +9,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - *System* items (the results table, auto charts, price-change charts) are derived from the
   current search on every render and never stored.
 - *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
-  `TabProviders.tsx`). Add Chart and Pin create them; new searches and filter changes never touch
-  them. Don't clear them on search, and don't write system charts into them. The Pinned section
-  renders whatever the search state (on FDA it sits in `FdaSearch`, outside the `isSuccess`
-  gate), so pins show while a search is missing, loading, or failing.
+  `TabProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
+  touch them. Don't clear them on search, and don't write system charts into them. The Pinned
+  section sits on the page below the results (`PinnedSection`, `memo`'d), whatever the search
+  state, so pins show while a search is missing, loading, or failing.
 - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
   today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
   `points: [ms, price][]`), plain JSON so it persists. `fromChartSeries` turns it back into
@@ -21,17 +21,18 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and stores the dates it shows as `dateWindow` (`DateWindow` in `library/dates.ts`: ms,
   inclusive, a null end is open), which the card's dates chip can widen later. `UnitSplit` clips
   to the window, and `LineViz` stretches the x-axis across all of it, so a late series shows a gap.
-- The Page Tools "Chart dates" control (`ChartDatesControl`) sets `chartDates`: fixed dates, or a
-  **recent** preset ("Last year", "6 months", …) stored as the preset so it follows new weeks.
-  `useChartWindow` resolves it against the current result (presets count back from its last
-  date). Auto charts show the resolved window; Add Chart and Pin start new items at it, as fixed
-  dates. It is not a search criteria field, doesn't touch the results table or which changes
-  are flagged, and a new search keeps it.
-- Price-change charts (`PriceChangeCards`, on both search pages; NADAC flags each package of its
-  result with `flagPriceChanges`, as FDA does) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
-  (`changeSpan`, stored on pinned copies too) and toggle to the full history. Only changes whose
-  new price starts inside the chart dates get a card (`priceChangesInWindow`); a note counts the
-  rest, and past `MAX_AUTO_PRICE_CHANGE_CHARTS` it gives the count instead of charting them.
+- There is no page-level chart dates control: the search panel's **Dates** decide which prices
+  load, and so the window of everything on the page. Auto charts show the result's dates (the
+  view's `dateWindow`: the search's, snapped to as-of dates); Chart selected and Pin start new
+  items at them, as fixed dates, with every loaded date of their series (`withLoadedHistory`
+  over the view's `history`). After a narrowing that didn't fetch, more is loaded than shown;
+  the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
+  of the search panels (`DatesField`, with a Custom preset).
+- Price-change charts (`PriceChangeCards`, on both search pages) are flagged per package over the
+  refined result (`flagPriceChanges`), so only inside the search's dates. Each opens on
+  ±`PRICE_CHANGE_WINDOW_MONTHS` around the change (`changeSpan`, stored on pinned copies too) and
+  toggles to the full history. Past `MAX_AUTO_PRICE_CHANGE_CHARTS` a note gives the count
+  instead of charting them.
 - **"Match scale" is per chart.** A pinned line chart's menu toggles `ChartItem.matchScale`; the
   matched charts in one unit share a fitted axis (`matchedPriceRange`) and show a "Matched scale"
   chip. New pins start unmatched. A tab-wide switch put $0.25 metformin on humira's $0–$8K axis,
@@ -44,7 +45,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
-  what Add Chart filters on. `setFdaResultDetailLevel` clears the selection on every level change.
+  what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
 
 ## Chart data
 
@@ -72,7 +73,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 `palette.chart.series` has 10 color-blind-safe colors, each at least 3:1 on the card
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
 so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
-page agrees. Add Chart and Pin store each series' `color`, since the result is gone after the next
+page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
 search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 ## Line charts

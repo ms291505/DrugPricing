@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import { type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
-import { ALL_DATES, FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
+import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
   type BrandGeneric, type FdaCriteria, type NadacCriteria,
@@ -328,11 +328,13 @@ export function watchSettings(onChange: (settings: AppSettings) => void): () => 
 
 // --- Search tabs --------------------------------------------------------------------------
 
-/** What both search tab types save from `ExplorerItemsContext`. */
+/**
+ * What every tab type with pinned items saves from `ExplorerItemsContext`. Tabs saved before
+ * step 3 of plans/search-filters.md also hold the page's `chartDates`, which the search's Dates
+ * replaced; it is ignored, except that `legacyFdaCriteria` reads it.
+ */
 export type PersistedExplorerState = {
   pinnedItems: ExplorerItem[],
-  /** The Page Tools chart dates. */
-  chartDates: ChartDates,
 };
 
 export type PersistedFdaTab = {
@@ -362,7 +364,6 @@ type PersistedTab = PersistedFdaTab | PersistedNadacTab | PersistedCollectionTab
 function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState {
   return {
     pinnedItems: validItems(raw.pinnedItems),
-    chartDates: isChartDates(raw.chartDates) ? raw.chartDates : ALL_DATES,
   };
 }
 
