@@ -9,7 +9,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
 import { usePinActions, type PinHighlight } from "../../Context/pinnedItemsContexts";
-import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
+import { formatItemSource, isScaleMatched, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
@@ -25,6 +25,16 @@ type Props = {
   priceRanges?: Map<string, [number, number]>,
 }
 
+/** When to start centering a new card again if no `scrollend` arrives. */
+const RECENTER_FALLBACK_MS = 1000;
+/** How often, and how many times, to check that a new card is still centered. */
+const RECENTER_INTERVAL_MS = 150;
+const RECENTER_CHECKS = 6;
+/** How far off center a new card may sit. */
+const SETTLED_PX = 24;
+/** Input that scrolls the page: the user taking over from the centering. */
+const USER_SCROLL_EVENTS = ["wheel", "touchmove", "keydown"] as const;
+
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** A pinned item's card. Memoized: its props change only when its own item does. */
@@ -38,12 +48,43 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const highlighted = highlight !== null;
   const focusOnAdd = highlight?.focus ?? false;
 
-  // Add Chart feedback: bring the new card into view and move focus to its heading,
+  // Chart selected feedback: bring the new card into view and move focus to its heading,
   // so keyboard and screen-reader users land on what they just created.
   useEffect(() => {
     if (!focusOnAdd) return;
-    cardRef.current?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    const card = cardRef.current;
+    card?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
     headingRef.current?.focus({ preventScroll: true });
+    // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
+    // and grow past their placeholders, pushing the card down. Once the scroll stops, center the
+    // card again until the charts around it have drawn and it stays put. The user scrolling
+    // first ends it.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let checks = 0;
+    const settle = () => {
+      if (!card) return;
+      const { top, bottom } = card.getBoundingClientRect();
+      const offCenter = Math.abs((top + bottom) / 2 - window.innerHeight / 2);
+      if (offCenter > SETTLED_PX) {
+        card.scrollIntoView({ block: "center", behavior: "auto" });
+      }
+      if (++checks < RECENTER_CHECKS) timer = setTimeout(settle, RECENTER_INTERVAL_MS);
+    };
+    const start = () => {
+      window.removeEventListener("scrollend", start);
+      clearTimeout(timer);
+      settle();
+    };
+    const stop = () => {
+      clearTimeout(timer);
+      window.removeEventListener("scrollend", start);
+      for (const type of USER_SCROLL_EVENTS) window.removeEventListener(type, stop);
+    };
+    window.addEventListener("scrollend", start);
+    for (const type of USER_SCROLL_EVENTS) window.addEventListener(type, stop, { passive: true });
+    // Browsers without `scrollend`, and a card already in place (no scroll, so no event).
+    timer = setTimeout(start, RECENTER_FALLBACK_MS);
+    return stop;
   }, [focusOnAdd]);
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -58,7 +99,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
 
   const isLineChart = item.kind === "chart" && item.chartType === "line";
-  const matched = isLineChart && item.matchScale === true;
+  const matched = isScaleMatched(item);
 
   const actions = (
     <>

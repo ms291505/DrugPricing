@@ -1,7 +1,7 @@
 import { memo, useId, useMemo } from "react";
 import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 import { usePinActions, usePinHighlight, usePinnedItems } from "../../Context/pinnedItemsContexts";
-import { matchedPriceRange, samePriceRanges } from "../../library/explorerItems";
+import { isScaleMatched, matchedPriceRange, samePriceRanges } from "../../library/explorerItems";
 import useStableValue from "../../hooks/useStableValue";
 import PinnedItemCard from "./PinnedItemCard";
 
@@ -45,7 +45,7 @@ export default memo(function PinnedSection() {
             isFirst={index === 0}
             isLast={index === pinnedItems.length - 1}
             highlight={highlight?.id === item.id ? highlight : null}
-            priceRanges={item.kind === "chart" && item.chartType === "line" && item.matchScale ? priceRanges : undefined}
+            priceRanges={isScaleMatched(item) ? priceRanges : undefined}
           />
         ))}
       </Grid>

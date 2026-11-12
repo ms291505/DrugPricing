@@ -10,6 +10,12 @@ import useMobile from "../../hooks/useMobile";
 import LineViz from "../Charts/LineViz";
 import BarViz from "../Charts/BarViz";
 
+/**
+ * A drawn line chart's height beyond its plot: the unit caption, a legend row or two and the View
+ * data row (measured at 118 to 148 px with six series).
+ */
+const AROUND_PLOT_PX = 120;
+
 type Props = {
   item: ChartItem,
   /** Shared price range per pricing unit from "Match scale". Line charts only. */
@@ -26,8 +32,11 @@ export default memo(function ChartItemBody({ item, priceRanges }: Props) {
 
   if (!near) {
     return (
-      // About a line chart's height, so the page doesn't jump much as charts are drawn.
-      <Box ref={ref} sx={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}>
+      // About a drawn line chart's height, so the page shifts little as charts draw: its plot
+      // (sized as `LineViz` sizes it) and what goes around it.
+      <Box ref={ref} sx={{ display: "flex", flexDirection: "column" }}>
+        <Box sx={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }} />
+        <Box sx={{ height: AROUND_PLOT_PX }} />
         <Box sx={visuallyHidden}>Chart not drawn yet: it draws when scrolled into view.</Box>
       </Box>
     );

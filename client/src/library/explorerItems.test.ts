@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, formatItemSource, matchedPriceRange, samePriceRanges, withLoadedHistory,
+  chartDataBounds, createChartItem, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
   type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { FULL_WINDOW } from "./dates";
@@ -92,6 +92,10 @@ describe("matchedPriceRange", () => {
   it("leaves out charts the user didn't match, however their prices compare", () => {
     const unmatched = make(series("E", 6745));
     expect(matchedPriceRange([lineA, lineB, unmatched]).get("each")).toEqual([5, 10]);
+  });
+
+  it("matches only line charts the user matched (isScaleMatched)", () => {
+    expect([lineA, bar, make(packageA1)].map(isScaleMatched)).toEqual([true, false, false]);
   });
 
   it("ignores prices outside each chart's window", () => {
