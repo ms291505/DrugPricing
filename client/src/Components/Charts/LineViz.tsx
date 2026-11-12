@@ -1,4 +1,4 @@
-import { useId, useState, type CSSProperties } from "react";
+import { useId, useMemo, useState, type CSSProperties } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
@@ -35,12 +35,12 @@ type Props = {
 
 export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
-  const shownPrices = clipToWindow(nadacPrices, dateWindow);
-  const bounds = dateBounds(shownPrices);
+  const shownPrices = useMemo(() => clipToWindow(nadacPrices, dateWindow), [nadacPrices, dateWindow]);
+  const bounds = useMemo(() => dateBounds(shownPrices), [shownPrices]);
   const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
 
   // Legend toggles are view state. A new set of series in the dates starts with every series shown.
-  const seriesKey = seriesSetKey(shownPrices.map(price => price.ndc));
+  const seriesKey = useMemo(() => seriesSetKey(shownPrices.map(price => price.ndc)), [shownPrices]);
   const [visibility, setVisibility] = useState({ seriesKey, hidden: NONE_HIDDEN });
   const hidden = visibility.seriesKey === seriesKey ? visibility.hidden : NONE_HIDDEN;
   const update = (change: (current: ReadonlySet<string>) => ReadonlySet<string>) => setVisibility(prev => ({
@@ -102,13 +102,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const descriptionId = useId();
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
-  const ndcs = [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))];
-  const shownNdcs = visibleSeries(ndcs, hidden);
+  // Derived once per set of prices: the legend's hover highlight re-renders the chart.
+  const ndcs = useMemo(() => [...new Set(nadacPrices.map((nadacPrice) => nadacPrice.ndc))], [nadacPrices]);
+  const shownNdcs = useMemo(() => visibleSeries(ndcs, hidden), [ndcs, hidden]);
   // A series hidden while under the pointer dims nothing.
   const focusNdc = highlighted && shownNdcs.includes(highlighted) ? highlighted : null;
   const opacityOf = (ndc: string) => focusNdc && focusNdc !== ndc ? DIMMED_OPACITY : 1;
 
-  const { rows: vizData, rangeNdcs, packageCounts } = createLineVizData(nadacPrices);
+  const { rows: vizData, rangeNdcs, packageCounts } = useMemo(() => createLineVizData(nadacPrices), [nadacPrices]);
 
   const descriptionFor = (ndc: string) => nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
 
@@ -119,11 +120,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const colorFor = (ndc: string) =>
     colors?.get(ndc) ?? chartTheme.palette[ndcs.indexOf(ndc) % chartTheme.palette.length];
 
-  const xTicks = dateTicks(xDomain[0], xDomain[1], isMobile ? 4 : 7);
+  const [xStart, xEnd] = xDomain;
+  const xTicks = useMemo(() => dateTicks(xStart, xEnd, isMobile ? 4 : 7), [xStart, xEnd, isMobile]);
 
-  const yAxis = linePriceAxis(nadacPrices, shownNdcs, priceRange);
+  const yAxis = useMemo(() => linePriceAxis(nadacPrices, shownNdcs, priceRange), [nadacPrices, shownNdcs, priceRange]);
 
-  const bandNdcs = visibleBandNdcs(vizData, shownNdcs.filter(ndc => rangeNdcs.has(ndc)), yAxis.domain);
+  const bandNdcs = useMemo(
+    () => visibleBandNdcs(vizData, shownNdcs.filter(ndc => rangeNdcs.has(ndc)), yAxis.domain),
+    [vizData, shownNdcs, rangeNdcs, yAxis.domain]);
   const bandCaption = averagedLineCaption(bandNdcs, shownNdcs.length, packageCounts);
 
   const readout = useChartReadout((row: LineVizRow) => row.asOfDate, date => {

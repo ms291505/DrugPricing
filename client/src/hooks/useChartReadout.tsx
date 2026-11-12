@@ -1,4 +1,4 @@
-import { useEffect, useState, type FocusEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FocusEvent } from "react";
 import { Box } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { useActiveTooltipDataPoints, useIsTooltipActive } from "recharts";
@@ -31,6 +31,24 @@ export default function useChartReadout<Row, Key extends string | number>(
   const [keyboardDriven, setKeyboardDriven] = useState(false);
   const text = keyboardDriven && activeKey !== undefined ? describe(activeKey) ?? "" : "";
 
+  // The pointer moves the active point on every date it crosses. Only the keys' moves are spoken,
+  // so the point is kept in refs and copied to state only while the keys drive it: hovering never
+  // re-renders the chart.
+  const latestKey = useRef<Key>(undefined);
+  const keysDrive = useRef(false);
+  const keyOfRef = useRef(keyOf);
+  useEffect(() => { keyOfRef.current = keyOf; });
+  const drive = useCallback((byKeys: boolean) => {
+    if (keysDrive.current === byKeys) return;
+    keysDrive.current = byKeys;
+    setKeyboardDriven(byKeys);
+    if (byKeys) setActiveKey(latestKey.current);
+  }, []);
+  const onChange = useCallback((point: unknown) => {
+    latestKey.current = point === undefined ? undefined : keyOfRef.current(point as Row);
+    if (keysDrive.current) setActiveKey(latestKey.current);
+  }, []);
+
   const [announcement, setAnnouncement] = useState("");
   useEffect(() => {
     const timer = setTimeout(() => setAnnouncement(text), text ? READOUT_DELAY_MS : 0);
@@ -38,14 +56,14 @@ export default function useChartReadout<Row, Key extends string | number>(
   }, [text]);
 
   return {
-    reporter: <ActivePointReporter onChange={point => setActiveKey(point === undefined ? undefined : keyOf(point as Row))} />,
+    reporter: <ActivePointReporter onChange={onChange} />,
     focusProps: {
       // The last input decides: a click then arrow keys speaks, and hover never does.
       onFocus: (event: FocusEvent) =>
-        setKeyboardDriven(event.target instanceof SVGSVGElement && event.target.matches(":focus-visible")),
-      onKeyDown: () => setKeyboardDriven(true),
-      onPointerMove: () => setKeyboardDriven(false),
-      onBlur: () => setKeyboardDriven(false),
+        drive(event.target instanceof SVGSVGElement && event.target.matches(":focus-visible")),
+      onKeyDown: () => drive(true),
+      onPointerMove: () => drive(false),
+      onBlur: () => drive(false),
     },
     // In the DOM, empty, from the first render: regions added along with their text often go unread.
     liveRegion: (

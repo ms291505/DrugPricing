@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from "@mui/material";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { ChartPrice } from "../../library/types";
 import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
 import { clipToWindow, FULL_WINDOW, type DateWindow } from "../../library/dates";
@@ -18,7 +18,8 @@ type Props = {
  * and captions each chart with its unit.
  */
 export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, renderChart, grow = false }: Props) {
-  const groups = splitByPricingUnit(clipToWindow(nadacPrices, dateWindow));
+  // Kept across renders, so each unit chart can keep what it derived from its prices.
+  const groups = useMemo(() => splitByPricingUnit(clipToWindow(nadacPrices, dateWindow)), [nadacPrices, dateWindow]);
   const isMixed = groups.length > 1;
 
   if (groups.length === 0 && nadacPrices.length > 0) {

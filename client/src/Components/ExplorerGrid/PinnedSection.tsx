@@ -1,20 +1,25 @@
 import { memo, useId, useMemo } from "react";
 import { Box, Button, Chip, Grid, Typography } from "@mui/material";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
-import { matchedPriceRange } from "../../library/explorerItems";
+import { usePinActions, usePinHighlight, usePinnedItems } from "../../Context/pinnedItemsContexts";
+import { isScaleMatched, matchedPriceRange, samePriceRanges } from "../../library/explorerItems";
+import useStableValue from "../../hooks/useStableValue";
 import PinnedItemCard from "./PinnedItemCard";
 
 /**
  * A tab's pinned items: charts made with Chart selected or pinned from auto charts. They stay as
  * they are across new searches and filter changes. Hidden until something is pinned. Memoized
- * (no props), so a search page's refine changes don't redraw every pinned chart.
+ * (no props), so a search page's refine changes don't redraw every pinned chart, and so are the
+ * cards: a change to one item, or the add highlight, redraws only that item's card.
  */
 export default memo(function PinnedSection() {
-  const { pinnedItems, setAllCollapsed } = useExplorerItems();
+  const pinnedItems = usePinnedItems();
+  const highlight = usePinHighlight();
+  const { setAllCollapsed } = usePinActions();
   const headingId = useId();
 
-  // Shared axes for the charts the user matched; each card uses them only if it is matched.
-  const priceRanges = useMemo(() => matchedPriceRange(pinnedItems), [pinnedItems]);
+  // Shared axes for the charts the user matched; each card gets them only if it is matched. Kept
+  // while the ranges are the same, so a change to an unmatched card doesn't redraw matched ones.
+  const priceRanges = useStableValue(useMemo(() => matchedPriceRange(pinnedItems), [pinnedItems]), samePriceRanges);
 
   if (pinnedItems.length === 0) return null;
 
@@ -34,7 +39,14 @@ export default memo(function PinnedSection() {
       </Typography>
       <Grid container spacing={2}>
         {pinnedItems.map((item, index) => (
-          <PinnedItemCard key={item.id} item={item} index={index} count={pinnedItems.length} priceRanges={priceRanges} />
+          <PinnedItemCard
+            key={item.id}
+            item={item}
+            isFirst={index === 0}
+            isLast={index === pinnedItems.length - 1}
+            highlight={highlight?.id === item.id ? highlight : null}
+            priceRanges={isScaleMatched(item) ? priceRanges : undefined}
+          />
         ))}
       </Grid>
     </Box>

@@ -223,6 +223,11 @@ export function chartDataBounds(item: ChartItem): DateBounds | null {
   return first <= last ? { first, last } : null;
 }
 
+/** Whether the item shares its price axis with the other matched charts ("Match scale"). Line charts only. */
+export function isScaleMatched(item: ExplorerItem): boolean {
+  return item.kind === "chart" && item.chartType === "line" && item.matchScale === true;
+}
+
 /**
  * The lowest and highest visible price per pricing unit across the line charts the user matched
  * ("Match scale"): those charts share the axis `fittedPriceAxis` builds from this range. Charts
@@ -232,7 +237,7 @@ export function chartDataBounds(item: ChartItem): DateBounds | null {
 export function matchedPriceRange(items: ExplorerItem[]): Map<string, [number, number]> {
   const ranges = new Map<string, [number, number]>();
   for (const item of items) {
-    if (item.kind !== "chart" || item.chartType !== "line" || !item.matchScale) continue;
+    if (!isScaleMatched(item)) continue;
     for (const { unit, points } of item.series) {
       for (const [time, price] of points) {
         if (!inWindow(time, item.dateWindow)) continue;
@@ -242,4 +247,14 @@ export function matchedPriceRange(items: ExplorerItem[]): Map<string, [number, n
     }
   }
   return ranges;
+}
+
+/** Whether two `matchedPriceRange` results hold the same ranges, so a card can keep the old one. */
+export function samePriceRanges(a: Map<string, [number, number]>, b: Map<string, [number, number]>): boolean {
+  if (a.size !== b.size) return false;
+  for (const [unit, [min, max]] of a) {
+    const other = b.get(unit);
+    if (!other || other[0] !== min || other[1] !== max) return false;
+  }
+  return true;
 }

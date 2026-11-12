@@ -2,7 +2,7 @@ import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import SsidChartIcon from "@mui/icons-material/SsidChart";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { createChartItem, withLoadedHistory, type ChartOrigin, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { DateWindow } from "../../library/dates";
@@ -22,7 +22,7 @@ type Props = {
 
 /** Charts the table's selected rows as a new pinned line or bar chart, which then stays as it is. */
 export default function ChartSelectedControl({ prices, history, selection, origin, dateWindow, colors }: Props) {
-  const { addItem } = useExplorerItems();
+  const { addItem } = usePinActions();
   const count = selection.ids.size;
 
   const handleChart = (chartType: ChartType) => {

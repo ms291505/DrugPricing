@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, formatItemSource, matchedPriceRange, withLoadedHistory,
+  chartDataBounds, createChartItem, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
   type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { FULL_WINDOW } from "./dates";
@@ -94,9 +94,28 @@ describe("matchedPriceRange", () => {
     expect(matchedPriceRange([lineA, lineB, unmatched]).get("each")).toEqual([5, 10]);
   });
 
+  it("matches only line charts the user matched (isScaleMatched)", () => {
+    expect([lineA, bar, make(packageA1)].map(isScaleMatched)).toEqual([true, false, false]);
+  });
+
   it("ignores prices outside each chart's window", () => {
     const spike = matched(make([...productB, { ...productB[0], nadacPerUnit: 99 }], { start: day("2025-02-01"), end: null }));
     expect(matchedPriceRange([spike]).get("each")).toEqual([5, 5]);
+  });
+});
+
+describe("samePriceRanges", () => {
+  const ranges = (...entries: [string, [number, number]][]) => new Map(entries);
+
+  it("is true for equal ranges in new maps, in any order", () => {
+    expect(samePriceRanges(ranges(["each", [1, 2]], ["milliliter", [3, 4]]), ranges(["milliliter", [3, 4]], ["each", [1, 2]]))).toBe(true);
+    expect(samePriceRanges(ranges(), ranges())).toBe(true);
+  });
+
+  it("is false when a unit or a bound differs", () => {
+    expect(samePriceRanges(ranges(["each", [1, 2]]), ranges(["each", [1, 3]]))).toBe(false);
+    expect(samePriceRanges(ranges(["each", [1, 2]]), ranges(["gram", [1, 2]]))).toBe(false);
+    expect(samePriceRanges(ranges(["each", [1, 2]]), ranges(["each", [1, 2]], ["gram", [1, 2]]))).toBe(false);
   });
 });
 
