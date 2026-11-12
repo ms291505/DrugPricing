@@ -1,7 +1,9 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useSearchContext } from "../../Context/NadacSearchContext";
+import { useMemo } from "react";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext";
+import type { NadacPrice } from "../../library/types";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
@@ -18,18 +20,28 @@ import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 import useChartWindow from "../../hooks/useChartWindow";
 
-export default function VizTools() {
-  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, selectedRows, vizData, data } = useSearchContext();
+type Props = {
+  /** The result as the page shows it (`useRefinedNadacSearch`): Add Chart's source and the colors' visible set. */
+  prices: NadacPrice[],
+}
+
+export default function VizTools({ prices }: Props) {
+  const { criteria, setCriteria, selectedRows } = useNadacSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
-  // The auto charts show the whole (clipped) result (the Drug filter only feeds Add Chart), so it
-  // is also the visible set.
-  const colors = useSeriesColors(origin.resultPrices, data);
+  const colors = useSeriesColors(origin.resultPrices, prices);
+
+  // The options come from the loaded result, so excluding a description doesn't remove it.
+  const ndcDescriptions = useMemo(
+    () => [...new Set(origin.resultPrices.map(price => price.ndcDescription))].sort(),
+    [origin.resultPrices]);
+  const selectedNdcDescriptions = ndcDescriptions.filter(
+    description => !criteria.excludedNdcDescriptions.includes(description));
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));
-    const chartData = vizData.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
+    const chartData = prices.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
     if (chartData.length === 0) return;
 
     addItem(createChartItem({
@@ -71,13 +83,16 @@ export default function VizTools() {
                 ? e.target.value.split(",")
                 : e.target.value;
 
-              setSelectedNdcDescriptions(newDescriptions);
+              setCriteria(prev => ({
+                ...prev,
+                excludedNdcDescriptions: ndcDescriptions.filter(description => !newDescriptions.includes(description)),
+              }));
             }}
           >
             {
               ndcDescriptions.map(drug => {
                 return (
-                  <MenuItem id={drug} value={drug}>{drug}</MenuItem>
+                  <MenuItem id={drug} key={drug} value={drug}>{drug}</MenuItem>
                 )
               })
             }

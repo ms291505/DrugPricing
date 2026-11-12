@@ -1,4 +1,4 @@
-import { useSearchContext } from "../Context/NadacSearchContext";
+import { useNadacSearchContext } from "../Context/NadacSearchContext";
 import type { ChartOrigin } from "../library/explorerItems";
 import { useNadacSearch } from "./useNadacSearch";
 
@@ -10,7 +10,7 @@ const EMPTY: never[] = [];
  * the chart shows.
  */
 export default function useNadacChartOrigin(): ChartOrigin {
-  const { criteria } = useSearchContext();
+  const { criteria } = useNadacSearchContext();
   const { data } = useNadacSearch();
 
   const searchLabel = criteria.ndcDescription

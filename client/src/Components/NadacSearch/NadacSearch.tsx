@@ -3,15 +3,17 @@ import TextField from "@mui/material/TextField"
 import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 import CircularProgress from "@mui/material/CircularProgress"
-import React, { useState, useEffect } from "react";
-import { useSearchContext } from "../../Context/NadacSearchContext.tsx";
+import Checkbox from "@mui/material/Checkbox"
+import FormControlLabel from "@mui/material/FormControlLabel"
+import React, { useState } from "react";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import useAppInit, { useLastAsOfDate } from "../../hooks/useAppInit.ts";
-import { fromDateInput, FULL_WINDOW, toDateInput, type ChartDates } from "../../library/dates.ts";
-import { clipNadacToSearchDates, DEFAULT_SEARCH_DATES, resolveSearchDates } from "../../library/searchCriteria.ts";
+import { fromDateInput, toDateInput, type ChartDates } from "../../library/dates.ts";
+import { DEFAULT_SEARCH_DATES, resolveSearchDates } from "../../library/searchCriteria.ts";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceContexts.ts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
@@ -19,7 +21,7 @@ import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts"
 import QueryErrorToast from "../ui/QueryErrorToast.tsx";
 
 export default function NadacSearch() {
-  const { criteria, requested, search, setData, waiting } = useSearchContext();
+  const { criteria, setCriteria, search, waiting } = useNadacSearchContext();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const [ndcDescription, setNdcDescription] = useState(criteria.ndcDescription);
@@ -57,15 +59,6 @@ export default function NadacSearch() {
   const tab = useWorkspaceTab(id);
   // Name the tab after its first search, unless the user has already named it.
   const canChangeName = tab ? tab.title === defaultTitleFor(tab.type) : false;
-
-  // The page shows the loaded result clipped to the requested dates: a narrower search for the
-  // same terms keeps what's loaded rather than fetching (`nextLoad`).
-  const requestedDates = requested?.dates ?? FULL_WINDOW;
-  useEffect(() => {
-    if (nadacSearchQuery.data?.prices) {
-      setData(clipNadacToSearchDates(nadacSearchQuery.data.prices, requestedDates));
-    }
-  }, [nadacSearchQuery.data, requestedDates, setData]);
 
   const busy = nadacSearchQuery.isLoading || waiting;
 
@@ -164,6 +157,17 @@ export default function NadacSearch() {
             slotProps={{ htmlInput: dateInputBounds }}
           />
         </Box>
+        {/* A refine field: it narrows what loaded, so it applies at once, without Search. */}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={criteria.includeOtc}
+              onChange={() => setCriteria(prev => ({ ...prev, includeOtc: !prev.includeOtc }))}
+            />
+          }
+          label="Include OTC"
+          sx={{ flexShrink: 0, mr: 0 }}
+        />
         <Button
           type="submit"
           disabled={!isValidSearch || busy}

@@ -127,11 +127,12 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   built in steps): one object per search type. *Load* fields (text terms, dates) go to the server
   on Search; *refine* fields narrow the loaded result in the client at once, never fetching.
   `nextLoad` keeps what's loaded when only the dates narrowed; `refineNadac`/`refineFda` are
-  what consumers read. Tabs hold them through `useSearchLoad`. FDA always loads sample and
+  what consumers read (`useRefinedNadacSearch`/`useRefinedFdaSearch`; the NADAC page calls its
+  hook once and passes the result down). Chart provenance, colors and the filter options read
+  the loaded result. Tabs hold them through `useSearchLoad`. FDA always loads sample and
   no-price packages and hides them by default, and both pages hide OTC by default (Include
-  boxes). As of step 1 (2026-11): FDA still loads all history (its Dates aren't a load field
-  yet), FDA has no Include OTC control, and NADAC's page reads only the date-clipped result
-  (its Drug filter feeds only Add Chart, `vizData`), not `refineNadac`.
+  boxes). As of step 2 (2026-11): FDA still loads all history (its Dates aren't a load field
+  yet) and has no Include OTC control.
 - **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
   (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.

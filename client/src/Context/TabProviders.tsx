@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
-import { NadacSearchContextProvider, useSearchContext } from "./NadacSearchContext";
+import { NadacSearchContextProvider, useNadacSearchContext } from "./NadacSearchContext";
 import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
 import { loadCollectionTabState, loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
 
@@ -73,7 +73,7 @@ function SaveFdaTab({ tabId }: { tabId: string }) {
 }
 
 function SaveNadacTab({ tabId }: { tabId: string }) {
-  const { criteria } = useSearchContext();
+  const { criteria } = useNadacSearchContext();
   const { pinnedItems, chartDates } = useExplorerItems();
 
   useEffect(() => {

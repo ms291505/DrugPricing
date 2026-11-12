@@ -36,7 +36,6 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    - The Dates control gets a **Custom** preset. Typing dates selects it. Picking another
      preset keeps the typed dates, so Custom can be switched back on.
    - Add Chart becomes **Chart selected** (Line/Bar) on the results table.
-   - NADAC's Drug filter narrows the table and the auto charts too, like FDA's filters.
    - This settles two Cleanups items, "Page Tools is cramped at 1024px" and "One Page Tools
      shell for both pages". Delete them with it.
 3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
@@ -120,13 +119,8 @@ Size: medium. One PR, or two (database + server, then client).
 
 ### For the NADAC/FDA parity plan
 
-All three are part of [plans/search-filters.md](plans/search-filters.md) (steps 2 and 3).
-Delete them with it.
+Part of [plans/search-filters.md](plans/search-filters.md) (step 3). Delete it with it.
 
-- **The NADAC page copies query results into context** (`setData` in a `useEffect` in
-  `NadacSearch`), where the FDA page derives everything from `useQuery`. Deriving would remove
-  the `data`/`setData` state and a render with stale data.
-- **Rename `SearchContext` → `NadacSearchContext`** (the TODO at the top of the file).
 - **One Page Tools shell for both pages.** `FdaPageTools` and `VizTools` share Add Chart and
   Chart dates but duplicate the panel layout, heading and section styles. Superseded by step 2
   of the usability round: one Results section on both pages.

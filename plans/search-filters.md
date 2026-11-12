@@ -1,7 +1,7 @@
 # One search-and-filter panel for NADAC and FDA
 
-Status: agreed with the author (2026-11-12). Nothing here is built. What was decided is at the
-end.
+Status: agreed with the author (2026-11-12). Steps 1 and 2 are built; step 2 also added an
+Include OTC box to the NADAC form, since NADAC now hides OTC. What was decided is at the end.
 
 ## Context
 
