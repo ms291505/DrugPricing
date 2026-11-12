@@ -28,7 +28,8 @@ export default function DrugPricingBar() {
         </Portal>
       )}
       <AppBar
-        // A paper bar in both modes: in light mode MUI's default is primary, which hides the active link.
+        // A paper bar in both modes: in light mode MUI's default is primary, which hides the
+        // active link.
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           display: { xs: "block", md: "block" },

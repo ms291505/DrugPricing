@@ -1,5 +1,4 @@
-import { createTheme, type ThemeOptions } from '@mui/material/styles';
-import { grey } from '@mui/material/colors';
+import { createTheme, type Theme, type ThemeOptions } from '@mui/material/styles';
 import type { ColorMode } from './library/settings';
 
 /*
@@ -8,7 +7,7 @@ import type { ColorMode } from './library/settings';
  * in `sx`, `theme.palette.divider` in code), never a hex value. To change the look:
  *
  * 1. Edit `COLORS`. Roles follow, since each is set from a named color below.
- * 2. If a color's job changes (a new accent, say), remap the role in `theme.palette`.
+ * 2. If a color's job changes (a new accent, say), remap the role in `darkTheme` or `lightTheme`.
  * 3. `npm test`: `chartPalette.test.ts` checks chart contrast against the cards, in both modes.
  *
  * There are two themes, picked in Settings (`colorMode`): the app's own dark theme, and MUI's
@@ -48,8 +47,8 @@ declare module '@mui/material/styles' {
 const BORDER_RADIUS = 4;
 
 /**
- * Every color in the app but the chart series (`CHART_SERIES_COLORS`), named for how it looks.
- * Only `theme` below reads these.
+ * Every color in the app but the chart series (`CHART_SERIES_COLORS`,
+ * `LIGHT_CHART_SERIES_COLORS`), named for how it looks. Only the two themes below read these.
  */
 const COLORS = {
   cyan: "#3cbcd7",
@@ -70,11 +69,20 @@ const COLORS = {
   paleLilac: "#f5f5f9",
   lilacGrey: "#dadde9",
   inkOnLight: "rgba(0, 0, 0, 0.87)",
+  // Light mode. The greys, red and green are MUI's own (`grey[50]`, `grey[200]`, `grey[600]`,
+  // `grey[800]`, and its default light `error` and `success`), kept so it still looks like MUI.
+  offWhite: "#fafafa",
+  paleGrey: "#eeeeee",
+  midGrey: "#757575",
+  graphite: "#424242",
+  red: "#d32f2f",
+  forestGreen: "#2e7d32",
 };
 
 /**
  * Dark mode chart series colors: Okabe-Ito (color-blind safe), lightened where needed and
- * extended to 10. Each is at least 3:1 against `background.paper`; `chartPalette.test.ts` checks it.
+ * extended to 10. Each is at least 3:1 against `background.paper`; `chartPalette.test.ts`
+ * checks it.
  */
 export const CHART_SERIES_COLORS = [
   "#56B4E9", // sky blue
@@ -167,9 +175,7 @@ export const darkTheme = createTheme({
 /** The highest elevation that in-page surfaces use (the app bar's); above it are overlays. */
 const MAX_FLAT_ELEVATION = 4;
 
-/** MUI's default light palette, for now, on grey surfaces. Its error and success colors mark price changes. */
-const lightBase = createTheme({ "palette": { "mode": "light" } }).palette;
-
+/** MUI's default light palette, for now, on grey surfaces. */
 export const lightTheme = createTheme({
   ...SHARED_OPTIONS,
   "palette": {
@@ -181,17 +187,18 @@ export const lightTheme = createTheme({
     },
     // Off-white cards on a grey page: softer than pure white, and the surfaces stand apart.
     "background": {
-      "default": grey[200],
-      "paper": grey[50]
+      "default": COLORS.paleGrey,
+      "paper": COLORS.offWhite
     },
     // On a light page the "inverse" surfaces are dark.
     "inverse": {
-      "main": grey[800],
-      "light": grey[800],
-      "border": grey[600],
-      "contrastText": lightBase.common.white
+      "main": COLORS.graphite,
+      "light": COLORS.graphite,
+      "border": COLORS.midGrey,
+      "contrastText": COLORS.white
     },
-    "chart": { "series": LIGHT_CHART_SERIES_COLORS, "rise": lightBase.error.main, "drop": lightBase.success.main },
+    // Rises and drops in the theme's error and success colors, as in the dark theme.
+    "chart": { "series": LIGHT_CHART_SERIES_COLORS, "rise": COLORS.red, "drop": COLORS.forestGreen },
   },
   // Flat surfaces: cards and the app bar get a thin border in place of a drop shadow. Menus,
   // popovers and dialogs (elevation 8 and up) keep their shadow, since they float over the page.
@@ -214,7 +221,7 @@ export const lightTheme = createTheme({
   },
 });
 
-export const THEMES: Record<ColorMode, typeof darkTheme> = { dark: darkTheme, light: lightTheme };
+export const THEMES: Record<ColorMode, Theme> ={ dark: darkTheme, light: lightTheme };
 
 const SERIES_PALETTES = [CHART_SERIES_COLORS, LIGHT_CHART_SERIES_COLORS];
 

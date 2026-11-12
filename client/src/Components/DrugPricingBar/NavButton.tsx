@@ -12,7 +12,8 @@ export default function NavButton({ to, children, ...props }: Props) {
       to={to}
       sx={{
         color: "text.primary",
-        // Tighter on a phone, where four links share the row with the Settings gear.
+        // Tighter on a phone, where four links share the row with the Settings gear. From `sm`
+        // up, 64px is MUI's own button min width, restored.
         minWidth: { xs: 0, sm: 64 },
         px: { xs: 0.75, sm: 1 },
         "&.active": {
