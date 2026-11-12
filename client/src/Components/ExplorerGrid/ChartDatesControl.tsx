@@ -84,8 +84,11 @@ export default function ChartDatesControl({
   if (customPreset) {
     presets.push({ key: "custom", label: "Custom", chartDates: { kind: "window", dateWindow: customWindow ?? shown } });
   }
+  // Custom was picked, which the value can't always say: picked from All, or with both dates
+  // cleared, its window is All's. Not saved, so such a tab comes back as All.
+  const [customPicked, setCustomPicked] = useState(false);
   // With Custom, any typed dates are Custom, even ones that match a preset's.
-  const activePreset = customPreset && isCustom(value) ? "custom" : activePresetKey(value, presets, bounds);
+  const activePreset = customPreset && (customPicked || isCustom(value)) ? "custom" : activePresetKey(value, presets, bounds);
 
   const shownKey = `${shown.start}|${shown.end}`;
   const [draft, setDraft] = useState(() => toDraft(shown));
@@ -131,6 +134,7 @@ export default function ChartDatesControl({
           const preset = presets.find(p => p.key === key);
           if (!preset) return;
           clearTimeout(pending.current);
+          setCustomPicked(preset.key === "custom");
           onChange(preset.chartDates);
         }}
         sx={{ flexWrap: "wrap" }}
