@@ -29,7 +29,9 @@ describe("hiddenResultsMessage", () => {
       .toEqual({ message: "2 sample packages hidden.", action: "Include sample packages" });
   });
 
-  it("offers to show all when several filters hide them", () => {
+  it("offers to clear the filters, or to show all", () => {
+    expect(hiddenResultsMessage({ kind: "clear", count: 8 }, ["package", "packages"]))
+      .toEqual({ message: "8 packages hidden by filters.", action: "Clear filters" });
     expect(hiddenResultsMessage({ kind: "all", count: 8 }, products))
       .toEqual({ message: "8 products hidden by filters.", action: "Show all" });
   });

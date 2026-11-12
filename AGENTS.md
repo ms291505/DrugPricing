@@ -77,7 +77,7 @@ supporting UI. Each search page is its panel (`*SearchPanel`), its results (`*Re
 ### Result tables
 
 Each table is one file in `ResultTables/` that takes its search's data and `loading` as props,
-lists its columns, and renders `ResultTable` (paging, the selection Chart selected charts).
+lists its columns, and renders `ResultTable` (paging, and the selection that Chart selected charts).
 `ResultsSection` gives it its `Paper`. Rows are built in `library/resultRows.ts` (tested): each
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and

@@ -281,10 +281,12 @@ export function nadacFilterOptions(prices: NadacPrice[], criteria: NadacCriteria
 /**
  * What the refine fields hide, in rows of the results table (NDCs on NADAC; products or packages
  * on FDA, by detail level). `byInclude` has, for each of the page's Include boxes, the rows
- * ticking it would add (0 while it's ticked); `total`, the rows that showing everything would add.
+ * ticking it would add (0 while it's ticked); `byClearing`, the rows that "Clear filters" (every
+ * refine field back to its default) would add; `total`, the rows that showing everything would add.
  */
 export type HiddenCounts = {
   byInclude: Partial<Record<IncludeKey, number>>,
+  byClearing: number,
   total: number,
 };
 
@@ -298,6 +300,7 @@ export function nadacHiddenCounts(prices: NadacPrice[], refined: NadacPrice[], c
   const added = (wider: NadacCriteria) => ndcCount(refineNadac(prices, wider, dates)) - shown;
   return {
     byInclude: { includeOtc: criteria.includeOtc ? 0 : added({ ...criteria, includeOtc: true }) },
+    byClearing: added(clearNadacRefine(criteria)),
     total: added(showAllNadac(criteria)),
   };
 }
@@ -306,14 +309,22 @@ export function nadacHiddenCounts(prices: NadacPrice[], refined: NadacPrice[], c
 export type HiddenResultsHint =
   /** One Include box would show them all. */
   | { kind: "include", key: IncludeKey, count: number }
-  /** Several fields hide them: "Show all" sets every refine field to show everything. */
+  /** Fields the user set hide them: "Clear filters" shows the `count` the defaults show. */
+  | { kind: "clear", count: number }
+  /** The defaults hide them too: "Show all" sets every refine field to show everything. */
   | { kind: "all", count: number };
 
-/** The hint for a page that shows nothing, or null when nothing is hidden either. */
+/**
+ * The hint for a page that shows nothing, or null when nothing is hidden either. Clearing comes
+ * before showing everything, so a filter the user set doesn't bring back what the defaults hide
+ * (OTC) along with what it hid.
+ */
 export function hiddenResultsHint(hidden: HiddenCounts): HiddenResultsHint | null {
   if (hidden.total === 0) return null;
   const key = (Object.keys(hidden.byInclude) as IncludeKey[]).find(k => hidden.byInclude[k] === hidden.total);
-  return key ? { kind: "include", key, count: hidden.total } : { kind: "all", count: hidden.total };
+  if (key) return { kind: "include", key, count: hidden.total };
+  if (hidden.byClearing > 0) return { kind: "clear", count: hidden.byClearing };
+  return { kind: "all", count: hidden.total };
 }
 
 /**
@@ -400,7 +411,8 @@ export const fdaRowCount = (result: FdaProductSearchResult, level: FdaResultDeta
     ? result.products.length
     : result.products.reduce((count, product) => count + product.fdaPackageDetails.length, 0);
 
-const FDA_INCLUDE_KEYS: readonly IncludeKey[] = ["includeOtc", "includeSamplePackages", "includeResultsWithoutPrices"];
+/** FDA's Include boxes, in the panel's order. */
+export const FDA_INCLUDE_KEYS: readonly IncludeKey[] = ["includeOtc", "includeSamplePackages", "includeResultsWithoutPrices"];
 
 /** @param refined - `refineFda(result, criteria, dates)`, which the caller already has */
 export function fdaHiddenCounts(
@@ -412,6 +424,7 @@ export function fdaHiddenCounts(
   return {
     byInclude: Object.fromEntries(FDA_INCLUDE_KEYS.map(key =>
       [key, criteria[key] ? 0 : added({ ...criteria, [key]: true })])),
+    byClearing: added(clearFdaRefine(criteria)),
     total: added(showAllFda(criteria)),
   };
 }

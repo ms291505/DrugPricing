@@ -11,8 +11,10 @@ Step 3, as built (2026-11-12):
   (`fdaShownDates`). `snapToAsOfDates` now reaches at most 6 days, on both pages, so an NDC last
   priced months before the start no longer pulls the start back after a narrowing.
 - **Hidden counts are table rows**: NDCs on NADAC; products or packages on FDA, by detail level.
-  The empty result's several-filters action is **Show all** (every refine field set to show
-  everything, `showAll*`), not Clear filters: clearing re-hides OTC, so it wouldn't show them.
+  When the filters hide every result, the empty table offers one Include box when it alone
+  would show them all, else **Clear filters** when the defaults would show some ("8 packages
+  hidden by filters", without the OTC the defaults hide), else **Show all** (every refine field
+  set to show everything, `showAll*`).
 - **New charts keep every loaded date of their series** (`withLoadedHistory`), as "Dates" above
   says: after a narrowing that didn't fetch, a pin is no longer marked "filtered" for the dates.
   A price-change card's full history is the search's dates, which is what it shows.

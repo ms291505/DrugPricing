@@ -8,7 +8,7 @@ import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 import { fdaPackagePrices, flagPriceChanges } from "../../library/flagNadacPriceChange";
-import { fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
+import { clearFdaRefine, fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
 import { countMessage, foundMessage, type Noun } from "../../library/searchToasts";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
@@ -75,7 +75,8 @@ export default memo(function FdaResults({ view }: Props) {
         ? <HiddenResultsNotice
           hint={hint}
           noun={noun}
-          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true } : showAllFda(prev))}
+          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
+            : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
         />
         : null}
       table={fdaResultDetailLevel === "product"

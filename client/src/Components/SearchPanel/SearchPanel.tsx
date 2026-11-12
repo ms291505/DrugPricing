@@ -45,7 +45,7 @@ export default function SearchPanel({
         e.preventDefault();
         if (canSearch && !busy) onSearch();
       }}
-      sx={{ display: "flex", flexDirection: "column", gap: 2, p: 2, width: "100%" }}
+      sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.5, sm: 2 }, p: { xs: 1.5, sm: 2 }, width: "100%" }}
     >
       <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, alignItems: { sm: "center" } }}>
         {terms}
@@ -58,9 +58,9 @@ export default function SearchPanel({
           {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
         </Button>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: { xs: 1, sm: 2 } }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>{dates}</Box>
-        <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>{refine}</Box>
+        <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 1 } }}>{refine}</Box>
       </Box>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

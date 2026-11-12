@@ -239,6 +239,13 @@ describe("NADAC filter options and hidden counts", () => {
     expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" }).total).toBe(4);
     expect(hidden(showAllNadac(createNadacCriteria())).total).toBe(0);
   });
+
+  it("counts what clearing the filters would add, which leaves OTC hidden", () => {
+    expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" }).byClearing).toBe(2);
+    expect(hidden(createNadacCriteria()).byClearing).toBe(0);
+    // Clearing unticks Include OTC, so it can show fewer than now.
+    expect(hidden({ ...createNadacCriteria(), includeOtc: true }).byClearing).toBe(-2);
+  });
 });
 
 describe("refineFda", () => {
@@ -336,26 +343,33 @@ describe("FDA filter options and hidden counts", () => {
 
   it("counts the rows each Include box would add, at the table's detail level", () => {
     expect(hidden(createFdaCriteria(), "product")).toEqual({
-      byInclude: { includeOtc: 1, includeSamplePackages: 0, includeResultsWithoutPrices: 1 }, total: 2,
+      byInclude: { includeOtc: 1, includeSamplePackages: 0, includeResultsWithoutPrices: 1 }, byClearing: 0, total: 2,
     });
     expect(hidden(createFdaCriteria(), "package")).toEqual({
-      byInclude: { includeOtc: 1, includeSamplePackages: 1, includeResultsWithoutPrices: 2 }, total: 4,
+      byInclude: { includeOtc: 1, includeSamplePackages: 1, includeResultsWithoutPrices: 2 }, byClearing: 0, total: 4,
     });
+    expect(hidden({ ...createFdaCriteria(), excludedLabelers: ["A LABS", "B LABS"] }, "product").byClearing).toBe(2);
     expect(hidden({ ...createFdaCriteria(), includeOtc: true }, "product").byInclude.includeOtc).toBe(0);
   });
 });
 
 describe("hiddenResultsHint", () => {
   it("names the one Include box that shows every hidden result", () => {
-    expect(hiddenResultsHint({ byInclude: { includeOtc: 12 }, total: 12 }))
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 12 }, byClearing: 0, total: 12 }))
       .toEqual({ kind: "include", key: "includeOtc", count: 12 });
-    expect(hiddenResultsHint({ byInclude: { includeOtc: 0, includeResultsWithoutPrices: 3 }, total: 3 }))
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 0, includeResultsWithoutPrices: 3 }, byClearing: 0, total: 3 }))
       .toEqual({ kind: "include", key: "includeResultsWithoutPrices", count: 3 });
   });
 
-  it("offers to show all when no one box would, and nothing when nothing is hidden", () => {
-    expect(hiddenResultsHint({ byInclude: { includeOtc: 5 }, total: 8 })).toEqual({ kind: "all", count: 8 });
-    expect(hiddenResultsHint({ byInclude: { includeOtc: 0 }, total: 0 })).toBeNull();
+  it("offers to clear the filters when the defaults would show something, without the OTC they hide", () => {
+    // loratadine with Brand: Brand hides 8 Rx packages, and the defaults 66 OTC ones.
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 0 }, byClearing: 8, total: 74 })).toEqual({ kind: "clear", count: 8 });
+  });
+
+  it("offers to show all when the defaults hide everything too, and nothing when nothing is hidden", () => {
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 5 }, byClearing: 0, total: 8 })).toEqual({ kind: "all", count: 8 });
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 5 }, byClearing: -3, total: 8 })).toEqual({ kind: "all", count: 8 });
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 0 }, byClearing: 0, total: 0 })).toBeNull();
   });
 });
 

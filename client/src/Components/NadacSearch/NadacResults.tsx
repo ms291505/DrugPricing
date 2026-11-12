@@ -6,7 +6,7 @@ import useSeriesColors from "../../hooks/useSeriesColors";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { flagPriceChanges, nadacPackagePrices } from "../../library/flagNadacPriceChange";
-import { hiddenResultsHint, showAllNadac } from "../../library/searchCriteria";
+import { clearNadacRefine, hiddenResultsHint, showAllNadac } from "../../library/searchCriteria";
 import { countMessage, foundMessage, type Noun } from "../../library/searchToasts";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
@@ -57,7 +57,8 @@ export default memo(function NadacResults({ view }: Props) {
         ? <HiddenResultsNotice
           hint={hint}
           noun={PACKAGES}
-          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true } : showAllNadac(prev))}
+          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
+            : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
         />
         : null}
       table={<NadacResultTable nadacPrices={prices} loading={isLoading} />}

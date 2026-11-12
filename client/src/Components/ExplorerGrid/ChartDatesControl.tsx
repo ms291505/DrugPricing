@@ -8,6 +8,8 @@ import {
 type Preset = {
   key: string,
   label: string,
+  /** Shown instead of `label` on phones, so the presets fit on one row. */
+  shortLabel?: string,
   chartDates: ChartDates,
 };
 
@@ -31,9 +33,9 @@ type Props = {
 }
 
 const RECENT_PRESETS = [
-  { months: 12, label: "Last year" },
-  { months: 6, label: "6 months" },
-  { months: 3, label: "3 months" },
+  { months: 12, label: "Last year", shortLabel: "1 yr" },
+  { months: 6, label: "6 months", shortLabel: "6 mo" },
+  { months: 3, label: "3 months", shortLabel: "3 mo" },
 ];
 
 const sameWindow = (a: DateWindow, b: DateWindow) => a.start === b.start && a.end === b.end;
@@ -66,7 +68,7 @@ export default function ChartDatesControl({
     { key: "all", label: "All", chartDates: ALL_DATES },
     // "Recent" needs data to count back from.
     ...(bounds
-      ? RECENT_PRESETS.map(({ months, label }) => ({ key: `recent-${months}`, label, chartDates: { kind: "recent", months } as const }))
+      ? RECENT_PRESETS.map(({ months, label, shortLabel }) => ({ key: `recent-${months}`, label, shortLabel, chartDates: { kind: "recent", months } as const }))
       : []),
   ];
   // The inputs show the dates the value means for this data, and hold what was typed until it
@@ -105,7 +107,7 @@ export default function ChartDatesControl({
 
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Box>
+      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
         <Typography variant="subtitle2" id={labelId}>{label}</Typography>
         {caption ? <Typography variant="caption" color="text.secondary">{caption}</Typography> : null}
       </Box>
@@ -120,8 +122,13 @@ export default function ChartDatesControl({
         sx={{ flexWrap: "wrap" }}
       >
         {presets.map(preset => (
-          <ToggleButton key={preset.key} value={preset.key} sx={{ px: 1, py: 0.25 }}>
-            {preset.label}
+          <ToggleButton key={preset.key} value={preset.key} aria-label={preset.label} sx={{ px: 1, py: 0.25 }}>
+            {preset.shortLabel
+              ? <>
+                <Box component="span" aria-hidden sx={{ display: { xs: "inline", sm: "none" } }}>{preset.shortLabel}</Box>
+                <Box component="span" aria-hidden sx={{ display: { xs: "none", sm: "inline" } }}>{preset.label}</Box>
+              </>
+              : preset.label}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>

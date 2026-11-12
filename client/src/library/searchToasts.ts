@@ -44,5 +44,8 @@ export function hiddenResultsMessage(hint: HiddenResultsHint, noun: Noun): { mes
   if (hint.kind === "include") {
     return { message: `${hiddenPhrase(hint.key, hint.count, noun)} hidden.`, action: INCLUDE_LABELS[hint.key] };
   }
-  return { message: `${hint.count} ${nounFor(hint.count, noun)} hidden by filters.`, action: "Show all" };
+  return {
+    message: `${hint.count} ${nounFor(hint.count, noun)} hidden by filters.`,
+    action: hint.kind === "clear" ? "Clear filters" : "Show all",
+  };
 }

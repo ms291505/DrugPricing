@@ -6,13 +6,11 @@ import useMobile from "../../hooks/useMobile";
 import useRenameAfterSearch from "../../hooks/useRenameAfterSearch";
 import type { ChartDates } from "../../library/dates";
 import {
-  clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, isValidFdaSearch,
-  type FdaExclusionKey, type IncludeKey,
+  clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, isValidFdaSearch,
+  type FdaExclusionKey,
 } from "../../library/searchCriteria";
 import { INCLUDE_LABELS } from "../../library/searchToasts";
 import SearchPanel, { DatesField, ExclusionSelect, IncludeCheckbox } from "../SearchPanel";
-
-const INCLUDE_KEYS: IncludeKey[] = ["includeOtc", "includeSamplePackages", "includeResultsWithoutPrices"];
 
 /** The "More filters" lists, in order. */
 const LISTS: { key: FdaExclusionKey, label: string, noun: string }[] = [
@@ -59,7 +57,7 @@ export default function FdaSearchPanel({ view }: Props) {
           value={proprietaryName} onChange={(e) => setProprietaryName(e.target.value)} sx={{ flex: 1, minWidth: 0 }} />
       }
       dates={<DatesField value={dates} onChange={setDates} />}
-      refine={INCLUDE_KEYS.map(key => (
+      refine={FDA_INCLUDE_KEYS.map(key => (
         <IncludeCheckbox
           key={key}
           label={INCLUDE_LABELS[key]}
