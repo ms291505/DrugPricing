@@ -243,3 +243,13 @@ export function matchedPriceRange(items: ExplorerItem[]): Map<string, [number, n
   }
   return ranges;
 }
+
+/** Whether two `matchedPriceRange` results hold the same ranges, so a card can keep the old one. */
+export function samePriceRanges(a: Map<string, [number, number]>, b: Map<string, [number, number]>): boolean {
+  if (a.size !== b.size) return false;
+  for (const [unit, [min, max]] of a) {
+    const other = b.get(unit);
+    if (!other || other[0] !== min || other[1] !== max) return false;
+  }
+  return true;
+}

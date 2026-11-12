@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { memo, useEffect, useId, useRef, useState } from "react";
 import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -8,7 +8,7 @@ import WidthNormalIcon from "@mui/icons-material/WidthNormal";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { usePinActions, type PinHighlight } from "../../Context/pinnedItemsContexts";
 import { formatItemSource, itemTitle, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
@@ -17,23 +17,26 @@ import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   item: ExplorerItem,
-  index: number,
-  count: number,
-  /** Shared price range per pricing unit across the matched line charts ("Match scale"). */
+  isFirst: boolean,
+  isLast: boolean,
+  /** Set while this item is the one just added. */
+  highlight: PinHighlight | null,
+  /** Shared price range per pricing unit across the matched line charts ("Match scale"). Matched line charts only. */
   priceRanges?: Map<string, [number, number]>,
 }
 
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export default function PinnedItemCard({ item, index, count, priceRanges }: Props) {
-  const { updateItem, removeItem, moveItem, highlight } = useExplorerItems();
+/** A pinned item's card. Memoized: its props change only when its own item does. */
+export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, priceRanges }: Props) {
+  const { updateItem, removeItem, moveItem } = usePinActions();
   const title = itemTitle(item);
   const isFull = item.layout.width === "full";
 
   const cardRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const highlighted = highlight?.id === item.id;
-  const focusOnAdd = highlighted && highlight.focus;
+  const highlighted = highlight !== null;
+  const focusOnAdd = highlight?.focus ?? false;
 
   // Add Chart feedback: bring the new card into view and move focus to its heading,
   // so keyboard and screen-reader users land on what they just created.
@@ -72,11 +75,11 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
         </IconButton>
       </Tooltip>
       <Menu id={menuId} anchorEl={menuAnchor} open={menuAnchor !== null} onClose={closeMenu}>
-        <MenuItem disabled={index === 0} onClick={runAndClose(() => moveItem(item.id, -1))}>
+        <MenuItem disabled={isFirst} onClick={runAndClose(() => moveItem(item.id, -1))}>
           <ListItemIcon><ArrowUpwardIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Move up</ListItemText>
         </MenuItem>
-        <MenuItem disabled={index === count - 1} onClick={runAndClose(() => moveItem(item.id, 1))}>
+        <MenuItem disabled={isLast} onClick={runAndClose(() => moveItem(item.id, 1))}>
           <ListItemIcon><ArrowDownwardIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Move down</ListItemText>
         </MenuItem>
@@ -140,8 +143,8 @@ export default function PinnedItemCard({ item, index, count, priceRanges }: Prop
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed: boolean) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={matched ? priceRanges : undefined} /> : null}
+        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={priceRanges} /> : null}
       </ExplorerGridItem>
     </Grid>
   );
-}
+})

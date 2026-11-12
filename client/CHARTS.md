@@ -8,11 +8,22 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 - *System* items (the results table, auto charts, price-change charts) are derived from the
   current search on every render and never stored.
-- *Pinned* items are snapshots in `ExplorerItemsContext` (one provider per tab, wired in
+- *Pinned* items are snapshots held by `PinnedItemsProvider` (one per tab, wired in
   `TabProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
   touch them. Don't clear them on search, and don't write system charts into them. The Pinned
   section sits on the page below the results (`PinnedSection`, `memo`'d), whatever the search
   state, so pins show while a search is missing, loading, or failing.
+- **A change to one pinned item redraws only its card.** The provider splits into three contexts
+  (`Context/pinnedItemsContexts.ts`): the items (`usePinnedItems`, for the section and the tab
+  save), the actions (`usePinActions`, stable) and the add highlight (`usePinHighlight`).
+  `PinnedSection` passes each card its own `highlight`, and the shared Match scale ranges only to
+  matched cards, kept while unchanged (`useStableValue` with `samePriceRanges`). `PinnedItemCard`
+  and `ChartItemBody` are `memo`'d, and the provider keeps the identity of every item it doesn't
+  change. A pinned chart is drawn once it comes within a screen of the viewport
+  (`useNearViewport`) and kept after.
+- **Hover doesn't re-render a chart.** `useChartReadout` keeps the pointer's active point in refs
+  and copies it to state only while the arrow keys drive it (for the screen-reader readout).
+  `LineViz` and `UnitSplit` memoize what they derive from their prices.
 - An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
   today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
   `points: [ms, price][]`), plain JSON so it persists. `fromChartSeries` turns it back into

@@ -12,14 +12,9 @@ Goal: make the core flow usable (search, results table, chart and compare) befor
 anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
 `dev` in this order:
 
-1. **Pinned-chart performance.** It hurts when hovering and scrolling, and with many tabs. Profile
-   first (3 tabs × about 10 pins), then:
-   - split `ExplorerItemsContext` into narrow contexts, and `memo` the pinned cards (the 2s add
-     highlight re-renders every pinned chart today; the page's chart dates left it in
-     search-filters step 3, and `PinnedSection` is `memo`'d). Name the new contexts for their jobs;
-   - memoize each chart's derived data;
-   - debounce the tab-state saves, which stringify every pin's full history on each change;
-   - mount charts only near the viewport.
+1. **Pinned-chart performance.** Built (2026-11-12): narrow pinned-item contexts, `memo`'d
+   cards and charts, hover kept out of React state, and charts drawn only near the viewport. Tab
+   saves stay undebounced: a 10-pin tab with two years of prices stringifies in about 1 ms.
 2. **A Results section replaces Page Tools on both pages.** Built as step 3 of
    [plans/search-filters.md](plans/search-filters.md) (2026-11-12): the search panel holds Dates
    (with Custom) and the filters, and the Results section the table, Chart selected and the auto
@@ -48,7 +43,7 @@ Pinned, with price changes flagged the same way. No server changes.
 
 Size: large. Four PRs to `dev`, listed in the plan; steps 1–3 are built (step 3 also did most
 of step 4's docs). It absorbed step 2 of the usability round. Pinned-chart performance (step 1
-of the usability round) was moved after step 3 (author, 2026-11-12).
+of the usability round) was moved after step 3 (author, 2026-11-12) and is built.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 

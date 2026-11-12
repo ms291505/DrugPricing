@@ -3,12 +3,12 @@ import PinnedSection from "../ExplorerGrid/PinnedSection";
 import { useWorkspaceActions } from "../../Context/workspaceContexts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { useEffect } from "react";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { usePinActions } from "../../Context/pinnedItemsContexts";
 
 export default function Collection() {
   const { registerTab } = useWorkspaceActions();
   const { id: tabId } = useTabInstanceContext();
-  const { addItem } = useExplorerItems();
+  const { addItem } = usePinActions();
   useEffect(
     () => registerTab(tabId, item => addItem(item)),
     [tabId, registerTab, addItem]

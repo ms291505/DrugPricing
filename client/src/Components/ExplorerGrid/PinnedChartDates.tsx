@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { Box, Button, Chip, Popover, Tooltip } from "@mui/material";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { chartDataBounds, type ChartItem } from "../../library/explorerItems";
 import { formatWindow, resolveChartDates, windowAround } from "../../library/dates";
 import { PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
@@ -21,7 +21,7 @@ type Props = {
  * never changes, so presets are stored as the fixed dates they mean for it.
  */
 export default function PinnedChartDates({ item, title, anchor, onOpen, onClose }: Props) {
-  const { updateItem } = useExplorerItems();
+  const { updateItem } = usePinActions();
   const dialogId = useId();
   const open = anchor !== null;
 

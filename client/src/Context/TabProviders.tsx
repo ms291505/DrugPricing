@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { FdaSearchContextProvider, useFdaSearchContext } from "./FdaSearchContext";
 import { NadacSearchContextProvider, useNadacSearchContext } from "./NadacSearchContext";
-import { ExplorerItemsProvider, useExplorerItems } from "./ExplorerItemsContext";
+import { PinnedItemsProvider } from "./PinnedItemsProvider";
+import { usePinnedItems } from "./pinnedItemsContexts";
 import { loadCollectionTabState, loadFdaTabState, loadNadacTabState, saveTabState } from "../library/persist";
 
 // Each search tab gets its own page context plus its own pinned items, restored from and saved
@@ -18,10 +19,10 @@ export const FdaTabProvider = ({ children, tabId, active = true }: TabProviderPr
   const [saved] = useState(() => loadFdaTabState(tabId));
   return (
     <FdaSearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
-      <ExplorerItemsProvider initial={saved ?? undefined}>
+      <PinnedItemsProvider initial={saved ?? undefined}>
         <SaveFdaTab tabId={tabId} />
         {children}
-      </ExplorerItemsProvider>
+      </PinnedItemsProvider>
     </FdaSearchContextProvider>
   );
 };
@@ -30,10 +31,10 @@ export const NadacTabProvider = ({ children, tabId, active = true }: TabProvider
   const [saved] = useState(() => loadNadacTabState(tabId));
   return (
     <NadacSearchContextProvider initial={saved ?? undefined} searchEnabled={active}>
-      <ExplorerItemsProvider initial={saved ?? undefined}>
+      <PinnedItemsProvider initial={saved ?? undefined}>
         <SaveNadacTab tabId={tabId} />
         {children}
-      </ExplorerItemsProvider>
+      </PinnedItemsProvider>
     </NadacSearchContextProvider>
   );
 };
@@ -41,23 +42,23 @@ export const NadacTabProvider = ({ children, tabId, active = true }: TabProvider
 export const CollectionTabProvider = ({ children, tabId }: TabProviderProps) => {
   const [saved] = useState(() => loadCollectionTabState(tabId));
   return (
-    <ExplorerItemsProvider initial={saved ?? undefined}>
+    <PinnedItemsProvider initial={saved ?? undefined}>
       <SaveCollectionTab tabId={tabId} />
       {children}
-    </ExplorerItemsProvider>
+    </PinnedItemsProvider>
   )
 }
 
 /** A tab that hasn't chosen a search type yet: nothing to restore or save. */
 export const BlankTabProvider = ({ children }: TabProviderProps) => (
   <FdaSearchContextProvider>
-    <ExplorerItemsProvider>{children}</ExplorerItemsProvider>
+    <PinnedItemsProvider>{children}</PinnedItemsProvider>
   </FdaSearchContextProvider>
 );
 
 function SaveFdaTab({ tabId }: { tabId: string }) {
   const { criteria, fdaResultDetailLevel } = useFdaSearchContext();
-  const { pinnedItems } = useExplorerItems();
+  const pinnedItems = usePinnedItems();
 
   useEffect(() => {
     saveTabState(tabId, { type: "fda", criteria, detailLevel: fdaResultDetailLevel, pinnedItems });
@@ -68,7 +69,7 @@ function SaveFdaTab({ tabId }: { tabId: string }) {
 
 function SaveNadacTab({ tabId }: { tabId: string }) {
   const { criteria } = useNadacSearchContext();
-  const { pinnedItems } = useExplorerItems();
+  const pinnedItems = usePinnedItems();
 
   useEffect(() => {
     saveTabState(tabId, { type: "nadac", criteria, pinnedItems });
@@ -78,7 +79,7 @@ function SaveNadacTab({ tabId }: { tabId: string }) {
 }
 
 function SaveCollectionTab({ tabId }: { tabId: string }) {
-  const { pinnedItems } = useExplorerItems();
+  const pinnedItems = usePinnedItems();
 
   useEffect(() => {
     saveTabState(tabId, { type: "collection", pinnedItems });

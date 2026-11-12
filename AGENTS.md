@@ -128,7 +128,9 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **Price axes may exaggerate a change at most `MAX_AXIS_EXAGGERATION` times** (`fittedPriceAxis`);
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items
-  (derived from the search) are never stored. Details in [client/CHARTS.md](client/CHARTS.md).
+  (derived from the search) are never stored. A change to one redraws only its card: read the
+  narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
+  [client/CHARTS.md](client/CHARTS.md).
 - **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`): one
   object per search type, edited in one panel per page (`SearchPanel`). *Load* fields (text
   terms, Dates) go to the server on Search; *refine* fields narrow the loaded result in the

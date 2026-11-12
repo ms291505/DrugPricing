@@ -1,7 +1,7 @@
 import { IconButton, Tooltip } from "@mui/material";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
-import { useExplorerItems } from "../../Context/ExplorerItemsContext";
+import { usePinActions } from "../../Context/pinnedItemsContexts";
 import {
   createChartItem, withLoadedHistory, type ChartChangeSpan, type ChartOrigin, type ChartType,
 } from "../../library/explorerItems";
@@ -29,7 +29,7 @@ type Props = {
  * which then survives new searches and filter changes.
  */
 export default function PinButton({ title, chartType, prices, history, origin, dateWindow, changeSpan, colors, barValue }: Props) {
-  const { addItem } = useExplorerItems();
+  const { addItem } = usePinActions();
 
   const handlePin = () => {
     addItem(createChartItem({
