@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
-  fdaActiveFilterCount, fdaLoadRequest, nadacActiveFilterCount, nadacLoadRequest, nextLoad, refineFda, refineNadac,
+  fdaActiveFilterCount, fdaLoadRequest, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenOtcCount,
+  nadacLoadRequest, nextLoad, refineFda, refineNadac,
   resolveSearchDates, snapToAsOfDates,
   type FdaCriteria, type NadacLoad,
 } from "./searchCriteria";
@@ -183,6 +184,35 @@ describe("refineNadac", () => {
 
   it("returns nothing for an empty result", () => {
     expect(refineNadac([], createNadacCriteria(), FULL_WINDOW)).toEqual([]);
+  });
+});
+
+describe("NADAC filter options and hidden OTC", () => {
+  const prices = [
+    nadacPrice("1", "2026-01-07", { ndcDescription: "B DRUG" }),
+    nadacPrice("2", "2026-01-14", { ndcDescription: "OTC DRUG", isOtc: true }),
+    nadacPrice("3", "2026-01-14", { ndcDescription: "A DRUG", pricingUnit: "gram" }),
+    nadacPrice("4", "2026-01-14", { ndcDescription: "OTC DRUG", isOtc: true }),
+  ];
+
+  it("lists what the page could show, sorted, before exclusions", () => {
+    const excluding = { ...createNadacCriteria(), excludedNdcDescriptions: ["A DRUG"], excludedUnits: ["gram"] };
+    expect(nadacFilterOptions(prices, excluding, FULL_WINDOW))
+      .toEqual({ ndcDescriptions: ["A DRUG", "B DRUG"], units: ["each", "gram"] });
+  });
+
+  it("lists OTC values only while OTC is included, and only values inside the dates", () => {
+    const withOtc = { ...createNadacCriteria(), includeOtc: true };
+    expect(nadacFilterOptions(prices, withOtc, FULL_WINDOW).ndcDescriptions).toEqual(["A DRUG", "B DRUG", "OTC DRUG"]);
+    expect(nadacFilterOptions(prices, withOtc, { start: day("2026-01-14"), end: null }).ndcDescriptions)
+      .toEqual(["A DRUG", "OTC DRUG"]);
+  });
+
+  it("counts the OTC NDCs that Include OTC would add, after the other filters", () => {
+    expect(nadacHiddenOtcCount(prices, createNadacCriteria(), FULL_WINDOW)).toBe(2);
+    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), includeOtc: true }, FULL_WINDOW)).toBe(0);
+    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), excludedNdcDescriptions: ["OTC DRUG"] }, FULL_WINDOW)).toBe(0);
+    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), brandGeneric: "brand" }, FULL_WINDOW)).toBe(0);
   });
 });
 

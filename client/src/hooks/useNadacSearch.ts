@@ -4,10 +4,20 @@ import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
 import { CONSTANT } from "../library/constants";
 import { FULL_WINDOW } from "../library/dates";
-import { refineNadac } from "../library/searchCriteria";
+import { nadacFilterOptions, nadacHiddenOtcCount, refineNadac } from "../library/searchCriteria";
 import type { NadacPrice } from "../library/types";
 
 const EMPTY: NadacPrice[] = [];
+
+/** The NADAC result as the page shows it, and what its filters need to say about it. */
+export type NadacResultView = {
+  /** `refineNadac` of the loaded result: what every consumer of the page's results reads. */
+  prices: NadacPrice[],
+  /** The Drug filter's options (`nadacFilterOptions`). */
+  ndcDescriptions: string[],
+  /** NDCs the Include OTC box hides (`nadacHiddenOtcCount`). */
+  hiddenOtcCount: number,
+};
 
 /** The tab's loaded NADAC result: everything `loaded` asked for, before it's clipped or refined. */
 export function useNadacSearch() {
@@ -22,17 +32,17 @@ export function useNadacSearch() {
 
 /**
  * The loaded NADAC result as the page shows it (`refineNadac`: clipped to the search's dates,
- * then filtered), with the query it came from. Call it once per page and pass `refined` down:
- * every consumer of the page's results reads it. Chart provenance and colors read the loaded
- * result (`useNadacChartOrigin`).
+ * then filtered), with its filter options and hidden count. Call it once per page and pass it
+ * down. Chart provenance and colors read the loaded result (`useNadacChartOrigin`).
  */
-export function useRefinedNadacSearch() {
-  const query = useNadacSearch();
+export function useRefinedNadacSearch(): NadacResultView {
+  const { data } = useNadacSearch();
   const { criteria, requested } = useNadacSearchContext();
   const dates = requested?.dates ?? FULL_WINDOW;
-  const prices = query.data?.prices;
-  const refined = useMemo(
-    () => prices ? refineNadac(prices, criteria, dates) : EMPTY,
-    [prices, criteria, dates]);
-  return { query, refined };
+  const prices = data?.prices ?? EMPTY;
+  return useMemo(() => ({
+    prices: refineNadac(prices, criteria, dates),
+    ndcDescriptions: nadacFilterOptions(prices, criteria, dates).ndcDescriptions,
+    hiddenOtcCount: nadacHiddenOtcCount(prices, criteria, dates),
+  }), [prices, criteria, dates]);
 }

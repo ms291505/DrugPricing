@@ -5,7 +5,7 @@ import Grid from "@mui/material/Grid";
 import { NadacResultTable } from "../ResultTables";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
-import { useRefinedNadacSearch } from "../../hooks/useNadacSearch";
+import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
 import { shouldAutoChart } from "../../library/chartSeries";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
@@ -24,13 +24,19 @@ import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { countMessage } from "../../library/searchToasts";
 
-// Memoized (it takes no props) so the search form's keystrokes and changes to the workspace's
-// tab list, such as a rename after a search, don't re-render every NADAC tab's results.
-export default memo(function NadacSearchViz() {
+type Props = {
+  /** The result as the page shows it (`useRefinedNadacSearch`). */
+  view: NadacResultView,
+};
 
-  // The result as the page shows it: clipped to the search's dates and refined. The table, auto
-  // charts, price changes, Add Chart and both toasts all read it.
-  const { query: { isLoading, isSuccess, dataUpdatedAt }, refined: prices } = useRefinedNadacSearch();
+// Memoized (its one prop is memoized) so the search form's keystrokes and changes to the
+// workspace's tab list, such as a rename after a search, don't re-render every NADAC tab's results.
+export default memo(function NadacSearchViz({ view }: Props) {
+
+  const { isLoading, isSuccess, dataUpdatedAt } = useNadacSearch();
+  // Clipped to the search's dates and refined. The table, auto charts, price changes, Add Chart
+  // and both toasts all read it.
+  const { prices } = view;
   const { lastSearch } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
   const origin = useNadacChartOrigin();
@@ -62,7 +68,7 @@ export default memo(function NadacSearchViz() {
     >
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <VizTools prices={prices} />
+          <VizTools prices={prices} ndcDescriptions={view.ndcDescriptions} />
         </Grid>
         <Grid size={{ xs: 12, sm: 9 }}>
           <Paper sx={{ p: 1 }}>

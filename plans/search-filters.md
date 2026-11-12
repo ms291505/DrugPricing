@@ -227,7 +227,10 @@ Each step is a PR to `dev` that leaves the app working.
    provider or `ResultsSection`) instead of in each of `useRefinedFdaSearch`'s three callers;
    and decide whether FDA's clip snaps the start down to an as-of date like NADAC's
    (`clipNadacToSearchDates`). FDA's server filters prices strictly (`AsOfDate >= start`), so
-   without a snap its first shown week can start after the start date.
+   without a snap its first shown week can start after the start date. From step 2's review:
+   FDA's from-results lists (labeler, dosage form, ...) should take their options the way
+   `nadacFilterOptions` does (after the Include boxes, before exclusions), and its Include boxes
+   should show how many results they hide, as NADAC's Include OTC does ("(72 hidden)").
 4. **Docs**: AGENTS.md (the two-layer FDA note, the NADAC gap, NADAC search dates),
    `client/CHARTS.md` (Chart dates, price-change cards), FUTURE_WORK.md (delete what this
    settles).

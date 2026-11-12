@@ -8,7 +8,7 @@ import FormControlLabel from "@mui/material/FormControlLabel"
 import React, { useState } from "react";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import NadacSearchViz from "./NadacSearchViz";
-import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
+import { useNadacSearch, useRefinedNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import useAppInit, { useLastAsOfDate } from "../../hooks/useAppInit.ts";
@@ -53,6 +53,8 @@ export default function NadacSearch() {
   const isValidSearch = isValidNadacSearch(ndcDescription, searchNdc);
 
   const nadacSearchQuery = useNadacSearch();
+  // The result as the page shows it, computed once here and passed down.
+  const view = useRefinedNadacSearch();
 
   const { renameTab } = useWorkspaceActions();
   const { id } = useTabInstanceContext();
@@ -165,7 +167,12 @@ export default function NadacSearch() {
               onChange={() => setCriteria(prev => ({ ...prev, includeOtc: !prev.includeOtc }))}
             />
           }
-          label="Include OTC"
+          label={<>
+            Include OTC
+            {/* Feedback where the box is: on a phone the table is a long scroll below. */}
+            {view.hiddenOtcCount > 0 &&
+              <Box component="span" sx={{ color: "text.secondary", ml: 0.5 }}>({view.hiddenOtcCount} hidden)</Box>}
+          </>}
           sx={{ flexShrink: 0, mr: 0 }}
         />
         <Button
@@ -182,7 +189,7 @@ export default function NadacSearch() {
           }
         </Button>
       </Paper>
-      <NadacSearchViz />
+      <NadacSearchViz view={view} />
     </Box>
   </>)
 }

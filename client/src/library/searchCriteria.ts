@@ -235,6 +235,33 @@ export function refineNadac(prices: NadacPrice[], criteria: NadacCriteria, dates
     && !excludedUnits.has(price.pricingUnit));
 }
 
+const uniqueSorted = (values: string[]) => [...new Set(values)].sort();
+const ndcCount = (prices: NadacPrice[]) => new Set(prices.map(price => price.ndc)).size;
+
+/**
+ * The options of NADAC's from-results lists: the values of the result the page could show, after
+ * the clip and the fixed refine fields (Include OTC, brand/generic) but before any exclusion. So
+ * excluding a value doesn't remove it from its list, and a value the page can't show (an OTC-only
+ * drug while OTC is hidden, a drug only outside narrowed dates) isn't listed.
+ */
+export function nadacFilterOptions(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): Record<"ndcDescriptions" | "units", string[]> {
+  const shown = refineNadac(prices, { ...criteria, ...clearedExclusions(NADAC_EXCLUSION_KEYS) }, dates);
+  return {
+    ndcDescriptions: uniqueSorted(shown.map(price => price.ndcDescription)),
+    units: uniqueSorted(shown.map(price => price.pricingUnit)),
+  };
+}
+
+/**
+ * How many NDCs ticking Include OTC would add to the NADAC page: the OTC NDCs that the other
+ * refine fields would show. Zero while OTC is included.
+ */
+export function nadacHiddenOtcCount(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): number {
+  if (criteria.includeOtc) return 0;
+  return ndcCount(refineNadac(prices, { ...criteria, includeOtc: true }, dates))
+    - ndcCount(refineNadac(prices, criteria, dates));
+}
+
 /**
  * A package as the page shows it, or null when it's hidden: its prices clipped to the dates and
  * without excluded units. A package whose only prices were in excluded units is hidden, not

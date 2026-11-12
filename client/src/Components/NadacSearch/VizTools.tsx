@@ -1,7 +1,6 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useMemo } from "react";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import type { NadacPrice } from "../../library/types";
 import Select from "@mui/material/Select";
@@ -23,19 +22,17 @@ import useChartWindow from "../../hooks/useChartWindow";
 type Props = {
   /** The result as the page shows it (`useRefinedNadacSearch`): Add Chart's source and the colors' visible set. */
   prices: NadacPrice[],
+  /** The Drug filter's options (`nadacFilterOptions`): excluding a drug doesn't remove it. */
+  ndcDescriptions: string[],
 }
 
-export default function VizTools({ prices }: Props) {
+export default function VizTools({ prices, ndcDescriptions }: Props) {
   const { criteria, setCriteria, selectedRows } = useNadacSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
   const colors = useSeriesColors(origin.resultPrices, prices);
 
-  // The options come from the loaded result, so excluding a description doesn't remove it.
-  const ndcDescriptions = useMemo(
-    () => [...new Set(origin.resultPrices.map(price => price.ndcDescription))].sort(),
-    [origin.resultPrices]);
   const selectedNdcDescriptions = ndcDescriptions.filter(
     description => !criteria.excludedNdcDescriptions.includes(description));
 
@@ -71,21 +68,33 @@ export default function VizTools({ prices }: Props) {
       <Typography variant="subtitle2">Page Filters</Typography>
       <Box sx={{ display: "flex" }}>
         <FormControl fullWidth>
-          <InputLabel id="drug-filter-select-label">{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
+          <InputLabel id="drug-filter-select-label" shrink>{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
           <Select
             label={CONSTANT.label.ndcDescriptionNadacSearchFilter}
             id="drug-filter"
             name="drug-filter"
             multiple
+            // Excluding every drug still shows "0 of N drugs", which needs the label kept up.
+            displayEmpty
+            notched
             value={selectedNdcDescriptions}
+            disabled={ndcDescriptions.length === 0}
+            // A count, not the first names: it says when the filter is on.
+            renderValue={selected => ndcDescriptions.length === 0 ? ""
+              : selected.length === ndcDescriptions.length ? "All drugs"
+              : `${selected.length} of ${ndcDescriptions.length} drugs`}
             onChange={(e) => {
               const newDescriptions = typeof e.target.value === "string"
                 ? e.target.value.split(",")
                 : e.target.value;
 
+              // Exclusions of drugs not listed now (OTC while it's hidden) are kept.
               setCriteria(prev => ({
                 ...prev,
-                excludedNdcDescriptions: ndcDescriptions.filter(description => !newDescriptions.includes(description)),
+                excludedNdcDescriptions: [
+                  ...prev.excludedNdcDescriptions.filter(description => !ndcDescriptions.includes(description)),
+                  ...ndcDescriptions.filter(description => !newDescriptions.includes(description)),
+                ],
               }));
             }}
           >

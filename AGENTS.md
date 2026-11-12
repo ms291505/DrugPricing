@@ -127,9 +127,10 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   built in steps): one object per search type. *Load* fields (text terms, dates) go to the server
   on Search; *refine* fields narrow the loaded result in the client at once, never fetching.
   `nextLoad` keeps what's loaded when only the dates narrowed; `refineNadac`/`refineFda` are
-  what consumers read (`useRefinedNadacSearch`/`useRefinedFdaSearch`; the NADAC page calls its
-  hook once and passes the result down). Chart provenance, colors and the filter options read
-  the loaded result. Tabs hold them through `useSearchLoad`. FDA always loads sample and
+  what consumers read (`useRefinedNadacSearch`/`useRefinedFdaSearch`; `NadacSearch` calls its
+  hook once and passes the result down). Chart provenance and colors read the loaded result.
+  A from-results list offers what the page could show before exclusions
+  (`nadacFilterOptions`), so it never lists a value Include OTC hides. Tabs hold them through `useSearchLoad`. FDA always loads sample and
   no-price packages and hides them by default, and both pages hide OTC by default (Include
   boxes). As of step 2 (2026-11): FDA still loads all history (its Dates aren't a load field
   yet) and has no Include OTC control.
