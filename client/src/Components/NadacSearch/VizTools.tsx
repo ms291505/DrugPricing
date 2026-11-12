@@ -70,6 +70,7 @@ export default function VizTools({ prices, ndcDescriptions }: Props) {
         <FormControl fullWidth>
           <InputLabel id="drug-filter-select-label" shrink>{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
           <Select
+            labelId="drug-filter-select-label"
             label={CONSTANT.label.ndcDescriptionNadacSearchFilter}
             id="drug-filter"
             name="drug-filter"

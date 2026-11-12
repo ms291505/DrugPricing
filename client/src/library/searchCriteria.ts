@@ -254,12 +254,12 @@ export function nadacFilterOptions(prices: NadacPrice[], criteria: NadacCriteria
 
 /**
  * How many NDCs ticking Include OTC would add to the NADAC page: the OTC NDCs that the other
- * refine fields would show. Zero while OTC is included.
+ * refine fields would show. Zero while OTC is included. `refined` is
+ * `refineNadac(prices, criteria, dates)`, which the caller already has.
  */
-export function nadacHiddenOtcCount(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): number {
+export function nadacHiddenOtcCount(prices: NadacPrice[], refined: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): number {
   if (criteria.includeOtc) return 0;
-  return ndcCount(refineNadac(prices, { ...criteria, includeOtc: true }, dates))
-    - ndcCount(refineNadac(prices, criteria, dates));
+  return ndcCount(refineNadac(prices, { ...criteria, includeOtc: true }, dates)) - ndcCount(refined);
 }
 
 /**

@@ -5,7 +5,7 @@ import {
   fdaActiveFilterCount, fdaLoadRequest, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenOtcCount,
   nadacLoadRequest, nextLoad, refineFda, refineNadac,
   resolveSearchDates, snapToAsOfDates,
-  type FdaCriteria, type NadacLoad,
+  type FdaCriteria, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
 
@@ -209,10 +209,12 @@ describe("NADAC filter options and hidden OTC", () => {
   });
 
   it("counts the OTC NDCs that Include OTC would add, after the other filters", () => {
-    expect(nadacHiddenOtcCount(prices, createNadacCriteria(), FULL_WINDOW)).toBe(2);
-    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), includeOtc: true }, FULL_WINDOW)).toBe(0);
-    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), excludedNdcDescriptions: ["OTC DRUG"] }, FULL_WINDOW)).toBe(0);
-    expect(nadacHiddenOtcCount(prices, { ...createNadacCriteria(), brandGeneric: "brand" }, FULL_WINDOW)).toBe(0);
+    const hidden = (criteria: NadacCriteria) =>
+      nadacHiddenOtcCount(prices, refineNadac(prices, criteria, FULL_WINDOW), criteria, FULL_WINDOW);
+    expect(hidden(createNadacCriteria())).toBe(2);
+    expect(hidden({ ...createNadacCriteria(), includeOtc: true })).toBe(0);
+    expect(hidden({ ...createNadacCriteria(), excludedNdcDescriptions: ["OTC DRUG"] })).toBe(0);
+    expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" })).toBe(0);
   });
 });
 

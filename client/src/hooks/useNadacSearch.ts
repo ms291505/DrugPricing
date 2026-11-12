@@ -40,9 +40,12 @@ export function useRefinedNadacSearch(): NadacResultView {
   const { criteria, requested } = useNadacSearchContext();
   const dates = requested?.dates ?? FULL_WINDOW;
   const prices = data?.prices ?? EMPTY;
-  return useMemo(() => ({
-    prices: refineNadac(prices, criteria, dates),
-    ndcDescriptions: nadacFilterOptions(prices, criteria, dates).ndcDescriptions,
-    hiddenOtcCount: nadacHiddenOtcCount(prices, criteria, dates),
-  }), [prices, criteria, dates]);
+  return useMemo(() => {
+    const refined = refineNadac(prices, criteria, dates);
+    return {
+      prices: refined,
+      ndcDescriptions: nadacFilterOptions(prices, criteria, dates).ndcDescriptions,
+      hiddenOtcCount: nadacHiddenOtcCount(prices, refined, criteria, dates),
+    };
+  }, [prices, criteria, dates]);
 }
