@@ -1,52 +1,63 @@
 // TODO: Update to be NadacSearchContext!
-import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react"
-import type { NadacPrice, NadacSearchParams } from "../library/types";
+import { type Dispatch, type ReactNode, type SetStateAction, createContext, useCallback, useContext, useMemo, useState } from "react"
+import type { NadacPrice } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
+import {
+  applyNadacSearch, createNadacCriteria, nadacLoadRequest,
+  type NadacCriteria, type NadacLoad, type NadacLoadFields,
+} from "../library/searchCriteria";
+import useSearchLoad from "../hooks/useSearchLoad";
 
 type NadacSearchContextType = {
+  /** The applied criteria. Refine fields apply at once; load fields change through `search`. */
+  criteria: NadacCriteria;
+  setCriteria: Dispatch<SetStateAction<NadacCriteria>>;
+  /** The Search button: applies the form's load fields. */
+  search: (fields: NadacLoadFields) => void;
+  /** What the criteria ask for; its dates clip the result. See `useSearchLoad`. */
+  requested: NadacLoad | null;
+  /** What the query fetches: `requested`, or a wider load that holds it. */
+  loaded: NadacLoad | null;
+  /** The load the user's last Search asked for; null for a restored tab's re-run. */
+  lastSearch: NadacLoad | null;
   data: Array<NadacPrice>;
   setData: React.Dispatch<React.SetStateAction<Array<NadacPrice>>>;
   /** `data` without the descriptions the Drug page filter excludes. Only Add Chart reads it. */
   vizData: Array<NadacPrice>;
   selectedNdcDescriptions: string[];
   setSelectedNdcDescriptions: (selected: string[]) => void;
-  /** What the Drug page filter hides. Stored rather than the selection, so it needs no reset when data loads. */
-  excludedNdcDescriptions: string[];
-  /** Clears the Drug page filter; a new search starts unfiltered. */
-  clearNdcDescriptionFilter: () => void;
   ndcDescriptions: string[];
   selectedRows: GridRowSelectionModel;
   setSelectedRows: React.Dispatch<React.SetStateAction<GridRowSelectionModel>>;
-  searchParams: NadacSearchParams | null;
-  setSearchParams: React.Dispatch<React.SetStateAction<NadacSearchParams | null>>;
   /** False while the tab hasn't been shown yet; `useNadacSearch` waits for it. */
   searchEnabled: boolean;
 }
 
 export const NadacSearchContext = createContext<NadacSearchContextType>({
+  criteria: createNadacCriteria(),
+  setCriteria: () => { },
+  search: () => { },
+  requested: null,
+  loaded: null,
+  lastSearch: null,
   data: [],
   setData: () => { },
   vizData: [],
   selectedNdcDescriptions: [],
   setSelectedNdcDescriptions: () => { },
-  excludedNdcDescriptions: [],
-  clearNdcDescriptionFilter: () => { },
   ndcDescriptions: [],
   selectedRows: { type: "include", ids: new Set() },
   setSelectedRows: () => { },
-  searchParams: null,
-  setSearchParams: () => { },
   searchEnabled: true,
 });
 
 export type NadacSearchInitialState = {
-  searchParams: NadacSearchParams | null,
-  excludedNdcDescriptions: string[],
+  criteria: NadacCriteria,
 };
 
 type ProviderProps = {
   children: ReactNode,
-  /** State restored from storage; the search re-runs from `searchParams`. */
+  /** State restored from storage; the search re-runs from `criteria`. */
   initial?: NadacSearchInitialState,
   searchEnabled?: boolean,
 };
@@ -54,8 +65,9 @@ type ProviderProps = {
 export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
-  const [searchParams, setSearchParams] = useState<NadacSearchParams | null>(initial?.searchParams ?? null);
-  const [excludedNdcDescriptions, setExcludedNdcDescriptions] = useState<string[]>(initial?.excludedNdcDescriptions ?? []);
+  const { criteria, setCriteria, search, requested, loaded, lastSearch } = useSearchLoad(
+    initial?.criteria ?? createNadacCriteria(), nadacLoadRequest, applyNadacSearch);
+  const { excludedNdcDescriptions } = criteria;
 
   const ndcDescriptions: Array<string> = useMemo(
     () => [...new Set(data.map(drug => drug.ndcDescription))],
@@ -68,10 +80,11 @@ export const NadacSearchContextProvider = ({ children, initial, searchEnabled = 
   );
 
   const setSelectedNdcDescriptions = useCallback((selected: string[]) => {
-    setExcludedNdcDescriptions(ndcDescriptions.filter(description => !selected.includes(description)));
-  }, [ndcDescriptions]);
-
-  const clearNdcDescriptionFilter = useCallback(() => setExcludedNdcDescriptions([]), []);
+    setCriteria(prev => ({
+      ...prev,
+      excludedNdcDescriptions: ndcDescriptions.filter(description => !selected.includes(description)),
+    }));
+  }, [ndcDescriptions, setCriteria]);
 
   const vizData = useMemo(() => {
     if (excludedNdcDescriptions.length === 0) return data;
@@ -81,18 +94,20 @@ export const NadacSearchContextProvider = ({ children, initial, searchEnabled = 
 
   return (
     <NadacSearchContext.Provider value={{
+      criteria,
+      setCriteria,
+      search,
+      requested,
+      loaded,
+      lastSearch,
       data,
       setData,
       vizData,
       selectedNdcDescriptions,
       setSelectedNdcDescriptions,
-      excludedNdcDescriptions,
-      clearNdcDescriptionFilter,
       ndcDescriptions,
       selectedRows,
       setSelectedRows,
-      setSearchParams,
-      searchParams,
       searchEnabled,
     }}>
       {children}

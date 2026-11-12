@@ -81,8 +81,7 @@ Size: medium. One PR, or two (database + server, then client).
 ### Each a small PR of its own
 
 - **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
-  (`applyFdaResultFilter`, `validateTabTitle`). Split it by domain
-  (`nadac.ts`, `fda.ts`, `workspace.ts`), with the filter logic next to the FDA types.
+  (`validateTabTitle`). Split it by domain (`nadac.ts`, `fda.ts`, `workspace.ts`).
 - **`ExplorerItemsContext` now holds more than items:** step 4 of the chart plan added the page's
   chart dates. Consider renaming it to `ExplorerContext` (or splitting out a small
   chart-settings context) so its name matches its job. It's a pure rename across about 15 files.

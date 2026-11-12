@@ -1,4 +1,4 @@
-import { applyFdaResultFilter, type NadacPrice, type FdaProductSearchResult, type FdaResultFilter, type FdaResultDetailLevel, type FdaProductDetail } from "./types";
+import { type NadacPrice, type FdaResultDetailLevel, type FdaProductDetail } from "./types";
 
 function createProductDescription(prod: FdaProductDetail): string {
   const proprietaryName = (prod.proprietaryName ?? " ") + " ";
@@ -24,16 +24,4 @@ export function fdaProductsToNadacPrices(
           : { ...price, ndc: fdaPackage.ndcPackageCode, ndcDescription: fdaPackage.packageDescription }
       )
     )));
-}
-
-/** Prices of the search result after the page filters, keyed at the given level. */
-export default function fdaSearchResulsToNadacPrices(
-  data: FdaProductSearchResult | undefined,
-  fdaResultFilter: FdaResultFilter,
-  fdaResultDetailLevel: FdaResultDetailLevel
-) {
-
-  if (!data) return [];
-
-  return fdaProductsToNadacPrices(applyFdaResultFilter(data, fdaResultFilter).products, fdaResultDetailLevel);
 }

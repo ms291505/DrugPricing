@@ -3,17 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
 import { CONSTANT } from "../library/constants";
 
+/** The tab's loaded NADAC result: everything `loaded` asked for, before it's clipped or refined. */
 export function useNadacSearch() {
-  const { searchParams, searchEnabled } = useSearchContext();
+  const { loaded, searchEnabled } = useSearchContext();
   return useQuery({
-    queryKey: ["nadacSearch", searchParams],
-    queryFn: async () => getNadacSearchResults(
-      searchParams!.ndcDescription,
-      searchParams!.ndc,
-      new Date(searchParams!.minDate),
-      new Date(searchParams!.maxDate)
-    ),
-    enabled: searchParams !== null && searchEnabled,
+    queryKey: ["nadacSearch", loaded],
+    queryFn: async () => getNadacSearchResults(loaded!),
+    enabled: loaded !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,
   });
 }

@@ -19,15 +19,13 @@ import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 import useChartWindow from "../../hooks/useChartWindow";
 
 export default function VizTools() {
-  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, selectedRows, vizData } = useSearchContext();
+  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, selectedRows, vizData, data } = useSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
-  // The auto charts show the whole result (the Drug filter only feeds Add Chart), so it is also
-  // the visible set.
-  // `origin.resultPrices` is the result's prices with a stable empty fallback; `data?.prices ?? []`
-  // would be a new [] on every render while loading and re-run the color memo.
-  const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
+  // The auto charts show the whole (clipped) result (the Drug filter only feeds Add Chart), so it
+  // is also the visible set.
+  const colors = useSeriesColors(origin.resultPrices, data);
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));

@@ -25,10 +25,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   **recent** preset ("Last year", "6 months", …) stored as the preset so it follows new weeks.
   `useChartWindow` resolves it against the current result (presets count back from its last
   date). Auto charts show the resolved window; Add Chart and Pin start new items at it, as fixed
-  dates. It is not part of `FdaResultFilter`, doesn't touch the results table or which changes
+  dates. It is not a search criteria field, doesn't touch the results table or which changes
   are flagged, and a new search keeps it.
 - Price-change charts (`PriceChangeCards`, on both search pages; NADAC flags each package of its
-  result with `flagNadacPriceChangesByPackage`) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
+  result with `flagPriceChanges`, as FDA does) open on ±`PRICE_CHANGE_WINDOW_MONTHS` around the change
   (`changeSpan`, stored on pinned copies too) and toggle to the full history. Only changes whose
   new price starts inside the chart dates get a card (`priceChangesInWindow`); a note counts the
   rest, and past `MAX_AUTO_PRICE_CHANGE_CHARTS` it gives the count instead of charting them.

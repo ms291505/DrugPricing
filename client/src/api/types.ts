@@ -1,4 +1,4 @@
-import type { NadacPrice, FdaProductDetail, } from "../library/types";
+import type { NadacPrice, FdaProductDetail, NadacClassification, } from "../library/types";
 
 export type UpResponse = {
   up: boolean
@@ -39,7 +39,7 @@ export type NadacPriceResponse = {
   pharmacyTypeIndicator?: string,
   isOtc: boolean,
   explanationCode: Array<string | number>,
-  classificationForRateSetting: string,
+  classificationForRateSetting: number,
   correspondingGenericNadacPerUnit?: number,
   correspondingGenericEffectiveDate?: string,
   asOfDate: string,
@@ -47,6 +47,12 @@ export type NadacPriceResponse = {
   loadedAt: string,
   createdAt: string
 }
+
+// The server's `NadacClassification` enum, in its order: it arrives as the member's index.
+const CLASSIFICATIONS = ["G", "B", "B_ANDA", "B_BIO"] as const;
+
+const mapClassification = (classification: number): NadacClassification =>
+  CLASSIFICATIONS[classification] ?? "unknown";
 
 const mapPricingUnit = (pricingUnit: number) => {
   switch (pricingUnit) {
@@ -67,7 +73,7 @@ export const mapNadacPriceResponse = (response: NadacPriceResponse): NadacPrice 
   pharmacyTypeIndicator: response.pharmacyTypeIndicator,
   isOtc: response.isOtc,
   explanationCode: response.explanationCode,
-  classificationForRateSetting: response.classificationForRateSetting,
+  classificationForRateSetting: mapClassification(response.classificationForRateSetting),
   correspondingGenericNadacPerUnit: response.correspondingGenericNadacPerUnit,
   correspondingGenericEffectiveDate: response.correspondingGenericEffectiveDate
     ? new Date(response.correspondingGenericEffectiveDate)

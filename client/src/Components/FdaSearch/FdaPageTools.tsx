@@ -1,11 +1,11 @@
 import Paper from "@mui/material/Paper"
 import { Typography, Box, type SxProps, type Theme, Divider, Grid } from "@mui/material";
 import { useMemo, } from "react";
-import useFdaSearch from "../../hooks/useFdaSearch";
+import { useRefinedFdaSearch } from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import SelectFilter from "./SelectFilter";
 import SelectDetailLevel from "./DetailLevelSelect";
-import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
+import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { createChartItem, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
@@ -21,19 +21,20 @@ type Props = {
 
 export default function FdaPageTools({ displayHeader }: Props) {
 
-  const { fdaResultFilter, selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
+  const { selectedRows, fdaResultDetailLevel } = useFdaSearchContext();
 
   const { addItem } = useExplorerItems();
 
   const origin = useFdaChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
 
-  const { data } = useFdaSearch();
+  // The filter options come from the loaded result, so excluding a value doesn't remove it.
+  const { query: { data }, refined } = useRefinedFdaSearch();
 
   // What the page shows at this level after filters: Add Chart's source, and the colors' visible set.
   const visiblePrices = useMemo(
-    () => fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel),
-    [data, fdaResultFilter, fdaResultDetailLevel]);
+    () => fdaProductsToNadacPrices(refined?.products ?? [], fdaResultDetailLevel),
+    [refined, fdaResultDetailLevel]);
   const colors = useSeriesColors(origin.resultPrices, visiblePrices);
 
   const productNdcs = useMemo(

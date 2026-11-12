@@ -4,17 +4,16 @@ import TextField from "@mui/material/TextField"
 import useMobile from "../../hooks/useMobile"
 import { Button, Checkbox, CircularProgress, FormControlLabel, Grid } from "@mui/material";
 import { useState } from "react";
-import { MIN_NDC_DESCRIPTION_LENGTH } from "../../library/constants";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceContexts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import { defaultTitleFor } from "../../library/tabType.ts";
-import { createFdaResultFilter, defaultAdvFdaSearchParams } from "../../library/types.ts";
+import { isValidFdaSearch } from "../../library/searchCriteria.ts";
 
 export default function FdaSearchTool() {
 
-  const { fdaSearchParams, setFdaSearchParams, setFdaResultFilter } = useFdaSearchContext();
+  const { criteria, setCriteria, search } = useFdaSearchContext();
 
   const { renameTab } = useWorkspaceActions();
 
@@ -23,13 +22,13 @@ export default function FdaSearchTool() {
   const tab = useWorkspaceTab(id);
 
   // A restored tab shows the search it re-ran.
-  const [draftSearchParams, setDraftSearchParams] = useState(fdaSearchParams ?? defaultAdvFdaSearchParams);
+  const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
 
   const isMobile = useMobile();
 
   const fdaSearch = useFdaSearch();
 
-  const isValidSearch = draftSearchParams.proprietaryName.length >= MIN_NDC_DESCRIPTION_LENGTH;
+  const isValidSearch = isValidFdaSearch(proprietaryName);
 
   const canChangeName = tab
     ? tab.title === defaultTitleFor(tab?.type)
@@ -37,11 +36,11 @@ export default function FdaSearchTool() {
 
   const handleSearch = () => {
 
-    if (canChangeName) renameTab(id, draftSearchParams.proprietaryName.toUpperCase());
+    const name = proprietaryName.trim();
+    if (canChangeName) renameTab(id, name.toUpperCase());
 
-    setFdaSearchParams(draftSearchParams);
-    // A new search starts unfiltered.
-    setFdaResultFilter(createFdaResultFilter());
+    // Dates aren't on this form yet; a search keeps the tab's.
+    search({ proprietaryName: name, dates: criteria.dates });
   }
 
   return (
@@ -91,11 +90,8 @@ export default function FdaSearchTool() {
                   id="proprietaryName"
                   name="proprietaryName"
                   label="Brand Name"
-                  value={draftSearchParams.proprietaryName}
-                  onChange={(e) =>
-                    setDraftSearchParams(
-                      prev => ({ ...prev, proprietaryName: e.target.value }))
-                  }
+                  value={proprietaryName}
+                  onChange={(e) => setProprietaryName(e.target.value)}
                 />
               </Grid>
               <Grid size={3}>
@@ -116,6 +112,7 @@ export default function FdaSearchTool() {
               </Grid>
             </Grid>
           </Box>
+          {/* Refine fields: they narrow what loaded, so they apply at once, without Search. */}
           <Box
             id="checkbox-container"
             sx={{
@@ -129,8 +126,8 @@ export default function FdaSearchTool() {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={draftSearchParams.includeResultsWNoPrices}
-                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeResultsWNoPrices: !prev.includeResultsWNoPrices }))}
+                  checked={criteria.includeResultsWithoutPrices}
+                  onChange={() => setCriteria(prev => ({ ...prev, includeResultsWithoutPrices: !prev.includeResultsWithoutPrices }))}
                 />
               }
               label="Include Results Without Prices"
@@ -138,11 +135,11 @@ export default function FdaSearchTool() {
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={draftSearchParams.includeSamplePackages}
-                  onChange={() => setDraftSearchParams(prev => ({ ...prev, includeSamplePackages: !prev.includeSamplePackages }))}
+                  checked={criteria.includeSamplePackages}
+                  onChange={() => setCriteria(prev => ({ ...prev, includeSamplePackages: !prev.includeSamplePackages }))}
                 />
               }
-              label="Inculde Sample Packages"
+              label="Include Sample Packages"
             />
           </Box>
         </Box>

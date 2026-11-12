@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { fdaPackageRows, fdaProductRows, nadacRows } from "./resultRows";
-import { applyFdaResultFilter, createFdaResultFilter, type FdaPackageDetail, type FdaProductDetail, type NadacPrice } from "./types";
+import { FULL_WINDOW } from "./dates";
+import { createFdaCriteria, refineFda } from "./searchCriteria";
+import { type FdaPackageDetail, type FdaProductDetail, type NadacPrice } from "./types";
 
 const nadacPrice = (ndc: string, iso: string, nadacPerUnit: number, pricingUnit = "each"): NadacPrice => ({
   id: 0, ndc, ndcDescription: `Drug ${ndc}`, nadacPerUnit, pricingUnit, asOfDate: new Date(iso),
@@ -61,9 +63,8 @@ describe("fdaProductRows", () => {
       fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 10)]),
       fdaPackage("1-1-2", [nadacPrice("112", "2025-01-01", 30)], true),
     ])] };
-    const filter = { ...createFdaResultFilter(), excludeSamplePackages: true };
     expect(fdaProductRows(data.products)[0].priceSummaries[0].latest).toBe(20);
-    expect(fdaProductRows(applyFdaResultFilter(data, filter).products)[0].priceSummaries[0].latest).toBe(10);
+    expect(fdaProductRows(refineFda(data, createFdaCriteria(), FULL_WINDOW).products)[0].priceSummaries[0].latest).toBe(10);
   });
 });
 

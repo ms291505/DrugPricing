@@ -1,12 +1,13 @@
 import toast from "react-hot-toast";
-import {
-  createFdaResultFilter,
-  type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, type LayoutMode,
-  type NadacSearchParams,
-} from "./types";
+import { type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
-import { ALL_DATES, FULL_WINDOW, type ChartDates, type DateWindow } from "./dates";
+import { ALL_DATES, FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
+import {
+  createFdaCriteria, createNadacCriteria, isValidFdaSearch,
+  type BrandGeneric, type FdaCriteria, type NadacCriteria,
+} from "./searchCriteria";
+import { isValidNadacSearch } from "./nadacSearch";
 import { DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
@@ -87,6 +88,7 @@ function remove(key: string): void {
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
 const isString = (x: unknown): x is string => typeof x === "string";
 const isStringArray = (x: unknown): x is string[] => Array.isArray(x) && x.every(isString);
+const isBoolean = (x: unknown): x is boolean => typeof x === "boolean";
 const oneOf = <T extends string>(values: readonly T[]) => (x: unknown): x is T => values.includes(x as T);
 
 const isTabType = oneOf<TabType>(["fda", "nadac", "new", "collection"]);
@@ -140,17 +142,89 @@ const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
   ? x.filter(isStoredExplorerItem).map(item => ({ ...item, dateWindow: item.dateWindow ?? FULL_WINDOW }))
   : [];
 
-const isFdaSearchParams = (x: unknown): x is AdvancedFdaSearchParams =>
-  isObject(x) && isString(x.proprietaryName)
-  && typeof x.includeSamplePackages === "boolean" && typeof x.includeResultsWNoPrices === "boolean";
+const isBrandGeneric = oneOf<BrandGeneric>(["all", "brand", "generic"]);
 
-const isFdaResultFilter = (x: unknown): x is FdaResultFilter =>
-  isObject(x) && isStringArray(x.excludedProductNdcs) && isStringArray(x.excludedDosageForms)
-  && isStringArray(x.excludedRoutes) && isStringArray(x.excludedLabelers)
-  && typeof x.excludeOtc === "boolean" && typeof x.excludeSamplePackages === "boolean";
+/** Reads one field of `raw` when it passes `isValid`, else the field's default. */
+const field = <T>(raw: Record<string, unknown>, defaults: T) =>
+  <K extends keyof T>(key: K, isValid: (x: unknown) => boolean): T[K] =>
+    isValid(raw[key as string]) ? raw[key as string] as T[K] : defaults[key];
 
-const isNadacSearchParams = (x: unknown): x is NadacSearchParams =>
-  isObject(x) && isString(x.ndcDescription) && isString(x.ndc) && isString(x.minDate) && isString(x.maxDate);
+/*
+ * Criteria are read field by field. Exclusion lists name values from a result, so they are kept
+ * only alongside a search (`hasSearch`): on their own they filter nothing meaningful.
+ */
+
+function readNadacCriteria(raw: Record<string, unknown>): NadacCriteria {
+  const defaults = createNadacCriteria();
+  const get = field(raw, defaults);
+  const terms = { ndcDescription: get("ndcDescription", isString), ndc: get("ndc", isString) };
+  const hasSearch = isValidNadacSearch(terms.ndcDescription, terms.ndc);
+  return {
+    ...terms,
+    dates: get("dates", isChartDates),
+    includeOtc: get("includeOtc", isBoolean),
+    brandGeneric: get("brandGeneric", isBrandGeneric),
+    excludedNdcDescriptions: hasSearch ? get("excludedNdcDescriptions", isStringArray) : [],
+    excludedUnits: hasSearch ? get("excludedUnits", isStringArray) : [],
+  };
+}
+
+function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
+  const defaults = createFdaCriteria();
+  const get = field(raw, defaults);
+  const proprietaryName = get("proprietaryName", isString);
+  const hasSearch = isValidFdaSearch(proprietaryName);
+  const exclusions = (key: "excludedProductNdcs" | "excludedDosageForms" | "excludedRoutes" | "excludedLabelers" | "excludedUnits") =>
+    hasSearch ? get(key, isStringArray) : [];
+  return {
+    proprietaryName,
+    dates: get("dates", isChartDates),
+    includeOtc: get("includeOtc", isBoolean),
+    includeSamplePackages: get("includeSamplePackages", isBoolean),
+    includeResultsWithoutPrices: get("includeResultsWithoutPrices", isBoolean),
+    excludedProductNdcs: exclusions("excludedProductNdcs"),
+    excludedDosageForms: exclusions("excludedDosageForms"),
+    excludedRoutes: exclusions("excludedRoutes"),
+    excludedLabelers: exclusions("excludedLabelers"),
+    excludedUnits: exclusions("excludedUnits"),
+  };
+}
+
+/*
+ * Tabs saved before search criteria existed (2026-11) stored `searchParams` plus a page filter,
+ * and the page's `chartDates`. They are read into criteria here rather than bumping VERSION, so
+ * nobody loses tabs. Remove these at the next real VERSION bump. Include OTC starts unchecked on
+ * them, as on a new search.
+ */
+
+function legacyNadacCriteria(raw: Record<string, unknown>): NadacCriteria {
+  const params = isObject(raw.searchParams) ? raw.searchParams : {};
+  const dates: ChartDates | undefined = isString(params.minDate) && isString(params.maxDate)
+    ? { kind: "window", dateWindow: { start: fromDateInput(params.minDate), end: fromDateInput(params.maxDate) } }
+    : undefined;
+  return readNadacCriteria({
+    ndcDescription: params.ndcDescription,
+    ndc: params.ndc,
+    dates,
+    excludedNdcDescriptions: raw.excludedNdcDescriptions,
+  });
+}
+
+function legacyFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
+  const params = isObject(raw.searchParams) ? raw.searchParams : {};
+  const filter = isObject(raw.resultFilter) ? raw.resultFilter : {};
+  return readFdaCriteria({
+    proprietaryName: params.proprietaryName,
+    // FDA searches loaded all history, and the page's chart dates picked what showed.
+    dates: raw.chartDates,
+    includeSamplePackages: params.includeSamplePackages,
+    includeResultsWithoutPrices: params.includeResultsWNoPrices,
+    excludedProductNdcs: filter.excludedProductNdcs,
+    excludedDosageForms: filter.excludedDosageForms,
+    excludedRoutes: filter.excludedRoutes,
+    excludedLabelers: filter.excludedLabelers,
+  });
+}
 
 // --- Workspace ----------------------------------------------------------------------------
 
@@ -263,15 +337,15 @@ export type PersistedExplorerState = {
 
 export type PersistedFdaTab = {
   type: "fda",
-  searchParams: AdvancedFdaSearchParams | null,
-  resultFilter: FdaResultFilter,
+  /** The applied criteria. A tab has a search when its terms are enough to search on. */
+  criteria: FdaCriteria,
   detailLevel: FdaResultDetailLevel,
 } & PersistedExplorerState;
 
 export type PersistedNadacTab = {
   type: "nadac",
-  searchParams: NadacSearchParams | null,
-  excludedNdcDescriptions: string[],
+  /** The applied criteria. A tab has a search when its terms are enough to search on. */
+  criteria: NadacCriteria,
 } & PersistedExplorerState;
 
 export type PersistedCollectionTab = {
@@ -282,8 +356,7 @@ type PersistedTab = PersistedFdaTab | PersistedNadacTab | PersistedCollectionTab
 
 /*
  * Tab state is validated field by field, each with its own default, so one bad field never
- * costs the user the tab's pinned items. A page filter is kept only alongside a valid search:
- * on its own it would filter nothing meaningful.
+ * costs the user the tab's pinned items.
  */
 
 function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState {
@@ -301,11 +374,9 @@ function readTab(tabId: string, type: PersistedTab["type"]): Record<string, unkn
 export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
   const raw = readTab(tabId, "fda");
   if (!raw) return null;
-  const searchParams = isFdaSearchParams(raw.searchParams) ? raw.searchParams : null;
   return {
     type: "fda",
-    searchParams,
-    resultFilter: searchParams && isFdaResultFilter(raw.resultFilter) ? raw.resultFilter : createFdaResultFilter(),
+    criteria: isObject(raw.criteria) ? readFdaCriteria(raw.criteria) : legacyFdaCriteria(raw),
     detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : "product",
     ...loadExplorerState(raw),
   };
@@ -314,11 +385,9 @@ export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
 export function loadNadacTabState(tabId: string): PersistedNadacTab | null {
   const raw = readTab(tabId, "nadac");
   if (!raw) return null;
-  const searchParams = isNadacSearchParams(raw.searchParams) ? raw.searchParams : null;
   return {
     type: "nadac",
-    searchParams,
-    excludedNdcDescriptions: searchParams && isStringArray(raw.excludedNdcDescriptions) ? raw.excludedNdcDescriptions : [],
+    criteria: isObject(raw.criteria) ? readNadacCriteria(raw.criteria) : legacyNadacCriteria(raw),
     ...loadExplorerState(raw),
   };
 }

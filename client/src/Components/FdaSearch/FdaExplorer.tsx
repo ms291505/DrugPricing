@@ -3,12 +3,12 @@ import { Grid, } from "@mui/material";
 import FdaSearchResults from "./FdaSearchResults";
 import FdaPageTools from "./FdaPageTools";
 import BarViz from "../Charts/BarViz";
-import useFdaSearch from "../../hooks/useFdaSearch";
-import { applyFdaResultFilter, type FdaResultDetailLevel, } from "../../library/types";
+import { useRefinedFdaSearch } from "../../hooks/useFdaSearch";
+import { type FdaProductDetail, type FdaResultDetailLevel, } from "../../library/types";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import fdaSearchResultToNadacPrices from "../../library/fdaDataToNadacPrices";
+import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 import LineViz from "../Charts/LineViz";
-import { flagNadacPriceChangeForFdaProducts } from "../../library/flagNadacPriceChange";
+import { fdaPackagePrices, flagPriceChanges } from "../../library/flagNadacPriceChange";
 import { shouldAutoChart } from "../../library/chartSeries";
 import PinButton from "../ExplorerGrid/PinButton";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
@@ -22,28 +22,27 @@ import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { countMessage } from "../../library/searchToasts";
 import ExplorerGrid, { ExplorerGridItem } from "../ExplorerGrid";
 
+const EMPTY_PRODUCTS: FdaProductDetail[] = [];
+
 type Props = {
   visible?: boolean
 }
 
 export default function FdaExplorer({ visible = true }: Props) {
-  const { data, isSuccess, dataUpdatedAt } = useFdaSearch();
-  const { fdaSearchParams, fdaResultFilter, fdaResultDetailLevel } = useFdaSearchContext();
-  const resultKey = useNewSearchResult(fdaSearchParams, isSuccess, dataUpdatedAt);
+  const { query: { isSuccess, dataUpdatedAt }, refined } = useRefinedFdaSearch();
+  const { lastSearch, fdaResultDetailLevel } = useFdaSearchContext();
+  const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
+  const products = refined?.products ?? EMPTY_PRODUCTS;
   const origin = useFdaChartOrigin();
   const { chartWindow } = useChartWindow(origin.resultPrices);
   const packageOrigin = useFdaChartOrigin("package");
   // Derived once per result, filter, and level change, not on every render (e.g. each change
   // of the chart dates).
   const nadacPrices = useMemo(
-    () => fdaSearchResultToNadacPrices(data, fdaResultFilter, fdaResultDetailLevel),
-    [data, fdaResultFilter, fdaResultDetailLevel]);
-  const packageNadacPrices = useMemo(
-    () => fdaSearchResultToNadacPrices(data, fdaResultFilter, "package"),
-    [data, fdaResultFilter]);
-  const productPriceChanges = useMemo(
-    () => flagNadacPriceChangeForFdaProducts(applyFdaResultFilter(data ?? { products: [] }, fdaResultFilter).products),
-    [data, fdaResultFilter]);
+    () => fdaProductsToNadacPrices(products, fdaResultDetailLevel),
+    [products, fdaResultDetailLevel]);
+  const packageNadacPrices = useMemo(() => fdaProductsToNadacPrices(products, "package"), [products]);
+  const productPriceChanges = useMemo(() => flagPriceChanges(fdaPackagePrices(products)), [products]);
 
   const colors = useSeriesColors(origin.resultPrices, nadacPrices);
   const packageColors = useSeriesColors(packageOrigin.resultPrices, packageNadacPrices);
@@ -62,7 +61,7 @@ export default function FdaExplorer({ visible = true }: Props) {
   const autoChartSubtitle = chartSubtitle(labels.length, origin.seriesKind, chartWindow, nadacPrices);
 
   return (<>
-    <SearchResultToast resultKey={resultKey} message={data ? countMessage(data.products.length, ["product", "products"], "found") : null} />
+    <SearchResultToast resultKey={resultKey} message={refined ? countMessage(refined.products.length, ["product", "products"], "found") : null} />
     {/* Counts every change the search flagged, charted or not: the cards' notes say why some aren't. */}
     <SearchResultToast
       resultKey={resultKey}

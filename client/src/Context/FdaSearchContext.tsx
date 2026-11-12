@@ -1,12 +1,25 @@
 import React, { createContext, useCallback, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { createFdaResultFilter, defaultAdvFdaSearchParams, type AdvancedFdaSearchParams, type FdaResultDetailLevel, type FdaResultFilter, } from "../library/types";
+import { type FdaResultDetailLevel, } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
+import {
+  applyFdaSearch, createFdaCriteria, fdaLoadRequest,
+  type FdaCriteria, type FdaLoad, type FdaLoadFields,
+} from "../library/searchCriteria";
+import { ALL_DATES } from "../library/dates";
+import useSearchLoad from "../hooks/useSearchLoad";
 
 export type FdaSearchContextType = {
-  fdaSearchParams: AdvancedFdaSearchParams | null;
-  setFdaSearchParams: Dispatch<SetStateAction<AdvancedFdaSearchParams | null>>;
-  fdaResultFilter: FdaResultFilter;
-  setFdaResultFilter: Dispatch<SetStateAction<FdaResultFilter>>;
+  /** The applied criteria. Refine fields apply at once; load fields change through `search`. */
+  criteria: FdaCriteria;
+  setCriteria: Dispatch<SetStateAction<FdaCriteria>>;
+  /** The Search button: applies the form's load fields. */
+  search: (fields: FdaLoadFields) => void;
+  /** What the criteria ask for; its dates clip the result. See `useSearchLoad`. */
+  requested: FdaLoad | null;
+  /** What the query fetches: `requested`, or a wider load that holds it. */
+  loaded: FdaLoad | null;
+  /** The load the user's last Search asked for; null for a restored tab's re-run. */
+  lastSearch: FdaLoad | null;
   fdaResultDetailLevel: FdaResultDetailLevel
   /** Also clears `selectedRows`, whose ids mean different things at each level. */
   setFdaResultDetailLevel: (level: FdaResultDetailLevel) => void;
@@ -17,16 +30,17 @@ export type FdaSearchContextType = {
 }
 
 export type FdaSearchInitialState = {
-  searchParams: AdvancedFdaSearchParams | null,
-  resultFilter: FdaResultFilter,
+  criteria: FdaCriteria,
   detailLevel: FdaResultDetailLevel,
 };
 
 export const FdaSearchContext = createContext<FdaSearchContextType>({
-  fdaSearchParams: { ...defaultAdvFdaSearchParams },
-  setFdaSearchParams: () => { },
-  fdaResultFilter: { ...createFdaResultFilter() },
-  setFdaResultFilter: () => { },
+  criteria: createFdaCriteria(),
+  setCriteria: () => { },
+  search: () => { },
+  requested: null,
+  loaded: null,
+  lastSearch: null,
   fdaResultDetailLevel: "product",
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
@@ -34,17 +48,24 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   searchEnabled: true,
 });
 
+/**
+ * FDA searches load all history until Dates becomes a load field on this page (step 3 of
+ * plans/search-filters.md, with the request's date parameter fix). Until then the page's Chart
+ * dates pick what shows, so the criteria's dates are kept but not loaded.
+ */
+const fdaLoadRequestAllDates = (criteria: FdaCriteria, lastAsOfDate: number) =>
+  fdaLoadRequest({ ...criteria, dates: ALL_DATES }, lastAsOfDate);
 
 type ProviderProps = {
   children: React.ReactNode,
-  /** State restored from storage; the search re-runs from `searchParams`. */
+  /** State restored from storage; the search re-runs from `criteria`. */
   initial?: FdaSearchInitialState,
   searchEnabled?: boolean,
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  const [fdaSearchParams, setFdaSearchParams] = useState<AdvancedFdaSearchParams | null>(initial?.searchParams ?? null)
-  const [fdaResultFilter, setFdaResultFilter] = useState<FdaResultFilter>(initial?.resultFilter ?? { ...createFdaResultFilter() });
+  const { criteria, setCriteria, search, requested, loaded, lastSearch } = useSearchLoad(
+    initial?.criteria ?? createFdaCriteria(), fdaLoadRequestAllDates, applyFdaSearch);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
@@ -59,10 +80,12 @@ export const FdaSearchContextProvider = ({ children, initial, searchEnabled = tr
 
   return (
     <FdaSearchContext.Provider value={{
-      fdaSearchParams,
-      setFdaSearchParams,
-      fdaResultFilter,
-      setFdaResultFilter,
+      criteria,
+      setCriteria,
+      search,
+      requested,
+      loaded,
+      lastSearch,
       fdaResultDetailLevel,
       setFdaResultDetailLevel,
       selectedRows,

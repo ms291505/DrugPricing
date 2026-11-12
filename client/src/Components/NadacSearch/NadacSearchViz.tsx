@@ -17,7 +17,7 @@ import useChartWindow from "../../hooks/useChartWindow";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue } from "../../library/explorerItems";
-import { flagNadacPriceChangesByPackage } from "../../library/flagNadacPriceChange";
+import { flagPriceChanges, nadacPackagePrices } from "../../library/flagNadacPriceChange";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
@@ -28,24 +28,22 @@ import { countMessage } from "../../library/searchToasts";
 // tab list, such as a rename after a search, don't re-render every NADAC tab's results.
 export default memo(function NadacSearchViz() {
 
-  const { data, isLoading, isSuccess, dataUpdatedAt } = useNadacSearch();
-  const { searchParams } = useSearchContext();
-  const resultKey = useNewSearchResult(searchParams, isSuccess, dataUpdatedAt);
+  const { isLoading, isSuccess, dataUpdatedAt } = useNadacSearch();
+  // The loaded result clipped to the search's dates (`NadacSearch` copies it in).
+  const { data: prices, lastSearch } = useSearchContext();
+  const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
   const origin = useNadacChartOrigin();
   const { chartWindow } = useChartWindow(origin.resultPrices);
   const [barValue, setBarValue] = useState<BarValue>("latest");
 
   // System charts are derived from the current result on every render, like the FDA page's.
   // User charts live in the tab's pinned items and are not touched by a new search.
-  const prices = data?.prices ?? [];
   const showAutoCharts = shouldAutoChart(prices);
-  // The auto charts show the whole result, so it is also the visible set.
-  // `origin.resultPrices` is the result's prices with a stable empty fallback; `data?.prices ?? []`
-  // would be a new [] on every render while loading and re-run the color memo.
-  const colors = useSeriesColors(origin.resultPrices, origin.resultPrices);
+  // The auto charts show the whole (clipped) result, so it is also the visible set.
+  const colors = useSeriesColors(origin.resultPrices, prices);
   // Every package's changes, like the FDA page's; a NADAC result is already package-level.
-  const priceChanges = useMemo(() => flagNadacPriceChangesByPackage(data?.prices ?? []), [data]);
-  const packageCount = useMemo(() => new Set(data?.prices.map(price => price.ndc)).size, [data]);
+  const priceChanges = useMemo(() => flagPriceChanges(nadacPackagePrices(prices)), [prices]);
+  const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
 
   const labels = seriesLabels(prices);
   const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
