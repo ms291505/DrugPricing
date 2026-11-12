@@ -1,6 +1,6 @@
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
-import { useSearchContext } from "../../Context/NadacSearchContext";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import type { NadacPrice } from "../../library/types";
 import { nadacRows, type NadacRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
@@ -32,7 +32,7 @@ type Props = {
 
 /** The NADAC search's results: one row per NDC. */
 export default function NadacResultTable({ nadacPrices, loading }: Props) {
-  const { selectedRows, setSelectedRows } = useSearchContext();
+  const { selectedRows, setSelectedRows } = useNadacSearchContext();
 
   const rows = useMemo(() => nadacRows(nadacPrices), [nadacPrices]);
 

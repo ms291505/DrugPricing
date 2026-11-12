@@ -5,7 +5,7 @@ import Grid from "@mui/material/Grid";
 import { NadacResultTable } from "../ResultTables";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
-import { useNadacSearch } from "../../hooks/useNadacSearch";
+import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch";
 import VizTools from "./VizTools";
 import { shouldAutoChart } from "../../library/chartSeries";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
@@ -21,16 +21,23 @@ import { flagPriceChanges, nadacPackagePrices } from "../../library/flagNadacPri
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
-import { useSearchContext } from "../../Context/NadacSearchContext";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { countMessage } from "../../library/searchToasts";
 
-// Memoized (it takes no props) so the search form's keystrokes and changes to the workspace's
-// tab list, such as a rename after a search, don't re-render every NADAC tab's results.
-export default memo(function NadacSearchViz() {
+type Props = {
+  /** The result as the page shows it (`useRefinedNadacSearch`). */
+  view: NadacResultView,
+};
+
+// Memoized (its one prop is memoized) so the search form's keystrokes and changes to the
+// workspace's tab list, such as a rename after a search, don't re-render every NADAC tab's results.
+export default memo(function NadacSearchViz({ view }: Props) {
 
   const { isLoading, isSuccess, dataUpdatedAt } = useNadacSearch();
-  // The loaded result clipped to the search's dates (`NadacSearch` copies it in).
-  const { data: prices, lastSearch } = useSearchContext();
+  // Clipped to the search's dates and refined. The table, auto charts, price changes, Add Chart
+  // and both toasts all read it.
+  const { prices } = view;
+  const { lastSearch } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess, dataUpdatedAt);
   const origin = useNadacChartOrigin();
   const { chartWindow } = useChartWindow(origin.resultPrices);
@@ -39,7 +46,7 @@ export default memo(function NadacSearchViz() {
   // System charts are derived from the current result on every render, like the FDA page's.
   // User charts live in the tab's pinned items and are not touched by a new search.
   const showAutoCharts = shouldAutoChart(prices);
-  // The auto charts show the whole (clipped) result, so it is also the visible set.
+  // The auto charts show the whole refined result, so it is also the visible set.
   const colors = useSeriesColors(origin.resultPrices, prices);
   // Every package's changes, like the FDA page's; a NADAC result is already package-level.
   const priceChanges = useMemo(() => flagPriceChanges(nadacPackagePrices(prices)), [prices]);
@@ -61,7 +68,7 @@ export default memo(function NadacSearchViz() {
     >
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <VizTools />
+          <VizTools prices={prices} ndcDescriptions={view.ndcDescriptions} />
         </Grid>
         <Grid size={{ xs: 12, sm: 9 }}>
           <Paper sx={{ p: 1 }}>

@@ -57,10 +57,11 @@ public class FdaProductRepository : IFdaProductRepository
     if (_cache.TryGetValue(cacheKey, out List<FdaProductDetail>? cachedResults))
       return cachedResults!;
 
+    var pattern = LikePattern.Contains(proprietaryName);
     var products = await _db
       .FdaProducts.AsNoTracking()
       .Where(product => product.DelistedAt == null)
-      .Where(product => EF.Functions.ILike(product.ProprietaryName, $"%{proprietaryName}%"))
+      .Where(product => EF.Functions.ILike(product.ProprietaryName, pattern, LikePattern.EscapeCharacter))
       .Select(product => new FdaProductDetail
       {
         Id = product.Id,
@@ -115,22 +116,25 @@ public class FdaProductRepository : IFdaProductRepository
 
     if (!string.IsNullOrWhiteSpace(request.ProprietaryName))
     {
+      var pattern = LikePattern.Contains(request.ProprietaryName);
       productQuery = productQuery.Where(p =>
-        EF.Functions.ILike(p.ProprietaryName, $"%{request.ProprietaryName}%")
+        EF.Functions.ILike(p.ProprietaryName, pattern, LikePattern.EscapeCharacter)
       );
     }
 
     if (!string.IsNullOrWhiteSpace(request.NonProprietaryName))
     {
+      var pattern = LikePattern.Contains(request.NonProprietaryName);
       productQuery = productQuery.Where(p =>
-        p.NonProprietaryName.Any(a => EF.Functions.ILike(a, $"%{request.NonProprietaryName}%"))
+        p.NonProprietaryName.Any(a => EF.Functions.ILike(a, pattern, LikePattern.EscapeCharacter))
       );
     }
 
     if (!string.IsNullOrWhiteSpace(request.ProductNdc))
     {
+      var pattern = LikePattern.Contains(request.ProductNdc);
       productQuery = productQuery.Where(p =>
-        EF.Functions.ILike(p.ProductNdc, $"%{request.ProductNdc}%")
+        EF.Functions.ILike(p.ProductNdc, pattern, LikePattern.EscapeCharacter)
       );
     }
 
@@ -146,8 +150,9 @@ public class FdaProductRepository : IFdaProductRepository
 
     if (!string.IsNullOrWhiteSpace(request.LabelerName))
     {
+      var pattern = LikePattern.Contains(request.LabelerName);
       productQuery = productQuery.Where(p =>
-        EF.Functions.ILike(p.LabelerName, $"%{request.LabelerName}%")
+        EF.Functions.ILike(p.LabelerName, pattern, LikePattern.EscapeCharacter)
       );
     }
 

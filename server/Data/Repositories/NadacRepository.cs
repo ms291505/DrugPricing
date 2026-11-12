@@ -52,15 +52,18 @@ public class NadacRepository : INadacRepository
 
     if (!string.IsNullOrWhiteSpace(ndcDescription))
     {
-      var ndcDescriptionLower = ndcDescription.ToLower();
+      var pattern = LikePattern.Contains(ndcDescription.ToLower());
 
       query = query.Where(p =>
-        EF.Functions.ILike(p.NdcDescriptionLower, $"%{ndcDescriptionLower}%")
+        EF.Functions.ILike(p.NdcDescriptionLower, pattern, LikePattern.EscapeCharacter)
       );
     }
 
     if (!string.IsNullOrWhiteSpace(ndc))
-      query = query.Where(p => EF.Functions.ILike(p.Ndc, $"%{ndc}%"));
+    {
+      var pattern = LikePattern.Contains(ndc);
+      query = query.Where(p => EF.Functions.ILike(p.Ndc, pattern, LikePattern.EscapeCharacter));
+    }
 
     var nadacPrices = await query
       .Join(_db.NadacPrices, drug => drug.Ndc, price => price.Ndc, (drug, price) => price)

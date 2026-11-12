@@ -36,6 +36,9 @@ Gotchas:
 - NADAC description search is an `ILIKE '%term%'` match on `DrugPackages.NdcDescriptionLower`.
   Trigram similarity is used only behind the stubbed advanced search, but a fresh DB still needs
   `CREATE EXTENSION IF NOT EXISTS pg_trgm;` for the `*_trgm_ops` indexes.
+- **Every `EF.Functions.ILike` on a search term goes through `LikePattern`** (`Data/LikePattern.cs`):
+  `EF.Functions.ILike(column, LikePattern.Contains(term), LikePattern.EscapeCharacter)`. Never
+  interpolate a term into a pattern: `_____` passes the minimum length and matches every row.
 - **`ProductNdc` is the FDA product key**, not `ProductId`, which the FDA reissues
   (`{ProductNdc}_{guid}`) on every change. Never join or upsert on `ProductId`.
 - **NADAC NDCs are stored without leading zeros** (`3089321` for `00003-0893-21`), the same as
@@ -127,11 +130,13 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   built in steps): one object per search type. *Load* fields (text terms, dates) go to the server
   on Search; *refine* fields narrow the loaded result in the client at once, never fetching.
   `nextLoad` keeps what's loaded when only the dates narrowed; `refineNadac`/`refineFda` are
-  what consumers read. Tabs hold them through `useSearchLoad`. FDA always loads sample and
+  what consumers read (`useRefinedNadacSearch`/`useRefinedFdaSearch`; `NadacSearch` calls its
+  hook once and passes the result down). Chart provenance and colors read the loaded result.
+  A from-results list offers what the page could show before exclusions
+  (`nadacFilterOptions`), so it never lists a value Include OTC hides. Tabs hold them through `useSearchLoad`. FDA always loads sample and
   no-price packages and hides them by default, and both pages hide OTC by default (Include
-  boxes). As of step 1 (2026-11): FDA still loads all history (its Dates aren't a load field
-  yet), FDA has no Include OTC control, and NADAC's page reads only the date-clipped result
-  (its Drug filter feeds only Add Chart, `vizData`), not `refineNadac`.
+  boxes). As of step 2 (2026-11): FDA still loads all history (its Dates aren't a load field
+  yet) and has no Include OTC control.
 - **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
   (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.

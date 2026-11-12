@@ -1,7 +1,8 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { useSearchContext } from "../../Context/NadacSearchContext";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext";
+import type { NadacPrice } from "../../library/types";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import InputLabel from "@mui/material/InputLabel";
@@ -18,18 +19,26 @@ import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import ChartDatesControl from "../ExplorerGrid/ChartDatesControl";
 import useChartWindow from "../../hooks/useChartWindow";
 
-export default function VizTools() {
-  const { ndcDescriptions, selectedNdcDescriptions, setSelectedNdcDescriptions, selectedRows, vizData, data } = useSearchContext();
+type Props = {
+  /** The result as the page shows it (`useRefinedNadacSearch`): Add Chart's source and the colors' visible set. */
+  prices: NadacPrice[],
+  /** The Drug filter's options (`nadacFilterOptions`): excluding a drug doesn't remove it. */
+  ndcDescriptions: string[],
+}
+
+export default function VizTools({ prices, ndcDescriptions }: Props) {
+  const { criteria, setCriteria, selectedRows } = useNadacSearchContext();
   const { addItem } = useExplorerItems();
   const origin = useNadacChartOrigin();
   const { chartDates, setChartDates, chartWindow, bounds } = useChartWindow(origin.resultPrices);
-  // The auto charts show the whole (clipped) result (the Drug filter only feeds Add Chart), so it
-  // is also the visible set.
-  const colors = useSeriesColors(origin.resultPrices, data);
+  const colors = useSeriesColors(origin.resultPrices, prices);
+
+  const selectedNdcDescriptions = ndcDescriptions.filter(
+    description => !criteria.excludedNdcDescriptions.includes(description));
 
   const handleAddChart = (chartType: ChartType) => {
     const ndcs = new Set([...selectedRows.ids].map(String));
-    const chartData = vizData.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
+    const chartData = prices.filter((nadacPrice) => ndcs.has(nadacPrice.ndc));
     if (chartData.length === 0) return;
 
     addItem(createChartItem({
@@ -59,25 +68,41 @@ export default function VizTools() {
       <Typography variant="subtitle2">Page Filters</Typography>
       <Box sx={{ display: "flex" }}>
         <FormControl fullWidth>
-          <InputLabel id="drug-filter-select-label">{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
+          <InputLabel id="drug-filter-select-label" shrink>{CONSTANT.label.ndcDescriptionNadacSearchFilter}</InputLabel>
           <Select
+            labelId="drug-filter-select-label"
             label={CONSTANT.label.ndcDescriptionNadacSearchFilter}
             id="drug-filter"
             name="drug-filter"
             multiple
+            // Excluding every drug still shows "0 of N drugs", which needs the label kept up.
+            displayEmpty
+            notched
             value={selectedNdcDescriptions}
+            disabled={ndcDescriptions.length === 0}
+            // A count, not the first names: it says when the filter is on.
+            renderValue={selected => ndcDescriptions.length === 0 ? ""
+              : selected.length === ndcDescriptions.length ? "All drugs"
+              : `${selected.length} of ${ndcDescriptions.length} drugs`}
             onChange={(e) => {
               const newDescriptions = typeof e.target.value === "string"
                 ? e.target.value.split(",")
                 : e.target.value;
 
-              setSelectedNdcDescriptions(newDescriptions);
+              // Exclusions of drugs not listed now (OTC while it's hidden) are kept.
+              setCriteria(prev => ({
+                ...prev,
+                excludedNdcDescriptions: [
+                  ...prev.excludedNdcDescriptions.filter(description => !ndcDescriptions.includes(description)),
+                  ...ndcDescriptions.filter(description => !newDescriptions.includes(description)),
+                ],
+              }));
             }}
           >
             {
               ndcDescriptions.map(drug => {
                 return (
-                  <MenuItem id={drug} value={drug}>{drug}</MenuItem>
+                  <MenuItem id={drug} key={drug} value={drug}>{drug}</MenuItem>
                 )
               })
             }
