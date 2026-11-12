@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 import { useTheme } from "@mui/material/styles";
-import type { CSSProperties } from "react";
 
 /**
  * Shared chart styling from the MUI theme, so `LineViz` and `BarViz` don't hardcode colors or
- * sizes: 12px ticks in `text.secondary` (about 7:1 on the card), axis lines in `divider`, and a
- * tooltip that matches the cards.
+ * sizes: 12px ticks in `text.secondary` (about 7:1 on the card) and axis lines in `divider`.
  */
 export default function useChartTheme() {
   const theme = useTheme();
@@ -13,23 +11,11 @@ export default function useChartTheme() {
     const fontSize = 12;
     const tick = { fill: theme.palette.text.secondary, fontSize };
     const axisLine = { stroke: theme.palette.divider };
-    // The charts draw their own tooltip content (`LineTooltip`, `BarTooltip`) in this box.
-    const tooltip: { contentStyle: CSSProperties } = {
-      contentStyle: {
-        backgroundColor: theme.palette.background.paper,
-        border: `1px solid ${theme.palette.divider}`,
-        fontSize: 13,
-        // Leaves room around it on a phone, where a chart is about 350px wide.
-        maxWidth: "min(360px, calc(100vw - 64px))",
-        whiteSpace: "normal",
-      },
-    };
     return {
       palette: theme.palette.chart.series,
       fontSize,
       tick,
       axisLine,
-      tooltip,
       textPrimary: theme.palette.text.primary,
       paper: theme.palette.background.paper,
       textSecondary: theme.palette.text.secondary,

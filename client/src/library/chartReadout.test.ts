@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barAnnouncement, lineAnnouncement, tooltipRows } from "./chartReadout";
+import { barAnnouncement, barReadoutHeight, lineAnnouncement, lineReadoutHeight, READOUT_MAX_HEIGHT, rowAtIndex, tooltipRows } from "./chartReadout";
 import { rangeKey, type LineVizRow } from "./createLineVizData";
 
 const JAN_13 = Date.parse("2026-01-13");
@@ -35,5 +35,52 @@ describe("announcements", () => {
     const row = { ndc: "A", label: "Drug A", latest: 9.7, latestDate: JAN_13, average: 8.5, min: 5.5, max: 9.7, packages: 1 };
     expect(barAnnouncement(row, "latest", "mL")).toBe("A: latest $9.70 on Jan 13, 2026, range $5.50 to $9.70, per mL.");
     expect(barAnnouncement(row, "average", "mL")).toBe("A: average $8.50, range $5.50 to $9.70, per mL.");
+  });
+});
+
+describe("lineReadoutHeight", () => {
+  it("grows with the series, rows taller on wide screens", () => {
+    expect(lineReadoutHeight(2, false)).toBeGreaterThan(lineReadoutHeight(2, true));
+    expect(lineReadoutHeight(3, false)).toBeGreaterThan(lineReadoutHeight(2, false));
+  });
+
+  it("stops at the readout's height limit, past which it scrolls", () => {
+    expect(lineReadoutHeight(40, false)).toBe(READOUT_MAX_HEIGHT.wide);
+    expect(lineReadoutHeight(40, true)).toBe(READOUT_MAX_HEIGHT.compact);
+  });
+
+  it("counts the frame, the gaps and each range line (2 series drew 126 px at 1440)", () => {
+    expect(lineReadoutHeight(2, false)).toBe(126);
+    expect(lineReadoutHeight(2, false, 1)).toBe(146);
+    expect(lineReadoutHeight(2, true, 1)).toBe(lineReadoutHeight(2, true));
+  });
+
+  it("reserves a row even with no series", () => {
+    expect(lineReadoutHeight(0, true)).toBe(lineReadoutHeight(1, true));
+  });
+});
+
+describe("rowAtIndex", () => {
+  const rows = ["a", "b", "c"];
+
+  it("reads recharts' index as a number or a numeric string", () => {
+    expect(rowAtIndex(rows, 1)).toBe("b");
+    expect(rowAtIndex(rows, "2")).toBe("c");
+  });
+
+  it("finds nothing for a missing, empty, fractional or out-of-range index", () => {
+    expect([undefined, null, "", "1.5", 1.5, 3, "x"].map(index => rowAtIndex(rows, index))).toEqual(Array(7).fill(undefined));
+  });
+});
+
+describe("barReadoutHeight", () => {
+  it("fits one row in full (an NDC row draws 86 px at 1440), and the packages line for a product", () => {
+    expect(barReadoutHeight(false, false)).toBe(86);
+    expect(barReadoutHeight(false, true) - barReadoutHeight(false, false)).toBe(24);
+  });
+
+  it("holds the value and range lines on a phone, without the packages line", () => {
+    expect(barReadoutHeight(true, true)).toBe(barReadoutHeight(true, false));
+    expect(barReadoutHeight(true, false)).toBe(86);
   });
 });

@@ -41,3 +41,45 @@ export function barAnnouncement(row: PriceSummary, barValue: BarValue, unit: str
     : `average ${formatPrice(row.average)}`;
   return `${row.ndc}: ${value}, range ${formatPrice(row.min)} to ${formatPrice(row.max)}, per ${unit}.`;
 }
+
+/** The docked readout's height limit: past it, the readout scrolls. Smaller on a phone. */
+export const READOUT_MAX_HEIGHT = { wide: 200, compact: 132 };
+
+// The docked readout's box model, in px: its padding and border, the header, the gap after the
+// header and between rows, and the rows' lines (body2 20 px, caption 20 px).
+const DOCK_FRAME = 12 + 2;
+const HEADER = 24;
+const GAP = 4;
+const LINE = 20;
+
+/**
+ * The height a line chart's docked readout reserves for its series, so moving between dates (some
+ * with fewer prices) doesn't move the chart under the pointer. On wider screens each row also
+ * shows its description, and a third line for an averaged product's package range.
+ *
+ * @param rangeCount - the series that are averaged products (they can show a range line)
+ */
+export function lineReadoutHeight(seriesCount: number, compact: boolean, rangeCount = 0): number {
+  const rows = Math.max(seriesCount, 1);
+  const row = compact ? 22 : 2 * LINE;
+  const ranges = compact ? 0 : Math.min(rangeCount, rows) * LINE;
+  const max = compact ? READOUT_MAX_HEIGHT.compact : READOUT_MAX_HEIGHT.wide;
+  return Math.min(max, DOCK_FRAME + HEADER + GAP + rows * row + (rows - 1) * GAP + ranges);
+}
+
+/**
+ * The height a bar chart's docked readout reserves: one row in full (its description, value and
+ * range line, and "Average of N packages" when a row averages a product's packages, on wider
+ * screens; on a phone, the value and the range on lines of their own, since together they wrap
+ * at some prices).
+ */
+export function barReadoutHeight(compact: boolean, averagesPackages: boolean): number {
+  const lines = compact ? 2 : averagesPackages ? 3 : 2;
+  return DOCK_FRAME + HEADER + GAP + lines * LINE + (lines - 1) * GAP;
+}
+
+/** The data row recharts reports as active (`activeTooltipIndex`, a number or numeric string). */
+export function rowAtIndex<Row>(rows: Row[], index: unknown): Row | undefined {
+  const i = typeof index === "number" ? index : typeof index === "string" && index !== "" ? Number(index) : NaN;
+  return Number.isInteger(i) ? rows[i] : undefined;
+}

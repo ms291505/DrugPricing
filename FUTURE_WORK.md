@@ -19,12 +19,6 @@ anything new. Decided in an interview about the notes under **Author's notes**, 
    [plans/search-filters.md](plans/search-filters.md) (2026-11-12): the search panel holds Dates
    (with Custom) and the filters, and the Results section the table, Chart selected and the auto
    charts. The price columns cover the search's dates; Average stays out, as before.
-3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
-   values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
-   and its own scroll.
-   - Click or tap locks a date, and a second click or Esc unlocks it.
-   - Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click arrow keys
-     no longer move the readout.
 4. **Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. A
    toast says why there are several. Pins saved earlier with mixed units still render split.
 
