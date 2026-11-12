@@ -79,8 +79,8 @@ describe("barReadoutHeight", () => {
     expect(barReadoutHeight(false, true) - barReadoutHeight(false, false)).toBe(24);
   });
 
-  it("holds only the value line on a phone", () => {
+  it("holds the value and range lines on a phone, without the packages line", () => {
     expect(barReadoutHeight(true, true)).toBe(barReadoutHeight(true, false));
-    expect(barReadoutHeight(true, false)).toBeLessThan(barReadoutHeight(false, false));
+    expect(barReadoutHeight(true, false)).toBe(86);
   });
 });

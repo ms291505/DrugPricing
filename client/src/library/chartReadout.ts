@@ -70,10 +70,11 @@ export function lineReadoutHeight(seriesCount: number, compact: boolean, rangeCo
 /**
  * The height a bar chart's docked readout reserves: one row in full (its description, value and
  * range line, and "Average of N packages" when a row averages a product's packages, on wider
- * screens; the value line alone on a phone).
+ * screens; on a phone, the value and the range on lines of their own, since together they wrap
+ * at some prices).
  */
 export function barReadoutHeight(compact: boolean, averagesPackages: boolean): number {
-  const lines = compact ? 1 : averagesPackages ? 3 : 2;
+  const lines = compact ? 2 : averagesPackages ? 3 : 2;
   return DOCK_FRAME + HEADER + GAP + lines * LINE + (lines - 1) * GAP;
 }
 

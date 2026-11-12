@@ -305,8 +305,14 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
         {barValue === "latest"
           ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
           : <>Average <b>{formatPrice(row.average)}</b></>}
-        {" · "}Range {formatPrice(row.min)}–{formatPrice(row.max)}
+        {/* On a phone the two would wrap at some prices, changing the readout's height. */}
+        {compact ? null : <>{" · "}Range {formatPrice(row.min)}–{formatPrice(row.max)}</>}
       </Typography>
+      {compact
+        ? <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          Range {formatPrice(row.min)}–{formatPrice(row.max)}
+        </Typography>
+        : null}
       {row.packages > 1 && !compact
         ? <Typography variant="caption" color="text.secondary">Average of {row.packages} packages</Typography>
         : null}
