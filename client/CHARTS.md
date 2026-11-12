@@ -77,7 +77,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   never goes below $0, and rounds to round ticks. Line charts and Match scale use it; bar lengths
   start at $0 (`zeroBasedAxis`). The author considers small changes drawn big misleading.
 - Tick labels: `priceTickFormatter` (precision follows the step). Value labels: `formatPriceLabel`
-  (three significant digits under $1). Full prices in tooltips and tables: `formatPrice`.
+  (three significant digits under $1). Full prices in readouts and tables: `formatPrice`.
 
 ## Colors
 
@@ -96,7 +96,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   shows unless the band is visible: same-price packages have no range (`distinctRange`), and a
   spread under 1% of the axis span is dropped (`visibleBandNdcs`). E.g. Humira 0074-0124's $9
   spread is dropped on its own $5.5K–$8K axis and on the 7-product $2K–$7K axis. A dropped band
-  still shows its range in the tooltip (from `md` up), View data and the CSV. Bands are rare:
+  still shows its range in the readout (from `md` up), View data and the CSV. Bands are rare:
   most products price every package the same per unit (liquids' bottle sizes are the exception).
 - **Price changes** are called out on the line: dots at the old and new price, the old price
   continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined in
@@ -117,25 +117,41 @@ fitted axis (default) or a `bar` from $0 with a gray range track. Rows are drawn
 `shape`. Don't use recharts' `ErrorBar` (stale scale, ranges at half price) or
 `allowDataOverflow` on the value axis (clips the value labels).
 
-## Tooltips
+## Docked readout (no floating tooltips)
 
-`LineTooltip`/`BarTooltip`, not recharts' default list, and they must work on a ~350px phone
-chart under a finger. The line tooltip gives the date and unit once, then swatch, NDC and price
-per series; descriptions, ranges and package counts show from `md` up. On a phone the line tooltip
-stays at the top; the bar tooltip goes above the plot. The box (`useChartTheme().tooltip`) is
-capped at `min(360px, 100vw − 64px)`. Check new tooltip lines at phone width.
+Each unit chart shows its values in a fixed box above the plot (`ReadoutDock`), never in a
+tooltip that floats over the plot or sits under a finger. The box is recharts' `Tooltip`
+rendered there through `portal` (`DOCKED_TOOLTIP` keeps it showing between points), so hovering
+re-renders only the readout, not the chart.
+
+- **What it shows:** the hovered point; else the locked one; else, on a line chart, the latest
+  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`, the
+  bar chart's `BAR_READOUT_HEIGHT`) so the plot doesn't move under the pointer, and past
+  `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).
+- **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
+  second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
+  header has an Unlock button. While locked the `Tooltip` is `active={false}`, so the pointer no
+  longer moves the readout, and the chart marks the point (a dashed line, or the row highlight).
+  Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click the arrow
+  keys no longer move the readout.
+- React events bubble out of a portal to its React parents: `ReadoutContent` stops them, or a
+  click on Unlock would also reach the chart and lock again.
+- The line readout gives the date and unit once, then swatch, NDC and price per series, highest
+  first; descriptions, ranges and package counts show from `md` up. Check new lines at phone
+  width.
 
 ## Accessibility
 
 - Each unit chart's SVG keeps recharts' `role="application"` (never `role="img"`, which broke its
   name and arrow keys), with `aria-label` "<title>, USD per <unit>" and `aria-describedby` to a
   hidden summary (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts'
-  store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts).
+  store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts); Enter or Space also
+  lock the readout and Esc unlocks it.
 - `useChartReadout`: a hidden `role="status"` region, present and empty from the first render,
   speaks the active point 300ms after the last key while the SVG has focus; pointer movement
   silences it. Keep only a primitive key of `useActiveTooltipDataPoints` in state (the rows are
   rebuilt each render, and storing one loops). Text comes from `chartReadout.ts`, whose
-  `tooltipRows` the line tooltip uses too.
+  `tooltipRows` the line readout uses too.
 
 ## View data and CSV
 

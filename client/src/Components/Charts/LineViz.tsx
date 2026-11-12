@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type CSSProperties } from "react";
+import { useId, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
@@ -8,8 +8,10 @@ import { pricingUnitLabel } from "../../library/prices.ts";
 import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
-import { lineAnnouncement, tooltipRows, type TooltipRow } from "../../library/chartReadout.ts";
+import { lineAnnouncement, lineReadoutHeight, rowAtIndex, tooltipRows, type TooltipRow } from "../../library/chartReadout.ts";
 import useChartReadout from "../../hooks/useChartReadout.tsx";
+import useLockedPoint from "../../hooks/useLockedPoint.ts";
+import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock.tsx";
 import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
 import SeriesLegend from "./SeriesLegend.tsx";
 import ChartData, { LineDataTable } from "./ChartData.tsx";
@@ -136,14 +138,27 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
     return rows.length ? lineAnnouncement(date, unit, rows) : null;
   });
 
+  // The docked readout: the hovered date, else the locked one, else the latest.
+  const [dock, setDock] = useState<HTMLDivElement | null>(null);
+  const lock = useLockedPoint<number>(readout.currentKey);
+  const latestDate = vizData.at(-1)?.asOfDate;
+
   const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
 
   return (<>
-    <Box {...readout.focusProps}>
+    <ReadoutDock portalRef={setDock} minHeight={lineReadoutHeight(shownNdcs.length, isMobile)} />
+    <Box
+      {...readout.focusProps}
+      onKeyDown={event => {
+        readout.focusProps.onKeyDown();
+        lock.onKeyDown(event);
+      }}
+    >
       <ComposedChart
         data={vizData}
+        onClick={state => lock.toggle(rowAtIndex(vizData, state.activeTooltipIndex)?.asOfDate)}
         margin={chartTheme.margin}
         style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
         responsive
@@ -172,20 +187,31 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
           tickLine={chartTheme.axisLine}
         />
         <Tooltip
-          wrapperStyle={{ zIndex: 1 }}
-          // On a phone the finger is on the chart: keep the readout at the top, out from under it.
-          position={isMobile ? { y: 0 } : undefined}
-          content={({ active, payload, label }) => active && payload?.length
-            ? <LineTooltip
-              date={label as number}
-              unit={unit}
-              rows={tooltipRows(payload[0].payload as LineVizRow, shownNdcs)}
-              colorFor={colorFor}
-              descriptionFor={isMobile ? undefined : descriptionFor}
-              style={chartTheme.tooltip.contentStyle}
-            />
-            : null}
+          {...DOCKED_TOOLTIP}
+          portal={dock}
+          // Locked: the pointer no longer moves the readout.
+          active={lock.locked !== null ? false : undefined}
+          content={({ active, payload }) => {
+            const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
+            const date = hovered?.asOfDate ?? lock.locked ?? latestDate;
+            const row = hovered ?? vizData.find(r => r.asOfDate === date);
+            if (date === undefined || !row) return null;
+            return (
+              <LineReadout
+                date={date}
+                unit={unit}
+                rows={tooltipRows(row, shownNdcs)}
+                status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
+                onUnlock={lock.unlock}
+                colorFor={colorFor}
+                descriptionFor={isMobile ? undefined : descriptionFor}
+              />
+            );
+          }}
         />
+        {lock.locked !== null
+          ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
+          : null}
         {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
         {bandNdcs.map((ndc) => (
           <Area
@@ -245,27 +271,31 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   </>);
 }
 
-type LineTooltipProps = {
+type LineReadoutProps = {
   date: number,
   unit: string,
   rows: TooltipRow[],
+  status: ReadoutStatus,
+  onUnlock: () => void,
   colorFor: (ndc: string) => string,
-  /** Each series' description, left out on a phone to keep the tooltip small. */
+  /** Each series' description, left out on a phone to keep the readout small. */
   descriptionFor?: (ndc: string) => string,
-  style: CSSProperties,
 }
 
 /**
  * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
  * description and, for an averaged product, its packages' range beneath on wider screens.
  */
-function LineTooltip({ date, unit, rows, colorFor, descriptionFor, style }: LineTooltipProps) {
+function LineReadout({ date, unit, rows, status, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
-    <Box style={style} sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
-      <Typography variant="body2">
+    <ReadoutContent
+      header={<ReadoutHeader status={status} onUnlock={onUnlock}>
         <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
-        <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
-      </Typography>
+        <Box component="span" sx={{ color: "text.secondary" }}>
+          {" "}· per {unit}{status === "default" ? " · latest" : ""}
+        </Box>
+      </ReadoutHeader>}
+    >
       {rows.map(({ ndc, price, range }) => {
         const rangeText = range ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}` : null;
         return (
@@ -284,7 +314,7 @@ function LineTooltip({ date, unit, rows, colorFor, descriptionFor, style }: Line
           </Box>
         );
       })}
-    </Box>
+    </ReadoutContent>
   );
 }
 

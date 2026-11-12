@@ -41,3 +41,24 @@ export function barAnnouncement(row: PriceSummary, barValue: BarValue, unit: str
     : `average ${formatPrice(row.average)}`;
   return `${row.ndc}: ${value}, range ${formatPrice(row.min)} to ${formatPrice(row.max)}, per ${unit}.`;
 }
+
+/** The docked readout's height limit: past it, the readout scrolls. Smaller on a phone. */
+export const READOUT_MAX_HEIGHT = { wide: 200, compact: 132 };
+
+/**
+ * The height a line chart's docked readout reserves for its series, so moving between dates (some
+ * with fewer prices) doesn't move the chart under the pointer. Rows are taller on wider screens,
+ * where they also show each series' description.
+ */
+export function lineReadoutHeight(seriesCount: number, compact: boolean): number {
+  const header = 24, padding = 12;
+  const row = compact ? 22 : 40;
+  const max = compact ? READOUT_MAX_HEIGHT.compact : READOUT_MAX_HEIGHT.wide;
+  return Math.min(max, header + padding + Math.max(seriesCount, 1) * row);
+}
+
+/** The data row recharts reports as active (`activeTooltipIndex`, a number or numeric string). */
+export function rowAtIndex<Row>(rows: Row[], index: unknown): Row | undefined {
+  const i = typeof index === "number" ? index : typeof index === "string" && index !== "" ? Number(index) : NaN;
+  return Number.isInteger(i) ? rows[i] : undefined;
+}

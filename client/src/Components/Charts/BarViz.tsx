@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import { useId, useState } from "react";
 import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
@@ -11,8 +11,10 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
-import { barAnnouncement } from "../../library/chartReadout";
+import { barAnnouncement, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
+import useLockedPoint from "../../hooks/useLockedPoint";
+import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock";
 import { barCsv, barDataRows } from "../../library/chartCsv";
 import ChartData, { BarDataTable } from "./ChartData";
 import { useSettings } from "../../Context/SettingsContext";
@@ -88,6 +90,10 @@ type UnitBarChartProps = {
 type BarRow = PriceSummary & { value: number };
 
 const BAR_ROW_HEIGHT = 40;
+/** The docked readout's reserved height: a full row's readout, so pointing at bars doesn't move them. */
+const BAR_READOUT_HEIGHT = { wide: 104, compact: 60 };
+/** The row highlight under the pointer, and on the locked row. */
+const ROW_HIGHLIGHT_OPACITY = 0.15;
 /** Room right of the plot for value labels. */
 const LABEL_MARGIN = 64;
 
@@ -116,12 +122,25 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
     return row ? barAnnouncement(row, barValue, unit) : null;
   });
 
+  // The docked readout: the hovered bar, else the locked one, else a hint.
+  const [dock, setDock] = useState<HTMLDivElement | null>(null);
+  const lock = useLockedPoint<string>(readout.currentKey);
+
   return (<>
+    <ReadoutDock portalRef={setDock} minHeight={isMobile ? BAR_READOUT_HEIGHT.compact : BAR_READOUT_HEIGHT.wide} />
     {/* The box sets the height: its rows' height, or more when the card fills a taller row. The
         chart is absolutely positioned inside it so its own measured height never feeds back into
         the row's: in flow, a chart that grew once would hold the row at that height. */}
-    <Box {...readout.focusProps} sx={{ position: "relative", flexGrow: 1, minHeight: rows.length * BAR_ROW_HEIGHT + 40 }}>
+    <Box
+      {...readout.focusProps}
+      onKeyDown={event => {
+        readout.focusProps.onKeyDown();
+        lock.onKeyDown(event);
+      }}
+      sx={{ position: "relative", flexGrow: 1, minHeight: rows.length * BAR_ROW_HEIGHT + 40 }}
+    >
       <BarChart
+        onClick={state => lock.toggle(rowAtIndex(rows, state.activeTooltipIndex)?.ndc)}
         layout="vertical"
         data={rows}
         margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
@@ -150,17 +169,18 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
           tickLine={false}
         />
         <Tooltip
+          {...DOCKED_TOOLTIP}
+          portal={dock}
+          // Locked: the pointer no longer moves the readout.
+          active={lock.locked !== null ? false : undefined}
           // Highlights the whole row, label to value, under the pointer.
-          cursor={{ fill: chartTheme.textSecondary, fillOpacity: 0.15 }}
-          // On a phone the rows fill the chart, so the tooltip goes above the plot (`compact` lifts
-          // it by its own height), over the caption and toggle.
-          position={isMobile ? { y: 0 } : undefined}
-          allowEscapeViewBox={isMobile ? { x: false, y: true } : undefined}
+          cursor={{ fill: chartTheme.textSecondary, fillOpacity: ROW_HIGHLIGHT_OPACITY }}
           content={({ active, payload }) => {
-            const row = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
-            if (!row) return null;
-            const color = colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc));
-            return <BarTooltip row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} style={chartTheme.tooltip.contentStyle} />;
+            const hovered = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
+            const row = hovered ?? rows.find(r => r.ndc === lock.locked);
+            const status: ReadoutStatus = hovered ? "hover" : row ? "locked" : "default";
+            const color = row ? colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc)) : undefined;
+            return <BarReadout row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} status={status} onUnlock={lock.unlock} />;
           }}
         />
         <Bar
@@ -177,6 +197,10 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
             const at = (price: number) => left + (price - low) / (high - low) * plotWidth;
             const { y = 0, height = 0 } = props;
             const color = colorFor(row.ndc, props.index ?? 0);
+            // The locked row keeps the highlight the pointer gives a row.
+            const lockMark = row.ndc === lock.locked
+              ? <rect x={0} y={band?.y ?? y} width={left + plotWidth} height={band?.height ?? height} fill={chartTheme.textSecondary} fillOpacity={ROW_HIGHLIGHT_OPACITY} />
+              : null;
             const rangeX = at(row.min);
             const rangeWidth = Math.max(at(row.max) - rangeX, 2);
             const text = formatPriceLabel(row.value);
@@ -187,6 +211,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
               const fitsAfterBar = valueX + 6 + textWidth <= left + plotWidth + LABEL_MARGIN;
               return (
                 <g>
+                  {lockMark}
                   <Rectangle x={left} y={y} width={at(row.value) - left} height={barHeight} radius={[0, 3, 3, 0]} fill={color} />
                   <rect x={rangeX} y={y + barHeight + 4} width={rangeWidth} height={4} rx={2} fill={chartTheme.textSecondary} />
                   {/* Right after the bar's end, or inside it in dark text if that would leave the chart.
@@ -208,6 +233,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
             const cy = y + height / 2;
             return (
               <g>
+                {lockMark}
                 {/* A faint rail across the row leads the eye from the label to the dot. */}
                 <line x1={left} x2={left + plotWidth} y1={cy} y2={cy} stroke={chartTheme.axisLine.stroke} strokeDasharray="2 4" />
                 <rect x={rangeX} y={cy - 3} width={rangeWidth} height={6} rx={3} fill={color} fillOpacity={0.4} />
@@ -234,42 +260,51 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   </>);
 }
 
-type BarTooltipProps = {
-  row: BarRow,
+type BarReadoutProps = {
+  /** The hovered or locked row; none shows a hint. */
+  row: BarRow | undefined,
   barValue: BarValue,
   unit: string,
-  color: string,
-  /** Phone: no description or package count, and lifted above the plot. */
+  color: string | undefined,
+  /** Phone: no description or package count. */
   compact: boolean,
-  style: CSSProperties,
+  status: ReadoutStatus,
+  onUnlock: () => void,
 }
 
-/** One row in full, laid out like the line chart's tooltip: the value, its date, and the range. */
-function BarTooltip({ row, barValue, unit, color, compact, style }: BarTooltipProps) {
+/** One row in full, laid out like the line chart's readout: the value, its date, and the range. */
+function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: BarReadoutProps) {
+  if (!row) {
+    return (
+      <ReadoutContent
+        header={<ReadoutHeader status={status} onUnlock={onUnlock}>
+          <Box component="span" sx={{ color: "text.secondary" }}>
+            {compact ? "Tap a row for its prices" : "Point at a row for its prices"}
+          </Box>
+        </ReadoutHeader>}
+      />
+    );
+  }
   return (
-    <Box
-      style={style}
-      sx={{ p: 1, display: "flex", flexDirection: "column", gap: 0.25, transform: compact ? "translateY(-100%)" : undefined }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
-        <Typography variant="body2">
+    <ReadoutContent
+      header={<ReadoutHeader status={status} onUnlock={onUnlock}>
+        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+          <Box component="span" sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
           <Box component="span" sx={{ fontWeight: 600 }}>{row.ndc}</Box>
-          <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
-        </Typography>
-      </Box>
+        </Box>
+        <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
+      </ReadoutHeader>}
+    >
       {compact ? null : <Typography variant="caption" color="text.secondary">{row.label}</Typography>}
       <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
         {barValue === "latest"
           ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
           : <>Average <b>{formatPrice(row.average)}</b></>}
-      </Typography>
-      <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
-        Range {formatPrice(row.min)}–{formatPrice(row.max)}
+        {" · "}Range {formatPrice(row.min)}–{formatPrice(row.max)}
       </Typography>
       {row.packages > 1 && !compact
         ? <Typography variant="caption" color="text.secondary">Average of {row.packages} packages</Typography>
         : null}
-    </Box>
+    </ReadoutContent>
   );
 }

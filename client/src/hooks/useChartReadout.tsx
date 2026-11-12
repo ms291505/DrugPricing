@@ -57,6 +57,8 @@ export default function useChartReadout<Row, Key extends string | number>(
 
   return {
     reporter: <ActivePointReporter onChange={onChange} />,
+    /** The point the pointer or the keys last made active. For event handlers, not rendering. */
+    currentKey: useCallback(() => latestKey.current, []),
     focusProps: {
       // The last input decides: a click then arrow keys speaks, and hover never does.
       onFocus: (event: FocusEvent) =>
