@@ -223,7 +223,11 @@ Each step is a PR to `dev` that leaves the app working.
 3. **`SearchPanel` and `ResultsSection` on both pages**, with Dates as a load field on FDA (the
    parameter-name fix) and the page-level Chart dates removed; Page Tools, `VizTools`,
    `FdaSearchTool` and `FdaPageTools` go. The large one; it is also step 2 of the usability
-   round.
+   round. Two carry-overs from step 1's review: compute `refineFda` once per tab (in the
+   provider or `ResultsSection`) instead of in each of `useRefinedFdaSearch`'s three callers;
+   and decide whether FDA's clip snaps the start down to an as-of date like NADAC's
+   (`clipNadacToSearchDates`). FDA's server filters prices strictly (`AsOfDate >= start`), so
+   without a snap its first shown week can start after the start date.
 4. **Docs**: AGENTS.md (the two-layer FDA note, the NADAC gap, NADAC search dates),
    `client/CHARTS.md` (Chart dates, price-change cards), FUTURE_WORK.md (delete what this
    settles).

@@ -18,8 +18,10 @@ type NadacSearchContextType = {
   requested: NadacLoad | null;
   /** What the query fetches: `requested`, or a wider load that holds it. */
   loaded: NadacLoad | null;
-  /** The load the user's last Search asked for; null for a restored tab's re-run. */
+  /** The load the user's last Search fetched or re-ran; the result toasts' key. */
   lastSearch: NadacLoad | null;
+  /** True while a Search waits for app-init. */
+  waiting: boolean;
   data: Array<NadacPrice>;
   setData: React.Dispatch<React.SetStateAction<Array<NadacPrice>>>;
   /** `data` without the descriptions the Drug page filter excludes. Only Add Chart reads it. */
@@ -40,6 +42,7 @@ export const NadacSearchContext = createContext<NadacSearchContextType>({
   requested: null,
   loaded: null,
   lastSearch: null,
+  waiting: false,
   data: [],
   setData: () => { },
   vizData: [],
@@ -65,7 +68,7 @@ type ProviderProps = {
 export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [data, setData] = useState<Array<NadacPrice>>([]);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
-  const { criteria, setCriteria, search, requested, loaded, lastSearch } = useSearchLoad(
+  const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
     initial?.criteria ?? createNadacCriteria(), nadacLoadRequest, applyNadacSearch);
   const { excludedNdcDescriptions } = criteria;
 
@@ -100,6 +103,7 @@ export const NadacSearchContextProvider = ({ children, initial, searchEnabled = 
       requested,
       loaded,
       lastSearch,
+      waiting,
       data,
       setData,
       vizData,

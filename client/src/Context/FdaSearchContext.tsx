@@ -18,8 +18,10 @@ export type FdaSearchContextType = {
   requested: FdaLoad | null;
   /** What the query fetches: `requested`, or a wider load that holds it. */
   loaded: FdaLoad | null;
-  /** The load the user's last Search asked for; null for a restored tab's re-run. */
+  /** The load the user's last Search fetched or re-ran; the result toasts' key. */
   lastSearch: FdaLoad | null;
+  /** True while a Search waits for app-init. */
+  waiting: boolean;
   fdaResultDetailLevel: FdaResultDetailLevel
   /** Also clears `selectedRows`, whose ids mean different things at each level. */
   setFdaResultDetailLevel: (level: FdaResultDetailLevel) => void;
@@ -41,6 +43,7 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   requested: null,
   loaded: null,
   lastSearch: null,
+  waiting: false,
   fdaResultDetailLevel: "product",
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
@@ -64,8 +67,9 @@ type ProviderProps = {
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  const { criteria, setCriteria, search, requested, loaded, lastSearch } = useSearchLoad(
-    initial?.criteria ?? createFdaCriteria(), fdaLoadRequestAllDates, applyFdaSearch);
+  // The request ignores the as-of date until step 3, so a search needn't wait for app-init.
+  const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
+    initial?.criteria ?? createFdaCriteria(), fdaLoadRequestAllDates, applyFdaSearch, { waitForAsOfDate: false });
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
@@ -86,6 +90,7 @@ export const FdaSearchContextProvider = ({ children, initial, searchEnabled = tr
       requested,
       loaded,
       lastSearch,
+      waiting,
       fdaResultDetailLevel,
       setFdaResultDetailLevel,
       selectedRows,

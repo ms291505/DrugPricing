@@ -3,7 +3,7 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
   fdaActiveFilterCount, fdaLoadRequest, nadacActiveFilterCount, nadacLoadRequest, nextLoad, refineFda, refineNadac,
-  resolveSearchDates,
+  resolveSearchDates, snapToAsOfDates,
   type FdaCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
@@ -111,6 +111,23 @@ describe("applying a search", () => {
   });
 });
 
+describe("snapToAsOfDates", () => {
+  const asOf = ["2026-01-07", "2026-01-14", "2026-01-21"].map(iso => nadacPrice("1", iso));
+
+  it("moves the start down and the end up to the nearest as-of dates", () => {
+    expect(snapToAsOfDates({ start: day("2026-01-10"), end: day("2026-01-16") }, asOf))
+      .toEqual({ start: day("2026-01-07"), end: day("2026-01-21") });
+  });
+
+  it("keeps dates that are as-of dates, open ends, and dates beyond the loaded ones", () => {
+    expect(snapToAsOfDates({ start: day("2026-01-14"), end: day("2026-01-14") }, asOf))
+      .toEqual({ start: day("2026-01-14"), end: day("2026-01-14") });
+    expect(snapToAsOfDates(FULL_WINDOW, asOf)).toEqual(FULL_WINDOW);
+    expect(snapToAsOfDates({ start: day("2025-01-01"), end: day("2027-01-01") }, asOf))
+      .toEqual({ start: day("2025-01-01"), end: day("2027-01-01") });
+  });
+});
+
 describe("refineNadac", () => {
   const prices = [
     nadacPrice("1", "2026-01-07"),
@@ -128,7 +145,15 @@ describe("refineNadac", () => {
 
   it("clips to the dates", () => {
     expect(refineNadac(prices, criteria, { start: day("2026-01-14"), end: null })).toHaveLength(3);
-    expect(refineNadac(prices, criteria, { start: null, end: day("2026-01-10") })).toEqual([prices[0]]);
+    expect(refineNadac(prices, criteria, { start: null, end: day("2026-01-07") })).toEqual([prices[0]]);
+  });
+
+  it("snaps the dates out to as-of dates, as the server does, so the first week isn't dropped", () => {
+    // A preset's start between two as-of dates keeps the price in effect on it (Jan 7's), where
+    // a plain clip would keep only Jan 14's three.
+    expect(refineNadac(prices, criteria, { start: day("2026-01-10"), end: null })).toHaveLength(4);
+    // An end between two as-of dates takes in the next one.
+    expect(refineNadac(prices, criteria, { start: null, end: day("2026-01-10") })).toHaveLength(4);
   });
 
   it("picks brand or generic, every B classification counting as brand", () => {
@@ -146,7 +171,7 @@ describe("refineNadac", () => {
       nadacPrice("1", "2026-01-14", { classificationForRateSetting: "G" }),
     ];
     expect(refineNadac(changed, { ...createNadacCriteria(), brandGeneric: "generic" }, FULL_WINDOW)).toEqual(changed);
-    expect(refineNadac(changed, { ...createNadacCriteria(), brandGeneric: "generic" }, { start: null, end: day("2026-01-10") })).toEqual([]);
+    expect(refineNadac(changed, { ...createNadacCriteria(), brandGeneric: "generic" }, { start: null, end: day("2026-01-07") })).toEqual([]);
   });
 
   it("excludes descriptions and units, and combines with the other fields", () => {

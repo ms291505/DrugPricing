@@ -9,9 +9,9 @@ import NadacSearchViz from "./NadacSearchViz";
 import { useNadacSearch } from "../../hooks/useNadacSearch.ts";
 import useMobile from "../../hooks/useMobile.ts"
 import { toStoredNadacNdc } from "../../library/ndc.ts";
-import useAppInit from "../../hooks/useAppInit.ts";
-import { clipToWindow, fromDateInput, FULL_WINDOW, toDateInput, type ChartDates } from "../../library/dates.ts";
-import { DEFAULT_SEARCH_DATES, resolveSearchDates } from "../../library/searchCriteria.ts";
+import useAppInit, { useLastAsOfDate } from "../../hooks/useAppInit.ts";
+import { fromDateInput, FULL_WINDOW, toDateInput, type ChartDates } from "../../library/dates.ts";
+import { clipNadacToSearchDates, DEFAULT_SEARCH_DATES, resolveSearchDates } from "../../library/searchCriteria.ts";
 import { useWorkspaceActions, useWorkspaceTab } from "../../Context/workspaceContexts.ts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext.tsx";
 import { defaultTitleFor } from "../../library/tabType.ts";
@@ -19,7 +19,7 @@ import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts"
 import QueryErrorToast from "../ui/QueryErrorToast.tsx";
 
 export default function NadacSearch() {
-  const { criteria, requested, search, setData } = useSearchContext();
+  const { criteria, requested, search, setData, waiting } = useSearchContext();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const [ndcDescription, setNdcDescription] = useState(criteria.ndcDescription);
@@ -27,10 +27,10 @@ export default function NadacSearch() {
   const [dates, setDates] = useState<ChartDates>(criteria.dates);
 
   // The inputs show the dates the setting means: a preset counts back from the last loaded
-  // as-of date (today without app-init). The server snaps both dates to loaded as-of dates.
+  // as-of date (today until app-init answers; a search waits for it). The server snaps both dates
+  // to loaded as-of dates.
   const { data: appInit } = useAppInit();
-  const [today] = useState(() => Date.parse(toDateInput(Date.now())));
-  const lastAsOfDate = appInit?.nadacDates.last ?? today;
+  const { forDisplay: lastAsOfDate } = useLastAsOfDate();
   const shownDates = resolveSearchDates(dates, lastAsOfDate);
   const minDate = toDateInput(shownDates.start);
   const maxDate = toDateInput(shownDates.end);
@@ -63,9 +63,11 @@ export default function NadacSearch() {
   const requestedDates = requested?.dates ?? FULL_WINDOW;
   useEffect(() => {
     if (nadacSearchQuery.data?.prices) {
-      setData(clipToWindow(nadacSearchQuery.data.prices, requestedDates));
+      setData(clipNadacToSearchDates(nadacSearchQuery.data.prices, requestedDates));
     }
   }, [nadacSearchQuery.data, requestedDates, setData]);
+
+  const busy = nadacSearchQuery.isLoading || waiting;
 
   const handleSearch = () => {
     const title = nadacTabTitle(ndcDescription, searchNdc);
@@ -164,13 +166,13 @@ export default function NadacSearch() {
         </Box>
         <Button
           type="submit"
-          disabled={!isValidSearch || nadacSearchQuery.isLoading}
+          disabled={!isValidSearch || busy}
           variant="contained"
           sx={{
             width: { xs: "100%", md: 100 },
           }}
         >
-          {nadacSearchQuery.isLoading
+          {busy
             ? <CircularProgress aria-label="Loading..." />
             : "Search"
           }

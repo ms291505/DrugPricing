@@ -151,11 +151,6 @@ export function nextLoad<T extends { dates: DateWindow }>(loaded: T | null, requ
   return sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates) ? loaded : requested;
 }
 
-/** Whether a load is the same search (same terms) as another, whatever its dates. */
-export function isSameSearch<T extends { dates: DateWindow }>(a: T | null, b: T | null): boolean {
-  return a !== null && b !== null && sameTerms(a, b);
-}
-
 /**
  * The applied criteria after Search: the load fields from the form, and the refine fields kept.
  * A search for new terms clears the exclusion lists, which name values from the old result; the
@@ -192,14 +187,38 @@ function latestByNdc(prices: NadacPrice[]): Map<string, NadacPrice> {
 }
 
 /**
- * A NADAC result as the page shows it: clipped to the search's dates, then narrowed by the refine
+ * The window moved out to the as-of dates of these prices, as the NADAC server snaps a search's
+ * dates: the start down to the last as-of date at or before it (the price in effect on that day),
+ * the end up to the first at or after it. A date with no as-of date on its side stays.
+ */
+export function snapToAsOfDates(dates: DateWindow, prices: NadacPrice[]): DateWindow {
+  let start: number | null = null;
+  let end: number | null = null;
+  for (const price of prices) {
+    const time = price.asOfDate.getTime();
+    if (dates.start !== null && time <= dates.start && (start === null || time > start)) start = time;
+    if (dates.end !== null && time >= dates.end && (end === null || time < end)) end = time;
+  }
+  return { start: start ?? dates.start, end: end ?? dates.end };
+}
+
+/**
+ * A NADAC result clipped to a search's dates, the way the server would have answered that search,
+ * so a narrowing that didn't fetch shows the same weeks as one that did.
+ */
+export const clipNadacToSearchDates = (prices: NadacPrice[], dates: DateWindow): NadacPrice[] =>
+  clipToWindow(prices, snapToAsOfDates(dates, prices));
+
+/**
+ * A NADAC result as the page shows it: clipped to the search's dates (`clipNadacToSearchDates`),
+ * then narrowed by the refine
  * fields. OTC and brand/generic go by each NDC's latest price in those dates, so an NDC is shown
  * or hidden whole; the Drug and unit lists match each price.
  *
  * @param dates - the dates the applied criteria asked for (the requested load's)
  */
 export function refineNadac(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): NadacPrice[] {
-  const clipped = clipToWindow(prices, dates);
+  const clipped = clipNadacToSearchDates(prices, dates);
   const excludedDescriptions = new Set(criteria.excludedNdcDescriptions);
   const excludedUnits = new Set(criteria.excludedUnits);
   const latest = latestByNdc(clipped);
