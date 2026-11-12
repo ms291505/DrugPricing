@@ -1,37 +1,24 @@
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import useFdaSearch from "../../hooks/useFdaSearch";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
+import type { FdaResultDetailLevel } from "../../library/types";
+import { ChoiceField } from "../SearchPanel";
 
-export default function SelectDetailLevel() {
+const LEVELS: { value: FdaResultDetailLevel, label: string }[] = [
+  { value: "product", label: "Products" },
+  { value: "package", label: "Packages" },
+];
+
+/** The FDA results' detail level: a row per product or per package. */
+export default function DetailLevelSelect() {
   const { isLoading, data } = useFdaSearch();
   const { fdaResultDetailLevel, setFdaResultDetailLevel } = useFdaSearchContext();
-  const detailLevels = ["Product", "Package"];
-  const noData =
-    data
-      ? data.products.length === 0
-        ? true
-        : false
-      : true
-
   return (
-    <FormControl fullWidth>
-      <InputLabel id={"detail-level-select-label"}>Detail Level</InputLabel>
-      <Select
-        disabled={noData || isLoading}
-        label={"Detail Level"}
-        value={fdaResultDetailLevel}
-        onChange={(e) => {
-          const newValue = e.target.value;
-          setFdaResultDetailLevel(newValue);
-        }}>
-        {
-          detailLevels.map(value => {
-            return (
-              <MenuItem id={value} key={value} value={value.toLowerCase()}>{value}</MenuItem>
-            )
-          })
-        }
-      </Select>
-    </FormControl>
-  )
+    <ChoiceField
+      label="Show"
+      value={fdaResultDetailLevel}
+      options={LEVELS}
+      onChange={setFdaResultDetailLevel}
+      disabled={isLoading || !data || data.products.length === 0}
+    />
+  );
 }

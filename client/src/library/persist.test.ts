@@ -73,7 +73,6 @@ describe("loading saved tab state", () => {
         },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
       ],
-      chartDates: { kind: "recent" as const, months: 6 },
     } as Parameters<Persist["saveTabState"]>[1];
     persist.saveTabState("t1", state);
     expect(loaded(persist.loadNadacTabState("t1"))).toEqual(state);
@@ -83,7 +82,6 @@ describe("loading saved tab state", () => {
     saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [oldItem] });
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
-    expect(state.chartDates).toEqual({ kind: "window", dateWindow: FULL_WINDOW });
     expect(state.pinnedItems[0].matchScale).toBeUndefined();
   });
 
@@ -98,11 +96,9 @@ describe("loading saved tab state", () => {
         { ...oldItem, id: "bad-match", matchScale: "yes" },
         { ...oldItem, id: "good" },
       ],
-      chartDates: { kind: "recent", months: 0 },
     });
     const state = loaded(persist.loadFdaTabState("t2"));
     expect(state.pinnedItems.map(item => item.id)).toEqual(["good"]);
-    expect(state.chartDates).toEqual({ kind: "window", dateWindow: FULL_WINDOW });
   });
 
   it("reads each criteria field on its own, falling back to its default", () => {
@@ -195,7 +191,7 @@ describe("watchOtherWindows", () => {
 
   const fdaTab = (criteria: typeof fdaCriteria) => ({
     type: "fda" as const, criteria, detailLevel: "product" as const,
-    pinnedItems: [], chartDates: { kind: "window" as const, dateWindow: FULL_WINDOW },
+    pinnedItems: [],
   });
 
   it("ignores another window re-saving what this window wrote", () => {

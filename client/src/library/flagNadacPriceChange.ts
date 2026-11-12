@@ -1,5 +1,4 @@
 import type { FdaProductDetail, NadacPrice, NadacPriceChange, PackagePriceChange } from "./types";
-import { inWindow, type DateWindow } from "./dates";
 
 /** One package's prices, under the NDC its price-change cards show. */
 export type PackagePrices = {
@@ -75,12 +74,4 @@ export function percentageChangeToString(percentage: number) {
     style: "percent",
     minimumFractionDigits: 1
   }).format(percentage);
-}
-
-/**
- * The changes whose date (the first as-of date at the new price) is inside the chart dates, so
- * the price-change cards follow the page's "Chart dates" like the other auto charts.
- */
-export function priceChangesInWindow(changes: PackagePriceChange[], dateWindow: DateWindow): PackagePriceChange[] {
-  return changes.filter(change => inWindow(change.priceChange.endDate.getTime(), dateWindow));
 }

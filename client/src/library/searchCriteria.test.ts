@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
-  fdaActiveFilterCount, fdaLoadRequest, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenOtcCount,
+  exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
+  hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nextLoad, refineFda, refineNadac,
-  resolveSearchDates, snapToAsOfDates,
+  resolveSearchDates, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
@@ -127,6 +128,20 @@ describe("snapToAsOfDates", () => {
     expect(snapToAsOfDates({ start: day("2025-01-01"), end: day("2027-01-01") }, asOf))
       .toEqual({ start: day("2025-01-01"), end: day("2027-01-01") });
   });
+
+  it("reaches no further than one as-of interval", () => {
+    // Jan 21 is 7 days after Jan 14: out of reach, as an NDC's last price months back would be.
+    expect(snapToAsOfDates({ start: day("2026-01-28"), end: day("2025-12-31") }, asOf))
+      .toEqual({ start: day("2026-01-28"), end: day("2025-12-31") });
+    expect(snapToAsOfDates({ start: day("2026-01-27"), end: day("2026-01-01") }, asOf))
+      .toEqual({ start: day("2026-01-21"), end: day("2026-01-07") });
+  });
+
+  it("widens a request by the same reach, so a strict server returns the dates it snaps to", () => {
+    expect(widenToAsOfDates({ start: day("2026-01-10"), end: day("2026-01-16") }))
+      .toEqual({ start: day("2026-01-04"), end: day("2026-01-22") });
+    expect(widenToAsOfDates(FULL_WINDOW)).toEqual(FULL_WINDOW);
+  });
 });
 
 describe("refineNadac", () => {
@@ -187,7 +202,7 @@ describe("refineNadac", () => {
   });
 });
 
-describe("NADAC filter options and hidden OTC", () => {
+describe("NADAC filter options and hidden counts", () => {
   const prices = [
     nadacPrice("1", "2026-01-07", { ndcDescription: "B DRUG" }),
     nadacPrice("2", "2026-01-14", { ndcDescription: "OTC DRUG", isOtc: true }),
@@ -198,23 +213,31 @@ describe("NADAC filter options and hidden OTC", () => {
   it("lists what the page could show, sorted, before exclusions", () => {
     const excluding = { ...createNadacCriteria(), excludedNdcDescriptions: ["A DRUG"], excludedUnits: ["gram"] };
     expect(nadacFilterOptions(prices, excluding, FULL_WINDOW))
-      .toEqual({ ndcDescriptions: ["A DRUG", "B DRUG"], units: ["each", "gram"] });
+      .toEqual({ excludedNdcDescriptions: ["A DRUG", "B DRUG"], excludedUnits: ["each", "gram"] });
   });
 
   it("lists OTC values only while OTC is included, and only values inside the dates", () => {
     const withOtc = { ...createNadacCriteria(), includeOtc: true };
-    expect(nadacFilterOptions(prices, withOtc, FULL_WINDOW).ndcDescriptions).toEqual(["A DRUG", "B DRUG", "OTC DRUG"]);
-    expect(nadacFilterOptions(prices, withOtc, { start: day("2026-01-14"), end: null }).ndcDescriptions)
+    expect(nadacFilterOptions(prices, withOtc, FULL_WINDOW).excludedNdcDescriptions).toEqual(["A DRUG", "B DRUG", "OTC DRUG"]);
+    expect(nadacFilterOptions(prices, withOtc, { start: day("2026-01-14"), end: null }).excludedNdcDescriptions)
       .toEqual(["A DRUG", "OTC DRUG"]);
   });
 
+  const hidden = (criteria: NadacCriteria) =>
+    nadacHiddenCounts(prices, refineNadac(prices, criteria, FULL_WINDOW), criteria, FULL_WINDOW);
+
   it("counts the OTC NDCs that Include OTC would add, after the other filters", () => {
-    const hidden = (criteria: NadacCriteria) =>
-      nadacHiddenOtcCount(prices, refineNadac(prices, criteria, FULL_WINDOW), criteria, FULL_WINDOW);
-    expect(hidden(createNadacCriteria())).toBe(2);
-    expect(hidden({ ...createNadacCriteria(), includeOtc: true })).toBe(0);
-    expect(hidden({ ...createNadacCriteria(), excludedNdcDescriptions: ["OTC DRUG"] })).toBe(0);
-    expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" })).toBe(0);
+    expect(hidden(createNadacCriteria()).byInclude.includeOtc).toBe(2);
+    expect(hidden({ ...createNadacCriteria(), includeOtc: true }).byInclude.includeOtc).toBe(0);
+    expect(hidden({ ...createNadacCriteria(), excludedNdcDescriptions: ["OTC DRUG"] }).byInclude.includeOtc).toBe(0);
+    expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" }).byInclude.includeOtc).toBe(0);
+  });
+
+  it("counts every NDC the refine fields hide in all", () => {
+    expect(hidden(createNadacCriteria()).total).toBe(2);
+    expect(hidden({ ...createNadacCriteria(), excludedUnits: ["gram"] }).total).toBe(3);
+    expect(hidden({ ...createNadacCriteria(), brandGeneric: "brand" }).total).toBe(4);
+    expect(hidden(showAllNadac(createNadacCriteria())).total).toBe(0);
   });
 });
 
@@ -248,7 +271,7 @@ describe("refineFda", () => {
   });
 
   it("clips prices to the dates, so a package priced only outside them counts as without prices", () => {
-    const dates = { start: day("2026-01-01"), end: null };
+    const dates = { start: day("2026-01-10"), end: null };
     expect(shown(createFdaCriteria(), dates)).toEqual([["1", ["1-1"]], ["4", ["4-2"]]]);
     const withoutPrices = refineFda(result, { ...createFdaCriteria(), includeResultsWithoutPrices: true }, dates);
     expect(withoutPrices.products.find(p => p.productNdc === "4")?.fdaPackageDetails[0].nadacPrices).toEqual([]);
@@ -267,6 +290,11 @@ describe("refineFda", () => {
     expect(shown({ ...createFdaCriteria(), excludedUnits: ["each"] })).toEqual([["4", ["4-2"]]]);
   });
 
+  it("snaps the dates out to as-of dates, as NADAC's server does", () => {
+    // Jan 14 is the first as-of date at or after the end, and within reach.
+    expect(shown(createFdaCriteria(), { start: null, end: day("2026-01-10") })).toEqual([["1", ["1-1"]], ["4", ["4-1", "4-2"]]]);
+  });
+
   it("leaves the loaded result as it is", () => {
     refineFda(result, { ...createFdaCriteria(), excludedUnits: ["each"] }, { start: day("2026-01-01"), end: null });
     expect(result.products[3].fdaPackageDetails[0].nadacPrices).toHaveLength(1);
@@ -278,7 +306,65 @@ describe("refineFda", () => {
   });
 });
 
+describe("FDA filter options and hidden counts", () => {
+  const priced = (code: string, options: Partial<NadacPrice> = {}) =>
+    fdaPackage(code, [nadacPrice(code, "2026-01-14", options)]);
+  const result = {
+    products: [
+      product("1", [priced("1-1"), fdaPackage("1-2", []), fdaPackage("1-3", [nadacPrice("13", "2026-01-14")], true)],
+        { labelerName: "B LABS", routeName: ["ORAL", "TOPICAL"] }),
+      product("2", [priced("2-1")], { productTypeName: "HUMAN OTC DRUG", dosageFormName: "CAPSULE", labelerName: "OTC LABS" }),
+      product("3", [fdaPackage("3-1", [])], { labelerName: "C LABS" }),
+      product("4", [priced("4-1", { pricingUnit: "milliliter" })], { labelerName: "A LABS" }),
+    ],
+  };
+  const hidden = (criteria: FdaCriteria, level: "product" | "package") =>
+    fdaHiddenCounts(result, refineFda(result, criteria, FULL_WINDOW), criteria, FULL_WINDOW, level);
+
+  it("lists what the page could show, sorted, before exclusions", () => {
+    const excluding = { ...createFdaCriteria(), excludedLabelers: ["A LABS"], excludedUnits: ["milliliter"] };
+    expect(fdaFilterOptions(result, excluding, FULL_WINDOW)).toEqual({
+      excludedProductNdcs: ["1", "4"],
+      excludedDosageForms: ["TABLET"],
+      excludedRoutes: ["ORAL", "TOPICAL"],
+      excludedLabelers: ["A LABS", "B LABS"],
+      excludedUnits: ["each", "milliliter"],
+    });
+    expect(fdaFilterOptions(result, showAllFda(createFdaCriteria()), FULL_WINDOW).excludedLabelers)
+      .toEqual(["A LABS", "B LABS", "C LABS", "OTC LABS"]);
+  });
+
+  it("counts the rows each Include box would add, at the table's detail level", () => {
+    expect(hidden(createFdaCriteria(), "product")).toEqual({
+      byInclude: { includeOtc: 1, includeSamplePackages: 0, includeResultsWithoutPrices: 1 }, total: 2,
+    });
+    expect(hidden(createFdaCriteria(), "package")).toEqual({
+      byInclude: { includeOtc: 1, includeSamplePackages: 1, includeResultsWithoutPrices: 2 }, total: 4,
+    });
+    expect(hidden({ ...createFdaCriteria(), includeOtc: true }, "product").byInclude.includeOtc).toBe(0);
+  });
+});
+
+describe("hiddenResultsHint", () => {
+  it("names the one Include box that shows every hidden result", () => {
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 12 }, total: 12 }))
+      .toEqual({ kind: "include", key: "includeOtc", count: 12 });
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 0, includeResultsWithoutPrices: 3 }, total: 3 }))
+      .toEqual({ kind: "include", key: "includeResultsWithoutPrices", count: 3 });
+  });
+
+  it("offers to show all when no one box would, and nothing when nothing is hidden", () => {
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 5 }, total: 8 })).toEqual({ kind: "all", count: 8 });
+    expect(hiddenResultsHint({ byInclude: { includeOtc: 0 }, total: 0 })).toBeNull();
+  });
+});
+
 describe("filter state", () => {
+  it("counts the exclusion lists that exclude something", () => {
+    expect(exclusionCount(createFdaCriteria(), FDA_EXCLUSION_KEYS)).toBe(0);
+    expect(exclusionCount({ ...createFdaCriteria(), includeOtc: true, excludedRoutes: ["ORAL"], excludedUnits: ["each"] }, FDA_EXCLUSION_KEYS)).toBe(2);
+  });
+
   it("counts the refine fields set away from their defaults", () => {
     expect(nadacActiveFilterCount(createNadacCriteria())).toBe(0);
     expect(nadacActiveFilterCount({ ...createNadacCriteria(), includeOtc: true, excludedUnits: ["each"], ndcDescription: "x" })).toBe(2);

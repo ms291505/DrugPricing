@@ -13,16 +13,8 @@ export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
 export const DATA_GRID_PAGE_SIZES = [5, 10, 25];
 export const NDC_NDC_DESCRIPTION_DELIMITER = " - ";
 export const DEFAULT_TOOLTIP_FONT_SIZE = 12;
-export const FILTER_SELECT_DELIMITER = " | ";
 
 export const CONSTANT = {
-  label: {
-    includeOtcFilter: "Include OTC Products",
-    ndcDescriptionNadacSearchFilter: "Drug",
-    drugFilterSelect: "Drug"
-  },
-  selectAllUuid: "c3fb0b4c-317d-4492-947c-3b1e76a7c86f",
-  selectNoneUuid: "23147a8f-f376-45a3-973f-b3620d8a69bd",
   staleTime: 1000 * 60 * 10,
   drawerWidth: 240,
   opacity: 0.6,

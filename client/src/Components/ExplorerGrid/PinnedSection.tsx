@@ -1,14 +1,15 @@
-import { useId, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 import { useExplorerItems } from "../../Context/ExplorerItemsContext";
 import { matchedPriceRange } from "../../library/explorerItems";
 import PinnedItemCard from "./PinnedItemCard";
 
 /**
- * A tab's pinned items: charts made with Add Chart or pinned from auto charts. They stay as they
- * are across new searches and filter changes. Hidden until something is pinned.
+ * A tab's pinned items: charts made with Chart selected or pinned from auto charts. They stay as
+ * they are across new searches and filter changes. Hidden until something is pinned. Memoized
+ * (no props), so a search page's refine changes don't redraw every pinned chart.
  */
-export default function PinnedSection() {
+export default memo(function PinnedSection() {
   const { pinnedItems, setAllCollapsed } = useExplorerItems();
   const headingId = useId();
 
@@ -28,6 +29,9 @@ export default function PinnedSection() {
           {anyExpanded ? "Collapse all" : "Expand all"}
         </Button>
       </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ px: { xs: 1, md: 0 } }}>
+        Pinned charts keep their own data and dates: searches and filters don't change them.
+      </Typography>
       <Grid container spacing={2}>
         {pinnedItems.map((item, index) => (
           <PinnedItemCard key={item.id} item={item} index={index} count={pinnedItems.length} priceRanges={priceRanges} />
@@ -35,4 +39,4 @@ export default function PinnedSection() {
       </Grid>
     </Box>
   );
-}
+})

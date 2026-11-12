@@ -3,7 +3,8 @@ import { clipToWindow, windowEndingAt, type ChartDates, type DateWindow } from "
 import { isValidNadacSearch } from "./nadacSearch";
 import {
   isFdaProductOtc,
-  type FdaPackageDetail, type FdaProductDetail, type FdaProductSearchResult, type NadacClassification, type NadacPrice,
+  type FdaPackageDetail, type FdaProductDetail, type FdaProductSearchResult, type FdaResultDetailLevel,
+  type NadacClassification, type NadacPrice,
 } from "./types";
 
 /*
@@ -88,9 +89,12 @@ export const createFdaCriteria = (): FdaCriteria => ({
   excludedUnits: [],
 });
 
-const NADAC_EXCLUSION_KEYS: readonly NadacExclusionKey[] = ["excludedNdcDescriptions", "excludedUnits"];
-const FDA_EXCLUSION_KEYS: readonly FdaExclusionKey[] =
+export const NADAC_EXCLUSION_KEYS: readonly NadacExclusionKey[] = ["excludedNdcDescriptions", "excludedUnits"];
+export const FDA_EXCLUSION_KEYS: readonly FdaExclusionKey[] =
   ["excludedProductNdcs", "excludedDosageForms", "excludedRoutes", "excludedLabelers", "excludedUnits"];
+
+/** An "Include ..." checkbox: a refine field that hides something by default. */
+export type IncludeKey = "includeOtc" | "includeSamplePackages" | "includeResultsWithoutPrices";
 
 // --- Load ---------------------------------------------------------------------------------
 
@@ -186,21 +190,41 @@ function latestByNdc(prices: NadacPrice[]): Map<string, NadacPrice> {
   return latest;
 }
 
+/** Days between NADAC as-of dates: weekly (all 249 gaps in the data were 7 days, 2026-11). */
+const AS_OF_INTERVAL_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** The furthest a date snaps: to an as-of date less than one interval away. */
+const SNAP_REACH = (AS_OF_INTERVAL_DAYS - 1) * DAY_MS;
+
 /**
  * The window moved out to the as-of dates of these prices, as the NADAC server snaps a search's
  * dates: the start down to the last as-of date at or before it (the price in effect on that day),
- * the end up to the first at or after it. A date with no as-of date on its side stays.
+ * the end up to the first at or after it. Only as-of dates less than one interval away count, as
+ * the server snaps to the dates loaded for every NDC: an NDC last priced months before the start
+ * doesn't pull it back. A date with no as-of date in reach stays.
  */
 export function snapToAsOfDates(dates: DateWindow, prices: NadacPrice[]): DateWindow {
   let start: number | null = null;
   let end: number | null = null;
   for (const price of prices) {
     const time = price.asOfDate.getTime();
-    if (dates.start !== null && time <= dates.start && (start === null || time > start)) start = time;
-    if (dates.end !== null && time >= dates.end && (end === null || time < end)) end = time;
+    if (dates.start !== null && time <= dates.start && time >= dates.start - SNAP_REACH
+      && (start === null || time > start)) start = time;
+    if (dates.end !== null && time >= dates.end && time <= dates.end + SNAP_REACH
+      && (end === null || time < end)) end = time;
   }
   return { start: start ?? dates.start, end: end ?? dates.end };
 }
+
+/**
+ * The dates to ask a server for when it filters prices strictly, as FDA's does: each end moved
+ * out by `snapToAsOfDates`'s reach, so the result holds the as-of dates it snaps to. The client
+ * then clips it as NADAC's server would have.
+ */
+export const widenToAsOfDates = (dates: DateWindow): DateWindow => ({
+  start: dates.start === null ? null : dates.start - SNAP_REACH,
+  end: dates.end === null ? null : dates.end + SNAP_REACH,
+});
 
 /**
  * A NADAC result clipped to a search's dates, the way the server would have answered that search,
@@ -238,28 +262,58 @@ export function refineNadac(prices: NadacPrice[], criteria: NadacCriteria, dates
 const uniqueSorted = (values: string[]) => [...new Set(values)].sort();
 const ndcCount = (prices: NadacPrice[]) => new Set(prices.map(price => price.ndc)).size;
 
-/**
- * The options of NADAC's from-results lists: the values of the result the page could show, after
- * the clip and the fixed refine fields (Include OTC, brand/generic) but before any exclusion. So
+/*
+ * From-results lists take their options from the result the page could show: after the clip and
+ * the fixed refine fields (the Include boxes, brand/generic) but before any exclusion. So
  * excluding a value doesn't remove it from its list, and a value the page can't show (an OTC-only
  * drug while OTC is hidden, a drug only outside narrowed dates) isn't listed.
  */
-export function nadacFilterOptions(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): Record<"ndcDescriptions" | "units", string[]> {
+
+/** The options of NADAC's from-results lists, keyed by the exclusion each one sets. */
+export function nadacFilterOptions(prices: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): Record<NadacExclusionKey, string[]> {
   const shown = refineNadac(prices, { ...criteria, ...clearedExclusions(NADAC_EXCLUSION_KEYS) }, dates);
   return {
-    ndcDescriptions: uniqueSorted(shown.map(price => price.ndcDescription)),
-    units: uniqueSorted(shown.map(price => price.pricingUnit)),
+    excludedNdcDescriptions: uniqueSorted(shown.map(price => price.ndcDescription)),
+    excludedUnits: uniqueSorted(shown.map(price => price.pricingUnit)),
   };
 }
 
 /**
- * How many NDCs ticking Include OTC would add to the NADAC page: the OTC NDCs that the other
- * refine fields would show. Zero while OTC is included. `refined` is
- * `refineNadac(prices, criteria, dates)`, which the caller already has.
+ * What the refine fields hide, in rows of the results table (NDCs on NADAC; products or packages
+ * on FDA, by detail level). `byInclude` has, for each of the page's Include boxes, the rows
+ * ticking it would add (0 while it's ticked); `total`, the rows that showing everything would add.
  */
-export function nadacHiddenOtcCount(prices: NadacPrice[], refined: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): number {
-  if (criteria.includeOtc) return 0;
-  return ndcCount(refineNadac(prices, { ...criteria, includeOtc: true }, dates)) - ndcCount(refined);
+export type HiddenCounts = {
+  byInclude: Partial<Record<IncludeKey, number>>,
+  total: number,
+};
+
+/** Every refine field set to show everything: the empty result's "Show all". */
+export const showAllNadac = (criteria: NadacCriteria): NadacCriteria =>
+  ({ ...criteria, includeOtc: true, brandGeneric: "all", ...clearedExclusions(NADAC_EXCLUSION_KEYS) });
+
+/** @param refined - `refineNadac(prices, criteria, dates)`, which the caller already has */
+export function nadacHiddenCounts(prices: NadacPrice[], refined: NadacPrice[], criteria: NadacCriteria, dates: DateWindow): HiddenCounts {
+  const shown = ndcCount(refined);
+  const added = (wider: NadacCriteria) => ndcCount(refineNadac(prices, wider, dates)) - shown;
+  return {
+    byInclude: { includeOtc: criteria.includeOtc ? 0 : added({ ...criteria, includeOtc: true }) },
+    total: added(showAllNadac(criteria)),
+  };
+}
+
+/** What the empty table offers when the refine fields hide every result. */
+export type HiddenResultsHint =
+  /** One Include box would show them all. */
+  | { kind: "include", key: IncludeKey, count: number }
+  /** Several fields hide them: "Show all" sets every refine field to show everything. */
+  | { kind: "all", count: number };
+
+/** The hint for a page that shows nothing, or null when nothing is hidden either. */
+export function hiddenResultsHint(hidden: HiddenCounts): HiddenResultsHint | null {
+  if (hidden.total === 0) return null;
+  const key = (Object.keys(hidden.byInclude) as IncludeKey[]).find(k => hidden.byInclude[k] === hidden.total);
+  return key ? { kind: "include", key, count: hidden.total } : { kind: "all", count: hidden.total };
 }
 
 /**
@@ -276,14 +330,27 @@ function refinePackage(pkg: FdaPackageDetail, criteria: FdaCriteria, dates: Date
   return nadacPrices === pkg.nadacPrices ? pkg : { ...pkg, nadacPrices };
 }
 
+const fdaPrices = (result: FdaProductSearchResult) =>
+  result.products.flatMap(product => product.fdaPackageDetails.flatMap(pkg => pkg.nadacPrices));
+
 /**
- * An FDA result as the page shows it: each package's prices clipped to the dates, then narrowed
+ * The dates an FDA result shows: the search's, snapped to as-of dates as NADAC's server snaps
+ * them (`snapToAsOfDates`), so both pages start on the price in effect on the start date. The
+ * request is widened to hold those dates (`widenToAsOfDates`).
+ */
+export const fdaShownDates = (result: FdaProductSearchResult, dates: DateWindow): DateWindow =>
+  snapToAsOfDates(dates, fdaPrices(result));
+
+/**
+ * An FDA result as the page shows it: each package's prices clipped to the dates (snapped,
+ * `fdaShownDates`), then narrowed
  * by the refine fields. "Without prices" means without prices in these dates. A product whose
  * packages are all hidden is hidden too.
  *
  * @param dates - the dates the applied criteria asked for (the requested load's)
  */
 export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow): FdaProductSearchResult {
+  const shownDates = fdaShownDates(result, dates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const showsProduct = (p: FdaProductDetail) =>
     !criteria.excludedProductNdcs.includes(p.productNdc)
@@ -297,7 +364,7 @@ export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria,
   for (const product of result.products) {
     if (!showsProduct(product)) continue;
     const packages = product.fdaPackageDetails
-      .map(pkg => refinePackage(pkg, criteria, dates, excludedUnits))
+      .map(pkg => refinePackage(pkg, criteria, shownDates, excludedUnits))
       .filter(pkg => pkg !== null);
     // A product with no packages at all has no prices either.
     const shown = product.fdaPackageDetails.length === 0 ? criteria.includeResultsWithoutPrices : packages.length > 0;
@@ -306,10 +373,57 @@ export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria,
   return { ...result, products };
 }
 
+/** The options of FDA's from-results lists, keyed by the exclusion each one sets. */
+export function fdaFilterOptions(result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow): Record<FdaExclusionKey, string[]> {
+  const { products } = refineFda(result, { ...criteria, ...clearedExclusions(FDA_EXCLUSION_KEYS) }, dates);
+  return {
+    excludedProductNdcs: uniqueSorted(products.map(product => product.productNdc)),
+    excludedDosageForms: uniqueSorted(products.map(product => product.dosageFormName)),
+    excludedRoutes: uniqueSorted(products.flatMap(product => product.routeName)),
+    excludedLabelers: uniqueSorted(products.map(product => product.labelerName)),
+    excludedUnits: uniqueSorted(products.flatMap(product =>
+      product.fdaPackageDetails.flatMap(pkg => pkg.nadacPrices.map(price => price.pricingUnit)))),
+  };
+}
+
+export const showAllFda = (criteria: FdaCriteria): FdaCriteria => ({
+  ...criteria,
+  includeOtc: true,
+  includeSamplePackages: true,
+  includeResultsWithoutPrices: true,
+  ...clearedExclusions(FDA_EXCLUSION_KEYS),
+});
+
+/** The table's rows at a detail level: products, or their packages. */
+export const fdaRowCount = (result: FdaProductSearchResult, level: FdaResultDetailLevel): number =>
+  level === "product"
+    ? result.products.length
+    : result.products.reduce((count, product) => count + product.fdaPackageDetails.length, 0);
+
+const FDA_INCLUDE_KEYS: readonly IncludeKey[] = ["includeOtc", "includeSamplePackages", "includeResultsWithoutPrices"];
+
+/** @param refined - `refineFda(result, criteria, dates)`, which the caller already has */
+export function fdaHiddenCounts(
+  result: FdaProductSearchResult, refined: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow,
+  level: FdaResultDetailLevel,
+): HiddenCounts {
+  const shown = fdaRowCount(refined, level);
+  const added = (wider: FdaCriteria) => fdaRowCount(refineFda(result, wider, dates), level) - shown;
+  return {
+    byInclude: Object.fromEntries(FDA_INCLUDE_KEYS.map(key =>
+      [key, criteria[key] ? 0 : added({ ...criteria, [key]: true })])),
+    total: added(showAllFda(criteria)),
+  };
+}
+
 // --- Filter state -------------------------------------------------------------------------
 
 const NADAC_DEFAULTS = createNadacCriteria();
 const FDA_DEFAULTS = createFdaCriteria();
+
+/** How many of the exclusion lists exclude something: the "More filters (2)" count. */
+export const exclusionCount = <C extends Record<K, string[]>, K extends string>(criteria: C, keys: readonly K[]) =>
+  keys.filter(key => criteria[key].length > 0).length;
 
 /** How many refine fields are set away from their defaults. */
 export function nadacActiveFilterCount(criteria: NadacCriteria): number {

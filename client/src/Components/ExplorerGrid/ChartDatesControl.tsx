@@ -16,9 +16,18 @@ type Props = {
   onChange: (value: ChartDates) => void,
   /** The dates there is data for: the inputs' limits, and where "recent" presets count back from. */
   bounds: DateBounds | null,
+  /** The date inputs' limits, when they aren't `bounds` (null: none). */
+  inputBounds?: DateBounds | null,
   /** An extra preset, e.g. the dates around a price change. */
   focusPreset?: { label: string, dateWindow: DateWindow },
+  /**
+   * Adds a Custom preset: typed dates select it, and it keeps them while another preset is
+   * picked, so they can be switched back on.
+   */
+  customPreset?: boolean,
   label?: string,
+  /** Shown under the label, e.g. when the dates apply. */
+  caption?: string,
 }
 
 const RECENT_PRESETS = [
@@ -40,13 +49,16 @@ function activePresetKey(value: ChartDates, presets: Preset[], bounds: DateBound
 
 const toDraft = (dateWindow: DateWindow) => ({ start: toDateInput(dateWindow.start), end: toDateInput(dateWindow.end) });
 
+const isCustom = (value: ChartDates) => value.kind === "window" && !isFullWindow(value.dateWindow);
+
 /**
- * Picks the dates a chart shows: presets for the common cases, or a start and end date. A blank
- * date is open, so the chart runs to its first or last price. "Recent" presets stay presets
- * (they follow the data); typed dates are fixed. Used by Page Tools on both search pages and by
- * each pinned chart.
+ * Picks dates: presets for the common cases, or a start and end date. A blank date is open, so it
+ * runs to the first or last price. "Recent" presets stay presets (they follow the data); typed
+ * dates are fixed. Used by each pinned chart, and by the search panels' Dates (`DatesField`).
  */
-export default function ChartDatesControl({ value, onChange, bounds, focusPreset, label = "Chart dates" }: Props) {
+export default function ChartDatesControl({
+  value, onChange, bounds, inputBounds = bounds, focusPreset, customPreset = false, label = "Chart dates", caption,
+}: Props) {
   const labelId = useId();
 
   const presets: Preset[] = [
@@ -57,11 +69,18 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
       ? RECENT_PRESETS.map(({ months, label }) => ({ key: `recent-${months}`, label, chartDates: { kind: "recent", months } as const }))
       : []),
   ];
-  const activePreset = activePresetKey(value, presets, bounds);
-
   // The inputs show the dates the value means for this data, and hold what was typed until it
   // is a valid range. They reset when those dates change from outside (a preset, new data).
   const shown = resolveChartDates(value, bounds);
+
+  // The dates Custom stands for: the last ones typed, or else the ones shown when it's picked.
+  const [customWindow, setCustomWindow] = useState(() => isCustom(value) && value.kind === "window" ? value.dateWindow : null);
+  if (customPreset) {
+    presets.push({ key: "custom", label: "Custom", chartDates: { kind: "window", dateWindow: customWindow ?? shown } });
+  }
+  // With Custom, any typed dates are Custom, even ones that match a preset's.
+  const activePreset = customPreset && isCustom(value) ? "custom" : activePresetKey(value, presets, bounds);
+
   const shownKey = `${shown.start}|${shown.end}`;
   const [draft, setDraft] = useState(() => toDraft(shown));
   const [draftFor, setDraftFor] = useState(shownKey);
@@ -77,15 +96,19 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
     setDraft(next);
     const nextWindow = { start: fromDateInput(next.start), end: fromDateInput(next.end) };
     if (isValidWindow(nextWindow) && !sameWindow(nextWindow, shown)) {
+      setCustomWindow(nextWindow);
       onChange({ kind: "window", dateWindow: nextWindow });
     }
   };
 
-  const inputBounds = bounds ? { min: toDateInput(bounds.first), max: toDateInput(bounds.last) } : {};
+  const inputLimits = inputBounds ? { min: toDateInput(inputBounds.first), max: toDateInput(inputBounds.last) } : {};
 
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Typography variant="subtitle2" id={labelId}>{label}</Typography>
+      <Box>
+        <Typography variant="subtitle2" id={labelId}>{label}</Typography>
+        {caption ? <Typography variant="caption" color="text.secondary">{caption}</Typography> : null}
+      </Box>
       <ToggleButtonGroup
         size="small"
         exclusive
@@ -109,7 +132,7 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
           label="From"
           value={draft.start}
           onChange={(e) => handleDraftChange("start", e.target.value)}
-          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputBounds }}
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
           sx={{ flex: 1, minWidth: 0 }}
         />
         <TextField
@@ -120,7 +143,7 @@ export default function ChartDatesControl({ value, onChange, bounds, focusPreset
           onChange={(e) => handleDraftChange("end", e.target.value)}
           error={!draftValid}
           helperText={draftValid ? undefined : "Before the start date"}
-          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputBounds }}
+          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
           sx={{ flex: 1, minWidth: 0 }}
         />
       </Box>

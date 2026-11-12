@@ -68,15 +68,17 @@ in `TabProviders.tsx`) · `src/theme.ts` (every color; see Theme below) ·
 `src/library/constants.ts`.
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
+`SearchPanel/` and `ResultsSection/` (the frames and fields both search pages are built from),
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
 both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
-supporting UI.
+supporting UI. Each search page is its panel (`*SearchPanel`), its results (`*Results`, in a
+`ResultsSection`) and `PinnedSection`.
 
 ### Result tables
 
 Each table is one file in `ResultTables/` that takes its search's data and `loading` as props,
-lists its columns, and renders `ResultTable` (paging, Add Chart selection). The page that owns the
-query also owns the table's `Paper`. Rows are built in `library/resultRows.ts` (tested): each
+lists its columns, and renders `ResultTable` (paging, the selection Chart selected charts).
+`ResultsSection` gives it its `Paper`. Rows are built in `library/resultRows.ts` (tested): each
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
 sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
@@ -109,7 +111,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   own grid.
 - A search tab is renamed after its first search while it has its default title (NADAC:
   `nadacTabTitle` in `library/nadacSearch.ts`). Reading the tab list re-renders a page on every
-  tab change, so only the search forms read it, and `NadacSearchViz` is `memo`'d.
+  tab change, so only the search panels read it (`useRenameAfterSearch`), and `NadacResults` and
+  `FdaResults` are `memo`'d.
 
 ### Data rules that apply everywhere
 
@@ -126,19 +129,24 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items
   (derived from the search) are never stored. Details in [client/CHARTS.md](client/CHARTS.md).
-- **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`, being
-  built in steps): one object per search type. *Load* fields (text terms, dates) go to the server
-  on Search; *refine* fields narrow the loaded result in the client at once, never fetching.
-  `nextLoad` keeps what's loaded when only the dates narrowed; `refineNadac`/`refineFda` are
-  what consumers read (`useRefinedNadacSearch`/`useRefinedFdaSearch`; `NadacSearch` calls its
-  hook once and passes the result down). Chart provenance and colors read the loaded result.
-  A from-results list offers what the page could show before exclusions
-  (`nadacFilterOptions`), so it never lists a value Include OTC hides. Tabs hold them through `useSearchLoad`. FDA always loads sample and
-  no-price packages and hides them by default, and both pages hide OTC by default (Include
-  boxes). As of step 2 (2026-11): FDA still loads all history (its Dates aren't a load field
-  yet) and has no Include OTC control.
-- **NADAC search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data
-  (ending today if `app-init` fails), and the server snaps both dates to loaded as-of dates.
+- **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`): one
+  object per search type, edited in one panel per page (`SearchPanel`). *Load* fields (text
+  terms, Dates) go to the server on Search; *refine* fields narrow the loaded result in the
+  client at once, never fetching. `nextLoad` keeps what's loaded when only the dates narrowed.
+  Each page calls its view hook once (`useRefinedNadacSearch`/`useRefinedFdaSearch`) and passes
+  the result down: the refined rows (`refineNadac`/`refineFda`), the dates shown, the
+  from-results lists' options and the hidden counts. Chart provenance and colors read the loaded
+  result. A from-results list offers what the page could show before exclusions
+  (`*FilterOptions`), so it never lists a value an Include box hides. Tabs hold criteria
+  through `useSearchLoad`. FDA always loads sample and no-price packages and hides them by
+  default, and both pages hide OTC by default (Include boxes, each with a "(N hidden)" count).
+  When the filters hide every result, the table says why and offers the fix
+  (`hiddenResultsHint`).
+- **Search dates** default to the last `DEFAULT_NADAC_SEARCH_MONTHS` of loaded data (ending
+  today if `app-init` fails) on both pages, and are the window of everything on the page (there
+  is no separate chart dates control). NADAC's server snaps both dates to loaded as-of dates;
+  FDA's filters strictly, so the client widens its request (`widenToAsOfDates`) and snaps the
+  same way (`fdaShownDates`). The snap reaches less than one week (as-of dates are weekly).
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
 - **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
   `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone
@@ -169,12 +177,12 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). New preferences go
-  here, not in Page Tools.
+  here, not in the search panel.
 
 ### Persistence (`library/persist.ts`)
 
 The workspace and each search tab's state (search criteria, detail level, pinned
-items, chart dates) go to `localStorage` and are restored on load; a restored tab re-runs its
+items) go to `localStorage` and are restored on load; a restored tab re-runs its
 search when first shown (`active` → `searchEnabled`). Selection and system-card collapse state
 aren't saved.
 
