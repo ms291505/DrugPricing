@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Box, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Popover, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import {
   ALL_DATES, formatWindow, fromDateInput, isFullWindow, isValidWindow, resolveChartDates, toDateInput,
   type ChartDates, type DateBounds, type DateWindow,
@@ -23,9 +23,10 @@ type Props = {
   /** An extra preset, e.g. the dates around a price change. */
   focusPreset?: { label: string, dateWindow: DateWindow },
   /**
-   * Adds a Custom preset, the only one that shows the date inputs: the others say their dates in
-   * a line of text. Custom keeps the typed dates while another preset is picked, so they can be
-   * switched back on.
+   * Adds a Custom preset and says the dates in a line of text beside the label. The date inputs
+   * open in a popover under Custom, so nothing around the control moves and no room is kept for
+   * them. Custom keeps the typed dates while another preset is picked, so they can be switched
+   * back on.
    */
   customPreset?: boolean,
   /**
@@ -118,14 +119,45 @@ export default function ChartDatesControl({
     else apply();
   };
 
-  const showInputs = !customPreset || activePreset === "custom";
-  const shownText = showInputs ? null : formatWindow(shown, inputBounds ?? bounds);
+  // With Custom, the text always says the dates in effect, typed ones included.
+  const shownText = customPreset ? formatWindow(shown, inputBounds ?? bounds) : null;
+  // The Custom button while its date inputs are open.
+  const [customAnchor, setCustomAnchor] = useState<HTMLElement | null>(null);
 
   const inputLimits = inputBounds ? { min: toDateInput(inputBounds.first), max: toDateInput(inputBounds.last) } : {};
 
+  const dateInputs = (
+    <Box sx={{ display: "flex", gap: 1 }}>
+      <TextField
+        size="small"
+        type="date"
+        label="From"
+        value={draft.start}
+        onChange={(e) => handleDraftChange("start", e.target.value)}
+        slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
+        sx={{ flex: 1, minWidth: 0 }}
+      />
+      <TextField
+        size="small"
+        type="date"
+        label="To"
+        value={draft.end}
+        onChange={(e) => handleDraftChange("end", e.target.value)}
+        error={!draftValid}
+        helperText={draftValid ? undefined : "Before the start date"}
+        slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
+        sx={{ flex: 1, minWidth: 0 }}
+      />
+    </Box>
+  );
+
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Typography variant="subtitle2" id={labelId}>{label}</Typography>
+      {/* The dates a preset means sit with the label, so they read as what the group is set to. */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1 }}>
+        <Typography variant="subtitle2" id={labelId}>{label}</Typography>
+        {shownText ? <Typography variant="body2" color="text.secondary">{shownText}</Typography> : null}
+      </Box>
       <ToggleButtonGroup
         size="small"
         exclusive
@@ -140,7 +172,15 @@ export default function ChartDatesControl({
         sx={{ flexWrap: "wrap" }}
       >
         {presets.map(preset => (
-          <ToggleButton key={preset.key} value={preset.key} aria-label={preset.label} sx={{ px: 1, py: 0.25 }}>
+          <ToggleButton
+            key={preset.key}
+            value={preset.key}
+            aria-label={preset.label}
+            // Also when Custom is already picked, to change its dates.
+            onClick={preset.key === "custom" ? (e) => setCustomAnchor(e.currentTarget) : undefined}
+            aria-haspopup={preset.key === "custom" ? "dialog" : undefined}
+            sx={{ px: 1, py: 0.25 }}
+          >
             {preset.shortLabel
               ? <>
                 <Box component="span" aria-hidden sx={{ display: { xs: "inline", sm: "none" } }}>{preset.shortLabel}</Box>
@@ -150,29 +190,17 @@ export default function ChartDatesControl({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-      {shownText ? <Typography variant="body2" color="text.secondary">{shownText}</Typography> : null}
-      {showInputs ? <Box sx={{ display: "flex", gap: 1 }}>
-        <TextField
-          size="small"
-          type="date"
-          label="From"
-          value={draft.start}
-          onChange={(e) => handleDraftChange("start", e.target.value)}
-          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
-          sx={{ flex: 1, minWidth: 0 }}
-        />
-        <TextField
-          size="small"
-          type="date"
-          label="To"
-          value={draft.end}
-          onChange={(e) => handleDraftChange("end", e.target.value)}
-          error={!draftValid}
-          helperText={draftValid ? undefined : "Before the start date"}
-          slotProps={{ inputLabel: { shrink: true }, htmlInput: inputLimits }}
-          sx={{ flex: 1, minWidth: 0 }}
-        />
-      </Box> : null}
+      {customPreset
+        ? <Popover
+          open={customAnchor !== null}
+          anchorEl={customAnchor}
+          onClose={() => setCustomAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          slotProps={{ paper: { role: "dialog", "aria-label": `${label}: custom`, sx: { mt: 0.5, p: 2, width: 320, maxWidth: "calc(100vw - 32px)" } } }}
+        >
+          {dateInputs}
+        </Popover>
+        : dateInputs}
     </Box>
   );
 }

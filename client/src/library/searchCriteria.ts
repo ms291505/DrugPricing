@@ -45,6 +45,7 @@ export type NadacCriteria = {
 export type FdaCriteria = {
   // Load
   proprietaryName: string,
+  nonProprietaryName: string,
   dates: ChartDates,
   // Refine
   includeOtc: boolean,
@@ -59,7 +60,7 @@ export type FdaCriteria = {
 
 /** The text terms: the fields the Search button applies. */
 export type NadacTerms = Pick<NadacCriteria, "ndcDescription" | "ndc">;
-export type FdaTerms = Pick<FdaCriteria, "proprietaryName">;
+export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName">;
 
 /** An exclusion-list field: a multi-select whose options come from the loaded result. */
 export type NadacExclusionKey = "excludedNdcDescriptions" | "excludedUnits";
@@ -81,6 +82,7 @@ export const createNadacCriteria = (): NadacCriteria => ({
 
 export const createFdaCriteria = (): FdaCriteria => ({
   proprietaryName: "",
+  nonProprietaryName: "",
   dates: DEFAULT_SEARCH_DATES,
   includeOtc: false,
   includeSamplePackages: false,
@@ -103,7 +105,7 @@ export type IncludeKey = "includeOtc" | "includeSamplePackages" | "includeResult
 
 /** What a search asks the server for. Its dates are fixed (presets resolved); a null end is open. */
 export type NadacLoad = { ndcDescription: string, ndc: string, dates: DateWindow };
-export type FdaLoad = { proprietaryName: string, dates: DateWindow };
+export type FdaLoad = FdaTerms & { dates: DateWindow };
 
 /**
  * The dates a setting means for a search: presets count back from the last loaded as-of date
@@ -123,14 +125,20 @@ export function nadacLoadRequest(criteria: NadacCriteria, lastAsOfDate: number):
   };
 }
 
-export const isValidFdaSearch = (proprietaryName: string) =>
-  proprietaryName.trim().length >= MIN_NDC_DESCRIPTION_LENGTH;
+/** Either name can supply the minimum length; both supplied names narrow the match. */
+export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string) =>
+  [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
+
+/** Shared wording for results, chart provenance, and a new tab's title. */
+export const fdaSearchLabel = (terms: FdaTerms) =>
+  [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean).join(" / ") || "search";
 
 /** The FDA request the criteria ask for, or null when its terms aren't enough to search on. */
 export function fdaLoadRequest(criteria: FdaCriteria, lastAsOfDate: number): FdaLoad | null {
-  if (!isValidFdaSearch(criteria.proprietaryName)) return null;
+  if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName)) return null;
   return {
     proprietaryName: criteria.proprietaryName,
+    nonProprietaryName: criteria.nonProprietaryName,
     dates: resolveSearchDates(criteria.dates, lastAsOfDate),
   };
 }
@@ -171,7 +179,7 @@ export function applyNadacSearch(applied: NadacCriteria, fields: NadacTerms): Na
 
 export function applyFdaSearch(applied: FdaCriteria, fields: FdaTerms): FdaCriteria {
   const next = { ...applied, ...fields };
-  if (fields.proprietaryName === applied.proprietaryName) return next;
+  if (fields.proprietaryName === applied.proprietaryName && fields.nonProprietaryName === applied.nonProprietaryName) return next;
   return { ...next, ...clearedExclusions(FDA_EXCLUSION_KEYS) };
 }
 
@@ -466,5 +474,6 @@ export const clearNadacRefine = (criteria: NadacCriteria): NadacCriteria => ({
 export const clearFdaRefine = (criteria: FdaCriteria): FdaCriteria => ({
   ...createFdaCriteria(),
   proprietaryName: criteria.proprietaryName,
+  nonProprietaryName: criteria.nonProprietaryName,
   dates: criteria.dates,
 });

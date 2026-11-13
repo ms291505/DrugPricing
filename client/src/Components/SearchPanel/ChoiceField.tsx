@@ -7,14 +7,18 @@ type Props<V extends string> = {
   options: { value: V, label: string }[],
   onChange: (value: V) => void,
   disabled?: boolean,
+  /** The label above the choices, as the search panel's groups have it (default: beside them). */
+  stacked?: boolean,
 };
 
 /** A few exclusive choices with a label, e.g. Brand / generic. */
-export default function ChoiceField<V extends string>({ label, value, options, onChange, disabled = false }: Props<V>) {
+export default function ChoiceField<V extends string>({ label, value, options, onChange, disabled = false, stacked = false }: Props<V>) {
   const labelId = useId();
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-      <Typography variant="body2" id={labelId}>{label}</Typography>
+    <Box sx={stacked
+      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1.5 }
+      : { display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+      <Typography variant={stacked ? "subtitle2" : "body2"} id={labelId}>{label}</Typography>
       <ToggleButtonGroup
         size="small"
         exclusive

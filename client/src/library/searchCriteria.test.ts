@@ -3,7 +3,7 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
   exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nextLoad, refineFda, refineNadac,
   resolveSearchDates, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type NadacCriteria, type NadacLoad,
@@ -106,7 +106,7 @@ describe("applying a search", () => {
     });
 
     const fda: FdaCriteria = { ...createFdaCriteria(), proprietaryName: "eliquis", includeSamplePackages: true, excludedRoutes: ["ORAL"] };
-    expect(applyFdaSearch(fda, { proprietaryName: "humira" }))
+    expect(applyFdaSearch(fda, { proprietaryName: "humira", nonProprietaryName: "" }))
       .toEqual({ ...fda, proprietaryName: "humira", excludedRoutes: [] });
   });
 });
@@ -388,5 +388,45 @@ describe("filter state", () => {
     expect(clearNadacRefine({ ...nadac, includeOtc: true, brandGeneric: "brand", excludedNdcDescriptions: ["X"] })).toEqual(nadac);
     const fda = { ...createFdaCriteria(), proprietaryName: "eliquis" };
     expect(clearFdaRefine({ ...fda, includeResultsWithoutPrices: true, excludedDosageForms: ["TABLET"] })).toEqual(fda);
+  });
+});
+
+
+describe("FDA name searches", () => {
+  const generic = { ...createFdaCriteria(), nonProprietaryName: "atorvastatin" };
+  const last = day("2026-11-04");
+
+  it("accepts either name at the minimum length, including a short narrowing term", () => {
+    expect(isValidFdaSearch("", "  atorvastatin  ")).toBe(true);
+    expect(isValidFdaSearch("Lipitor", "")).toBe(true);
+    expect(isValidFdaSearch("Li", "atorvastatin")).toBe(true);
+    expect(isValidFdaSearch("  Li  ", "  at  ")).toBe(false);
+    expect(isValidFdaSearch("", "")).toBe(false);
+    expect(fdaLoadRequest(generic, last)).toEqual({
+      proprietaryName: "", nonProprietaryName: "atorvastatin",
+      dates: { start: day("2025-11-04"), end: last },
+    });
+  });
+
+  it("reloads when the generic term changes, even within the loaded dates", () => {
+    const loaded = fdaLoadRequest(generic, last)!;
+    const requested = { ...loaded, nonProprietaryName: "apixaban" };
+    expect(nextLoad(loaded, requested)).toBe(requested);
+    expect(nextLoad(loaded, { ...loaded, dates: { start: day("2026-08-04"), end: last } })).toBe(loaded);
+  });
+
+  it("clears result exclusions for a new generic term and preserves include choices", () => {
+    const applied = { ...generic, includeOtc: true, excludedRoutes: ["ORAL"] };
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "atorvastatin" })).toEqual(applied);
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "apixaban" }))
+      .toEqual({ ...applied, nonProprietaryName: "apixaban", excludedRoutes: [] });
+    expect(clearFdaRefine(applied)).toEqual(generic);
+  });
+
+  it("labels generic-only and combined searches for results and chart provenance", () => {
+    expect(fdaSearchLabel(generic)).toBe("atorvastatin");
+    expect(fdaSearchLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
+      .toBe("Lipitor / atorvastatin");
+    expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "" })).toBe("Lipitor");
   });
 });

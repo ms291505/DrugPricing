@@ -112,6 +112,19 @@ describe("loading saved tab state", () => {
     expect(loaded(persist.loadNadacTabState("t2")).criteria).toEqual(nadacCriteria);
   });
 
+  it("restores generic-only searches and their exclusions", () => {
+    const criteria = { ...createFdaCriteria(), nonProprietaryName: "atorvastatin", excludedRoutes: ["ORAL"] };
+    saveRaw("generic", { type: "fda", criteria });
+    expect(loaded(persist.loadFdaTabState("generic")).criteria).toEqual(criteria);
+  });
+
+  it("defaults a missing or malformed generic name without losing an older brand search", () => {
+    for (const value of [undefined, 42]) {
+      saveRaw("brand", { type: "fda", criteria: { ...fdaCriteria, nonProprietaryName: value, excludedRoutes: ["ORAL"] } });
+      expect(loaded(persist.loadFdaTabState("brand")).criteria).toEqual({ ...fdaCriteria, excludedRoutes: ["ORAL"] });
+    }
+  });
+
   it("keeps exclusion lists only alongside a search", () => {
     saveRaw("fda", { type: "fda", criteria: { ...createFdaCriteria(), proprietaryName: "eli", excludedRoutes: ["ORAL"] } });
     expect(loaded(persist.loadFdaTabState("fda")).criteria.excludedRoutes).toEqual([]);

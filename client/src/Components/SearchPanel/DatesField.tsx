@@ -12,7 +12,8 @@ type Props = {
 };
 
 /**
- * A search panel's Dates: the window of everything on the page. Presets count back from the last loaded as-of date
+ * A search panel's dates: the window of everything on the page, named for the prices because the
+ * FDA page's products have dates of their own. Presets count back from the last loaded as-of date
  * (today until app-init answers, as `resolveSearchDates` does), and the inputs are limited to the
  * loaded dates.
  */
@@ -22,7 +23,7 @@ export default function DatesField({ value, onChange }: Props) {
   const loadedDates = appInit ? { first: appInit.nadacDates.first, last: appInit.nadacDates.last } : null;
   return (
     <ChartDatesControl
-      label="Dates"
+      label="NADAC price dates"
       value={value}
       onChange={onChange}
       // Only `last` matters for the presets.

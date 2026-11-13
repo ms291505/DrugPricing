@@ -3,6 +3,7 @@ import FdaSearch from "../Components/FdaSearch";
 import NadacSearch from "../Components/NadacSearch";
 import TabCreator from "../Components/TabCreator";
 import { BlankTabProvider, CollectionTabProvider, FdaTabProvider, NadacTabProvider } from "../Context/TabProviders";
+import type { SearchPanelLayout } from "../Components/SearchPanel";
 import type { TabType } from "./tabType";
 
 // Kept apart from `tabType.ts` because it imports the pages, which import the workspace context,
@@ -16,7 +17,8 @@ export type TabTypeDefinition = {
    * tab has been shown, and holds back its search until then.
    */
   Provider: React.ComponentType<{ children: React.ReactNode, tabId: string, active?: boolean }>;
-  Content: React.ComponentType;
+  /** The tab's page. `panelLayout` is for the pages with a search panel; the others ignore it. */
+  Content: React.ComponentType<{ panelLayout?: SearchPanelLayout }>;
 }
 
 export const tabTypeRegistry: Record<TabType, TabTypeDefinition> = {
