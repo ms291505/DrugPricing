@@ -92,7 +92,7 @@ roughly 1–1.5 GB. The weekly ETL peak hasn't been measured.
    `OTEL_EXPORTER_OTLP_ENDPOINT`. Keep a single Alloy on the app Pi for host metrics and logs.
    A second box also keeps monitoring up when the app Pi is down.
 4. Optional later: GlitchTip for client and server exceptions. Browser error reporting needs the
-   same privacy decision `FUTURE_WORK.md` raises for logging searches.
+   same privacy decision `docs/future-work.md` raises for logging searches.
 
 ### Local dev
 
@@ -103,9 +103,9 @@ Add an optional `otel-lgtm` service (`grafana/otel-lgtm`, ports 3000/4317/4318) 
 
 ## Verification
 
-1. `docker compose up -d` with the `otel-lgtm` service. The `dotnet watch` server on :5250
-   reloads by itself.
-2. Run a few searches in the client (`fda-products/search`, `nadac-prices/search`).
+1. `docker compose up -d` with the `otel-lgtm` service, then restart the server on :5250 (it
+   may not be running under `dotnet watch`).
+2. Run a few searches in the client (`fda-products/advanced-search`, `nadac-prices/search`).
 3. In Grafana (:3000), check:
    - Tempo has a trace per request with an Npgsql child span showing the SQL.
    - Prometheus has `http.server.request.duration` and runtime metrics.

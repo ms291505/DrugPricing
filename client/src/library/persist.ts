@@ -333,7 +333,7 @@ export function watchSettings(onChange: (settings: AppSettings) => void): () => 
 
 /**
  * What every tab type with pinned items saves from `PinnedItemsProvider`. Tabs saved before
- * step 3 of plans/search-filters.md also hold the page's `chartDates`, which the search's Dates
+ * step 3 of docs/plans/search-filters.md also hold the page's `chartDates`, which the search's Dates
  * replaced; it is ignored, except that `legacyFdaCriteria` reads it.
  */
 export type PersistedExplorerState = {

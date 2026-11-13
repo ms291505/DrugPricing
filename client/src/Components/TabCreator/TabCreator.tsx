@@ -20,14 +20,14 @@ export default function TabCreator() {
       tabType: "fda",
       onClick: () => changeTabType(id, "fda"),
       header: "FDA + NADAC",
-      body: "The FDA's database of drug products currently on the market, including National Average Drug Aquisition Cost data when available.",
+      body: "The FDA's database of drug products currently on the market, including National Average Drug Acquisition Cost data when available.",
       isMobile: isMobile,
     },
     {
       tabType: "nadac",
       onClick: () => changeTabType(id, "nadac"),
       header: "NADAC Only",
-      body: "National Average Drug Aquisition Cost data going back to 2022.",
+      body: "National Average Drug Acquisition Cost data going back to 2022.",
       isMobile: isMobile,
     }
   ]

@@ -2,7 +2,7 @@
 
 ## Context
 
-Both search forms are plain text fields that need 5 exact characters before Search turns on,
+Both search panels have plain text fields that need 5 exact characters before Search turns on,
 and a typo ("eliqus", "ozempik") just returns nothing. Users don't know how NADAC words its
 descriptions or which FDA brand names have prices. The goal: as the user types, suggest real
 values from the data, including likely corrections of misspellings, so searches land.
@@ -73,9 +73,9 @@ Follow endpoint → service → repository, cache in the repository.
 
 - `GET /api/nadac-prices/suggest?term=` in `Endpoints/NadacPriceEndpoints.cs`.
 - `GET /api/fda-products/suggest?field=brand|generic&term=&pricedOnly=true` in
-  `Endpoints/FdaProductEndpoints.cs`. `pricedOnly` mirrors the form's "Include Results Without
-  Prices" checkbox (off by default), so users aren't steered to the 34K names whose search
-  would come back empty.
+  `Endpoints/FdaProductEndpoints.cs`. `pricedOnly` mirrors the panel's "Include results without
+  prices" box (unchecked by default), so users aren't steered to the 34K names whose search
+  would show nothing.
 - Response `SuggestionResponse { Data: [{ Value, Match }] }` (`Endpoints/SuggestionResponse.cs`),
   `Match` = `"contains"` or `"similar"`.
 - Validation in the services (`NadacService`, `FdaProductService`): term trimmed, length
@@ -113,31 +113,29 @@ Follow endpoint → service → repository, cache in the repository.
   tabs and validation are unchanged), `filterOptions={(x) => x}` (the server filters),
   `groupBy` on `match`, `loading`, `autoHighlight={false}` so Enter submits what was typed
   unless the user arrowed onto a suggestion. Props: `label`, `id`, `value`, `onChange`,
-  `suggestions`, `loading`, `size`. It renders the same `TextField` the forms use today, so
-  sizes and phone layout carry over. MUI supplies the combobox ARIA.
+  `suggestions`, `loading`, `size`. It renders the same `TextField` the panel uses today, so
+  both layouts' sizes carry over. MUI supplies the combobox ARIA.
 
-Forms:
+Panels (rewritten 2026-11-13: the search panels and the FDA Generic name field, with its
+validity, tab title and persistence, were built since this plan was written):
 
-- `Components/NadacSearch/NadacSearch.tsx`: Description `TextField` → `SuggestField` fed by
-  `useSuggestions("nadac", …)`. Picking sets `ndcDescription`. The NDC field stays plain.
-- `Components/FdaSearch/FdaSearchTool.tsx`: Brand Name → `SuggestField` (field `brand`); add
-  Generic Name → `SuggestField` (field `generic`), writing `nonProprietaryName`. Both pass
-  `pricedOnly = !draftSearchParams.includeResultsWNoPrices`. Rework the `Grid 9/3` row into
-  two fields + Search, stacking on a phone.
-  - Validity: either name ≥ `MIN_NDC_DESCRIPTION_LENGTH` (the server already accepts either).
-    Put it in a small tested helper, e.g. `isValidFdaSearch` + `fdaTabTitle` (brand, else
-    generic, upper-cased) in a new `library/fdaSearch.ts`, mirroring `library/nadacSearch.ts`.
-  - When submitting, send `nonProprietaryName` only if non-blank, trimmed.
-  - Persistence: `isFdaSearchParams` (`library/persist.ts:144`) only checks
-    `proprietaryName`; also accept an optional string `nonProprietaryName` (optional field, no
-    `VERSION` bump). Add a `persist.test.ts` case.
-  - While here, fix the "Inculde Sample Packages" label typo.
+- `SearchPanel` owns the term fields, which the pages pass as data (`TermField`). Give a
+  `TermField` optional `suggestions` and `loading`, and have `SearchPanel` render a
+  `SuggestField` for a term that has them, in both layouts. The pages don't render fields.
+- `Components/NadacSearch/NadacSearchPanel.tsx`: Description gets
+  `useSuggestions("nadac", …)`. The NDC field stays plain.
+- `Components/FdaSearch/FdaSearchPanel.tsx`: Brand name (field `brand`) and Generic name
+  (field `generic`) get suggestions. Both pass `pricedOnly` as the opposite of the criteria's
+  "Include results without prices" box. That box is a refine field, so ticking it changes what
+  is suggested without fetching a search.
+- Picking a suggestion writes the panel's draft, like typing, so Search lights up as it does
+  for typed text.
 
 ### 4. Docs
 
 - AGENTS.md: the two suggest endpoints in the API list; the view and that both ETL paths
   refresh it; `MIN_SUGGEST_LENGTH` in the duplicated-minimums convention.
-- FUTURE_WORK.md: the "app-init names … autocomplete in the FDA search form" cleanup stays
+- docs/future-work.md: the "app-init names … autocomplete in the FDA search form" cleanup stays
   (dosage form/route are out of scope). Add an idea: suggest the drug word ("ELIQUIS") rather
   than a full strength description, if suggestions that narrow to one strength turn out to
   confuse users.
@@ -149,8 +147,9 @@ Feature branch off `dev`, PR into `dev`. One PR is fine; if it's large, split as
 
 ## Verification
 
-- `dotnet ef migrations add AddFdaNameSuggestions` from `server/`; the local server runs
-  `dotnet watch` on :5250 and applies it on restart-free reload/startup `Migrate()`.
+- `dotnet ef migrations add AddFdaNameSuggestions` from `server/`; startup `Migrate()` applies
+  it. The local server on :5250 may not be watching, so check before trusting it to serve a
+  server edit, or run a second instance on another port.
 - In psql: `EXPLAIN ANALYZE` the generated suggest SQL (from the EF log) for both sources and
   confirm the GIN trigram index is used; check row counts of the view (≈37K brand, ≈16K
   generic, ≈3.5K brand with prices).
@@ -163,6 +162,5 @@ Feature branch off `dev`, PR into `dev`. One PR is fine; if it's large, split as
 - Client: `npm test`, `npm run lint`, `npm run build`.
 - Chrome on the dev workspace (desktop and ~390px wide): type "eliqus" on a NADAC tab, see
   "Did you mean"; arrow + Enter fills the field without searching; Enter with no highlight
-  submits the typed text; FDA Brand and Generic suggest, the "Include Results Without Prices"
-  checkbox changes what's suggested; a generic-only FDA search works, names the tab, and
-  survives a reload.
+  submits the typed text; FDA Brand and Generic suggest, and the "Include results without
+  prices" box changes what's suggested. Check the compact layout in a workspace tab too.

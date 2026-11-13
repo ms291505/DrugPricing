@@ -6,8 +6,13 @@ at the end, and what was left out on purpose is under "Not built" below.
 
 Changed since (2026-11-12): Dates no longer wait for Search. Only the text terms do; Dates apply
 at once like every other field, so the user never has to know what fetches. Search is disabled
-while the terms are the search on screen. Where the plan below says dates wait for Search, read
-this instead.
+while the terms are the search on screen. Where the plan below says dates wait for Search
+("The model", "Dates", "Decided with the author"), read this instead.
+
+Also changed since: FDA's Generic name was built as a term in the default view, beside Brand
+name, not under "More filters" (PR 28). The panel has two layouts, `desktop` and `compact`,
+picked by its own width. AGENTS.md describes the panel as it is now; the plan below is the
+record of what was decided, not of the code.
 
 Step 3, as built (2026-11-12):
 
@@ -256,7 +261,7 @@ Each step is a PR to `dev` that leaves the app working.
    `nadacFilterOptions` does (after the Include boxes, before exclusions), and its Include boxes
    should show how many results they hide, as NADAC's Include OTC does ("(72 hidden)").
 4. **Docs**: AGENTS.md (the two-layer FDA note, the NADAC gap, NADAC search dates),
-   `client/CHARTS.md` (Chart dates, price-change cards), FUTURE_WORK.md (delete what this
+   `client/CHARTS.md` (Chart dates, price-change cards), docs/future-work.md (delete what this
    settles). Done, mostly in step 3.
 
 ## How this fits the other plans
@@ -266,11 +271,10 @@ Each step is a PR to `dev` that leaves the app working.
 - **Usability round step 2** is absorbed by step 3 here, with two changes: the filters and
   Dates sit in the search panel, not in a Results toolbar, and Dates decides what loads rather
   than being a view over all loaded dates. Its Custom preset moves to the panel's Dates field.
-  The Results section keeps Product/Package, Chart selected, the table and the auto charts; the
-  new Average column and "Chart selected" are unchanged.
-- **Autocomplete** adds its suggestions to the panel's text fields and brings the FDA Generic
-  Name field, which this plan places under "More filters". Either order works; whichever lands
-  second adapts to the other's form.
+  The Results section keeps Product/Package, Chart selected, the table and the auto charts.
+  (The Average column that round planned was left out: see "Not built" above.)
+- **Autocomplete** adds its suggestions to the panel's text fields. (The FDA Generic name
+  field it was going to bring was built first, in the default view.)
 - **Linkable search results** gets easier: criteria is a flat, validated object.
 - **Workspace redo** (author's note, not decided): if search becomes a tool opened from a
   collection, `SearchPanel` + `ResultsSection` are the pieces that move into it.

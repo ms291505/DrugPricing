@@ -9,8 +9,8 @@ examples per category.
 
 **Columns**
 
-- **Search:** what to type. NADAC searches the description, FDA the brand (proprietary) name,
-  both as "contains".
+- **Search:** what to type. NADAC searches the description. FDA searches go in Brand name
+  unless the row says Generic name. All are "contains".
 - **NADAC:** NDCs (packages) / of which OTC / descriptions (the Drug filter's options).
 - **FDA:** products / of which OTC / sample packages / packages with no NADAC price.
 - Classes: G generic, B brand, B-ANDA, B-BIO. Units: EA, ML, GM.
@@ -87,7 +87,7 @@ A description search rarely mixes classes, because brand descriptions use the br
 | `acetaminophen` | 1,062 products, 20 forms, 280 labelers | Long filter option lists |
 | `advil`, `tylenol` | 66 and 120 products, **all** OTC, **no** prices | OTC brands NADAC doesn't price: empty twice over |
 | `imbruvica`, `beclomethasone`, `afatinib` | products, no prices | In FDA, not in NADAC (specialty drugs, new generics) |
-| `semaglutide`, `pitolisant` | 0 products | FDA searches the brand name only: `ozempic` and `wakix` work, the ingredient doesn't |
+| `semaglutide`, `pitolisant` | 0 products as Brand name; 23 and 2 as Generic name | An ingredient belongs in Generic name: there `semaglutide` finds Ozempic, Rybelsus and Wegovy, and `pitolisant` finds Wakix (counts from 2026-11-13) |
 
 ## Dates and price changes
 

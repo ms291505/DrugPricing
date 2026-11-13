@@ -33,7 +33,8 @@ Data flows one way: the ETL downloads and loads NADAC and FDA data into Postgres
 reads it (with in-memory caching), and the client queries the API.
 
 See [`AGENTS.md`](AGENTS.md) for the full map of the code, conventions, and known rough edges,
-and [`FUTURE_WORK.md`](FUTURE_WORK.md) for planned work.
+and the [documentation index](docs/README.md) for plans, review notes, draft help content and
+[future work](docs/future-work.md).
 
 ## Data sources
 

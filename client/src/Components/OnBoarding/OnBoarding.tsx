@@ -46,7 +46,7 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           For example, something you might think of as a single product, like Eliquis,
           actually includes many products with one or more packages.
           Note below four examples of NDCs for Eliquis, each of them unique. All examples here are from
-          the same labeler, "0003" or Pfizer. The first two entries are different packages (21 and 91) for
+          the same labeler, "0003" or E.R. Squibb & Sons (Bristol-Myers Squibb). The first two entries are different packages (21 and 91) for
           the same product (0003-0893).
         </Typography>
         <EliquisTable />
@@ -55,7 +55,7 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           It's important to understand that the entire product NDC includes
           the labeler, when generic versions of Eliquis enter the market, those labelers do not need to use
           "0893" to identify their product. Instead, the product will be a unique combination of their
-          labeler ID and a four digit code. The code itself has no meaning, it is only useful in that
+          labeler ID and a three or four digit code. The code itself has no meaning, it is only useful in that
           it is unique. The last two examples are different products with the same proprietary name, "Eliquis".
           Note that they have different strengths and/or formulations from 0003-0893.
         </Typography>

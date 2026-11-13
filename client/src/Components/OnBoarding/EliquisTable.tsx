@@ -24,7 +24,7 @@ export default function EliquisTable() {
       ndc: '0003-0893-91',
       productNdc: '0003-0893',
       packageCode: '91',
-      strength: '5 mg/1',
+      strength: '2.5 mg/1',
       packageDescription:
         '1 BLISTER PACK in 1 CARTON (0003-0893-91) / 14 TABLET, FILM COATED in 1 BLISTER PACK',
     },

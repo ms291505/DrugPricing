@@ -10,24 +10,31 @@ they fit. When something is done, delete it here. The code and its PR are the re
 
 Goal: make the core flow usable (search, results table, chart and compare) before adding
 anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
-`dev` in this order. Steps 1 (pinned-chart performance) and 2 (a Results section, built as
-[plans/search-filters.md](plans/search-filters.md)) are built.
+`dev`. Pinned-chart performance, the Results section (built as
+[docs/plans/search-filters.md](plans/search-filters.md)) and the docked chart readout are built. One
+step is left:
 
-3. **Docked chart readout instead of floating tooltips.** Hover or touch picks a date. The
-   values show in a fixed box above the plot (recharts' `Tooltip` `portal`), with a max height
-   and its own scroll.
-   - Click or tap locks a date, and a second click or Esc unlocks it.
-   - Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click arrow keys
-     no longer move the readout.
-4. **Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. A
-   toast says why there are several. Pins saved earlier with mixed units still render split.
+**Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. Today a
+mixed-unit chart is one card that `UnitSplit` splits, with a "Mixed units" chip.
+
+- **Pin and Chart selected.** `createChartItem` (`library/explorerItems.ts`) gets a sibling
+  that splits the prices with `splitByPricingUnit` and returns one item per unit, each title
+  naming its unit. The pinned-items provider adds them in one state update and highlights and
+  focuses the first. With more than one, a toast says why: "Added 2 charts, one per pricing
+  unit (EA, ML)."
+- **Auto charts.** Both pages draw one bar card and one line card per unit. `shouldAutoChart`
+  stays gated on the total series count. Each card's Pin pins only its unit.
+- **Older pins.** `UnitSplit` stays, so pins saved with mixed units still render split. New
+  items are always one unit, so the chip leaves the new paths. No `VERSION` bump.
+- Tests: titles, colors carried per unit, and `source` per item. Check it with Wegovy and
+  Rybelsus.
 
 Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
-Plan: [plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
-Description, FDA Brand Name and a new FDA Generic Name field, including likely corrections of
+Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
+Description, FDA Brand name and FDA Generic name fields, including likely corrections of
 misspellings ("eliqus" → ELIQUIS) under "Did you mean". Picking one fills the field; Search
 still runs the search. Built on pg_trgm: a materialized view of FDA names (refreshed by both ETL
 paths) and the existing trigram index on `DrugPackages`, served by two `suggest` endpoints.
@@ -39,8 +46,16 @@ Size: medium. One PR, or two (database + server, then client).
 
 ### Each a small PR of its own
 
-- **Split `library/types.ts`.** It mixes NADAC types, FDA types, workspace types and logic
-  (`validateTabTitle`). Split it by domain (`nadac.ts`, `fda.ts`, `workspace.ts`).
+- **Split `library/types.ts`.** It mixes NADAC types, FDA types (with helpers such as
+  `isFdaProductOtc`) and workspace types (`LayoutMode`, `MobileDrawer`). Split it by domain
+  (`nadac.ts`, `fda.ts`, `workspace.ts`).
+- **Delete dead files.** Nothing imports `etl/fda/parse_fda.py` (it still uses `iterrows()`,
+  which AGENTS.md forbids; `parse_fda_products.py` and `parse_fda_packages.py` replaced it) or
+  `client/src/Components/DataPane/`.
+- **Debounce the tab-state saves.** `TabProviders.tsx` stringifies every pin's full history on
+  each change. If profiling shows it costs, debounce in `library/persist.ts` (about 500ms) and
+  flush on `pagehide` and when the page is hidden, keeping the several-windows guard and the
+  failed-write toast working. Left out of the pinned-chart performance PR.
 - **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
   (autocomplete in the FDA search form) or drop them from the response. The client uses only the
   date range.
@@ -87,7 +102,7 @@ and 8.2 MB (FDA) for 12 months, 29 MB for all FDA history. Nothing here is decid
 
 ### Self-hosted observability (2026-11-03)
 
-Plan: [plans/observability.md](plans/observability.md). Instrument the API once with
+Plan: [docs/plans/observability.md](plans/observability.md). Instrument the API once with
 OpenTelemetry (exporter off until `OTEL_EXPORTER_OTLP_ENDPOINT` is set), have the ETL ping a
 self-hosted Healthchecks so a failed or missing weekly run alerts, and run a Grafana stack on the
 existing Pi with memory caps on every container. Measure the ETL's memory peak first.
@@ -107,8 +122,8 @@ dates, so every line starts at 0% and shows how far it moved. It would be a char
 
 ### More user chart settings (2026-10-11)
 
-The Settings panel (gear in the app bar) exists and holds the bar chart style. Two more chart
-rules from step 5 of the chart plan are constants today, and could join it:
+The Settings panel (the gear in the app bar, or Settings in the workspace drawer) holds the bar
+chart style and the color mode. Two more chart rules are constants today, and could join it:
 
 - **Y-axis exaggeration cap.** Fitted price axes may exaggerate a change at most
   `MAX_AXIS_EXAGGERATION` times (4: a 10% change fills at most 40% of the chart height). A user
@@ -204,5 +219,5 @@ Eventually we can add "starting points" for tabs a user might want to see or sta
 The current Collection might be a good starting point, but it just uses PinnedSection and has a wonky mailbox design to get items to it. The whole workspace
 context needs to be rethought, so probably no need to stick to this mailbox design. However, users should be able to create a workspace tab from the basic search endpoints if they want to start there and then do something more complex. Because of that the workspace context probably needs to wrap around the whole app like it essentially does now.
 
-The Collections proof of concept (`Components/Collection/`, disabled in the tab creator) stays in
-the code until then. It is an early step toward this.
+The Collections proof of concept (`Components/Collection/`, a registered tab type the tab creator
+doesn't offer) stays in the code until then. It is an early step toward this.

@@ -80,7 +80,7 @@ type Props = {
 
 /**
  * Both search pages' panel, which is both the search and the filters (plan:
- * plans/search-filters.md). The text terms wait for Search, which sits beside them; every other
+ * docs/plans/search-filters.md). The text terms wait for Search, which sits beside them; every other
  * field applies at once, whether or not it fetches.
  * Each page lists its own fields; the layouts, spacing and breakpoints live here, so the two
  * pages can't drift apart. Everything is sized by the panel's own width, not the window's.

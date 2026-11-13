@@ -9,7 +9,7 @@ import {
 
 /*
  * One criteria object per search type holds every field of its search panel (plan:
- * plans/search-filters.md). Each field is in one of two groups, and the group alone decides
+ * docs/plans/search-filters.md). Each field is in one of two groups, and the group alone decides
  * whether changing it fetches:
  *
  * - Load fields (the text terms and Dates) go to the server.

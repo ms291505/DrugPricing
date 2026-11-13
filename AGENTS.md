@@ -3,6 +3,10 @@
 Orientation for coding and review agents; the single source of project guidance (`CLAUDE.md`
 only points here). Chart and card design rules are in [client/CHARTS.md](client/CHARTS.md).
 
+Project documentation is indexed in [docs/README.md](docs/README.md). Keep implementation
+plans in `docs/plans/`, review observations in `docs/reviews/`, and draft user-facing copy in
+`docs/content/`. The backlog is `docs/future-work.md`; code-specific guidance stays beside its code.
+
 ## What this project is
 
 A portfolio full-stack app for storing, serving, and graphing US drug prices:
@@ -72,7 +76,8 @@ Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearc
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
 both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
 supporting UI. Each search page is its panel (`*SearchPanel`), its results (`*Results`, in a
-`ResultsSection`) and `PinnedSection`.
+`ResultsSection`) and `PinnedSection`. `Collection/` is a proof of concept: a registered tab type
+the tab creator doesn't offer (see "Workspace redo" in docs/future-work.md).
 
 ### Result tables
 
@@ -131,7 +136,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   (derived from the search) are never stored. A change to one redraws only its card: read the
   narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
   [client/CHARTS.md](client/CHARTS.md).
-- **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`): one
+- **Search criteria** (`library/searchCriteria.ts`, plan in `docs/plans/search-filters.md`): one
   object per search type, edited in one panel per page (`SearchPanel`). The pages pass it their
   fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
   picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
@@ -187,7 +192,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   The phone drawer closes before a modal opens.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
-  validated field by field. Other windows follow a change (`watchSettings`). New preferences go
+  validated field by field. Other windows follow a change (`watchSettings`). The panel opens
+  from the gear in the app bar and from Settings in the workspace drawer. New preferences go
   here, not in the search panel.
 
 ### Persistence (`library/persist.ts`)
@@ -272,7 +278,7 @@ into `main` to ship. Never target `main` from a feature branch.
 
 ## Known rough edges (fair game for review)
 
-Planned work is in [FUTURE_WORK.md](FUTURE_WORK.md). Don't flag its items as new findings; add
+Planned work is in [docs/future-work.md](docs/future-work.md). Don't flag its items as new findings; add
 to it rather than fixing them inside unrelated work.
 
 - `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
