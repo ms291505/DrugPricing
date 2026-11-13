@@ -1,20 +1,13 @@
 import { useState } from "react";
-import TextField from "@mui/material/TextField";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
-import useMobile from "../../hooks/useMobile";
 import useRenameAfterSearch from "../../hooks/useRenameAfterSearch";
 import {
   clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, fdaSearchLabel, isValidFdaSearch,
   type FdaExclusionKey,
 } from "../../library/searchCriteria";
-import SearchPanel, { DatesField, ExclusionSelect, IncludeCheckbox } from "../SearchPanel";
-
-const INCLUDE_OPTIONS = {
-  includeOtc: "OTC drugs",
-  includeSamplePackages: "Sample packages",
-  includeResultsWithoutPrices: "Results without prices",
-};
+import { includeLabel } from "../../library/searchToasts";
+import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
 
 /** The "More filters" lists, in order. */
 const LISTS: { key: FdaExclusionKey, label: string, noun: string }[] = [
@@ -28,6 +21,8 @@ const LISTS: { key: FdaExclusionKey, label: string, noun: string }[] = [
 type Props = {
   /** The result as the page shows it: the lists' options and the hidden counts. */
   view: FdaResultView,
+  /** Forces the panel's layout (default: by its width). */
+  layout?: SearchPanelLayout,
 };
 
 /**
@@ -36,11 +31,10 @@ type Props = {
  * on screen, so it lights up when there is something to run. The tab is named after its first
  * search.
  */
-export default function FdaSearchPanel({ view }: Props) {
+export default function FdaSearchPanel({ view, layout }: Props) {
   const { criteria, setCriteria, search, waiting } = useFdaSearchContext();
   const { isLoading, isError, refetch } = useFdaSearch();
   const renameAfterSearch = useRenameAfterSearch();
-  const isMobile = useMobile();
 
   // A restored tab shows the search it re-ran.
   const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
@@ -59,31 +53,25 @@ export default function FdaSearchPanel({ view }: Props) {
   return (
     <SearchPanel
       label="FDA search"
-      compact
+      layout={layout}
       heading="Find a drug"
-      description="Search the FDA directory to explore products, packages, and NADAC prices."
-      termsHint="Enter either name. Use both to narrow your search."
-      refineLabel="Include:"
+      description="Search the FDA directory by brand or generic name to see products, packages and NADAC prices."
       onSearch={handleSearch}
       canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
-      terms={<>
-        <TextField size={isMobile ? "small" : "medium"} id="proprietaryName" name="proprietaryName" label="Brand name" placeholder="e.g. Lipitor"
-          value={proprietaryName} onChange={(e) => setProprietaryName(e.target.value)} sx={{ flex: 1, minWidth: 0 }} />
-        <TextField size={isMobile ? "small" : "medium"} id="nonProprietaryName" name="nonProprietaryName"
-          label="Generic name" placeholder="e.g. atorvastatin"
-          value={nonProprietaryName} onChange={(e) => setNonProprietaryName(e.target.value)} sx={{ flex: 1, minWidth: 0 }} />
-      </>}
-      dates={<DatesField label="Price dates" value={criteria.dates} onChange={dates => setCriteria(prev => ({ ...prev, dates }))} />}
-      refine={FDA_INCLUDE_KEYS.map(key => (
-        <IncludeCheckbox
-          key={key}
-          label={INCLUDE_OPTIONS[key]}
-          checked={criteria[key]}
-          onChange={checked => setCriteria(prev => ({ ...prev, [key]: checked }))}
-          hiddenCount={view.hidden.byInclude[key] ?? 0}
-        />
-      ))}
+      terms={[
+        { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Lipitor", value: proprietaryName, onChange: setProprietaryName },
+        { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. atorvastatin", value: nonProprietaryName, onChange: setNonProprietaryName },
+      ]}
+      dates={criteria.dates}
+      onDatesChange={dates => setCriteria(prev => ({ ...prev, dates }))}
+      includes={FDA_INCLUDE_KEYS.map(key => ({
+        key,
+        label: includeLabel(key),
+        checked: criteria[key],
+        onChange: checked => setCriteria(prev => ({ ...prev, [key]: checked })),
+        hiddenCount: view.hidden.byInclude[key] ?? 0,
+      }))}
       moreFilters={LISTS.map(({ key, label, noun }) => (
         <ExclusionSelect
           key={key}

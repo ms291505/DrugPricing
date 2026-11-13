@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countMessage, foundMessage, hiddenResultsMessage, type Noun } from "./searchToasts";
+import { countMessage, foundMessage, hiddenResultsMessage, includeLabel, type Noun } from "./searchToasts";
 
 const products: Noun = ["product", "products"];
 
@@ -22,11 +22,16 @@ describe("foundMessage", () => {
 describe("hiddenResultsMessage", () => {
   it("names what one Include box hides, and offers it", () => {
     expect(hiddenResultsMessage({ kind: "include", key: "includeOtc", count: 12 }, products))
-      .toEqual({ message: "12 OTC products hidden.", action: "Include OTC" });
+      .toEqual({ message: "12 OTC products hidden.", action: "Include OTC drugs" });
     expect(hiddenResultsMessage({ kind: "include", key: "includeResultsWithoutPrices", count: 1 }, products))
       .toEqual({ message: "1 product without prices hidden.", action: "Include results without prices" });
     expect(hiddenResultsMessage({ kind: "include", key: "includeSamplePackages", count: 2 }, ["package", "packages"]))
       .toEqual({ message: "2 sample packages hidden.", action: "Include sample packages" });
+  });
+
+  it("words the button as the Include box it ticks", () => {
+    expect(includeLabel("includeOtc")).toBe("OTC drugs");
+    expect(includeLabel("includeSamplePackages")).toBe("Sample packages");
   });
 
   it("offers to clear the filters, or to show all", () => {

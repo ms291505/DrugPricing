@@ -40,7 +40,8 @@ export default memo(function TabInstance({ workspaceTab, visible, onScreen }: Pr
   // The same element on every render, so showing or hiding the tab doesn't re-render its page.
   const page = useMemo(() => (
     <Provider tabId={id} active={hasBeenVisible}>
-      <Content />
+      {/* The tab's title names the search, so its panel needs no heading. */}
+      <Content panelLayout="compact" />
     </Provider>
   ), [Provider, Content, id, hasBeenVisible]);
 

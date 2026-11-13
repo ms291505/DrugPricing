@@ -21,12 +21,18 @@ export function foundMessage(shown: number, hidden: number, noun: Noun): string 
   return hidden > 0 ? `${found} (${hidden} hidden)` : found;
 }
 
-/** Each Include box's label, which is also the empty table's button. */
-export const INCLUDE_LABELS: Record<IncludeKey, string> = {
-  includeOtc: "Include OTC",
-  includeSamplePackages: "Include sample packages",
-  includeResultsWithoutPrices: "Include results without prices",
+/** What each Include box adds, worded to follow "Include". */
+const INCLUDED: Record<IncludeKey, string> = {
+  includeOtc: "OTC drugs",
+  includeSamplePackages: "sample packages",
+  includeResultsWithoutPrices: "results without prices",
 };
+
+/** An Include box's label, under the panel's "Include" legend: "Sample packages". */
+export const includeLabel = (key: IncludeKey) => INCLUDED[key].charAt(0).toUpperCase() + INCLUDED[key].slice(1);
+
+/** The empty table's button that ticks the box: "Include sample packages". */
+export const includeAction = (key: IncludeKey) => `Include ${INCLUDED[key]}`;
 
 /** What the hidden results are, by the box that shows them: "12 OTC packages". */
 const hiddenPhrase = (key: IncludeKey, count: number, noun: Noun) => {
@@ -38,11 +44,11 @@ const hiddenPhrase = (key: IncludeKey, count: number, noun: Noun) => {
 
 /**
  * The empty table's hint: what hid the results, and the button that shows them, e.g.
- * "12 OTC packages hidden." / "Include OTC".
+ * "12 OTC packages hidden." / "Include OTC drugs".
  */
 export function hiddenResultsMessage(hint: HiddenResultsHint, noun: Noun): { message: string, action: string } {
   if (hint.kind === "include") {
-    return { message: `${hiddenPhrase(hint.key, hint.count, noun)} hidden.`, action: INCLUDE_LABELS[hint.key] };
+    return { message: `${hiddenPhrase(hint.key, hint.count, noun)} hidden.`, action: includeAction(hint.key) };
   }
   return {
     message: `${hint.count} ${nounFor(hint.count, noun)} hidden by filters.`,

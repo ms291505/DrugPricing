@@ -132,7 +132,12 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
   [client/CHARTS.md](client/CHARTS.md).
 - **Search criteria** (`library/searchCriteria.ts`, plan in `plans/search-filters.md`): one
-  object per search type, edited in one panel per page (`SearchPanel`). *Load* fields (text
+  object per search type, edited in one panel per page (`SearchPanel`). The pages pass it their
+  fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
+  picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
+  (heading, description, full-height fields) and `compact` below (no heading, small fields).
+  In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force `compact` (`panelLayout`). A new arrangement is a new
+  `SearchPanelLayout`, not a prop that changes wording. *Load* fields (text
   terms, Dates) go to the server; *refine* fields narrow the loaded result in the client, never
   fetching. **The user never has to know which is which:** only the text terms wait for Search,
   and every other field, Dates included, applies at once (typed dates after a short pause).

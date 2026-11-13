@@ -126,31 +126,34 @@ export default function ChartDatesControl({
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Typography variant="subtitle2" id={labelId}>{label}</Typography>
-      <ToggleButtonGroup
-        size="small"
-        exclusive
-        value={activePreset}
-        onChange={(_, key: string | null) => {
-          const preset = presets.find(p => p.key === key);
-          if (!preset) return;
-          clearTimeout(pending.current);
-          setCustomPicked(preset.key === "custom");
-          onChange(preset.chartDates);
-        }}
-        sx={{ flexWrap: "wrap" }}
-      >
-        {presets.map(preset => (
-          <ToggleButton key={preset.key} value={preset.key} aria-label={preset.label} sx={{ px: 1, py: 0.25 }}>
-            {preset.shortLabel
-              ? <>
-                <Box component="span" aria-hidden sx={{ display: { xs: "inline", sm: "none" } }}>{preset.shortLabel}</Box>
-                <Box component="span" aria-hidden sx={{ display: { xs: "none", sm: "inline" } }}>{preset.label}</Box>
-              </>
-              : preset.label}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-      {shownText ? <Typography variant="body2" color="text.secondary">{shownText}</Typography> : null}
+      {/* The dates sit beside the presets where they fit, and wrap under them on a phone. */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1.5, rowGap: 1 }}>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={activePreset}
+          onChange={(_, key: string | null) => {
+            const preset = presets.find(p => p.key === key);
+            if (!preset) return;
+            clearTimeout(pending.current);
+            setCustomPicked(preset.key === "custom");
+            onChange(preset.chartDates);
+          }}
+          sx={{ flexWrap: "wrap" }}
+        >
+          {presets.map(preset => (
+            <ToggleButton key={preset.key} value={preset.key} aria-label={preset.label} sx={{ px: 1, py: 0.25 }}>
+              {preset.shortLabel
+                ? <>
+                  <Box component="span" aria-hidden sx={{ display: { xs: "inline", sm: "none" } }}>{preset.shortLabel}</Box>
+                  <Box component="span" aria-hidden sx={{ display: { xs: "none", sm: "inline" } }}>{preset.label}</Box>
+                </>
+                : preset.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        {shownText ? <Typography variant="body2" color="text.secondary">{shownText}</Typography> : null}
+      </Box>
       {showInputs ? <Box sx={{ display: "flex", gap: 1 }}>
         <TextField
           size="small"

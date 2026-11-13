@@ -9,8 +9,9 @@ values from the data, including likely corrections of misspellings, so searches 
 
 Decided with the author:
 
-- Fields: NADAC **Description**, FDA **Brand Name**, and a new FDA **Generic Name** field (the
-  server's `AdvancedFdaSearchRequest.NonProprietaryName` already supports it; the form doesn't).
+- Fields: NADAC **Description**, FDA **Brand name** and FDA **Generic name**. All three are in
+  the search panels already (`TermField`s of `SearchPanel`), so autocomplete only has to swap
+  each for a `SuggestField`.
   No labeler, dosage form or route fields in this plan.
 - Picking a suggestion **fills the field only**; the user still presses Search/Enter. Typed
   free text keeps working (the search stays a contains match).
