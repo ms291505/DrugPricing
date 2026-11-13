@@ -1,5 +1,7 @@
 import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
-import { Box, Paper, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useCallback, useEffect, useRef } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
@@ -46,16 +48,15 @@ export default function DrawerContent() {
       >
         <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} />
       </Box>
-      <Paper
-        component="div"
-        sx={{
-          display: "flex",
-          flexDirection: "column"
-        }}
-      >
-        <Button onClick={() => openModal("settings")}>SETTINGS</Button>
-        <Button onClick={() => openModal("help")}>HELP</Button>
-      </Paper>
+      {/* Outlined, like Add Tab above, so they read as buttons; a rule sets them off from the tabs. */}
+      <Box sx={{ display: "flex", gap: 1, py: 1, borderTop: 1, borderColor: "divider" }}>
+        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={() => openModal("settings")} sx={{ flex: 1 }}>
+          Settings
+        </Button>
+        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={() => openModal("help")} sx={{ flex: 1 }}>
+          Help
+        </Button>
+      </Box>
     </>
   )
 }
