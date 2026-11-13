@@ -288,3 +288,12 @@ summary filters, significant events and flat/changed/insufficient-history rows. 
 [plan refinement](../plans/browser-usability.md#refinement--combined-price-activity-column-2026-11-13)
 for behavior and remaining decisions. This does not yet approve sparklines as a default,
 summary-filter scope, event grouping rules or unpinned-chart lifetime.
+
+
+### Selection workflow clarification
+
+The author explicitly wants to retain selecting rows and then adding a Line or Bar chart.
+This supersedes direct per-row View chart buttons and the earlier D8 summary's View chart
+shortcut. A proposed replacement summary action selects affected rows; users still decide
+when to chart them. Revised mockup review precedes replacement of documentation screenshots.
+See the plan's “Selection workflow refinement and rough mockups” section for styling limits.

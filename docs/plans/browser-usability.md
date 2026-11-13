@@ -155,3 +155,29 @@ and proportional dates in implementation; labels and accessible summaries remain
 Next decisions: whether this combined column earns a default slot; whether summary activity
 filters narrow only the table; and whether requested charts persist until dismissed or clear
 when the applied search changes. Keep pinned snapshots independent in all cases.
+
+
+## Selection workflow refinement and rough mockups
+
+**Decided:** preserve the existing manual workflow: select table rows, then choose the Line
+or Bar chart action. Do not replace it with per-row View chart buttons. Requested charts
+remain inline, with the existing Pin behavior. This supersedes earlier mockup row actions
+and the proposed direct View chart action in the price-change summary.
+
+**Recommended for review:** a price-change summary offers “Select affected rows,” which adds
+those rows to the selection without creating a chart. Users can adjust that selection and
+use the same Line/Bar controls. The mockup clears its activity filter to reveal affected rows;
+selection across filters and how that reveal works remain open implementation details.
+Activity indicators and sparklines help users choose rows; they are not additional chart
+creation controls. Automatic comparison shortcuts remain open and must not displace selection.
+
+**Rough mockups, not a styling specification:** mockups and their screenshots illustrate
+information hierarchy and interaction ideas only. Do not implement their styling exactly as
+shown. Use the existing MUI Data Grid, shared components, theme tokens, typography, spacing,
+responsive conventions and chart rules in `client/CHARTS.md`. Example prices, identifiers,
+chart drawings and dimensions are illustrative, not production data or chart-math guidance.
+A control appearing in a mockup does not settle an open decision.
+
+Screenshot refresh is pending review of the selection-based revision. Existing captures in
+`docs/assets/browser-usability/` show the superseded per-row chart actions and must not be
+used as the current implementation reference; replace them after reviewing the revised mockup.

@@ -8,6 +8,8 @@ Start with the [project README](../README.md) for setup and architecture, and
 - [Future work](future-work.md): backlog, established directions and links to detailed plans.
 - [Browser usability](plans/browser-usability.md): active discussion draft for results,
   price activity, chart creation, navigation and the workspace transition.
+- [Topic-based Help](plans/help.md): proposed modal-first help, shared topic pages and content
+  migration; discussion draft, not an approved implementation plan.
 - [Search filters](plans/search-filters.md): design and implementation record for the shared
   search criteria and filtering experience.
 - [Autocomplete](plans/autocomplete.md): planned search suggestions and spelling corrections.
