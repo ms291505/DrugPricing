@@ -1,6 +1,6 @@
+import HelpButton from "../Help/HelpButton";
 import type { GridApiCommon, GridColDef, GridComparatorFn, GridSortCellParams, GridSortDirection } from "@mui/x-data-grid";
 import { Box, Tooltip } from "@mui/material";
-import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import { compareUnitPrices, latestSummary, pricingUnitLabel } from "../../library/prices";
 import type { PricedRow } from "../../library/resultRows";
 import { formatPrice } from "../../library/chartScale";
@@ -51,14 +51,15 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     latest: {
       field: "latestPrice",
       headerName: "Latest Price",
+      renderHeader: () => <Box sx={{ display: "flex", alignItems: "center" }}>Latest Price<HelpButton topic="what-the-prices-mean" /></Box>,
       description: averagesPackages ? "Average of the product's packages on its latest price date" : undefined,
       type: "number",
-      width: 125,
+      width: 155,
       valueGetter: (_, row) => singleUnit(row)?.latest,
       valueFormatter: unitPrice,
       getSortComparator: byUnitThenPrice,
-      renderCell: ({ row, formattedValue }) => row.priceSummaries.length > 1
-        ? <MixedUnits pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
+      renderCell: ({ row, formattedValue, hasFocus }) => row.priceSummaries.length > 1
+        ? <MixedUnits tabIndex={hasFocus ? 0 : -1} pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
         : formattedValue as string,
     },
     history: [
@@ -97,11 +98,12 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
 
 type MixedUnitsProps = {
   pricingUnits: string[],
+  tabIndex: number,
   hint?: string,
 }
 
 /** Says the row has prices but no single figure for them, and (on hover or tap) where they are. */
-function MixedUnits({ pricingUnits, hint }: MixedUnitsProps) {
+function MixedUnits({ pricingUnits, hint, tabIndex }: MixedUnitsProps) {
   const units = pricingUnits.map(pricingUnitLabel).join(", ");
   const title = `Priced in more than one unit (${units}).` + (hint ? ` ${hint}` : "");
   return (
@@ -109,7 +111,7 @@ function MixedUnits({ pricingUnits, hint }: MixedUnitsProps) {
     <Tooltip title={title} enterTouchDelay={0}>
       <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
         Mixed units
-        <InfoOutlined fontSize="inherit" />
+        <HelpButton topic="the-results-table" tabIndex={tabIndex} />
       </Box>
     </Tooltip>
   );

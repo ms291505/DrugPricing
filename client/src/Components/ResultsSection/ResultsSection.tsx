@@ -1,3 +1,4 @@
+import HelpButton from "../Help/HelpButton";
 import { useId, type ReactNode } from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 
@@ -30,7 +31,7 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, ch
         </Typography>
         {toolbar}
       </Box>
-      {notice}
+      {notice && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>{notice}<HelpButton topic="filters-and-hidden-results" /></Box>}
       <Paper sx={{ p: 1 }}>{table}</Paper>
       <Grid container spacing={1}>{children}</Grid>
     </Box>

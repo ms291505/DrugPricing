@@ -125,3 +125,20 @@ Recommended defaults: modal-first with a separate-tab option; grouped index and 
 a time; a small topic filter; no browser-history entries for modal navigation. The remaining
 product question is how soon the separate-page option is valuable enough to ship. It can wait
 without changing the content model or modal design.
+
+## Implementation record
+
+Implemented modal and standalone shared-topic presentations together, including contextual
+links, local navigation and topic filtering. Standalone Help does not mount workspace storage
+providers, so opening a reference tab cannot initialize or prune saved workspaces. The published
+copy is in `client/src/content/help/`; the original draft retains deferred factual checks.
+
+The first version keeps Welcome/About unchanged. Fixed interactive results examples remain a
+follow-up. Browser-history integration for modal navigation is intentionally deferred.
+
+Validation: client build and lint passed; all 228 tests passed. Browser checks covered topic
+filtering, internal Back, Escape, preserved unsubmitted NADAC text, mobile drawer focus return,
+desktop/phone layouts, dark/light themes, standalone topic loads and unknown-topic recovery.
+Production SPA rewrites and live-data contextual triggers still need deployment/integration
+verification; the isolated client was tested without a configured API. No claim of a full
+VoiceOver audit or chart-render profiling is made.

@@ -22,6 +22,7 @@ export default function MobileDrawerFab() {
 
     <Fab
       color="primary"
+      id="workspace-drawer-toggle"
       aria-label="open drawer"
       size="small"
       onClick={handleClick}

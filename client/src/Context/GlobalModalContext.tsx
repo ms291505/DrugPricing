@@ -1,30 +1,14 @@
-import { createContext, type ReactNode, type Dispatch, type SetStateAction, useState, useContext } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { GlobalModalContext, type GlobalModal, type HelpTarget } from "./globalModalContexts";
+import type { HelpTopicId } from "../library/help";
 
-export type GlobalModal = "settings" | "about" | "onboarding" | "help";
-
-type GlobalModalContextType = {
-  globalModal: GlobalModal | null;
-  setGlobalModal: Dispatch<SetStateAction<GlobalModal | null>>;
-}
-
-export const GlobalModalContext = createContext<GlobalModalContextType>({
-  globalModal: null,
-  setGlobalModal: () => { },
-})
-
-export const GlobalModalContextProvider = ({ children }: { children: ReactNode }) => {
+export function GlobalModalContextProvider({ children }: { children: ReactNode }) {
   const [globalModal, setGlobalModal] = useState<GlobalModal | null>(null);
-
-  return (
-    <GlobalModalContext.Provider value={{
-      globalModal,
-      setGlobalModal,
-    }}>
-      {children}
-    </GlobalModalContext.Provider>
-  )
-}
-
-export const useGlobalModalContext = () => {
-  return useContext(GlobalModalContext);
+  const [helpTarget, setHelpTarget] = useState<HelpTarget>({});
+  const openHelp = useCallback((topic?: HelpTopicId, returnFocus?: HTMLElement | null) => {
+    setHelpTarget({ topic, returnFocus });
+    setGlobalModal("help");
+  }, []);
+  const value = useMemo(() => ({ globalModal, setGlobalModal, helpTarget, openHelp }), [globalModal, helpTarget, openHelp]);
+  return <GlobalModalContext.Provider value={value}>{children}</GlobalModalContext.Provider>;
 }

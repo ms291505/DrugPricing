@@ -1,3 +1,4 @@
+import HelpButton from "../Help/HelpButton";
 import { useId, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
@@ -275,7 +276,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
     <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, changeSpan)}</Box>
     {/* Said once here rather than in every tooltip row. */}
     {bandCaption
-      ? <Typography variant="caption" color="text.secondary">{bandCaption}</Typography>
+      ? <Typography variant="caption" color="text.secondary">{bandCaption}<HelpButton topic="charts" /></Typography>
       : null}
   </>);
 }

@@ -5,13 +5,13 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useCallback, useEffect, useRef } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
-import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
+import { useGlobalModalContext, type GlobalModal } from "../../Context/globalModalContexts";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 import ConfirmButton from "../ui/ConfirmButton.tsx";
 
 export default function DrawerContent() {
   const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
-  const { setGlobalModal } = useGlobalModalContext();
+  const { setGlobalModal, openHelp } = useGlobalModalContext();
 
   const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
 
@@ -30,7 +30,10 @@ export default function DrawerContent() {
   // would land back in it.
   const openModal = (modal: GlobalModal) => {
     closeMobileDrawer();
-    setGlobalModal(modal);
+    if (modal === "help") {
+      const drawerButton = document.getElementById("workspace-drawer-toggle");
+      openHelp(undefined, drawerButton?.getClientRects().length ? drawerButton : undefined);
+    } else setGlobalModal(modal);
   }
 
   return (

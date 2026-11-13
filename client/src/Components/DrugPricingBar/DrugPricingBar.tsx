@@ -1,3 +1,4 @@
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Outlet } from "react-router";
 import NavButton from "./NavButton";
 import Box from "@mui/material/Box";
@@ -6,11 +7,11 @@ import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
 import { Divider, IconButton, Tooltip } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useGlobalModalContext } from "../../Context/GlobalModalContext";
+import { useGlobalModalContext } from "../../Context/globalModalContexts";
 import Portal from "@mui/material/Portal"
 
 export default function DrugPricingBar() {
-  const { setGlobalModal } = useGlobalModalContext();
+  const { setGlobalModal, openHelp } = useGlobalModalContext();
   return (
     <>
       {import.meta.env.DEV && (
@@ -44,7 +45,7 @@ export default function DrugPricingBar() {
         */}
         <Toolbar sx={{
           display: "grid",
-          gridTemplateColumns: "1fr auto 1fr",
+          gridTemplateColumns: { xs: "auto minmax(0, 1fr) auto", md: "1fr auto 1fr" },
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
         }}>
@@ -58,6 +59,8 @@ export default function DrugPricingBar() {
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/about">ABOUT</NavButton>
           </Box>
+          <Box sx={{ gridColumn: 3, justifySelf: "end", display: "flex" }}>
+          <Tooltip title="Help"><IconButton aria-label="Help" color="inherit" onClick={() => openHelp()}><HelpOutlineIcon /></IconButton></Tooltip>
           <Tooltip title="Settings">
             <IconButton
               aria-label="Settings"
@@ -68,6 +71,7 @@ export default function DrugPricingBar() {
               <SettingsIcon />
             </IconButton>
           </Tooltip>
+          </Box>
         </Toolbar>
       </AppBar>
       {/* Room for the app bar, which phones don't show. */}
