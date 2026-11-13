@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import { useTheme } from "@mui/material";
 
 /** An element's own width against the theme's breakpoints: below `sm`, below `md`, or `md` and up. */
@@ -21,11 +22,12 @@ export default function useWidthTier<T extends HTMLElement>(): [RefObject<T | nu
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    // The first report comes before the first paint. A hidden tab (`content-visibility: hidden`)
-    // reports nothing, or 0, until it's shown.
+    // Reports come before the paint, the first one included. A hidden tab (`content-visibility:
+    // hidden`) reports nothing, or 0, until it's shown, so its tier may be stale by then: render
+    // the new one at once, or the tab paints its old layout for a frame and then jumps.
     const observer = new ResizeObserver(([entry]) => {
       const width = entry.borderBoxSize[0]?.inlineSize ?? 0;
-      if (width > 0) setTier(tierOf(width, sm, md));
+      if (width > 0) flushSync(() => setTier(tierOf(width, sm, md)));
     });
     observer.observe(element);
     return () => observer.disconnect();

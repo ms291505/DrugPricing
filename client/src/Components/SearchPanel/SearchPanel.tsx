@@ -35,10 +35,10 @@ export type IncludeField = {
   hiddenCount: number,
 };
 
+/** A filter group's left padding, in theme spacing units. */
+const GROUP_PADDING = 2;
 /** A filter group: a rule on its left, which the row hides for the first group of each line. */
-const groupSx = { minWidth: 0, pl: 2, borderLeft: 1, borderColor: "divider" } as const;
-/** Pulls the row left by a group's padding and rule. */
-const GROUP_INSET = "calc(-16px - 1px)";
+const groupSx = { minWidth: 0, pl: GROUP_PADDING, borderLeft: 1, borderColor: "divider" } as const;
 
 type Props = {
   /** The form's accessible name, e.g. "NADAC search". */
@@ -139,19 +139,24 @@ export default function SearchPanel({
         </Button>
       </Box>
       {/* One row while it fits; a group that doesn't fit wraps under the others, so a phone stacks
-          them. A rule divides the groups of a row: the first group's falls outside and is clipped. */}
-      <Box sx={{ overflowX: "clip" }}>
-      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 1.5, ml: GROUP_INSET }}>
-        <Box sx={groupSx}><DatesField value={dates} onChange={onDatesChange} /></Box>
-        <FormControl component="fieldset" sx={groupSx}>
-          <FormLabel component="legend" id={includeId} sx={{ typography: "subtitle2", color: "text.primary" }}>Include</FormLabel>
-          {/* The top margin puts the boxes level with the Dates presets beside them. */}
-          <FormGroup aria-labelledby={includeId} sx={{ flexDirection: "row", flexWrap: "wrap", columnGap: 2, mt: desktop ? 0.75 : 0.5 }}>
-            {includes.map(({ key, ...include }) => <IncludeCheckbox key={key} dense={!desktop} {...include} />)}
-          </FormGroup>
-        </FormControl>
-        {refine ? <Box sx={groupSx}>{refine}</Box> : null}
-      </Box>
+          them. A rule divides the groups of a row: the first group's falls outside and is clipped.
+          The clip is a little wider than the row, for a first checkbox's focus and hover circle. */}
+      <Box sx={{ overflowX: "clip", px: 1.25, mx: -1.25 }}>
+        {/* Pulled left by a group's padding and rule. */}
+        <Box sx={{
+          display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 1.5,
+          ml: theme => `calc(-${theme.spacing(GROUP_PADDING)} - 1px)`,
+        }}>
+          <Box sx={groupSx}><DatesField value={dates} onChange={onDatesChange} /></Box>
+          <FormControl component="fieldset" sx={groupSx}>
+            <FormLabel component="legend" id={includeId} sx={{ typography: "subtitle2", color: "text.primary" }}>Include</FormLabel>
+            {/* The top margin puts the boxes level with the Dates presets beside them. */}
+            <FormGroup aria-labelledby={includeId} sx={{ flexDirection: "row", flexWrap: "wrap", columnGap: 2, mt: desktop ? 0.75 : 0.5 }}>
+              {includes.map(({ key, ...include }) => <IncludeCheckbox key={key} dense={!desktop} {...include} />)}
+            </FormGroup>
+          </FormControl>
+          {refine ? <Box sx={groupSx}>{refine}</Box> : null}
+        </Box>
       </Box>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

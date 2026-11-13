@@ -196,7 +196,7 @@ export default function ChartDatesControl({
           anchorEl={customAnchor}
           onClose={() => setCustomAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          slotProps={{ paper: { "aria-label": `${label}: custom`, sx: { mt: 0.5, p: 2, width: 320, maxWidth: "calc(100vw - 32px)" } } }}
+          slotProps={{ paper: { role: "dialog", "aria-label": `${label}: custom`, sx: { mt: 0.5, p: 2, width: 320, maxWidth: "calc(100vw - 32px)" } } }}
         >
           {dateInputs}
         </Popover>

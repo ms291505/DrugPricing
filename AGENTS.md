@@ -136,11 +136,12 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
   picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
   (heading, description, full-height fields) and `compact` below (no heading, small fields).
-  In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force `compact` (`panelLayout`). A new arrangement is a new
-  `SearchPanelLayout`, not a prop that changes wording. *Load* fields (text
-  terms, Dates) go to the server; *refine* fields narrow the loaded result in the client, never
-  fetching. **The user never has to know which is which:** only the text terms wait for Search,
-  and every other field, Dates included, applies at once (typed dates after a short pause).
+  In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force
+  `compact` (`panelLayout`). A new arrangement is a new `SearchPanelLayout`, not a prop that
+  changes wording. *Load* fields (text terms, Dates) go to the server; *refine* fields narrow
+  the loaded result in the client, never fetching. **The user never has to know which is
+  which:** only the text terms wait for Search, and every other field, Dates included, applies
+  at once (typed dates after a short pause).
   Search is disabled while the terms are the search on screen (unless it failed), so it lighting
   up is the hint to press it. `nextLoad` keeps what's loaded when only the dates narrowed.
   Each page calls its view hook once (`useRefinedNadacSearch`/`useRefinedFdaSearch`) and passes
