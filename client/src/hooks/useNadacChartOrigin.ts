@@ -1,5 +1,6 @@
 import { useNadacSearchContext } from "../Context/NadacSearchContext";
 import type { ChartOrigin } from "../library/explorerItems";
+import { nadacSearchLabel } from "../library/searchCriteria";
 import { useNadacSearch } from "./useNadacSearch";
 
 const EMPTY: never[] = [];
@@ -13,8 +14,5 @@ export default function useNadacChartOrigin(): ChartOrigin {
   const { criteria } = useNadacSearchContext();
   const { data } = useNadacSearch();
 
-  const searchLabel = criteria.ndcDescription
-    || (criteria.ndc ? `NDC ${criteria.ndc}` : "search");
-
-  return { searchLabel, seriesKind: "ndc", resultPrices: data?.prices ?? EMPTY };
+  return { searchLabel: nadacSearchLabel(criteria), seriesKind: "ndc", resultPrices: data?.prices ?? EMPTY };
 }

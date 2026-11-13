@@ -8,7 +8,7 @@ import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 import { fdaPackagePrices, flagPriceChanges } from "../../library/flagNadacPriceChange";
-import { clearFdaRefine, fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
+import { clearFdaRefine, fdaResultsLabel, fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
 import { countMessage, foundMessage, type Noun } from "../../library/searchToasts";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
@@ -33,7 +33,7 @@ type Props = {
  */
 export default memo(function FdaResults({ view }: Props) {
   const { isLoading, isSuccess } = useFdaSearch();
-  const { loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
+  const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden, history } = view;
   const origin = useFdaChartOrigin();
@@ -64,7 +64,7 @@ export default memo(function FdaResults({ view }: Props) {
       kind="flag"
     />
     <ResultsSection
-      searchLabel={origin.searchLabel}
+      searchLabel={fdaResultsLabel(criteria)}
       toolbar={<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
         <DetailLevelSelect />
         <ChartSelectedControl

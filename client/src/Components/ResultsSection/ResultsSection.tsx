@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 
 type Props = {
-  /** What was searched, for the heading "Results: <search>". */
+  /** What was searched, its typed terms in quotes, for the heading "Results: <search>". */
   searchLabel: string,
   /** At the heading's right: the detail level on FDA, and Chart selected. */
   toolbar: ReactNode,

@@ -3,8 +3,8 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
   exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
-  nadacLoadRequest, nextLoad, refineFda, refineNadac,
+  fdaResultsLabel, fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
@@ -428,5 +428,15 @@ describe("FDA name searches", () => {
     expect(fdaSearchLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
       .toBe("Lipitor / atorvastatin");
     expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "" })).toBe("Lipitor");
+  });
+
+  it("quotes the typed terms in the results heading, and nothing else", () => {
+    expect(fdaResultsLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
+      .toBe("\u201cLipitor\u201d / \u201catorvastatin\u201d");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "" })).toBe("search");
+    expect(nadacSearchLabel({ ndcDescription: "lipitor", ndc: "3089321" })).toBe("lipitor");
+    expect(nadacResultsLabel({ ndcDescription: "lipitor", ndc: "3089321" })).toBe("\u201clipitor\u201d");
+    expect(nadacResultsLabel({ ndcDescription: "", ndc: "3089321" })).toBe("NDC 3089321");
+    expect(nadacResultsLabel({ ndcDescription: "", ndc: "" })).toBe("search");
   });
 });

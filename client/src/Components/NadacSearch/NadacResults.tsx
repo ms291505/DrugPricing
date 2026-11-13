@@ -6,7 +6,7 @@ import useSeriesColors from "../../hooks/useSeriesColors";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { flagPriceChanges, nadacPackagePrices } from "../../library/flagNadacPriceChange";
-import { clearNadacRefine, hiddenResultsHint, showAllNadac } from "../../library/searchCriteria";
+import { clearNadacRefine, hiddenResultsHint, nadacResultsLabel, showAllNadac } from "../../library/searchCriteria";
 import { countMessage, foundMessage, type Noun } from "../../library/searchToasts";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
@@ -27,7 +27,7 @@ type Props = {
  */
 export default memo(function NadacResults({ view }: Props) {
   const { isLoading, isSuccess } = useNadacSearch();
-  const { loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
+  const { criteria, loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { prices, dateWindow, hidden, history } = view;
   const origin = useNadacChartOrigin();
@@ -49,7 +49,7 @@ export default memo(function NadacResults({ view }: Props) {
       kind="flag"
     />
     <ResultsSection
-      searchLabel={origin.searchLabel}
+      searchLabel={nadacResultsLabel(criteria)}
       toolbar={<ChartSelectedControl
         prices={prices} history={history} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
       />}

@@ -1,12 +1,15 @@
 import { useWorkspaceActions } from "../../Context/workspaceContexts"
 import type { WorkspaceTab } from "../../library/tabType.ts";
-import { Box, IconButton, ButtonBase, TextField, } from "@mui/material";
+import { Box, IconButton, ButtonBase, ListItemIcon, ListItemText, Menu, MenuItem, TextField } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import CloseIcon from "@mui/icons-material/Close";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import { memo, useId, useState } from "react";
 import SearchTypeChip from "../ui/SearchTypeChip.tsx";
 import useTabRename from "../../hooks/useTabRename.ts";
+
+/** The room the menu needs beside its button to open there, in px: its width and the gaps. */
+const MENU_SIDE_ROOM = 200;
 
 type Props = {
   tab: WorkspaceTab,
@@ -34,8 +37,13 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
   const menuId = `${uuid}-menu`;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  // Beside the button, over the page, where it covers no other tab. The phone drawer leaves no
+  // room there, so its menu opens under the button.
+  const [beside, setBeside] = useState(true);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+    const button = event.currentTarget;
+    setBeside(window.innerWidth - button.getBoundingClientRect().right >= MENU_SIDE_ROOM);
+    setAnchorEl(button);
   };
   const handleCloseMenu = () => {
     setAnchorEl(null);
@@ -69,7 +77,8 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
         display: "flex",
         alignItems: "center",
         color: "text.primary",
-        backgroundColor: selected ? "action.selected" : "transparent",
+        // While its menu is open the row looks hovered, so the menu reads as this tab's.
+        backgroundColor: selected ? "action.selected" : open ? "action.hover" : "transparent",
         "@media (hover: hover)": {
           "&:hover": {
             backgroundColor: selected ? "action.selected" : "action.hover",
@@ -132,12 +141,12 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
         className="tab-menu-icon"
         id={buttonId}
         aria-label={`Options for ${tab.title}`}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-controls={open ? menuId : undefined}
         aria-expanded={open}
         sx={{
           // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
-          opacity: 0,
+          opacity: open ? 1 : 0,
           transition: "opacity 0.15s",
           borderRadius: 1,
         }}
@@ -152,22 +161,22 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
       anchorEl={anchorEl}
       open={open}
       onClose={handleCloseMenu}
+      anchorOrigin={beside ? { vertical: "top", horizontal: "right" } : { vertical: "bottom", horizontal: "right" }}
+      transformOrigin={beside ? { vertical: "top", horizontal: "left" } : { vertical: "top", horizontal: "right" }}
       slotProps={{
-        list: {
-          'aria-labelledby': buttonId,
-        },
-      }}
-      anchorOrigin={{
-        vertical: "bottom",
-        horizontal: "right"
-      }}
-      transformOrigin={{
-        horizontal: "right",
-        vertical: "top"
+        list: { "aria-labelledby": buttonId },
+        // A gap from the button, like the search dates' popover.
+        paper: { sx: { minWidth: 160, ...(beside ? { ml: 0.5 } : { mt: 0.5 }) } },
       }}
     >
-      <MenuItem onClick={onClickRename} >Rename</MenuItem>
-      <MenuItem onClick={handleCloseTab} >Close Tab</MenuItem>
+      <MenuItem onClick={onClickRename}>
+        <ListItemIcon><DriveFileRenameOutlineIcon fontSize="small" /></ListItemIcon>
+        <ListItemText>Rename</ListItemText>
+      </MenuItem>
+      <MenuItem onClick={handleCloseTab}>
+        <ListItemIcon><CloseIcon fontSize="small" /></ListItemIcon>
+        <ListItemText>Close tab</ListItemText>
+      </MenuItem>
     </Menu>
   </>)
 });

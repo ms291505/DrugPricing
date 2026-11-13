@@ -133,6 +133,21 @@ export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: st
 export const fdaSearchLabel = (terms: FdaTerms) =>
   [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean).join(" / ") || "search";
 
+/** A term in quotes, as it was typed: the search matches it literally. */
+const quoted = (term: string) => `\u201c${term}\u201d`;
+
+/** The results heading's wording: `fdaSearchLabel` with each name in quotes. */
+export const fdaResultsLabel = (terms: FdaTerms) =>
+  [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean).map(quoted).join(" / ") || "search";
+
+/** Shared wording for chart provenance: the description, or else the NDC (in its stored form). */
+export const nadacSearchLabel = (terms: NadacTerms) =>
+  terms.ndcDescription.trim() || (terms.ndc ? `NDC ${terms.ndc}` : "search");
+
+/** The results heading's wording: `nadacSearchLabel` with a description in quotes. */
+export const nadacResultsLabel = (terms: NadacTerms) =>
+  terms.ndcDescription.trim() ? quoted(terms.ndcDescription.trim()) : nadacSearchLabel(terms);
+
 /** The FDA request the criteria ask for, or null when its terms aren't enough to search on. */
 export function fdaLoadRequest(criteria: FdaCriteria, lastAsOfDate: number): FdaLoad | null {
   if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName)) return null;
