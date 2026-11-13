@@ -1,4 +1,5 @@
 import type { ChartPrice } from "./types";
+import { quoted } from "./searchCriteria";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
 
 /**
@@ -200,12 +201,12 @@ export function createChartItem({
   };
 }
 
-/** Provenance chip text, e.g. "Products · 2 of 7 · from 'humira'" or "NDCs · 6 · from 'eliquis' · filtered". */
+/** Provenance chip text, e.g. "Products · 2 of 7 · from “humira”" or "NDCs · 6 · from “eliquis” · filtered". */
 export function formatItemSource(source: ExplorerItemSource): string {
   const count = source.resultSeriesCount > source.seriesCount
     ? `${source.seriesCount} of ${source.resultSeriesCount}`
     : String(source.seriesCount);
-  const parts = [SERIES_KIND_LABELS[source.seriesKind].chip, count, `from '${source.searchLabel}'`];
+  const parts = [SERIES_KIND_LABELS[source.seriesKind].chip, count, `from ${quoted(source.searchLabel)}`];
   if (source.filtered) parts.push("filtered");
   return parts.join(" · ");
 }

@@ -27,7 +27,7 @@ describe("createChartItem provenance", () => {
   it("is not filtered when the chart has every price of its series", () => {
     const item = make([...packageA1, ...packageA2]);
     expect(item.source).toMatchObject({ seriesCount: 1, resultSeriesCount: 2, filtered: false });
-    expect(formatItemSource(item.source)).toBe("Products · 1 of 2 · from 'humira'");
+    expect(formatItemSource(item.source)).toBe("Products · 1 of 2 · from \u201chumira\u201d");
   });
 
   it("is not filtered just because the window shows fewer dates", () => {

@@ -129,16 +129,17 @@ export function nadacLoadRequest(criteria: NadacCriteria, lastAsOfDate: number):
 export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string) =>
   [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
 
-/** Shared wording for results, chart provenance, and a new tab's title. */
-export const fdaSearchLabel = (terms: FdaTerms) =>
-  [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean).join(" / ") || "search";
+/** The names searched on, trimmed, brand first. */
+const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean);
 
-/** A term in quotes, as it was typed: the search matches it literally. */
-const quoted = (term: string) => `\u201c${term}\u201d`;
+/** Shared wording for chart provenance and a new tab's title. */
+export const fdaSearchLabel = (terms: FdaTerms) => fdaNames(terms).join(" / ") || "search";
+
+/** Text in quotes, to mark it as what the user typed and not the app's wording. */
+export const quoted = (text: string) => `\u201c${text}\u201d`;
 
 /** The results heading's wording: `fdaSearchLabel` with each name in quotes. */
-export const fdaResultsLabel = (terms: FdaTerms) =>
-  [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean).map(quoted).join(" / ") || "search";
+export const fdaResultsLabel = (terms: FdaTerms) => fdaNames(terms).map(quoted).join(" / ") || "search";
 
 /** Shared wording for chart provenance: the description, or else the NDC (in its stored form). */
 export const nadacSearchLabel = (terms: NadacTerms) =>
