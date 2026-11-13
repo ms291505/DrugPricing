@@ -22,7 +22,9 @@ export default function IncludeCheckbox({ label, checked, onChange, hiddenCount,
           ? <Box component="span" sx={{ color: "text.secondary", ml: 0.5 }}>({hiddenCount} hidden)</Box>
           : null}
       </>}
-      sx={{ mr: 0 }}
+      // The left margin undoes the box's padding (MUI's default overshoots it), so the box lines
+      // up with the group's label and stays inside the panel's clipped filter row.
+      sx={{ mr: 0, ml: dense ? -0.75 : -1.125 }}
     />
   );
 }
