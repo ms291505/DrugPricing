@@ -5,6 +5,9 @@ Dev database as of the 2026-10-07 NADAC file (weekly files from 2022-01-05). Que
 unit (`EA` each, `ML`, `GM`). **Search** is what to type into the NADAC search (description
 contains, 5+ characters) to reproduce a finding in the app.
 
+How much packages vary in price over a window, the band behind the planned "Price activity"
+label, and a gap check of the dev data: [NADAC_PRICE_VARIATION.md](NADAC_PRICE_VARIATION.md).
+
 ## How to read NADAC (lessons that shaped every query)
 
 - **One row per NDC per weekly file.** The same rate repeats each week until it changes;
