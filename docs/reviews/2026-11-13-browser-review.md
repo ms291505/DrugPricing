@@ -306,3 +306,15 @@ when to chart them. See the plan's “Selection workflow refinement” section.
 - The rough activity mockup was only ever meant to give the basic idea. Its screenshots were
   removed and the plan describes it in words (“What the rough mockup showed”), so it can't be
   read as layout or styling guidance.
+
+
+### Stages 2–4 settled (2026-11-13)
+
+The author and the reviewing agent went through the open decisions for results, charts,
+price activity and the workspace bridge one at a time. The outcomes are written into
+[the plan](../plans/browser-usability.md) as decisions and supersede the recommendations
+above where they differ. In short: selected rows pin directly and the Compare buttons toggle
+live overview cards (resolving D7 and D8); change callouts appear on any line chart, with a
+toggle; a Price Activity column with a sparkline and a label, sorted and not filtered;
+Stable means a range under 5%, chosen from measured data; the bridge is built. R3–R7 and R10
+are settled there. Stage 1's design choices (R1) remain open.

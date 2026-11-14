@@ -1,12 +1,12 @@
-# Browser usability plan — discussion draft
+# Browser usability plan
 
 Started 2026-11-13. Source and decision register:
 [docs/reviews/2026-11-13-browser-review.md](../reviews/2026-11-13-browser-review.md).
 
-This is a plan to refine together, not authorization to implement. D1–D8 in the notes
-are established direction and constraints. R1–R11 remain recommendations or open decisions.
-The stages below are a proposed sequence, not agreed scope or PR boundaries, with one
-exception: the author decided on 2026-11-13 that the app bar rework comes first (Stage 1).
+Stages 2–4 were settled with the author on 2026-11-13 and are written below as decisions.
+Stage 1 goes first by the author's decision, but its own design choices are still open (see
+"Still open"). Items marked *open detail* are for the implementer to raise, not to decide
+alone. The stages are a sequence, not PR boundaries. D1–D8 and R1–R11 refer to the review.
 
 Help is not part of this plan. Topic-based help, its modal and routes, and its content are in
 [help.md](help.md), which another branch is implementing. The two plans touch in three
@@ -60,25 +60,43 @@ phone drawer still closes before a modal opens.
 
 ## Stage 2 — Make results easier to inspect
 
-Propose a visible Columns action, Reset columns, lean initial columns and readable full NDCs.
-Keep Latest Price second or third. Start without sparklines; evaluate them after the table
-layout is settled. Candidate defaults, excluding selection:
+Add a visible, labeled Columns action and Reset columns to both search pages' results, in the
+same place on each (D1). MUI Data Grid's community columns panel does this; the shared
+`ResultTable` has no toolbar today.
 
-| Table | Proposed initial columns |
+Default columns, in order after the selection checkbox:
+
+| Table | Default columns |
 | --- | --- |
-| FDA products | Product NDC, Latest Price, Brand Name, Strength, Form, Latest Price Date |
-| FDA packages | Package NDC, Latest Price, Brand Name, Package Description, Latest Price Date |
-| NADAC | Stored NDC, Latest Price, Description, Latest Price Date |
+| FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form, Latest Price Date |
+| FDA packages | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity, Latest Price Date |
+| NADAC | NDC, Latest Price, Description, Price Activity, Latest Price Date |
 
-Other available columns remain selectable. Verify strength availability and useful rendering
-for multi-ingredient products before promising a single Strength column.
+- Price Activity is built in Stage 3 and joins the defaults then.
+- **Strength is new on the package table** (from the package's product) and shown by default:
+  without it two strengths in the same pack size differ only by NDC. The product table already
+  has it, joining multi-ingredient strengths with commas. NADAC's Description carries it.
+- Generic Name is hidden by default. Everything else stays in the Columns tool: Min and Max
+  Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
+  table.
+- Latest Price stays second (the phone rule in AGENTS.md).
 
-Decide: defaults; whether visibility is remembered per table type across the app; how phone
-users reach details without excessive horizontal scrolling. Recommendation: remember column
-visibility per table type, with a clear reset, independently of individual searches.
+Column choices are saved in Settings (`library/settings.ts`), once per table type, so they
+apply on both search pages and in every workspace tab and follow other windows. Save the
+**hidden** columns, not the visible ones, so a column added to the defaults later appears for
+people who already customized.
+
+NDCs (R4): tabular digits, widths sized to the identifier, the whole identifier on one line,
+never truncated. FDA keeps its dashed source form; NADAC keeps its stored form.
+
+Not in this work: a per-row details view for phones. The grid's detail panel is a paid MUI
+feature, so it would be a custom drawer with its own control on every row. Lean defaults and
+the Columns tool cover phones for now (see Later design work).
 
 Acceptance: both search sources share the control placement; complete identifiers and units
-remain accessible; Latest Price is visible at phone widths; keyboard column selection works.
+remain accessible; Latest Price is visible at phone widths; keyboard column selection works;
+Reset restores the defaults above; a choice made on one page shows on the other and survives
+a reload.
 
 Help's labeled fixed example that uses the actual results component belongs to the help plan
 ([help.md](help.md) step 6). It should wait until this stage's table has shipped, so the
@@ -86,56 +104,169 @@ example shows the table users will see.
 
 ## Stage 3 — Make charts intentional while preserving discovery
 
-Decided (D8): replace automatic chart cards with explicit “Compare latest prices” and “Compare
-price histories” actions, alongside existing selected-row chart actions and a compact Price
-changes section with View chart. (The View chart action was later superseded by “Select
-affected rows”; see Selection workflow refinement below.) Users must recognize interesting movement and flat prices
-without opening charts for each result. Apply this to FDA and NADAC.
+Prerequisite: land "Mixed units become separate cards" from docs/future-work.md first, as its
+own change. Both rewrite the code that creates charts.
 
-Recommended details for the agreed Price changes section: date, affected packages, percentage
-change, unit-aware old/new prices and View chart. Related events may be grouped, but exact
-package values must remain available. Define grouping precisely before implementing it;
-matching rounded percentages alone is insufficient.
+### How charts are made
 
-Decided (D7, 2026-11-13): requested charts appear inline below results and use the existing
-Pin action to keep snapshots while the workspace design remains open.
+Two rules, both of which exist today (they resolve D7 and D8):
 
-Still open: whether multiple requested charts coexist, their lifetime across searches and
-filter changes, dismissal and repeat-click behavior. Inline placement does not by itself
-settle these state rules or approve every proposed change to automatic chart creation.
+- **Selected rows pin directly.** Select rows, then Line or Bar: a pinned snapshot, as now.
+  This workflow is preserved; there are no per-row chart buttons.
+- **"Compare latest prices" and "Compare price histories" show or hide the two overview
+  cards.** They are the existing system cards: live, following the search and filters, with
+  the existing Pin button to snapshot them. The change is that they start hidden. Each button
+  is a toggle, so a repeat click can't duplicate. Shown cards stay shown across searches
+  until hidden; the state isn't saved, so a reload starts hidden (like collapse state).
+- The series cap stays (`MAX_AUTO_CHART_SERIES`, 8): above it a Compare button is disabled and
+  says why, pointing to row selection.
 
-Recommended activity presentation (not yet approved): a summary above the table counting
-unchanged, changed and insufficient-history results, plus a compact per-row activity indicator.
-Highlight significant events separately from ordinary changes. Count the current table's rows
-(products or packages), state the level, and avoid presenting package-event counts as product
-counts. A “Show changed” action should make inspection easy without hiding flat rows by default.
+The automatic price-change cards go away (`PriceChangeCards`, `MAX_AUTO_PRICE_CHANGE_CHARTS`).
+The Price changes section and chart callouts below replace them.
 
-“Unchanged” means all observed prices are equal throughout the selected window, not merely
-that the first and last prices match. One observation is insufficient history, not flat. Show
-coverage limitations rather than implying unobserved dates were flat. Assess each unit
-separately; product averages can conceal package movement, so expose underlying package
-changes rather than labeling a product unconditionally unchanged. Preserve existing price
-math and define activity classification before implementation. Sparklines remain optional;
-activity discovery must not depend on adopting them.
+### Price changes section
 
-Acceptance: Eliquis's related drops are discoverable without six automatic charts; events
-respect search dates and filters; no mixed-unit figures; saved pins remain unchanged by
-subsequent searches. Coordinate with the existing mixed-unit-card work in docs/future-work.md.
+A compact section on both pages listing the significant changes in the result: a single
+week-to-week change of 10% or more per package (`flagPriceChanges`, unchanged), within the
+search dates and the current filters, and labeled as such.
+
+- Each entry gives the date, the percent, the old → new price with its unit, and the packages
+  affected. Changes on the same date may be grouped ("6 packages dropped about 43% on Jan 14"),
+  with each package's exact values still reachable. *Open detail:* the grouping rule (same
+  date and direction is the minimum; rounded percentages alone are not enough) and how many
+  entries show before the list is cut.
+- Its action is **"Select affected rows"**: it adds those rows to the selection and sorts the
+  table by Price Activity so they are in view. It creates no chart; the user adjusts the
+  selection and uses Line or Bar. Say how many rows were selected.
+- **At product level** the affected things are packages, which aren't rows. The action there
+  reads **"Show affected packages"**: it switches Detail Level to Package and selects them.
+- The search toast keeps "N found" and drops its price-change part (`SearchResultToast`).
+
+### Change callouts on line charts
+
+Today a chart holds one stored `changeSpan`, drawn only on single-package price-change cards.
+Callouts become general:
+
+- **Any line chart marks the significant changes of the series it draws**, in the dates it
+  shows. They are derived when drawing from the prices the chart already holds, not stored.
+  Existing pins gain them, and widening a chart's dates reveals earlier ones. Pins with a
+  stored `changeSpan` keep working.
+- **A toggle, "Show price changes", in the pinned card's menu** (beside Match scale), saved on
+  the item, on by default. Live Compare cards always show them and get no menu.
+- **One label per date on a multi-series chart.** Each series keeps its dots and dashed old
+  price; the date gets one pill: the prices when the series agree, otherwise a count
+  ("6 changes"), with exact values in the readout.
+- **A product line never gets a callout from its own average**, which can jump when a package
+  joins or leaves. When one of its packages had a significant change in the dates shown, the
+  line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new
+  prices; those are in the readout and at Package level.
+- Line charts only. Bar charts have nothing to mark.
+- A chart made from selected rows opens on the search dates like any other. "Around change"
+  stays a preset in the dates picker. *Open detail:* which change the preset centers on when
+  a chart has several.
+
+### Price Activity column
+
+One column on all three tables: a small sparkline beside a text label, sortable.
+
+**States**, judged per package over the dates shown, per pricing unit:
+
+| State | Rule | Label |
+| --- | --- | --- |
+| Stable | Lowest and highest price within 5% of each other | "Stable · no change" or "Stable · within 2%" |
+| Changed | Range of 5% or more | one of the three below |
+| Insufficient history | One observation | "1 observation · Jun 30" |
+
+- The measure is the **range**, (max − min) / min, not the largest weekly step or the
+  start-to-end change. It is never smaller than either, so a dip or spike that returns counts
+  as Changed, and so does a slow drift.
+- The band is one named constant, 5%. The existing 10% weekly threshold stays as "significant".
+
+**Changed labels:**
+
+- A significant week exists: the largest one, "Dropped 25% on Apr 1", then "· 2 more" when
+  there are others.
+- No significant week, and it ended somewhere else: the net, "Up 14% over 52 weeks".
+- No significant week, and it ended within the band of where it started: where the low or
+  high was, "Dipped 8% in April" or "Spiked 8% in April".
+
+"Largest" is ranked by dollar amount, the earlier one winning a tie, so a drop and recovery
+($8 → $6 → $8) is labeled as the drop. Show the dollar change beside the percent: percentages
+on very cheap drugs are inflated (88 packages are under one cent a unit). No price floor hides
+those rows.
+
+**Gaps:** keep comparing consecutive observations however far apart, as `flagPriceChanges`
+does. When they are more than a week apart, word it as a span ("between Mar 4 and Apr 8"),
+in labels and callouts. Gaps are rare (129 of 1.57 million in a year), so the label carries no
+coverage count. This replaces the earlier draft's "do not calculate events across gaps".
+
+**Product rows** are classified from their packages, never from the averaged line: Stable
+only when every package is. *Open detail:* the product label's wording when packages differ
+(candidate: "1 of 3 packages dropped 25% on Apr 1") and which line its sparkline draws.
+Mixed-unit rows show "Mixed units" as the price columns do.
+
+**Sparkline:** a step line over the dates shown, small enough to sit beside the label at
+normal row height. It is an attention cue, not the analysis. Each row has its own vertical
+scale, under `MAX_AXIS_EXAGGERATION`, so a 43% drop fills it and a 0.5% change is nearly
+flat. Dates are proportional. It has an accessible text equivalent (the label). Build it
+tight, try it on a phone both shown and hidden, and let the author choose.
+
+**Sorting, not filtering:** the column sorts significant weeks first, then other Changed
+rows, then Stable, then Insufficient history, largest first within each. A plain line above
+the table gives the counts at the current level ("12 packages: 3 with significant changes,
+5 changed, 4 stable"). There is no activity filter in this version: it would be a third way
+to hide rows, outside the search panel.
+
+**Why 5%:** measured on the dev database (12 months to 2026-11-11, 33,411 packages), in
+[reporting/NADAC_PRICE_VARIATION.md](../../reporting/NADAC_PRICE_VARIATION.md) (PR 31 at the
+time of writing). Stable at 5% covers 16% of packages: 76% of brands, 11% of generics. The
+median generic ranges 16% in a year, so most generic rows read Changed, which is accurate;
+the label's size and the sort tell them apart. 10% would call most brand price increases
+Stable. 84% of the weekly changes that happen at all are under 5%. Of the Changed packages,
+about 6,500 had a significant week, 14,800 ended somewhere else and 6,900 ended near where
+they started, so all three labels are common. The share depends on the window (82% Stable
+over 1 month, 49% over 3, 16% over 12), so the count line names the dates it covers.
+
+*Open detail:* the exact comparison at the cutoff. Many brands took a list rise of about 5%:
+41 brand packages have a range of 4.95–5.00% and 137 have 5.00–5.05%, so rounding decides
+which side they fall on. Pick one rule (compare unrounded values, Changed at 5% or more) and
+show the label's percent rounded the same way, so a row never reads "Stable · within 5%".
+
+### Building and testing it
+
+Classification, labels, sort order, callout derivation and the per-date grouping are pure
+functions in `src/library/` with tests: stable at exactly the band, drop and recovery, slow
+drift, one observation, a gap, a sub-cent price, mixed units, and a product whose packages
+disagree. Reuse `seriesByDate` and `flagPriceChanges`; don't add a second price math.
+
+Acceptance: Eliquis's related drops are discoverable without six automatic charts, and
+"Select affected rows" then Line gives one chart with them called out; events and states
+respect search dates and filters; no mixed-unit figures; saved pins are unchanged by later
+searches and old pins still draw; both search pages behave the same.
 
 The help articles on charts and price changes describe the app as shipped
 ([help.md](help.md), "Content preparation"). They need revising when this stage ships.
 
 ## Stage 4 — Carry a search into Workspace
 
-Candidate bridge: “Add search to workspace” creates and opens an independent search tab.
-Copy applied terms, current dates/refinements, FDA detail level and pinned snapshots. Preserve
-the standalone page. Reuse available query data when possible; inspect provider initialization
-and query keys before promising that no request will occur.
+Decided: build it, after Stage 3. The workspace redo has no date, so the bridge is worth
+having even though tabs-as-searches is not the long-term model (D5).
 
-Decide: whether to build this bridge before the workspace redesign; selection and scroll
-transfer; behavior during loading/errors; repeat clicks. Recommendation: enable it for a
-successfully displayed search, transfer no unsubmitted text edits, and prevent double-click
-duplication without prohibiting deliberate independent copies.
+"Add search to workspace" on a standalone search page creates and opens an independent
+search tab with the applied terms, dates and refinements, FDA detail level and pinned
+snapshots. The standalone page keeps its own state.
+
+- Mechanism: a tab's provider loads its saved state once on mount, so write the new tab's
+  state (`drugpricing.v<VERSION>.tab.<tabId>`) and then add the tab. The query key is the
+  loaded criteria, so the results come from the cache within the stale time; don't promise
+  that no request occurs.
+- Enabled only for a search that loaded successfully. Unsubmitted text edits don't transfer.
+  Selection and scroll don't transfer.
+- No "N found" toast for the copy (as for a restored tab).
+- Disabled when this window is read-only because another window wrote the workspace.
+- A double click doesn't make two tabs; a deliberate second click later may.
+- *Open detail:* whether the workspace provider is mounted on the standalone routes, which
+  decides how the tab is added.
 
 Acceptance: the new tab initially represents the same applied search; subsequent edits are
 independent; pins retain their own data/dates; reload restores the new tab using normal
@@ -143,79 +274,38 @@ persistence; tab switching retains existing rendering-performance guarantees.
 
 ## Later design work
 
-- Trends: select a change metric, define missing/short-history behavior, respect the shared
-  date window and axis rules, and evaluate mobile space before adding a default column.
+- Row details on phones: a custom drawer showing everything about one row.
+- An activity filter (only Changed, only Stable), if sorting proves not to be enough.
 - Readout polish: test lock instructions, explicit locked status and overflow cues. Evaluate
   explanation placement separately from Latest/Average placement.
 - Workspace collections: decide what users collect, how searches open/reopen, destination
   selection, and the relationship between saved snapshots and reusable search criteria.
   Collection tabs and an Add data panel are options, not settled architecture.
 
-## Verification when implementation is authorized
+## Verification
 
 Use focused library tests for changed state/data logic, then client build, lint and tests.
 Review both sources at desktop and phone widths, with keyboard interaction. Include Eliquis
-for repeated events, a broad search for density/performance, mixed-unit data, no-price results
-and restored pins. Keep established provider isolation and multi-window storage behavior.
+for repeated events, a broad generic search for density/performance, a brand search (mostly
+Stable), mixed-unit data, no-price results and restored pins. Keep established provider
+isolation and multi-window storage behavior.
 
-## Next discussion
+## Still open
 
-The app bar comes first: settle Stage 1's decisions (phone layout, route shape, what state
-survives a source switch) before the rest.
-
-Chart destination and replacement of automatic charts are settled (D7–D8). Next settle the
-activity summary and row indicators, including unchanged versus insufficient history and what
-counts as significant. Then define the lifetime and dismissal of requested, unpinned charts.
-
-
-## Refinement — combined Price activity column (2026-11-13)
-
-Working design for review: combine the visual trend and its short text interpretation in one
-column, rather than separate indicator and sparkline columns. Icons alone are insufficient:
-an arrow does not say whether it represents net, latest or largest change. Use explicit labels.
-
-- Changed rows: step sparkline plus largest observed weekly rise/drop, date and exact prices.
-  Net change is not the primary label: it can hide a drop followed by recovery.
-- Unchanged rows: explicit text and observation count, optionally a quiet flat sparkline.
-- Insufficient history: explicit text and coverage; no flat-looking placeholder chart.
-- Summary filters count rows at the current FDA detail level or NADAC result level and offer
-  All, Changed, Unchanged and Insufficient history. Changed includes small movements, not
-  only events exceeding the significant-change threshold.
-- Significant events remain a separate compact discovery section. Filters and event summary
-  must have clearly defined scope: recommendation is to keep discovery based on the full
-  refined search while activity filters affect the results table only. Label that scope.
-- For incomplete coverage, distinguish unchanged observed prices from a fully covered flat
-  period. Missing weeks must not imply zero change; do not calculate weekly events across gaps.
-- Product rows require a separate design pass: package changes may cancel in an average.
-  Candidate label: “Average unchanged · package changes”; never hide underlying events.
-
-A rough mockup explored this column; it is described under “What the rough mockup showed”
-below. Sparklines must retain fittedPriceAxis rules and proportional dates in implementation;
-labels and accessible summaries remain essential.
-
-Next decisions: whether this combined column earns a default slot; whether summary activity
-filters narrow only the table; and whether requested charts persist until dismissed or clear
-when the applied search changes. Keep pinned snapshots independent in all cases.
-
-
-## Selection workflow refinement
-
-**Decided:** preserve the existing manual workflow: select table rows, then choose the Line
-or Bar chart action. Do not replace it with per-row View chart buttons. Requested charts
-remain inline, with the existing Pin behavior. This supersedes the mockup's per-row chart
-buttons and the proposed direct View chart action in the price-change summary.
-
-**Recommended for review:** a price-change summary offers “Select affected rows,” which adds
-those rows to the selection without creating a chart. Users can adjust that selection and
-use the same Line/Bar controls. Selection across filters, and how affected rows hidden by an
-activity filter are revealed, remain open implementation details. Activity indicators and sparklines help users choose rows; they are not additional chart
-creation controls. Automatic comparison shortcuts remain open and must not displace selection.
+- **Stage 1's design choices**: phone layout, route shape, what state survives a source
+  switch, default source and landing page, where About sits. These need the author before
+  Stage 1 starts.
+- The *open details* above: event grouping and list length, the "Around change" preset with
+  several changes, product-row label wording and sparkline, the comparison at the 5% cutoff,
+  how the bridge adds its tab.
+- After building: whether the sparkline shows on phones (author's choice from the real thing),
+  and whether 5% still reads right on real searches.
 
 ## What the rough mockup showed
 
 A rough, throwaway mockup was made in conversation to give the basic idea of the activity
-column. Its screenshots were removed from the repo on purpose (they are in git history under
-`docs/assets/browser-usability/`): it is not guidance for layout, styling, wording, sizes or
+column, before the decisions above. Its screenshots were removed from the repo on purpose
+(they are in git history under `docs/assets/browser-usability/`): it is not guidance for layout, styling, wording, sizes or
 controls, and a control appearing in it settles nothing. Build with the existing MUI Data
 Grid, shared components, theme roles, responsive conventions and the chart rules in
 `client/CHARTS.md`. Its data was invented.
@@ -237,12 +327,11 @@ What it contained, top to bottom:
 - A per-row chart button in a last column. This is superseded (see above): rows are selected
   and charted with the existing Line and Bar actions.
 
-Questions it raised, all open:
+What it got wrong, each fixed by a decision in Stage 3:
 
 - A row that dropped and recovered ($8 → $6 → $8) was labeled “Largest rise: 33.3%”, because
-  the recovery is a larger percentage than the 25% drop that caused it. Picking the largest
-  change by percentage favors rises; the label rule must handle a drop and recovery.
-- The event summary listed the 40% drop but not that row's 25% and 33% changes. Which events
-  the summary lists, and how many, is undefined.
-- The activity cell made rows about twice the usual height and sat fourth, so a phone would
-  not show it without scrolling sideways.
+  the recovery is a larger percentage than the 25% drop. Labels now rank by dollars.
+- Its filters, per-row chart buttons and inline preview with Close were not adopted: the
+  column sorts, rows are selected, and Compare cards toggle.
+- Its activity cell stacked the sparkline over the text and doubled the row height. The
+  sparkline now sits beside the label at normal height.
