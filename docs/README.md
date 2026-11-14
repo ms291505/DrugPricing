@@ -30,6 +30,8 @@ Start with the [project README](../README.md) for setup and architecture, and
 
 - [Chart and card guidance](../client/CHARTS.md)
 - [Pricing analysis findings](../reporting/FINDINGS.md)
+- [NADAC price variation and dev data gap check](../reporting/NADAC_PRICE_VARIATION.md): basis
+  of the Price Activity Stable/Changed band
 - [Search examples and test drugs](../reporting/TEST_DRUGS.md)
 - [Analysis SQL](../reporting/sql/)
 
