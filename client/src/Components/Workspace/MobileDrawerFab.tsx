@@ -8,7 +8,7 @@ import useScrolled from "../../hooks/useScrolled.ts";
 
 export default function MobileDrawerFab() {
   const { mobileDrawerIsOpen } = useMobileDrawer();
-  const { setMobileDrawerIsOpen } = useWorkspaceActions();
+  const { setMobileDrawerIsOpen, mobileDrawerToggle } = useWorkspaceActions();
 
   const handleClick = () => {
     setMobileDrawerIsOpen(open => !open);
@@ -22,7 +22,7 @@ export default function MobileDrawerFab() {
 
     <Fab
       color="primary"
-      id="workspace-drawer-toggle"
+      ref={mobileDrawerToggle}
       aria-label="open drawer"
       size="small"
       onClick={handleClick}

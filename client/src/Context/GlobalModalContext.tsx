@@ -1,14 +1,21 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { GlobalModalContext, type GlobalModal, type HelpTarget } from "./globalModalContexts";
-import type { HelpTopicId } from "../library/help";
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  GlobalModalActionsContext,
+  GlobalModalStateContext,
+  type GlobalModalActions,
+  type OpenGlobalModal,
+} from "./globalModalContexts";
 
 export function GlobalModalContextProvider({ children }: { children: ReactNode }) {
-  const [globalModal, setGlobalModal] = useState<GlobalModal | null>(null);
-  const [helpTarget, setHelpTarget] = useState<HelpTarget>({});
-  const openHelp = useCallback((topic?: HelpTopicId, returnFocus?: HTMLElement | null) => {
-    setHelpTarget({ topic, returnFocus });
-    setGlobalModal("help");
-  }, []);
-  const value = useMemo(() => ({ globalModal, setGlobalModal, helpTarget, openHelp }), [globalModal, helpTarget, openHelp]);
-  return <GlobalModalContext.Provider value={value}>{children}</GlobalModalContext.Provider>;
+  const [open, setOpen] = useState<OpenGlobalModal | null>(null);
+  const actions = useMemo<GlobalModalActions>(() => ({
+    openModal: (modal, options) => setOpen({ ...options, modal }),
+    openHelp: (helpTopic, options) => setOpen({ ...options, modal: "help", helpTopic }),
+    closeModal: () => setOpen(null),
+  }), []);
+  return (
+    <GlobalModalActionsContext.Provider value={actions}>
+      <GlobalModalStateContext.Provider value={open}>{children}</GlobalModalStateContext.Provider>
+    </GlobalModalActionsContext.Provider>
+  );
 }

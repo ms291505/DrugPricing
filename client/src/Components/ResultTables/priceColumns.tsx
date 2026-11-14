@@ -51,10 +51,9 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     latest: {
       field: "latestPrice",
       headerName: "Latest Price",
-      renderHeader: () => <Box sx={{ display: "flex", alignItems: "center" }}>Latest Price<HelpButton topic="what-the-prices-mean" /></Box>,
       description: averagesPackages ? "Average of the product's packages on its latest price date" : undefined,
       type: "number",
-      width: 155,
+      width: 125,
       valueGetter: (_, row) => singleUnit(row)?.latest,
       valueFormatter: unitPrice,
       getSortComparator: byUnitThenPrice,
@@ -107,12 +106,12 @@ function MixedUnits({ pricingUnits, hint, tabIndex }: MixedUnitsProps) {
   const units = pricingUnits.map(pricingUnitLabel).join(", ");
   const title = `Priced in more than one unit (${units}).` + (hint ? ` ${hint}` : "");
   return (
-    // A tap opens it at once: a phone has no hover.
-    <Tooltip title={title} enterTouchDelay={0}>
-      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
-        Mixed units
-        <HelpButton topic="the-results-table" tabIndex={tabIndex} />
-      </Box>
-    </Tooltip>
+    // No gap: the button's own padding spaces it, and the column has no width to spare.
+    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", color: "text.secondary" }}>
+      {/* A tap opens it at once: a phone has no hover. The help button sits outside it, so a tap
+          on the button opens Help without also flashing the hint. */}
+      <Tooltip title={title} enterTouchDelay={0}><span>Mixed units</span></Tooltip>
+      <HelpButton topic="the-results-table" tabIndex={tabIndex} />
+    </Box>
   );
 }

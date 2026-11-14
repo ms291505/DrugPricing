@@ -9,7 +9,8 @@ This document retains the original draft, provenance and unresolved checks. The 
 standalone `/help/:topic` pages share the published articles. The implementation deliberately
 omits dated price/news examples and unverified production counts, schedules and screen-reader
 claims. The Sources page uses CMS's pricing overview rather than an unverified methodology PDF.
-Welcome and About remain separate existing pages pending the navigation redesign.
+The Help index lists the Welcome topic and links to the About page; the welcome home page is
+part of the usability plan's Stage 1.
 
 ## How this file works
 

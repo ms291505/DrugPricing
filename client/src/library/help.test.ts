@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HELP_TOPICS, HELP_GROUPS, filterHelpTopics, findHelpTopic } from "./help";
+import { HELP_PAGE_LINKS, HELP_TOPICS, HELP_GROUPS, filterHelpPageLinks, filterHelpTopics, findHelpTopic } from "./help";
 
 const articles = import.meta.glob<string>("../content/help/*.md", { query: "?raw", import: "default", eager: true });
 
@@ -19,12 +19,18 @@ describe("published help", () => {
       }
     }
     expect(HELP_GROUPS).toHaveLength(5);
+    for (const link of HELP_PAGE_LINKS) expect(HELP_GROUPS).toContain(link.group);
   });
   it("finds UI terms and ignores case and extra whitespace", () => {
     expect(filterHelpTopics("  MIXED   units ").map(topic => topic.id)).toContain("the-results-table");
     expect(filterHelpTopics("OTC").map(topic => topic.id)).toContain("filters-and-hidden-results");
     expect(filterHelpTopics("  ")).toEqual(HELP_TOPICS);
     expect(filterHelpTopics("nonexistentword")).toEqual([]);
+  });
+  it("lists About in the index and filters it like a topic", () => {
+    expect(filterHelpPageLinks("").map(link => link.to)).toEqual(["/about"]);
+    expect(filterHelpPageLinks("ABOUT project").map(link => link.to)).toEqual(["/about"]);
+    expect(filterHelpPageLinks("charts")).toEqual([]);
   });
   it("handles unknown URL topics without guessing", () => {
     expect(findHelpTopic(undefined)).toBeUndefined();
