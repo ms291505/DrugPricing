@@ -35,6 +35,11 @@ What the label does at the planned settings, 12 months, 33,411 packages:
 ("Ended near where it started" is taken here as net change under 5%, the same band; the design
 does not fix this, so the 20.6% moves with it.)
 
+Product rows, Stable only when every package is, come out about the same: 15.6% of 20,326 FDA
+products (see [Product rows](#product-rows)). The 5% comparison should be made on the range
+rounded to 0.1%, so the client's doubles and the label cannot disagree with the state; that
+moves 77 packages to Changed (see [Where the 5% comparison runs](#where-the-5-comparison-runs)).
+
 ### Why range, not net change or the largest single step
 
 Range is the height of the line a user sees. The two alternatives each call visibly moving
@@ -71,9 +76,36 @@ Share of packages with range under each band (12 months; `sql/nadac_variation_ba
   brands in four Stable and one generic in ten.
 - **The 5% edge splits one common move.** Many brands took a list-price rise of about 5%. Brand
   packages with range 4.95-5.0% (Stable) number 41; 5.0-5.05% (Changed) number 137. Whether a 5%
-  rise reads Stable or Changed depends on 4-decimal rounding of the stored prices. Decide whether
-  the comparison is `>= 5%` on the stored price (as measured here) or on a rounded percentage, and
-  use the same one everywhere.
+  rise reads Stable or Changed depends on 4-decimal rounding of the stored prices, and on where
+  the comparison runs (next section).
+
+### Where the 5% comparison runs
+
+`NadacPerUnit` is `numeric(19,4)`, so Postgres (and this report) computes the range exactly. The
+client computes it in doubles, where a range of exactly 5% can come out just under 0.05:
+`(0.21 - 0.2) / 0.2` is `0.04999999999999993` in JS. In the 12-month window **9 packages have a
+range of exactly 5.0000%; in doubles 5 of them fall under 0.05**, so a client comparing the raw
+double would call them Stable while this report calls them Changed. Packages Stable under each
+rule (`sql/nadac_range_density.sql`, last result set):
+
+| Rule, 12 months | Stable | Labelled differently from exact numeric |
+| --- | ---: | ---: |
+| Exact numeric, range < 5% (this report) | 5,288 (15.8%) | |
+| Raw double, range < 0.05 | 5,293 (15.8%) | 5 |
+| **Range rounded to 0.1%**, `Math.round(range * 1000) / 1000 >= 0.05` is Changed | **5,211 (15.6%)** | **77** |
+| Range rounded to a whole percent, `Math.round(range * 100) / 100 >= 0.05` is Changed | 4,758 (14.2%) | 530 |
+
+**Recommendation:** classify on the range rounded to the precision the label displays, so a
+label can never show "5.0%" on a Stable row or "within 5%" beside a Changed one. At 0.1%
+precision that is `Math.round(range * 1000) / 1000 >= 0.05`: the 77 packages it moves are those
+with range 4.95-5.0% (they display as 5.0% and become Changed), and the 5 float misses disappear;
+in this window it gives the same answer whether computed in numeric or in doubles. Rounding to a
+whole percent moves 530 packages (4.5-5.0%) and is fragile in its own way: 38 packages have a
+range of exactly 4.5%, the rounding boundary, where doubles and numeric round differently. The
+plan's Stable labels show whole percents ("within 2%"); rounded up, "within 5%" for a 4.6% range
+is still true, so the label can stay whole-percent while the state is decided at 0.1%. Every
+other share in this report uses exact numeric; the 0.1% rule lowers the 12-month Stable share by
+0.2 points.
 
 ### The window changes the answer
 
@@ -91,6 +123,32 @@ Share Stable (range under 5%) by window length (`sql/nadac_variation_by_window.s
 The label means "stable within the dates shown", so a user who shortens the dates sees more
 Stable and one who widens them sees fewer. The label is not a property of the drug. The UI copy
 should say so, for example by naming the window ("Stable over 12 months").
+
+### Product rows
+
+The plan classifies an FDA product row from its packages, never from the averaged line: a
+product is Stable only when every package is. `sql/nadac_product_variation.sql` joins each NADAC
+NDC to `FdaPackages` on `NdcPackageCodeStripped` and then to `FdaProducts`, both with
+`DelistedAt IS NULL`. In the 12-month window **20,382 products have at least one priced
+package**; 56 have only single-observation packages (Insufficient history), and the shares below
+are of the other 20,326. No NDC matches more than one product, and none is priced in more than
+one pricing unit in the window.
+
+| Products, 12 months | Products | Stable at 3% | **Stable at 5%** | Stable at 10% |
+| --- | ---: | ---: | ---: | ---: |
+| All | 20,326 | 9.8% | **15.6%** | 32.9% |
+| Brand (all packages brand) | 1,850 | 59.4% | **76.6%** | 95.4% |
+| Generic (all packages generic) | 18,475 | 4.9% | **9.4%** | 26.6% |
+| With 1 package | 13,988 | 12.0% | 18.0% | 33.8% |
+| With 2 packages | 4,807 | 5.6% | 11.0% | 30.1% |
+| With 3-4 packages | 1,484 | 3.8% | 7.8% | 32.7% |
+| With 5-9 packages | 47 | 2.1% | 6.4% | 48.9% |
+| Matched packages, for comparison | 28,497 | 9.0% | 14.8% | 33.9% |
+
+One product mixes brand and generic packages. The product share about equals the package
+share only because 69% of products have one priced package; each added package lowers it
+(18.0% with one, 7.8% with three or four). So the product table's Price Activity column, like
+the package tables', will read mostly Changed over 12 months: about five products in six.
 
 ### Weekly steps
 
@@ -118,7 +176,7 @@ weekly series; the gaps that exist are NDCs entering and leaving NADAC.**
 | Weeks with too few or too many rows | **None.** Compared with the median of the 4 weeks either side, the largest deviations are 2024-04-17 (+3.2%) and 2024-04-10 (-3.2%, the same step seen from the other side); every other week is within 0.8%. Rows and distinct NDCs are identical each week (one row per NDC per file). |
 | Weeks missing 11-character NDCs (the old FK load failure) | **None.** `nadac_week_coverage.sql`: weekly rows run 24,851 (2022) to 30,597 (2026) with no dip, and the lowest week of every quarter still has 19k-24.5k 11-character NDCs. The 2025-01 to 2026-04 weeks noted in [FINDINGS.md](FINDINGS.md) are fully loaded. |
 | Duplicate NDC + as-of date | **0.** |
-| Null or zero or negative prices | **0.** |
+| Null or zero or negative prices; null classification | **0.** (`ClassificationForRateSetting` is also `NOT NULL` in the schema.) |
 | Prices under $0.01 | 24,839 rows (88 packages in the 12-month window); real but distorting, see Caveats. |
 | `EffectiveDate` after `AsOfDate` | 410 rows over 28 files and 347 NDCs, at most 5 days ahead. Not a hole (the as-of date is the file's date). Unused here, and the cause was not investigated. |
 
@@ -174,44 +232,22 @@ returned (29% of all NDCs, normal churn for old and discontinued products).
   Classification `B`, `B-ANDA` and `B-BIO` are all counted as brand.
 - **Few observations.** 93 packages have one price in the window and cannot be labelled by range:
   61 first appear in the latest file (2026-11-11), 25 were last seen on the window's first date,
-  and 7 are scattered. The design needs a label for "not enough data" (or Stable by default).
-  With only two or three prices, "Changed" can rest on one step.
+  and 7 are scattered. The plan labels these Insufficient history. With only two or three
+  prices, "Changed" can rest on one step.
 - **Spacing is not exactly weekly** for 129 consecutive pairs; the range ignores dates, so this
   does not move the label, but the "Dipped 8% in April" wording should not assume weekly spacing.
-- **Packages are NDCs.** FDA product-level results average packages per date (see AGENTS.md); a
-  product's range is the range of that average, not of its packages, and was not measured here.
-- **Not measured:** product-level (averaged) ranges; pricing-unit changes within an NDC (the
-  FDA product table already shows "Mixed units"); how much a minimum-price guard would change the
-  counts; the share of Changed packages whose significant week is a rise vs a drop; how the
+- **Packages are NDCs.** Product rows are classified from their packages, never from the
+  averaged line (package changes can cancel in an average), so the product range is not a
+  measure here; [Product rows](#product-rows) measures the every-package rule. That join covers
+  only NDCs in both datasets: 4,929 of the window's 33,504 NADAC packages have no listed FDA
+  package (268 of them match only a delisted one) and are in no product row.
+- **Not measured:** the product-level share for windows other than 12 months (the file takes
+  `-v weeks=N`, but only 52 was run); how much a minimum-price guard would change the counts;
+  the share of Changed packages whose significant week is a rise vs a drop; how the
   "near start" threshold (5% here) changes the 20.6% / 44.2% split; behavior in a 12-month window
   that starts at a different point in the NADAC calendar.
 - This is the dev database. Production loads the same files, but this report did not check it.
-
-## Compared with the earlier measurement
-
-An earlier pass on this database at as-of 2026-10-14 (7,036,653 rows, 42,373 NDCs, 250 files)
-gave nearly the same numbers; four more weekly files explain the differences.
-
-| Measure (12 months) | Earlier | Now |
-| --- | ---: | ---: |
-| Packages with 2+ prices | 33,376 | 33,411 |
-| Range under 3% / 5% / 10%, all | 10.2 / 16.5 / 35.5% | 9.9 / 15.8 / 35.2% |
-| Brand, same bands | 60.2 / 74.7 / 94.0% | 60.7 / 75.7 / 94.5% |
-| Generic, same bands | 5.7 / 11.3 / 30.3% | 5.3 / 10.5 / 29.9% |
-| Median range, generic / brand | 15.3% / 1.3% | 15.6% / 1.3% |
-| Median largest weekly step | 5.1% | 5.2% |
-| Packages with a step of 10% or more | 6,423 (19.2%) | 6,470 (19.4%) |
-| Range 5%+, and ended within 5% of start | 7,438 | 7,633 |
-| Range 5%+, no step of 5% | 10,318 | 10,234 |
-| Zero weekly steps; non-zero under 5% | 78.6%; 83.7% | 78.6%; 83.5% |
-| Share Stable at 5%: 3 months / all dates | 51.8% / 7.5% | 49.3% / 7.2% |
-| Consecutive pairs more than 14 days apart | 135 | 129 |
-| Packages with one price in the window | 26 | 93 |
-
-The large changes are the two last rows. The 3-month figure fell because the earlier run's window
-start is unknown and this one is a fixed 13 weeks. The single-price count rose because 61 NDCs
-are new in the 2026-11-11 file, which the earlier data did not have. Nothing else moved by more
-than a point.
+- An earlier pass at as-of 2026-10-14 agreed within a point.
 
 ## Reproducing
 
@@ -225,7 +261,8 @@ q nadac_variation_bands.sql -v weeks=52          # bands table (all, generic, br
 q nadac_variation_checks.sql -v weeks=52 -x      # labels split, round trips, tiny prices
 q nadac_weekly_steps.sql -v weeks=52 -x          # weekly steps and spacing
 q nadac_variation_by_window.sql                  # window table
-q nadac_range_density.sql -v weeks=52            # slices of range, and the 5% edge
+q nadac_range_density.sql -v weeks=52            # slices of range, the 5% edge, numeric vs double
+q nadac_product_variation.sql -v weeks=52        # product rows: FDA join, every-package rule
 q nadac_gap_check.sql                            # gap check, seven result sets
 q nadac_week_coverage.sql                        # rows per week by quarter
 ```

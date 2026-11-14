@@ -121,5 +121,8 @@ SELECT
   count(*) FILTER (WHERE "NadacPerUnit" < 0.01) AS under_one_cent,
   count(*) FILTER (WHERE "Ndc" = '') AS empty_ndc,
   count(*) FILTER (WHERE "EffectiveDate" > "AsOfDate") AS effective_after_asof,
+  -- NOT IN is never true for NULL, so nulls get their own column; the other queries' CASE
+  -- would count a null classification as brand.
+  count(*) FILTER (WHERE "ClassificationForRateSetting" IS NULL) AS null_classification,
   count(*) FILTER (WHERE "ClassificationForRateSetting" NOT IN ('G', 'B', 'B-ANDA', 'B-BIO')) AS other_classification
 FROM "NadacPrices";
