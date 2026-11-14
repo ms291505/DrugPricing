@@ -6,8 +6,9 @@ Start with the [project README](../README.md) for setup and architecture, and
 ## Plans and backlog
 
 - [Future work](future-work.md): backlog, established directions and links to detailed plans.
-- [Browser usability](plans/browser-usability.md): active discussion draft for results,
-  price activity, chart creation, navigation and the workspace transition.
+- [Browser usability](plans/browser-usability.md): decided plan, not yet built, for the app
+  bar and one Search area, results columns, price activity, chart creation and the workspace
+  bridge.
 - [Topic-based Help](plans/help.md): proposed modal-first help, shared topic pages and content
   migration; discussion draft, not an approved implementation plan.
 - [Search filters](plans/search-filters.md): design and implementation record for the shared
@@ -19,6 +20,8 @@ Start with the [project README](../README.md) for setup and architecture, and
 
 - [Browser review — November 13, 2026](reviews/2026-11-13-browser-review.md): annotation
   observations, confirmed decisions, recommendations and open questions.
+- [Welcome page content](content/welcome.md): draft copy for the home page the usability plan
+  adds.
 - [Help content](content/help.md): draft in-app reference copy, source notes and pre-publication
   checks. Describes current behavior; reconcile affected pages with the usability plan as
   changes ship. It is not published help or an approved implementation plan.

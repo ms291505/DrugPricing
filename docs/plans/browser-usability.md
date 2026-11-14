@@ -3,14 +3,13 @@
 Started 2026-11-13. Source and decision register:
 [docs/reviews/2026-11-13-browser-review.md](../reviews/2026-11-13-browser-review.md).
 
-Stages 2–4 were settled with the author on 2026-11-13 and are written below as decisions.
-Stage 1 goes first by the author's decision, but its own design choices are still open (see
-"Still open"). Items marked *open detail* are for the implementer to raise, not to decide
+All four stages were settled with the author on 2026-11-13 and are written below as decisions.
+Stage 1 goes first. Items marked *open detail* are for the implementer to raise, not to decide
 alone. The stages are a sequence, not PR boundaries. D1–D8 and R1–R11 refer to the review.
 
 Help is not part of this plan. Topic-based help, its modal and routes, and its content are in
 [help.md](help.md), which another branch is implementing. The two plans touch in three
-places, each noted where it applies: the Help action in the app bar (Stage 1), the fixed
+places, each noted where it applies: the bar, Help index and welcome links (Stage 1), the fixed
 results example for help (Stage 2), and the help articles on charts and price changes (Stage 3).
 
 ## Intended experience
@@ -22,41 +21,104 @@ decision; near-term improvements should not depend on completing it.
 
 ## Stage 1 — Rework the app bar and navigation
 
-Decided (2026-11-13): this goes first. Today the bar (`Components/DrugPricingBar/`) is one
-row at every width: NADAC, FDA, Workspace and About links (`NavButton`) and a Settings gear.
-It has no Help action; Help opens only from the workspace drawer.
+This goes first. Today the bar (`Components/DrugPricingBar/`) is one row at every width:
+NADAC, FDA, Workspace and About links (`NavButton`) and a Settings gear. Help opens only from
+the workspace drawer. The two search pages are torn down when you leave them, and `AppShell`
+(`App.tsx`) renders the bar twice, once for the workspace and once as the routes' layout.
 
-Propose one Search destination with an FDA/NADAC selector inside Search, close to the fields,
-with both source names always visible. The bar then holds Search, Workspace, a labeled Help
-action and Settings. Keep `/nadac-search` and `/fda-search` working. Create the brief welcome
-already requested (D3) once the Search destination is settled, since its calls to action
-point there; `/welcome` exists today and renders the onboarding content.
+### The bar
 
-Help action: the reworked bar includes it and opens the existing global Help modal. What
-that modal shows is the help plan's work; [help.md](help.md) step 3 ("add a labeled Help
-action to the shared app bar") is satisfied by this stage and should not add a second
-button. If help ships before this stage, its button moves into the reworked bar here.
+One top row at every width, and no bottom navigation: on a phone the bottom of the screen
+already holds the workspace's floating buttons, and charts need the height.
 
-Decide:
+- **The app name links to the welcome page**, which is the app's home. On phones, where the
+  name is hidden, a home icon takes its place.
+- **Search and Workspace** are the only destinations, with the current active marker.
+- **Help and Settings** are icon buttons at every width, each with an accessible name and a
+  tooltip. Help opens the existing global Help modal.
+- **About leaves the bar.** It is reached from the welcome page and from the Help index. The
+  page and `/about` stay.
 
-- Phone layout: a compact header versus bottom navigation, with labels and adequate touch
-  targets. Validate at desktop and phone widths before choosing.
-- What "preserving each source's state" means. The standalone pages unmount on a route
-  change; their criteria, detail level and pins come back from storage, and the search re-runs
-  (from the query cache within its stale time). Selection and scroll position are not saved.
-  Either accept that, or keep both sources mounted under one Search route, which is a larger
-  change (hidden pages must then not re-render or toast, as in Workspace).
-- The route shape: one `/search` route with the source in the path or query, or the two
-  existing routes with a selector that links between them. The second is the smaller change.
-- Default source, and where a returning visitor lands (the fallback route goes to `/about`
-  today).
-- Where About sits in the bar. The help plan keeps About separate from Help, so it is not
-  folded into Help; it may leave the primary links for a quieter place.
+### One Search area, kept mounted
 
-Acceptance: one row that never wraps at phone width; the active destination is evident in
-both themes; old search URLs load the right source; switching source loses no applied search,
-filters or pins; Help and Settings are reachable from every route by keyboard and touch; the
-phone drawer still closes before a modal opens.
+- **Addresses:** `/search/fda` and `/search/nadac`. `/search` goes to the source used last,
+  or FDA when there is none. `/fda-search` and `/nadac-search` redirect.
+- **Both sources stay mounted** once visited, the hidden one out of view, so switching is
+  instant and loses nothing: selection, scroll, table sort and page, unsubmitted text, and
+  (after Stage 3) which Compare cards are showing. A source is mounted the first time it is
+  visited, so someone who only uses one never loads the other.
+- **Search stays mounted when the user goes to Workspace, About, Welcome or a help page**,
+  as the workspace already does.
+- **The workspace's rules for hidden tabs apply to a hidden search page**: it does not
+  re-render when another page is shown, it shows no toasts while hidden
+  (`PageVisibleContext`), it runs its search only when first shown, and it is hidden with
+  `content-visibility: hidden` so its charts see no resize. Reuse those pieces; don't build a
+  second mechanism.
+- Persistence is unchanged: each source keeps its `STANDALONE_TAB_IDS` state, and a fresh
+  load restores it as now.
+- **The FDA / NADAC selector** is a two-option toggle at the top of the Search page, directly
+  above the fields, with both names always visible, in both panel layouts. It is navigation
+  between the two addresses, not a search field, and it is not in the bar. Workspace search
+  tabs don't show it.
+- **The last source is remembered** app-wide, so `/search` and the bar's Search link return
+  to it after a fresh load. *Open detail:* where it is stored (it is state, not a preference,
+  so probably its own validated key and not `settings`); `pruneStoredState` must keep it.
+
+### Landing
+
+- The bare address and any unknown address go to **Welcome on a first visit and Search
+  afterwards**. "First visit" is "no last source remembered", so the welcome shows until
+  someone has opened Search once. Don't infer it from the workspace's saved state, which is
+  written on the first load.
+- **Default source: FDA**, when there is no last source. Brand and generic names are how
+  most people think of a drug.
+
+### When FDA search comes up empty
+
+NADAC holds more than FDA search can show: about 15% of the packages priced in the last year
+have no listed FDA match (4,929 of 33,504, in the report under `reporting/`). Defaulting to
+FDA makes that more visible, so:
+
+- When an FDA search finds nothing, or nothing with prices, its empty state offers the same
+  terms in NADAC search with one click. Both sources are mounted, so this fills NADAC's
+  Description and runs it. *Open detail:* what happens when the term is shorter than NADAC's
+  minimum length (fill it without running is the candidate).
+- Explaining the two datasets properly is help's job ("Which search to use" in the help
+  content) and stays out of this stage.
+
+### Welcome
+
+A short home page at `/welcome`, replacing the onboarding text shown there today. Copy:
+[docs/content/welcome.md](../content/welcome.md). One sentence on what the app is, two buttons
+("Find a drug", "Open workspace"), a few one-line ideas that each link to a help topic, and
+quiet links to "What is NADAC?" and "About this project". Buttons, not a search box. It is
+also what a portfolio visitor sees first now that About is out of the bar.
+
+### For the help plan
+
+These touch [help.md](help.md), which another branch owns; they are noted here, not edited
+there.
+
+- Its step 3 ("add a labeled Help action to the shared app bar") is covered by this stage's
+  Help icon and should not add a second button. If help ships first, its button moves into
+  the reworked bar here.
+- The Help index should carry entries for Welcome and "About this project".
+- The welcome page's idea lines link to help topics by ID; until those topics ship, they open
+  the Help modal as it is.
+- With Search kept mounted, opening `/help` in the same tab no longer costs the search page
+  its state, which was one of that plan's reasons for a modal-first design. That is its call.
+
+### Acceptance
+
+- One row that never wraps at phone width; the active destination is evident in both themes;
+  Help, Settings and home are reachable from every route by keyboard and touch.
+- Old search addresses load the right source. Back and forward move between sources.
+- Switching source, or visiting Workspace and returning, loses no search, filter, pin,
+  selection, scroll position or unsubmitted text.
+- A hidden search page does not re-render on a switch and shows no toasts until shown.
+- A first visit lands on Welcome; a later visit lands on the last source.
+- An empty FDA search offers NADAC, and one click runs it there.
+- The phone drawer still closes before a modal opens.
 
 ## Stage 2 — Make results easier to inspect
 
@@ -201,7 +263,11 @@ in labels and callouts. Gaps are rare (129 of 1.57 million in a year), so the la
 coverage count. This replaces the earlier draft's "do not calculate events across gaps".
 
 **Product rows** are classified from their packages, never from the averaged line: Stable
-only when every package is. *Open detail:* the product label's wording when packages differ
+only when every package is. Packages with one observation are left out of that rule, and a
+product is Insufficient history only when all its packages are. Measured this way, 16% of
+products are Stable over 12 months (77% of brand products, 9% of generic), close to the
+package share because 69% of products have one priced package; it falls to 6% for products
+with 5–9 packages. *Open detail:* the product label's wording when packages differ
 (candidate: "1 of 3 packages dropped 25% on Apr 1") and which line its sparkline draws.
 Mixed-unit rows show "Mixed units" as the price columns do.
 
@@ -219,7 +285,7 @@ to hide rows, outside the search panel.
 
 **Why 5%:** measured on the dev database (12 months to 2026-11-11, 33,411 packages), in
 [reporting/NADAC_PRICE_VARIATION.md](../../reporting/NADAC_PRICE_VARIATION.md) (PR 31 at the
-time of writing). Stable at 5% covers 16% of packages: 76% of brands, 11% of generics. The
+time of writing; its SQL regenerates every figure here). Stable at 5% covers 16% of packages: 76% of brands, 11% of generics. The
 median generic ranges 16% in a year, so most generic rows read Changed, which is accurate;
 the label's size and the sort tell them apart. 10% would call most brand price increases
 Stable. 84% of the weekly changes that happen at all are under 5%. Of the Changed packages,
@@ -227,10 +293,15 @@ about 6,500 had a significant week, 14,800 ended somewhere else and 6,900 ended 
 they started, so all three labels are common. The share depends on the window (82% Stable
 over 1 month, 49% over 3, 16% over 12), so the count line names the dates it covers.
 
-*Open detail:* the exact comparison at the cutoff. Many brands took a list rise of about 5%:
-41 brand packages have a range of 4.95–5.00% and 137 have 5.00–5.05%, so rounding decides
-which side they fall on. Pick one rule (compare unrounded values, Changed at 5% or more) and
-show the label's percent rounded the same way, so a row never reads "Stable · within 5%".
+**The comparison at the cutoff** (from the report's "Where the 5% comparison runs"): decide
+the state on the range **rounded to 0.1%**, Changed at 5.0% or more
+(`Math.round(range * 1000) / 1000 >= 0.05`). The database computes the range exactly but the
+client computes it in doubles, where `(0.21 - 0.2) / 0.2` is just under 0.05; many brands
+took a list rise of about 5%, so the raw comparison splits them on floating-point error.
+Rounded to 0.1%, doubles and exact arithmetic agree for every package measured. Don't round
+to a whole percent to decide the state (it moves 530 packages and is itself fragile at 4.5%).
+The Stable label may show a whole percent, rounded **up** ("within 5%" for 4.6%), so it is
+never false and never shown on a Changed row.
 
 ### Building and testing it
 
@@ -265,8 +336,8 @@ snapshots. The standalone page keeps its own state.
 - No "N found" toast for the copy (as for a restored tab).
 - Disabled when this window is read-only because another window wrote the workspace.
 - A double click doesn't make two tabs; a deliberate second click later may.
-- *Open detail:* whether the workspace provider is mounted on the standalone routes, which
-  decides how the tab is added.
+- The workspace provider wraps the whole app and the workspace stays mounted (hidden) on
+  every route (`AppShell` in `App.tsx`), so the page can add the tab directly.
 
 Acceptance: the new tab initially represents the same applied search; subsequent edits are
 independent; pins retain their own data/dates; reload restores the new tab using normal
@@ -292,12 +363,9 @@ isolation and multi-window storage behavior.
 
 ## Still open
 
-- **Stage 1's design choices**: phone layout, route shape, what state survives a source
-  switch, default source and landing page, where About sits. These need the author before
-  Stage 1 starts.
-- The *open details* above: event grouping and list length, the "Around change" preset with
-  several changes, product-row label wording and sparkline, the comparison at the 5% cutoff,
-  how the bridge adds its tab.
+- The *open details* above: where the last source is stored, a too-short term in the FDA
+  empty state's NADAC offer, event grouping and list length, the "Around change" preset
+  with several changes, product-row label wording and sparkline.
 - After building: whether the sparkline shows on phones (author's choice from the real thing),
   and whether 5% still reads right on real searches.
 

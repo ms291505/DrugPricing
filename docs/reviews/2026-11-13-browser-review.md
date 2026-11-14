@@ -317,4 +317,14 @@ above where they differ. In short: selected rows pin directly and the Compare bu
 live overview cards (resolving D7 and D8); change callouts appear on any line chart, with a
 toggle; a Price Activity column with a sparkline and a label, sorted and not filtered;
 Stable means a range under 5%, chosen from measured data; the bridge is built. R3–R7 and R10
-are settled there. Stage 1's design choices (R1) remain open.
+are settled there.
+
+
+### Stage 1 settled (2026-11-13)
+
+The navigation choices (R1, comments 1–4) were then settled the same way and are in the
+plan's Stage 1: one top row with the app name as home, Search, Workspace, and Help and
+Settings icons; About out of the bar; one Search area at `/search/fda` and `/search/nadac`
+with both sources kept mounted; welcome on a first visit and the last source afterwards,
+FDA by default; an offer of NADAC when an FDA search is empty. Welcome copy is drafted in
+[docs/content/welcome.md](../content/welcome.md).
