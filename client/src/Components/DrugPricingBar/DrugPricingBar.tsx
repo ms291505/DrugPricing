@@ -1,3 +1,4 @@
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Outlet } from "react-router";
 import NavButton from "./NavButton";
 import Box from "@mui/material/Box";
@@ -6,11 +7,11 @@ import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
 import { Divider, IconButton, Tooltip } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useGlobalModalContext } from "../../Context/GlobalModalContext";
+import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import Portal from "@mui/material/Portal"
 
 export default function DrugPricingBar() {
-  const { setGlobalModal } = useGlobalModalContext();
+  const { openModal, openHelp } = useGlobalModalActions();
   return (
     <>
       {import.meta.env.DEV && (
@@ -38,13 +39,13 @@ export default function DrugPricingBar() {
         }}
       >
         {/*
-          One row at every width: title, links, gear. The side columns are equal, so the links
-          stay centered while there is room; on a phone the title is hidden and the left column
-          gives up its space first, so the gear never wraps to a second row.
+          One row at every width: title, links, then the Help and Settings icons. From `md` the
+          side columns are equal, so the links stay centered; on a phone the title is hidden and
+          the links take what the icons leave, so the icons never wrap to a second row.
         */}
         <Toolbar sx={{
           display: "grid",
-          gridTemplateColumns: "1fr auto 1fr",
+          gridTemplateColumns: { xs: "auto minmax(0, 1fr) auto", md: "1fr auto 1fr" },
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
         }}>
@@ -58,16 +59,18 @@ export default function DrugPricingBar() {
             <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
             <NavButton to="/about">ABOUT</NavButton>
           </Box>
-          <Tooltip title="Settings">
-            <IconButton
-              aria-label="Settings"
-              color="inherit"
-              onClick={() => setGlobalModal("settings")}
-              sx={{ gridColumn: 3, justifySelf: "end" }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ gridColumn: 3, justifySelf: "end", display: "flex" }}>
+            <Tooltip title="Help">
+              <IconButton aria-label="Help" color="inherit" onClick={() => openHelp()}>
+                <HelpOutlineIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Settings">
+              <IconButton aria-label="Settings" color="inherit" onClick={() => openModal("settings")}>
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Toolbar>
       </AppBar>
       {/* Room for the app bar, which phones don't show. */}

@@ -5,13 +5,14 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useCallback, useEffect, useRef } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
-import { useGlobalModalContext, type GlobalModal } from "../../Context/GlobalModalContext.tsx";
+import { useGlobalModalActions, type GlobalModal } from "../../Context/globalModalContexts";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 import ConfirmButton from "../ui/ConfirmButton.tsx";
 
-export default function DrawerContent() {
-  const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen } = useWorkspaceActions();
-  const { setGlobalModal } = useGlobalModalContext();
+/** `inMobileDrawer`: rendered in the phone drawer, which closes when a modal opens. */
+export default function DrawerContent({ inMobileDrawer = false }: { inMobileDrawer?: boolean }) {
+  const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen, mobileDrawerToggle } = useWorkspaceActions();
+  const { openModal } = useGlobalModalActions();
 
   const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
 
@@ -27,10 +28,10 @@ export default function DrawerContent() {
   }
 
   // On a phone the drawer would otherwise stay open behind the modal, and closing the modal
-  // would land back in it.
-  const openModal = (modal: GlobalModal) => {
+  // would land back in it. Its buttons go with it, so focus returns to the drawer's toggle.
+  const openFromDrawer = (modal: GlobalModal) => {
     closeMobileDrawer();
-    setGlobalModal(modal);
+    openModal(modal, inMobileDrawer ? { returnFocus: mobileDrawerToggle.current } : undefined);
   }
 
   return (
@@ -50,10 +51,10 @@ export default function DrawerContent() {
       </Box>
       {/* Outlined, like Add Tab above, so they read as buttons; a rule sets them off from the tabs. */}
       <Box sx={{ display: "flex", gap: 1, py: 1, borderTop: 1, borderColor: "divider" }}>
-        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={() => openModal("settings")} sx={{ flex: 1 }}>
+        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={() => openFromDrawer("settings")} sx={{ flex: 1 }}>
           Settings
         </Button>
-        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={() => openModal("help")} sx={{ flex: 1 }}>
+        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={() => openFromDrawer("help")} sx={{ flex: 1 }}>
           Help
         </Button>
       </Box>
