@@ -49,7 +49,7 @@ These are candidates for agreement, not approved implementation requirements.
 | ID | Recommendation / open item | Status |
 | --- | --- | --- |
 | R1 | One Search destination with independent FDA/NADAC state | Proposed; navigation and default source open |
-| R2 | Topic-based help with a real results-table example | Proposed; modal versus linkable pages open |
+| R2 | Topic-based help with a real results-table example | Moved to [the help plan](../plans/help.md) |
 | R3 | Visible Columns tool and lean defaults; omit OTC by default | Author-requested direction; exact defaults and persistence open |
 | R4 | Compact, readable, complete NDCs | Problem confirmed; typography and sizing open |
 | R5 | Optional table trends | Exploratory; metric, scales and mobile value open |
@@ -295,5 +295,36 @@ summary-filter scope, event grouping rules or unpinned-chart lifetime.
 The author explicitly wants to retain selecting rows and then adding a Line or Bar chart.
 This supersedes direct per-row View chart buttons and the earlier D8 summary's View chart
 shortcut. A proposed replacement summary action selects affected rows; users still decide
-when to chart them. Revised mockup review precedes replacement of documentation screenshots.
-See the plan's “Selection workflow refinement and rough mockups” section for styling limits.
+when to chart them. See the plan's “Selection workflow refinement” section.
+
+
+### Plan restructuring (2026-11-13)
+
+- The author decided the app bar and navigation rework comes first; it is Stage 1 of the plan.
+- Help left the usability plan. R2 and the help questions under comments 3–4 are owned by
+  [the help plan](../plans/help.md); the usability plan notes where the two touch.
+- The rough activity mockup was only ever meant to give the basic idea. Its screenshots were
+  removed and the plan describes it in words (“What the rough mockup showed”), so it can't be
+  read as layout or styling guidance.
+
+
+### Stages 2–4 settled (2026-11-13)
+
+The author and the reviewing agent went through the open decisions for results, charts,
+price activity and the workspace bridge one at a time. The outcomes are written into
+[the plan](../plans/browser-usability.md) as decisions and supersede the recommendations
+above where they differ. In short: selected rows pin directly and the Compare buttons toggle
+live overview cards (resolving D7 and D8); change callouts appear on any line chart, with a
+toggle; a Price Activity column with a sparkline and a label, sorted and not filtered;
+Stable means a range under 5%, chosen from measured data; the bridge is built. R3–R7 and R10
+are settled there.
+
+
+### Stage 1 settled (2026-11-13)
+
+The navigation choices (R1, comments 1–4) were then settled the same way and are in the
+plan's Stage 1: one top row with the app name as home, Search, Workspace, and Help and
+Settings icons; About out of the bar; one Search area at `/search/fda` and `/search/nadac`
+with both sources kept mounted; welcome on a first visit and the last source afterwards,
+FDA by default; an offer of NADAC when an FDA search is empty. Welcome copy is drafted in
+[docs/content/welcome.md](../content/welcome.md).
