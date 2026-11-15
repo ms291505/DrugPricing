@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_HIDDEN_COLUMNS } from "./settings";
+import { DEFAULT_COLUMN_OVERRIDES, columnVisibilityModel, columnOverridesFromModel, RESULT_SELECTION_FIELD } from "./settings";
 import { FULL_WINDOW } from "./dates";
 import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
@@ -252,7 +252,7 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(settingsKey, value));
 
     expect(onConflict).not.toHaveBeenCalled();
-    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
@@ -260,19 +260,19 @@ describe("watchOtherWindows", () => {
 
 describe("settings", () => {
   it("defaults when nothing or something unreadable is saved", () => {
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie", colorMode: "sepia" } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 
   it("round-trips what saveSettings wrote", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 
   it("round-trips independent column choices and follows another window", () => {
-    const hiddenColumns = { fdaProduct: ["proprietaryName"], fdaPackage: [], nadac: ["minPrice", "maxPrice", "ndcDescription"] };
-    const settings = { barStyle: "dot" as const, colorMode: "light" as const, hiddenColumns };
+    const columnOverrides = { fdaProduct: { proprietaryName: false }, fdaPackage: {}, nadac: { ndcDescription: false, minPrice: true } };
+    const settings = { barStyle: "dot" as const, colorMode: "light" as const, columnOverrides };
     const onSettings = vi.fn();
     const onConflict = vi.fn();
     persist.watchSettings(onSettings);
@@ -288,20 +288,51 @@ describe("settings", () => {
     expect(persist.loadSettings()).toEqual(settings);
   });
 
-  it("validates hidden columns independently without discarding valid settings", () => {
+  it("validates column overrides independently without discarding valid settings", () => {
     const key = `drugpricing.v${persist.VERSION}.settings`;
     localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: {
-      colorMode: "light", hiddenColumns: { fdaProduct: ["latestPrice", 42, null, "latestPrice", "__check__"], fdaPackage: "bad", nadac: [] },
+      colorMode: "light", columnOverrides: { fdaProduct: { latestPrice: false, minPrice: true, maxPrice: 42, routeName: null, [RESULT_SELECTION_FIELD]: false }, fdaPackage: "bad", nadac: [] },
     } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", hiddenColumns: {
-      fdaProduct: ["latestPrice"], fdaPackage: DEFAULT_HIDDEN_COLUMNS.fdaPackage, nadac: [],
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", columnOverrides: {
+      fdaProduct: { latestPrice: false, minPrice: true }, fdaPackage: {}, nadac: {},
     } });
   });
 
+  it("keeps an untouched browser on current column defaults across saves", () => {
+    // Match SettingsProvider's initial load and automatic mount-time save.
+    persist.saveSettings(persist.loadSettings());
+    const before = columnVisibilityModel(["minPrice", "maxPrice"], persist.loadSettings().columnOverrides.nadac);
+    expect(before).toEqual({ minPrice: false, maxPrice: false });
+    // A later release shows Min Price by default and hides Description instead.
+    const after = columnVisibilityModel(["maxPrice", "ndcDescription"], persist.loadSettings().columnOverrides.nadac);
+    expect(after.minPrice).toBeUndefined();
+    expect(after.ndcDescription).toBe(false);
+    expect(persist.loadSettings().columnOverrides).toEqual(DEFAULT_COLUMN_OVERRIDES);
+  });
+
+  it("keeps new optional columns hidden after custom choices were saved", () => {
+    const defaults = ["minPrice", "maxPrice"];
+    const settings = persist.loadSettings();
+    settings.columnOverrides.nadac = columnOverridesFromModel(defaults, { minPrice: true, maxPrice: false, ndcDescription: false });
+    persist.saveSettings(settings);
+    const saved = persist.loadSettings().columnOverrides.nadac;
+    expect(saved).toEqual({ minPrice: true, ndcDescription: false });
+    const model = columnVisibilityModel([...defaults, "newOptionalColumn"], saved);
+    expect(model.newOptionalColumn).toBe(false);
+    expect(model.minPrice).toBe(true);
+    expect(model.ndcDescription).toBe(false);
+    // A new default-visible column remains visible (absent means visible to MUI).
+    expect(model.priceActivity).toBeUndefined();
+    // Reset clears choices, so all columns follow the current defaults again.
+    persist.saveSettings({ ...settings, columnOverrides: { ...settings.columnOverrides, nadac: {} } });
+    expect(columnVisibilityModel(defaults, persist.loadSettings().columnOverrides.nadac))
+      .toEqual({ minPrice: false, maxPrice: false });
+  });
+
   it("survives pruning, which only removes tab state and old versions", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.pruneStoredState([]);
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 });
 

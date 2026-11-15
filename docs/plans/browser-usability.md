@@ -157,12 +157,14 @@ Implemented 2026-11-15 on `codex/browser-usability-stage-2`. Browser review sett
   pagination or sort changes. Latest Price is capped at its existing 125px width, Min/Max at
   115px. Hidden pages defer measurement until shown; a small observer handles visibility so
   the table itself does not re-render on a route or workspace tab switch.
-- Hidden fields are saved per table type in Settings, validated independently, and followed
-  across windows. Reset restores the app defaults; MUI's mount-time Reset is suppressed because
-  it would restore the saved choices from mount instead.
+- Per-column visibility overrides are saved per table type in Settings, validated independently,
+  and followed across windows. Review caught that saving complete hidden lists would freeze
+  defaults even for browsers that never customized; only deviations are now stored. Reset
+  restores the app defaults; MUI's mount-time Reset is suppressed because it would restore
+  the saved choices from mount instead.
 - Package rows now carry product strength and OTC status. The planned Price Activity column
   remains deferred to Stage 3.
-- Validation: 253 tests, lint and build pass. Browser checks covered FDA product/package and
+- Validation: 260 tests, lint and build pass after review fixes. Browser checks covered FDA product/package and
   NADAC defaults, keyboard column selection, reload persistence, changes and reset across
   windows, desktop footer placement, and 320px/375px phone layouts.
 
@@ -190,9 +192,11 @@ Default columns, in order after the selection checkbox:
 - Latest Price stays second (the phone rule in AGENTS.md).
 
 Column choices are saved in Settings (`library/settings.ts`), once per table type, so they
-apply on both search pages and in every workspace tab and follow other windows. Save the
-**hidden** columns, not the visible ones, so a column added to the defaults later appears for
-people who already customized.
+apply on both search pages and in every workspace tab and follow other windows. Save only
+per-column deviations from the current defaults (field → visible), and merge those over
+current defaults when rendering. This refines the original hidden-list approach after PR
+review: new default-visible columns appear, new optional columns stay hidden, and changed
+defaults reach browsers that never overrode those fields. Reset clears the overrides.
 
 NDCs (R4): tabular digits, widths sized to the identifier, the whole identifier on one line,
 never truncated. FDA keeps its dashed source form; NADAC keeps its stored form.

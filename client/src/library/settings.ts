@@ -1,6 +1,6 @@
 /*
  * App-wide preferences saved once for every tab and window (`persist.ts`). Appearance is edited
- * in Settings; hidden columns are edited from each results table's Columns tool.
+ * in Settings; column visibility is edited from each results table's Columns tool.
  */
 
 /**
@@ -15,36 +15,57 @@ export type ColorMode = "dark" | "light";
 
 /** Column choices are shared by every instance of the same results table. */
 export type ResultTableType = "fdaProduct" | "fdaPackage" | "nadac";
-export type HiddenColumns = Record<ResultTableType, string[]>;
+export type ColumnVisibilityOverrides = Record<string, boolean>;
+export type TableColumnOverrides = Record<ResultTableType, ColumnVisibilityOverrides>;
 
-export const DEFAULT_HIDDEN_COLUMNS: HiddenColumns = {
+// MUI's GRID_CHECKBOX_SELECTION_COL_DEF.field; selection is always visible, never a saved choice.
+export const RESULT_SELECTION_FIELD = "__check__";
+export const DEFAULT_COLUMN_OVERRIDES: TableColumnOverrides = { fdaProduct: {}, fdaPackage: {}, nadac: {} };
+
+export const DEFAULT_HIDDEN_COLUMNS: Record<ResultTableType, string[]> = {
   fdaProduct: ["minPrice", "maxPrice", "nonProprietaryName", "routeName", "labelerName", "productTypeName", "packageCount"],
   fdaPackage: ["minPrice", "maxPrice", "productNdc", "nonProprietaryName", "samplePackage", "dosageFormName", "routeName", "labelerName", "productTypeName"],
   nadac: ["minPrice", "maxPrice"],
 };
 
-/** Missing or malformed tables fall back independently; one bad field doesn't lose the rest. */
-export function readHiddenColumns(raw: unknown): HiddenColumns {
+/** Missing or malformed tables fall back independently; invalid fields don't cost valid choices. */
+export function readColumnOverrides(raw: unknown): TableColumnOverrides {
   const saved = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
-  const read = (table: ResultTableType) => Array.isArray(saved[table])
-    ? [...new Set((saved[table] as unknown[]).filter((field): field is string => typeof field === "string" && field !== "__check__"))]
-    : DEFAULT_HIDDEN_COLUMNS[table];
+  const read = (table: ResultTableType): ColumnVisibilityOverrides => {
+    const fields = saved[table];
+    return fields && typeof fields === "object" && !Array.isArray(fields)
+      ? Object.fromEntries(Object.entries(fields).filter(([field, visible]) => field !== RESULT_SELECTION_FIELD && typeof visible === "boolean"))
+      : {};
+  };
   return { fdaProduct: read("fdaProduct"), fdaPackage: read("fdaPackage"), nadac: read("nadac") };
 }
 
-/** Only hidden fields are stored, so new default columns appear for existing users. */
-export function columnVisibilityModel(hidden: string[]): Record<string, boolean> {
-  return Object.fromEntries(hidden.map(field => [field, false]));
+/** Merge current defaults with deliberate choices, leaving new defaults free to evolve. */
+export function columnVisibilityModel(hiddenDefaults: string[], overrides: ColumnVisibilityOverrides): Record<string, boolean> {
+  return { ...Object.fromEntries(hiddenDefaults.map(field => [field, false])), ...overrides };
+}
+
+/** MUI omits visible fields from its model. Save only deviations from today's defaults. */
+export function columnOverridesFromModel(hiddenDefaults: string[], model: Record<string, boolean>): ColumnVisibilityOverrides {
+  const hidden = new Set(hiddenDefaults);
+  const fields = new Set([...hiddenDefaults, ...Object.keys(model)]);
+  return Object.fromEntries([...fields]
+    .filter(field => {
+      const visible = model[field] !== false;
+      const defaultVisible = !hidden.has(field);
+      return field !== RESULT_SELECTION_FIELD && visible !== defaultVisible;
+    })
+    .map(field => [field, model[field] !== false]));
 }
 
 export type AppSettings = {
   barStyle: BarStyle,
   colorMode: ColorMode,
-  hiddenColumns: HiddenColumns,
+  columnOverrides: TableColumnOverrides,
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   barStyle: "dot",
   colorMode: "dark",
-  hiddenColumns: DEFAULT_HIDDEN_COLUMNS,
+  columnOverrides: DEFAULT_COLUMN_OVERRIDES,
 };

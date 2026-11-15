@@ -2,7 +2,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
-import { fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
+import { formatStrength, fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
@@ -26,7 +26,7 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "strengthNumber",
     headerName: "Strength",
-    valueGetter: (_, row) => row.strengthNumber.map((strength, i) => `${strength} ${row.strengthUnit[i]}`).join(", "),
+    valueGetter: (_, row) => formatStrength(row),
   },
   {
     field: "packageDescription",

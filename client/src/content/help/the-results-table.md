@@ -12,10 +12,10 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
 - Tick rows and choose **Chart selected** to chart just those. A row with no prices can't be
   ticked.
 
-Choose **Columns** beside the pagination below the table to show or hide fields, including Min and Max Price,
-Generic Name and Labeler. **Reset columns**, available on wider tables, restores the default selection. Your choices are
-saved separately for NADAC, FDA products and FDA packages, and apply to search pages and
-workspace tabs in every window.
+Choose **Columns** beside the pagination below the table to show or hide fields, including
+Min and Max Price, Generic Name and Labeler. **Reset columns**, available on wider tables,
+restores the default selection. Your choices are saved separately for NADAC, FDA products
+and FDA packages, and apply to search pages and workspace tabs in every window.
 
 FDA package rows include the product's **Strength**, so packages of different strengths can
 be told apart even when their pack sizes match. NDCs keep their source form: dashed FDA codes

@@ -65,3 +65,8 @@ export function fdaPackageRows(products: FdaProductDetail[]): FdaPackageRow[] {
     priceSummaries: summaries.get(fdaPackage.ndcPackageCode) ?? [],
   })));
 }
+
+/** Strength text shared by FDA product and package columns, including multi-ingredient drugs. */
+export function formatStrength(product: Pick<FdaProductDetail, "strengthNumber" | "strengthUnit">): string {
+  return product.strengthNumber.map((strength, i) => `${strength} ${product.strengthUnit[i]}`).join(", ");
+}

@@ -6,7 +6,7 @@ import AutosizePriceColumns from "./AutosizePriceColumns";
 import useWidthTier from "../../hooks/useWidthTier";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
-import { columnVisibilityModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
+import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
 import type { PricedRow } from "../../library/resultRows";
 
 type Props<R extends PricedRow> = {
@@ -38,9 +38,9 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
  */
 export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, getRowId, rowNoun, loading, selection, onSelectionChange }: Props<R>) {
   const apiRef = useGridApiRef();
-  const { settings, updateHiddenColumns } = useSettings();
-  const hiddenColumns = settings.hiddenColumns[tableType];
-  const visibility = useMemo(() => columnVisibilityModel(hiddenColumns), [hiddenColumns]);
+  const { settings, updateColumnOverrides } = useSettings();
+  const overrides = settings.columnOverrides[tableType];
+  const visibility = useMemo(() => columnVisibilityModel(DEFAULT_HIDDEN_COLUMNS[tableType], overrides), [overrides, tableType]);
   const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
   const allColumns = useMemo(() => [checkboxColumn<R>(rowNoun), ...columns], [rowNoun, columns]);
 
@@ -52,7 +52,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
       sx={{
         border: 0,
-        "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textOverflow: "clip" },
+        "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
         "& .MuiTablePagination-toolbar": { minHeight: 44, px: 1 },
       }}
       checkboxSelection
@@ -62,7 +62,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       loading={loading}
       initialState={INITIAL_STATE}
       columnVisibilityModel={visibility}
-      onColumnVisibilityModelChange={model => updateHiddenColumns(tableType, Object.keys(model).filter(field => model[field] === false && field !== GRID_CHECKBOX_SELECTION_COL_DEF.field))}
+      onColumnVisibilityModelChange={model => updateColumnOverrides(tableType, columnOverridesFromModel(DEFAULT_HIDDEN_COLUMNS[tableType], model))}
       slots={{ footer: ResultFooter }}
       slotProps={{
         footer: { resultTableType: tableType, compact: widthTier === "narrow" },
@@ -112,14 +112,14 @@ declare module "@mui/x-data-grid" {
 }
 
 function ResultFooter({ resultTableType, compact }: { resultTableType: ResultTableType, compact: boolean }) {
-  const { updateHiddenColumns } = useSettings();
+  const { updateColumnOverrides } = useSettings();
   return (
     <GridFooterContainer sx={{ minHeight: 44 }}>
-      <Toolbar aria-label="Results columns" style={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, padding: "0 4px" }}>
-        <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" sx={compact ? { minWidth: 0, px: 0.5 } : undefined} startIcon={<ViewColumnIcon />} />} />}>
+      <Toolbar aria-label="Results columns" style={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, padding: "0 4px", gap: 8 }}>
+        <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary", ...(compact && { minWidth: 0, px: 0.5 }) }} startIcon={<ViewColumnIcon />} />} />}>
           Columns
         </ColumnsPanelTrigger>
-        {!compact && <ToolbarButton render={<Button size="small" />} onClick={() => updateHiddenColumns(resultTableType, DEFAULT_HIDDEN_COLUMNS[resultTableType])}>
+        {!compact && <ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary" }} />} onClick={() => updateColumnOverrides(resultTableType, {})}>
           Reset columns
         </ToolbarButton>}
       </Toolbar>
