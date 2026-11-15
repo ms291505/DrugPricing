@@ -90,7 +90,8 @@ sorted by unit first. A row without prices can't be selected. Keep Latest Price 
 on a phone it must show without scrolling.
 
 `ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
-width it omits Reset and keeps Columns and pagination on one row. Column visibility choices
+width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
+visible columns match defaults. Column visibility choices
 are saved per table type in Settings (`columnOverrides`), shared by standalone pages and
 workspace tabs and followed by other windows. Save only deviations from `DEFAULT_HIDDEN_COLUMNS`,
 merge them over current defaults, and clear them on Reset: saving the complete default model

@@ -50,11 +50,14 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       ref={tableRef}
       rowHeight={widthTier === "narrow" ? 44 : 52}
       columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
-      sx={{
+      sx={theme => ({
         border: 0,
+        "--DataGrid-rowBorderColor": theme.palette.divider,
+        "& .MuiDataGrid-columnSeparator": { color: "divider" },
+        "& .MuiDataGrid-withBorderColor": { borderColor: "divider" },
         "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
         "& .MuiTablePagination-toolbar": { minHeight: 44, px: 1 },
-      }}
+      })}
       checkboxSelection
       rows={rows}
       columns={allColumns}
@@ -112,14 +115,17 @@ declare module "@mui/x-data-grid" {
 }
 
 function ResultFooter({ resultTableType, compact }: { resultTableType: ResultTableType, compact: boolean }) {
-  const { updateColumnOverrides } = useSettings();
+  const { settings, updateColumnOverrides } = useSettings();
+  const defaults = DEFAULT_HIDDEN_COLUMNS[resultTableType];
+  const visibility = columnVisibilityModel(defaults, settings.columnOverrides[resultTableType]);
+  const canReset = Object.keys(columnOverridesFromModel(defaults, visibility)).length > 0;
   return (
     <GridFooterContainer sx={{ minHeight: 44 }}>
       <Toolbar aria-label="Results columns" style={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, padding: "0 4px", gap: 8 }}>
         <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary", ...(compact && { minWidth: 0, px: 0.5 }) }} startIcon={<ViewColumnIcon />} />} />}>
           Columns
         </ColumnsPanelTrigger>
-        {!compact && <ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary" }} />} onClick={() => updateColumnOverrides(resultTableType, {})}>
+        {!compact && <ToolbarButton disabled={!canReset} render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary" }} />} onClick={() => updateColumnOverrides(resultTableType, {})}>
           Reset columns
         </ToolbarButton>}
       </Toolbar>

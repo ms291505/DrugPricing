@@ -15,6 +15,7 @@ export default function DetailLevelSelect() {
   return (
     <ChoiceField
       label="Show"
+      color="primary"
       value={fdaResultDetailLevel}
       options={LEVELS}
       onChange={setFdaResultDetailLevel}

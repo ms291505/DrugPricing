@@ -151,6 +151,9 @@ Implemented 2026-11-15 on `codex/browser-usability-stage-2`. Browser review sett
 - Columns and Reset columns sit at the left of the pagination footer. Below the table's `sm`
   width, only Columns remains, with pagination on the same row; Reset columns is omitted on
   phones. This replaced the initial toolbar and wrapping footer during review with the author.
+  Follow-up author review gave the actions neutral outlines and a gap, disabled Reset when the
+  current selection matches defaults, accented the selected Products/Packages option, and
+  matched grid rules to the app's divider color.
 - Narrow tables use 44px rows and headers, less footer padding, and no outer table padding on
   phones. Complete NDCs and Latest Price fit even at 320px viewport width.
 - Price columns size to the rendered contents, including headers, after data, visibility,
