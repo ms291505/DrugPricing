@@ -13,7 +13,7 @@ export default function Welcome() {
   const { openHelp } = useGlobalModalActions();
   return <Stack spacing={3} sx={{ py: 3 }}>
     <Typography variant="h3" component="h1">DrugPricing</Typography>
-    <Typography>Explore US drug acquisition prices, week by week since January 2022. Search for a drug, chart its price history, and pin charts side by side to compare.</Typography>
+    <Typography>Explore US drug acquisition prices, week by week. Search for a drug, chart its price history, and pin charts side by side to compare.</Typography>
     <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap">
       <Button variant="contained" component={RouterLink} to="/search">Find a drug</Button>
       <Button variant="outlined" component={RouterLink} to="/workspace">Open workspace</Button>

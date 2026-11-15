@@ -1,6 +1,5 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { NadacOfferContext } from "../../Context/searchNavigation";
-import type { ReactNode } from "react";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch.ts";
 import useRenameAfterSearch from "../../hooks/useRenameAfterSearch.ts";

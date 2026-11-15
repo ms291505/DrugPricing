@@ -1,7 +1,6 @@
 import { memo, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Box } from "@mui/material";
 import { PageVisibleContext } from "../Context/pageVisibility";
-
 import { hiddenPaneSx } from "../library/paneVisibility";
 
 /** Retains the document scroll separately for each mounted route. Children keep their identity. */

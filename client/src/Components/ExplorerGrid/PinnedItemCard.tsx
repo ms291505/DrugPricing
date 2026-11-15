@@ -53,7 +53,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   useEffect(() => {
     const card = cardRef.current;
     if (!focusOnAdd || !card?.checkVisibility()) return;
-    card?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    card.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
     headingRef.current?.focus({ preventScroll: true });
     // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
     // and grow past their placeholders, pushing the card down. Once the scroll stops, center the

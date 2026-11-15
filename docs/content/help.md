@@ -605,13 +605,8 @@ Not Help content, but worth fixing where they live:
 4. Should "Things to try" wait for linkable searches, so each row opens its search?
 5. Should Help show live facts (latest loaded week, first week of history) from `app-init`?
 
+## Published copy
 
-## Stage 1 content follow-up (2026-11-15)
-
-Browser review requested explicit NADAC package-NDC wording, a short survey explanation on
-Welcome, and shared pins between the standalone search sources. The shipped Welcome component
-and the NADAC, Sources and disclaimer, NDCs/products/packages, and Pinning/comparing articles
-now reflect those changes. Workspace pins remain per tab. Voluntary invoice submissions,
-retail-community scope and excluded off-invoice discounts were checked against the
-[CMS February 2024 NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf).
-The articles, rather than the earlier draft above, are the published copy.
+The articles in `client/src/content/help/` are the published copy, checked against the
+[CMS February 2024 NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf)
+on 2026-11-15.

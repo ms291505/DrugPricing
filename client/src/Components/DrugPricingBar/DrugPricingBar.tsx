@@ -54,14 +54,14 @@ export default function DrugPricingBar() {
           px: { xs: 0.5, sm: 2 },
         }}>
           <Box>
-            <Typography component={Link} to="/welcome" variant="h3" sx={{ display: { xs: "none", md: "block" }, color: "inherit", textDecoration: "none" }}>DrugPricing</Typography>
+            <Typography component={Link} to="/welcome" onClick={closeDrawer} variant="h3" sx={{ display: { xs: "none", md: "block" }, color: "inherit", textDecoration: "none" }}>DrugPricing</Typography>
             <Tooltip title="Home">
-              <IconButton component={Link} to="/welcome" aria-label="Home" color="inherit" sx={{ display: { md: "none" } }}><HomeIcon /></IconButton>
+              <IconButton component={Link} to="/welcome" onClick={closeDrawer} aria-label="Home" color="inherit" sx={{ display: { md: "none" } }}><HomeIcon /></IconButton>
             </Tooltip>
           </Box>
           <Box sx={{ display: "flex", gridColumn: 2, justifyContent: "center", gap: { xs: 0, sm: 1 } }}>
-            <NavButton to="/search">Search</NavButton>
-            <NavButton to="/workspace">Workspace</NavButton>
+            <NavButton to="/search" onClick={closeDrawer}>Search</NavButton>
+            <NavButton to="/workspace" onClick={closeDrawer}>Workspace</NavButton>
           </Box>
           <Box sx={{ gridColumn: 3, justifySelf: "end", display: "flex" }}>
             <Tooltip title="Help">

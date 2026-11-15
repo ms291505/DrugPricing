@@ -86,7 +86,7 @@ function AppShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   useLayoutEffect(() => {
-    if (pathname === "/welcome" || pathname === "/about") window.scrollTo(0, 0);
+    if (pathname === "/welcome" || pathname === "/about" || pathname === "/help" || pathname.startsWith("/help/")) window.scrollTo(0, 0);
   }, [pathname]);
   const matchedSource = useMatch("/search/:source")?.params.source;
   const source: SearchSource | null = matchedSource === "fda" || matchedSource === "nadac" ? matchedSource : null;
@@ -111,18 +111,18 @@ function AppShell() {
   const isWorkspace = useMatch("/workspace") !== null;
   const workspace = useMemo(() => <Workspace onScreen={isWorkspace} />, [isWorkspace]);
 
-  return <TryNadacContext value={tryNadac}><Container maxWidth="xl" sx={{ pb: 2 }}>
+  return <Container maxWidth="xl" sx={{ pb: 2 }}>
     <DrugPricingBar />
     <GlobalModal />
     <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)" }}>
       <KeptPage visible={isWorkspace}>{workspace}</KeptPage>
-      {visited.size > 0 && <StandalonePinsProvider>
+      {visited.size > 0 && <TryNadacContext value={tryNadac}><StandalonePinsProvider>
         {visited.has("fda") && <KeptPage visible={source === "fda"}>{fda}</KeptPage>}
         {visited.has("nadac") && <KeptPage visible={source === "nadac"}>{nadac}</KeptPage>}
         <Box sx={{ gridArea: "2 / 1", minWidth: 0, ...(source ? { mt: 2 } : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
           <PageVisibleContext value={source !== null}>{pins}</PageVisibleContext>
         </Box>
-      </StandalonePinsProvider>}
+      </StandalonePinsProvider></TryNadacContext>}
       {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
         {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
           <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
@@ -134,5 +134,5 @@ function AppShell() {
         </Routes>}
       </Box>}
     </Box>
-  </Container></TryNadacContext>;
+  </Container>;
 }

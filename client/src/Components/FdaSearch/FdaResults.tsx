@@ -15,6 +15,7 @@ import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
 import { TryNadacContext } from "../../Context/searchNavigation";
+import { fdaHasPricesInWindow, nadacHandoffTerm } from "../../library/fdaNadacHandoff";
 import DetailLevelSelect from "./DetailLevelSelect";
 
 const ROW_NOUNS: Record<FdaResultDetailLevel, Noun> = {
@@ -74,9 +75,9 @@ export default memo(function FdaResults({ view }: Props) {
         />
       </Box>}
       notice={<>
-        {isSuccess && onTryNadac && data && nadacPrices.length === 0 && <Alert severity="info"
-          action={<Button color="inherit" onClick={() => onTryNadac([loaded.proprietaryName, loaded.nonProprietaryName].filter(Boolean).join(" "))}>Try NADAC</Button>}>
-          {data.products.length === 0 ? "No FDA matches found." : "No FDA results with prices are showing."} Try the same terms in NADAC.
+        {isSuccess && onTryNadac && data && !hint && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
+          action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
+          {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
         </Alert>}
         {hint
         ? <HiddenResultsNotice

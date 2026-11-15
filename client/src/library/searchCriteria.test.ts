@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { fdaHasPricesInWindow, nadacHandoffTerm } from "./fdaNadacHandoff";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
@@ -438,5 +439,42 @@ describe("FDA name searches", () => {
     expect(nadacResultsLabel({ ndcDescription: "lipitor", ndc: "3089321" })).toBe("\u201clipitor\u201d");
     expect(nadacResultsLabel({ ndcDescription: "", ndc: "3089321" })).toBe("NDC 3089321");
     expect(nadacResultsLabel({ ndcDescription: "", ndc: "" })).toBe("search");
+  });
+});
+
+
+describe("FDA to NADAC handoff", () => {
+  it.each([
+    [" Lipitor ", "atorvastatin", "Lipitor"],
+    ["Li", " atorvastatin ", "atorvastatin"],
+    ["", "atorvastatin", "atorvastatin"],
+    ["Lipitor", "", "Lipitor"],
+    [" Li ", " at ", "Li"],
+    ["", " at ", "at"],
+  ])("carries one applied term (%s, %s → %s)", (proprietaryName, nonProprietaryName, expected) => {
+    expect(nadacHandoffTerm({ proprietaryName, nonProprietaryName })).toBe(expected);
+  });
+
+  it("recognizes loaded prices even when OTC, sample and other exclusions hide them", () => {
+    const result = { products: [product("12345-1234", [
+      fdaPackage("12345-1234-01", [nadacPrice("12345123401", "2026-11-04")], true),
+    ], { productTypeName: "HUMAN OTC DRUG" })] };
+    const criteria = { ...createFdaCriteria(), excludedProductNdcs: ["12345-1234"], excludedUnits: ["each"] };
+    expect(refineFda(result, criteria, FULL_WINDOW).products).toEqual([]);
+    expect(fdaHasPricesInWindow(result, FULL_WINDOW)).toBe(true);
+  });
+
+  it("checks the shown date window inclusively, rather than every loaded price", () => {
+    const result = { products: [product("12345-1234", [
+      fdaPackage("12345-1234-01", [nadacPrice("12345123401", "2026-11-04")]),
+    ])] };
+    expect(fdaHasPricesInWindow(result, { start: day("2026-11-05"), end: null })).toBe(false);
+    expect(fdaHasPricesInWindow(result, { start: null, end: day("2026-11-03") })).toBe(false);
+    expect(fdaHasPricesInWindow(result, { start: day("2026-11-04"), end: day("2026-11-04") })).toBe(true);
+  });
+
+  it("finds no prices for an empty result or packages without prices", () => {
+    expect(fdaHasPricesInWindow({ products: [] }, FULL_WINDOW)).toBe(false);
+    expect(fdaHasPricesInWindow({ products: [product("12345-1234", [fdaPackage("12345-1234-01", [])])] }, FULL_WINDOW)).toBe(false);
   });
 });

@@ -6,7 +6,6 @@ import { TabInstanceContextProvider } from "../../Context/TabInstanceContext.tsx
 import { PageVisibleContext } from "../../Context/pageVisibility.ts";
 import TabContextFab from "./TabContextFab.tsx";
 import useMobile from "../../hooks/useMobile.ts";
-
 import { hiddenPaneSx } from "../../library/paneVisibility";
 
 type Props = {
