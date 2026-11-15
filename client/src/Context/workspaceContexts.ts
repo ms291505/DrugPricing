@@ -1,4 +1,4 @@
-import { createContext, useContext, type Context, type SetStateAction } from "react";
+import { createContext, useContext, type Context, type RefObject, type SetStateAction } from "react";
 import type { LayoutMode } from "../library/types";
 import type { TabType, WorkspaceTab } from "../library/tabType";
 import type { ExplorerItem } from "../library/explorerItems";
@@ -35,6 +35,11 @@ export type WorkspaceActions = {
   setLayoutMode: (value: SetStateAction<LayoutMode>) => void;
   setPaneAssigment: (value: SetStateAction<Array<string | null>>) => void;
   setMobileDrawerIsOpen: (value: SetStateAction<boolean>) => void;
+  /**
+   * The phone drawer's toggle button. A modal opened from the phone drawer returns focus here,
+   * since the drawer closes as the modal opens and takes the opener with it.
+   */
+  mobileDrawerToggle: RefObject<HTMLButtonElement | null>;
   addToCollection: (item: ExplorerItem, id?: string) => void;
   /** Closes every tab and deletes their saved state, leaving one blank tab. */
   clearWorkspace: () => void;

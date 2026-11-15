@@ -125,3 +125,64 @@ Recommended defaults: modal-first with a separate-tab option; grouped index and 
 a time; a small topic filter; no browser-history entries for modal navigation. The remaining
 product question is how soon the separate-page option is valuable enough to ship. It can wait
 without changing the content model or modal design.
+
+## Implementation record
+
+Implemented modal and standalone shared-topic presentations together, including contextual
+links, local navigation and topic filtering. Standalone Help does not mount workspace storage
+providers, so opening a reference tab cannot initialize or prune saved workspaces. The published
+copy is in `client/src/content/help/`; the original draft retains deferred factual checks.
+
+Fixed interactive results examples remain a follow-up. Browser-history integration for modal
+navigation is intentionally deferred.
+
+Review changes (PR 30):
+
+- **Modal state is split** like the workspace contexts: buttons read stable actions
+  (`useGlobalModalActions`: `openModal`, `openHelp`, `closeModal`), and only `GlobalModal`
+  reads the open modal (`useGlobalModal`). Opening or closing any modal no longer re-renders
+  the Help buttons in every tab.
+- **Focus return is a modal option** (`returnFocus`), not a Help special case. The phone drawer
+  passes its toggle (`mobileDrawerToggle`, a ref in the workspace actions) for Settings and
+  Help alike, since the drawer and its buttons are gone when the dialog closes.
+- **Only browser Back and Forward close a modal** on navigation. A modal that navigates closes
+  itself (the index's About link).
+- **Latest Price has no header Help button.** Replacing the header dropped the FDA product
+  table's "average of the product's packages" tooltip, added a Tab stop the grid doesn't
+  manage, and widened the column. Step 5's Latest Price entry point is covered by Mixed units
+  → The results table, which lists What the prices mean among its related topics. The Mixed
+  units Help button sits beside its hint, not inside it.
+- The hidden-results Help button is part of `HiddenResultsNotice`, not `ResultsSection`.
+- The catalog lists real related topics, and keywords only where they add words.
+
+### Usability plan touch points
+
+[The usability plan](browser-usability.md) ("For the help plan", Stage 1) asks four things of
+Help. Where each stands:
+
+- **One Help button in the bar.** Step 3's labeled Help action is the bar's Help icon (with an
+  accessible name and tooltip), which is what Stage 1 specifies; Stage 1 keeps it in the
+  reworked bar and adds no second one. The drawer's Help button stays.
+- **The index lists Welcome and About this project.** Welcome is a topic under Start here.
+  About this project is a link in the same group (`HELP_PAGE_LINKS`), leading to `/about`; it
+  closes the modal. When Stage 1's welcome page ships, decide whether the Welcome entry should
+  lead to it instead of (or as well as) the topic.
+- **The welcome page links to topics by ID.** These IDs exist and are stable: `nadac`,
+  `ndcs-products-and-packages`, `what-the-prices-mean`, `pinning-and-comparing`,
+  `which-search-to-use` ([welcome copy](../content/welcome.md)). Open one with
+  `openHelp(id)`.
+- **Modal-first stays.** Once Search stays mounted, opening `/help` in the same tab won't cost
+  the search page its state, which was one reason for the modal. The other reason still
+  holds: the modal answers a question without leaving the page or the scroll position, and the
+  separate tab covers reading alongside the app. For Stage 1: `/help` is rendered outside
+  `AppShell` (`AppContent` in `App.tsx`) so that a Help tab never mounts workspace storage.
+  Stage 1's "Search stays mounted on a help page" applies to same-tab navigation, which the
+  app doesn't offer today (Help pages open in a new tab); if Stage 1 adds same-tab links to
+  `/help`, it has to choose between that rule and the storage isolation.
+
+Validation (first version): client build and lint passed; all 228 tests passed. Browser checks covered topic
+filtering, internal Back, Escape, preserved unsubmitted NADAC text, mobile drawer focus return,
+desktop/phone layouts, dark/light themes, standalone topic loads and unknown-topic recovery.
+Production SPA rewrites and live-data contextual triggers still need deployment/integration
+verification; the isolated client was tested without a configured API. No claim of a full
+VoiceOver audit or chart-render profiling is made.

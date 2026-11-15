@@ -1,3 +1,4 @@
+import HelpContent from "./Components/Help/HelpContent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NadacSearch from "./Components/NadacSearch";
 import Container from "@mui/material/Container";
@@ -34,15 +35,26 @@ export default function App() {
           <QueryClientProvider client={queryClient}>
             <AppToaster />
             <GlobalModalContextProvider>
-              <WorkspaceContextProvider>
-                <AppShell />
-              </WorkspaceContextProvider>
+              <AppContent />
             </GlobalModalContextProvider>
           </QueryClientProvider>
         </AppTheme>
       </SettingsProvider>
     </BrowserRouter>
   );
+}
+
+/** Standalone Help is read-only: it never mounts workspace storage writers. */
+function AppContent() {
+  const { pathname } = useLocation();
+  if (pathname === "/help" || pathname.startsWith("/help/")) return <>
+    <GlobalModal />
+    <Routes><Route element={<DrugPricingBar />}>
+      <Route path="/help/:topic?" element={<Container maxWidth="sm" sx={{ py: 3 }}><HelpContent standalone /></Container>} />
+      <Route path="/help/*" element={<Navigate to="/help" replace />} />
+    </Route></Routes>
+  </>;
+  return <WorkspaceContextProvider><AppShell /></WorkspaceContextProvider>;
 }
 
 /** The theme for the Settings color mode. */

@@ -185,11 +185,17 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   (`themedSeriesColor`). To retheme, edit `COLORS` and run `npm test`; the steps are at the top of
   `theme.ts`. Corners
   come from `BORDER_RADIUS` there (`shape.borderRadius`; `sx` `borderRadius: 1` is one unit).
-- **Global modal** (`setGlobalModal`) is an MUI `Dialog`: 600px (`maxWidth="sm"`), full screen
-  below `sm`, its title and close button in one header row (`TitleBar`). It owns the width,
-  height and padding; its contents bring no `Container`, outer padding or page heading (`About`
-  and `OnBoarding` take `showHeading={false}`). Settings apply at once, so it has no Save button.
-  The phone drawer closes before a modal opens.
+- **Global modal** (`openModal`, `openHelp`) is an MUI `Dialog`: 600px (`maxWidth="sm"`), full
+  screen below `sm`, its title and close button in one header row (`TitleBar`). It owns the
+  width, height and padding; its contents bring no `Container`, outer padding or page heading
+  (`About` and `OnBoarding` take `showHeading={false}`). Settings apply at once, so it has no
+  Save button. The phone drawer closes before a modal opens and passes `returnFocus` (its
+  toggle). Openers read only `useGlobalModalActions` (stable); `GlobalModal` alone reads the
+  open modal, so Help buttons in every tab don't re-render. Browser Back closes a modal; a
+  modal that navigates closes itself.
+- **Help** is a catalog (`library/help.ts`; topic IDs are URLs, never rename one) and one
+  Markdown article per topic in `src/content/help/`, shown in the modal and at `/help/:topic`.
+  `/help` renders outside `AppShell`, so a Help tab never mounts workspace storage.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). The panel opens

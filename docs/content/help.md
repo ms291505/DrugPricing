@@ -1,8 +1,16 @@
 # Help content
 
-Started 2026-11-13. A working draft of what the in-app Help should say, page by page. Nothing
-here is built: today Help (the drawer button) opens the Welcome text (`OnBoarding`) in the global
-modal. This file tracks the content only; how Help is built is a separate decision.
+Started 2026-11-13. A working draft of what the in-app Help should say, page by page. The original draft is retained below; see the publication record for what is now in the app.
+
+## Publication record
+
+The published articles now live in `client/src/content/help/`; edit those files for app wording.
+This document retains the original draft, provenance and unresolved checks. The modal and
+standalone `/help/:topic` pages share the published articles. The implementation deliberately
+omits dated price/news examples and unverified production counts, schedules and screen-reader
+claims. The Sources page uses CMS's pricing overview rather than an unverified methodology PDF.
+The Help index lists the Welcome topic and links to the About page; the welcome home page is
+part of the usability plan's Stage 1.
 
 ## How this file works
 
@@ -14,7 +22,7 @@ modal. This file tracks the content only; how Help is built is a separate decisi
 
 ## Shape of Help
 
-A table of contents with four groups, each page short enough to read on a phone without much
+A table of contents with five groups, each page short enough to read on a phone without much
 scrolling. Someone who opens Help from a search page most likely has one question, so every
 page answers one.
 

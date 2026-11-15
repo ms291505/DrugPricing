@@ -70,8 +70,10 @@ NADAC is; the page doesn't explain it, but links to the explanation.
 **Check:**
 
 - "since January 2022": the loaded data starts 2022-01-05. Reword if older data is loaded.
-- The help topic names match the pages in [help.md](help.md) as drafted; confirm the topic
-  IDs when Help is built, and until then these links open Help as it is.
+- Help topic IDs, confirmed against `client/src/library/help.ts`: More about products and
+  packages → `ndcs-products-and-packages`, What the prices mean → `what-the-prices-mean`,
+  Pinning and comparing → `pinning-and-comparing`, Which search to use →
+  `which-search-to-use`, What is NADAC? → `nadac`. Open them with `openHelp(id)`.
 - "Pin one and it stays as it is" must still be true after Stage 3 of the usability plan
   (selected rows pin directly; Compare cards are live until pinned).
 

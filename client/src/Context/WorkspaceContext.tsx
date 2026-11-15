@@ -39,6 +39,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   const [workspace, dispatch] = useReducer(workspaceReducer, undefined, initWorkspace);
   const { tabs, layoutMode, paneAssignment } = workspace;
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
+  const mobileDrawerToggle = useRef<HTMLButtonElement>(null);
 
   // Read by `removeTab`, which must stay stable so reading the actions doesn't re-render. It
   // updates after a commit, while the reducer picks its replacement from the latest state, so
@@ -141,6 +142,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setLayoutMode,
     setPaneAssigment,
     setMobileDrawerIsOpen,
+    mobileDrawerToggle,
     addToCollection,
     clearWorkspace,
     registerTab,

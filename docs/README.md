@@ -9,8 +9,8 @@ Start with the [project README](../README.md) for setup and architecture, and
 - [Browser usability](plans/browser-usability.md): decided plan, not yet built, for the app
   bar and one Search area, results columns, price activity, chart creation and the workspace
   bridge.
-- [Topic-based Help](plans/help.md): proposed modal-first help, shared topic pages and content
-  migration; discussion draft, not an approved implementation plan.
+- [Topic-based Help](plans/help.md): modal-first help, shared topic pages, content migration
+  and implementation record.
 - [Search filters](plans/search-filters.md): design and implementation record for the shared
   search criteria and filtering experience.
 - [Autocomplete](plans/autocomplete.md): planned search suggestions and spelling corrections.
