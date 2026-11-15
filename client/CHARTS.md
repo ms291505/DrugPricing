@@ -8,8 +8,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 - *System* items (the results table, auto charts, price-change charts) are derived from the
   current search on every render and never stored.
-- *Pinned* items are snapshots held by `PinnedItemsProvider` (one per tab, wired in
-  `TabProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
+- *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
+  (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
+  (`StandaloneSearchProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
   touch them. Don't clear them on search, and don't write system charts into them. The Pinned
   section sits on the page below the results (`PinnedSection`, `memo`'d), whatever the search
   state, so pins show while a search is missing, loading, or failing.

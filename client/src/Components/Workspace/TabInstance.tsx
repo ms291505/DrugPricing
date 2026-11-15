@@ -7,14 +7,7 @@ import { PageVisibleContext } from "../../Context/pageVisibility.ts";
 import TabContextFab from "./TabContextFab.tsx";
 import useMobile from "../../hooks/useMobile.ts";
 
-// Unlike `display: none`, `content-visibility: hidden` keeps the tab's layout, so showing it
-// again doesn't lay out the whole page from scratch. It also takes the content out of the
-// accessibility tree, the tab order and find-in-page.
-const hiddenPaneSx = {
-  contentVisibility: "hidden",
-  pointerEvents: "none",
-  "@supports not (content-visibility: hidden)": { display: "none" },
-} as const;
+import { hiddenPaneSx } from "../../library/paneVisibility";
 
 type Props = {
   workspaceTab: WorkspaceTab,

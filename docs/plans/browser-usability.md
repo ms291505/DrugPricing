@@ -8,9 +8,12 @@ Stage 1 goes first. Items marked *open detail* are for the implementer to raise,
 alone. The stages are a sequence, not PR boundaries. D1–D8 and R1–R11 refer to the review.
 
 Help is not part of this plan. Topic-based help, its modal and routes, and its content are in
-[help.md](help.md), which another branch is implementing. The two plans touch in three
+[help.md](help.md), whose modal and topic catalog have shipped. The two plans touch in three
 places, each noted where it applies: the bar, Help index and welcome links (Stage 1), the fixed
 results example for help (Stage 2), and the help articles on charts and price changes (Stage 3).
+
+Work for this plan targets the integration branch `browser-usability`. Stage branches open
+PRs against it; merge `browser-usability` into `dev` after the plan is complete.
 
 ## Intended experience
 
@@ -21,7 +24,28 @@ decision; near-term improvements should not depend on completing it.
 
 ## Stage 1 — Rework the app bar and navigation
 
-This goes first. Today the bar (`Components/DrugPricingBar/`) is one row at every width:
+Implemented 2026-11-15 on `codex/browser-usability-stage-1`. The original decisions below
+remain the scope; implementation details settled with the author:
+
+- The last source has its own validated `drugpricing.v1.last-search-source` key, retained by
+  pruning. Another window changing this navigation state does not make workspace writes read-only.
+- A term too short for NADAC fills Description without running. Currently FDA and NADAC use
+  the same five-character minimum, but the handoff checks NADAC's requirement independently.
+- After browser review, source navigation moved inside the panel, replacing “Find a drug.”
+  It uses underlined “FDA search” / “NADAC search” tabs in both layouts. The desktop description
+  sits beside the tabs; compact panels omit it. Workspace tabs have no source navigation.
+- Standalone FDA and NADAC searches share one pinned collection (`drugpricing.v1.search-pins`),
+  as requested during browser review. One section below the active source keeps its chart
+  view state across source switches. Legacy pins from both sources merge by ID, and their
+  old copies are removed only after the shared save succeeds. Workspace tabs remain independent.
+- Welcome uses the three idea lines originally agreed, with a short NADAC explainer covering
+  voluntary invoice submissions and incomplete coverage. The products/packages line explicitly
+  says NADAC lists package NDCs. Help retains its Welcome article and
+  adds a separate Welcome page link next to About this project.
+- A direct Help load still avoids workspace storage providers. Navigating to Help from an
+  already-mounted app keeps its existing providers and search pages alive.
+
+Original baseline (2026-11-13): the bar (`Components/DrugPricingBar/`) is one row at every width:
 NADAC, FDA, Workspace and About links (`NavButton`) and a Settings gear. Help opens only from
 the workspace drawer. The two search pages are torn down when you leave them, and `AppShell`
 (`App.tsx`) renders the bar twice, once for the workspace and once as the routes' layout.
@@ -54,8 +78,8 @@ already holds the workspace's floating buttons, and charts need the height.
   (`PageVisibleContext`), it runs its search only when first shown, and it is hidden with
   `content-visibility: hidden` so its charts see no resize. Reuse those pieces; don't build a
   second mechanism.
-- Persistence is unchanged: each source keeps its `STANDALONE_TAB_IDS` state, and a fresh
-  load restores it as now.
+- Each source keeps its own criteria under `STANDALONE_TAB_IDS`. Standalone pins are shared
+  between the two sources, with existing pins migrated from both (updated during browser review).
 - **The FDA / NADAC selector** is a two-option toggle at the top of the Search page, directly
   above the fields, with both names always visible, in both panel layouts. It is navigation
   between the two addresses, not a search field, and it is not in the bar. Workspace search
@@ -363,8 +387,7 @@ isolation and multi-window storage behavior.
 
 ## Still open
 
-- The *open details* above: where the last source is stored, a too-short term in the FDA
-  empty state's NADAC offer, event grouping and list length, the "Around change" preset
+- The *open details* above: event grouping and list length, the "Around change" preset
   with several changes, product-row label wording and sparkline.
 - After building: whether the sparkline shows on phones (author's choice from the real thing),
   and whether 5% still reads right on real searches.

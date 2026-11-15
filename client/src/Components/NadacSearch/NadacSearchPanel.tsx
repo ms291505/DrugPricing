@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { NadacOfferContext } from "../../Context/searchNavigation";
+import type { ReactNode } from "react";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch.ts";
 import useRenameAfterSearch from "../../hooks/useRenameAfterSearch.ts";
@@ -21,6 +23,7 @@ type Props = {
   view: NadacResultView,
   /** Forces the panel's layout (default: by its width). */
   layout?: SearchPanelLayout,
+  navigation?: ReactNode,
 };
 
 /**
@@ -29,14 +32,31 @@ type Props = {
  * search on screen, so it lights up when there is something to run. The tab is named after its
  * first search.
  */
-export default function NadacSearchPanel({ view, layout }: Props) {
+export default function NadacSearchPanel({ view, layout, navigation }: Props) {
   const { criteria, setCriteria, search, waiting } = useNadacSearchContext();
   const { isLoading, isError, refetch } = useNadacSearch();
   const renameAfterSearch = useRenameAfterSearch();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
-  const [ndcDescription, setNdcDescription] = useState(criteria.ndcDescription);
-  const [ndc, setNdc] = useState(criteria.ndc);
+  const offer = useContext(NadacOfferContext);
+  const [received, setReceived] = useState(offer);
+  const [draft, setDraft] = useState(() => offer
+    ? { ndcDescription: offer.description, ndc: "" }
+    : { ndcDescription: criteria.ndcDescription, ndc: criteria.ndc });
+  if (offer !== received) {
+    setReceived(offer);
+    if (offer) setDraft({ ndcDescription: offer.description, ndc: "" });
+  }
+  // Consume each explicit handoff once. Ordinary source switches don't touch drafts or searches.
+  const appliedOffer = useRef<typeof offer>(null);
+  useEffect(() => {
+    if (!offer || appliedOffer.current === offer) return;
+    appliedOffer.current = offer;
+    if (isValidNadacSearch(offer.description, "")) search({ ndcDescription: offer.description, ndc: "" });
+  }, [offer, search]);
+  const { ndcDescription, ndc } = draft;
+  const setNdcDescription = (ndcDescription: string) => setDraft(prev => ({ ...prev, ndcDescription }));
+  const setNdc = (ndc: string) => setDraft(prev => ({ ...prev, ndc }));
 
   // The server matches NDCs in NADAC's stored form, so convert what the user typed
   // ("00003089321", "0003-0893-21", "11788-037-60") before searching.
@@ -61,6 +81,7 @@ export default function NadacSearchPanel({ view, layout }: Props) {
     <SearchPanel
       label="NADAC search"
       layout={layout}
+      navigation={navigation}
       heading="Find a drug"
       description="Search NADAC prices by drug description or NDC."
       onSearch={handleSearch}

@@ -50,6 +50,8 @@ type Props = {
   layout?: SearchPanelLayout,
   /** Shown by the `desktop` layout only. */
   heading?: string,
+  /** Source navigation above the fields, replacing the heading in both layouts. */
+  navigation?: ReactNode,
   description?: string,
   /** The Search button: applies the text terms. */
   onSearch: () => void,
@@ -86,7 +88,7 @@ type Props = {
  * pages can't drift apart. Everything is sized by the panel's own width, not the window's.
  */
 export default function SearchPanel({
-  label, layout: forcedLayout, heading, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
+  label, layout: forcedLayout, heading, navigation, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
   moreFilters, moreFilterCount, canClear, onClear,
 }: Props) {
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
@@ -110,7 +112,10 @@ export default function SearchPanel({
       }}
       sx={{ display: "flex", flexDirection: "column", gap: desktop ? 2 : 1.5, p: desktop ? 2 : 1.5, width: "100%" }}
     >
-      {desktop && heading && <Box>
+      {navigation ? <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 3, borderBottom: 1, borderColor: "divider" }}>
+        {navigation}
+        {desktop && description && <Typography variant="body2" color="text.secondary" sx={{ flex: "1 1 300px", py: 0.5 }}>{description}</Typography>}
+      </Box> : desktop && heading && <Box>
         <Typography variant="h6" component="h1">{heading}</Typography>
         {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
       </Box>}

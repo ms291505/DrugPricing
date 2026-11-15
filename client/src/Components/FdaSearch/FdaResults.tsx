@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo } from "react";
-import { Box } from "@mui/material";
+import { memo, useCallback, useContext, useMemo } from "react";
+import { Alert, Button, Box } from "@mui/material";
 import { FdaPackageResultTable, FdaProductResultTable } from "../ResultTables";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
@@ -14,6 +14,7 @@ import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangeCards from "../ExplorerGrid/PriceChangeCards";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
+import { TryNadacContext } from "../../Context/searchNavigation";
 import DetailLevelSelect from "./DetailLevelSelect";
 
 const ROW_NOUNS: Record<FdaResultDetailLevel, Noun> = {
@@ -32,7 +33,8 @@ type Props = {
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
 export default memo(function FdaResults({ view }: Props) {
-  const { isLoading, isSuccess } = useFdaSearch();
+  const onTryNadac = useContext(TryNadacContext);
+  const { isLoading, isSuccess, data } = useFdaSearch();
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden, history } = view;
@@ -71,14 +73,19 @@ export default memo(function FdaResults({ view }: Props) {
           prices={nadacPrices} history={levelHistory} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
         />
       </Box>}
-      notice={hint
+      notice={<>
+        {isSuccess && onTryNadac && data && nadacPrices.length === 0 && <Alert severity="info"
+          action={<Button color="inherit" onClick={() => onTryNadac([loaded.proprietaryName, loaded.nonProprietaryName].filter(Boolean).join(" "))}>Try NADAC</Button>}>
+          {data.products.length === 0 ? "No FDA matches found." : "No FDA results with prices are showing."} Try the same terms in NADAC.
+        </Alert>}
+        {hint
         ? <HiddenResultsNotice
           hint={hint}
           noun={noun}
           onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
             : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
         />
-        : null}
+        : null}</>}
       table={fdaResultDetailLevel === "product"
         ? <FdaProductResultTable products={products} loading={isLoading} />
         : <FdaPackageResultTable products={products} loading={isLoading} />}

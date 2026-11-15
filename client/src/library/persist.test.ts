@@ -275,3 +275,98 @@ describe("settings", () => {
     expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
   });
 });
+
+describe("last search source", () => {
+  const key = "drugpricing.v1.last-search-source";
+
+  it("starts without a source and retains either source through pruning", () => {
+    expect(persist.loadLastSearchSource()).toBeNull();
+    for (const source of ["fda", "nadac"] as const) {
+      persist.saveLastSearchSource(source);
+      persist.pruneStoredState([]);
+      expect(persist.loadLastSearchSource()).toBe(source);
+    }
+  });
+
+  it.each([
+    "not JSON",
+    JSON.stringify({ version: 0, data: "fda" }),
+    JSON.stringify({ version: 1, data: "other" }),
+    JSON.stringify({ version: 1, data: {} }),
+  ])("ignores invalid stored sources: %s", raw => {
+    localStorage.setItem(key, raw);
+    expect(persist.loadLastSearchSource()).toBeNull();
+  });
+
+  it("allows another window to remember a source without making workspace writes read-only", () => {
+    const onConflict = vi.fn();
+    persist.watchOtherWindows(onConflict);
+    const value = JSON.stringify({ version: persist.VERSION, data: "nadac" });
+    localStorage.setItem(key, value);
+    window.dispatchEvent(Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue: value }));
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(persist.loadLastSearchSource()).toBe("nadac");
+    persist.saveTabState("t1", { type: "nadac", criteria: nadacCriteria, pinnedItems: [] });
+    expect(persist.loadNadacTabState("t1")).not.toBeNull();
+  });
+});
+
+describe("standalone search pins", () => {
+  const seed = () => {
+    saveRaw(persist.STANDALONE_TAB_IDS.fda, { type: "fda", criteria: fdaCriteria, detailLevel: "package", pinnedItems: [oldItem] });
+    saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [{ ...oldItem, id: "nadac-pin" }] });
+    saveRaw("workspace-fda", { type: "fda", criteria: fdaCriteria, pinnedItems: [{ ...oldItem, id: "workspace-pin" }] });
+  };
+
+  it("merges both legacy sources, preserves criteria, and leaves workspace pins independent", () => {
+    seed();
+    const pins = persist.loadSearchPins().pinnedItems;
+    expect(pins.map(pin => pin.id)).toEqual(["i1", "nadac-pin"]);
+    persist.saveSearchPins(pins);
+    persist.pruneStoredState(["workspace-fda"]);
+    expect(persist.loadSearchPins().pinnedItems).toEqual(pins);
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)).toMatchObject({
+      criteria: fdaCriteria, detailLevel: "package", pinnedItems: [],
+    });
+    expect(persist.loadNadacTabState(persist.STANDALONE_TAB_IDS.nadac)).toMatchObject({ criteria: nadacCriteria, pinnedItems: [] });
+    expect(persist.loadFdaTabState("workspace-fda")?.pinnedItems.map(pin => pin.id)).toEqual(["workspace-pin"]);
+  });
+
+  it("keeps an intentionally empty collection empty and never copies shared pins into source state", () => {
+    seed();
+    persist.saveSearchPins(persist.loadSearchPins().pinnedItems);
+    persist.saveSearchPins([]);
+    persist.saveStandaloneSearch({ type: "fda", criteria: { ...fdaCriteria, proprietaryName: "humira" }, detailLevel: "product" });
+    expect(persist.loadSearchPins().pinnedItems).toEqual([]);
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)?.pinnedItems).toEqual([]);
+  });
+
+  it("validates shared pins individually and deduplicates legacy ids", () => {
+    seed();
+    saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [oldItem] });
+    expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+    localStorage.setItem("drugpricing.v1.search-pins", JSON.stringify({ version: 1, data: { pinnedItems: [null, oldItem, { kind: "chart" }] } }));
+    expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+  });
+
+  it("preserves both legacy collections when saving shared snapshots fails", async () => {
+    seed();
+    const storage = localStorage;
+    const getItem = storage.getItem.bind(storage);
+    const before = Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const toast = (await import("react-hot-toast")).default;
+    const error = vi.spyOn(toast, "error").mockReturnValue("storage-error");
+    vi.stubGlobal("localStorage", { getItem, setItem: (key: string, value: string) => {
+      if (key.endsWith(".search-pins")) throw new Error("quota");
+      storage.setItem(key, value);
+    } });
+    persist.saveSearchPins(persist.loadSearchPins().pinnedItems);
+    expect(Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)))).toEqual(before);
+    persist.saveStandaloneSearch({ type: "fda", criteria: { ...fdaCriteria, proprietaryName: "humira" }, detailLevel: "product" });
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)?.pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+    expect(error).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+    error.mockRestore();
+  });
+});

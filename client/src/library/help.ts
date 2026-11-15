@@ -39,6 +39,7 @@ export const HELP_GROUPS = [...new Set(HELP_TOPICS.map(topic => topic.group))];
 
 /** Index entries for pages outside Help, listed in their group after its topics. */
 export const HELP_PAGE_LINKS: readonly (HelpIndexEntry & { to: string })[] = [
+  { title: "Welcome page", group: "Start here", keywords: "home", to: "/welcome" },
   { title: "About this project", group: "Start here", keywords: "author portfolio", to: "/about" },
 ];
 
