@@ -25,6 +25,9 @@ export type FdaPackageRow = FdaPackageDetail & PricedRow & {
   dosageFormName: string,
   routeName: string[],
   labelerName: string,
+  strengthNumber: string[],
+  strengthUnit: string[],
+  productTypeName: string,
 };
 
 /** One row per NDC, described by its latest description. */
@@ -56,6 +59,9 @@ export function fdaPackageRows(products: FdaProductDetail[]): FdaPackageRow[] {
     dosageFormName: product.dosageFormName,
     routeName: product.routeName,
     labelerName: product.labelerName,
+    strengthNumber: product.strengthNumber,
+    strengthUnit: product.strengthUnit,
+    productTypeName: product.productTypeName,
     priceSummaries: summaries.get(fdaPackage.ndcPackageCode) ?? [],
   })));
 }

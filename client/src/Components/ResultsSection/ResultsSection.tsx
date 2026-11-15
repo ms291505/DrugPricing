@@ -31,7 +31,7 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, ch
         {toolbar}
       </Box>
       {notice}
-      <Paper sx={{ p: 1 }}>{table}</Paper>
+      <Paper sx={{ p: { xs: 0, sm: 1 } }}>{table}</Paper>
       <Grid container spacing={1}>{children}</Grid>
     </Box>
   );

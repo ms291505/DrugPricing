@@ -1,11 +1,17 @@
-import { DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
-import { Tooltip } from "@mui/material";
+import { useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
+import { Button, Tooltip } from "@mui/material";
 import { useMemo } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
+import AutosizePriceColumns from "./AutosizePriceColumns";
+import useWidthTier from "../../hooks/useWidthTier";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
+import { useSettings } from "../../Context/SettingsContext";
+import { columnVisibilityModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
 import type { PricedRow } from "../../library/resultRows";
 
 type Props<R extends PricedRow> = {
   rows: R[],
+  tableType: ResultTableType,
   /** The table's own columns; the selection checkboxes come first. Keep it stable (a module constant). */
   columns: GridColDef<R>[],
   /** A row's id is the `ndc` of its chart prices, which Add Chart filters the selection on. */
@@ -30,31 +36,61 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
  * (`createPriceColumns`) and checkboxes that pick rows for Add Chart. A row without prices can't
  * be charted, so it can't be selected, and its checkbox says why.
  */
-export default function ResultTable<R extends PricedRow>({ rows, columns, getRowId, rowNoun, loading, selection, onSelectionChange }: Props<R>) {
+export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, getRowId, rowNoun, loading, selection, onSelectionChange }: Props<R>) {
+  const apiRef = useGridApiRef();
+  const { settings, updateHiddenColumns } = useSettings();
+  const hiddenColumns = settings.hiddenColumns[tableType];
+  const visibility = useMemo(() => columnVisibilityModel(hiddenColumns), [hiddenColumns]);
+  const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
   const allColumns = useMemo(() => [checkboxColumn<R>(rowNoun), ...columns], [rowNoun, columns]);
 
-  return (
+  return (<>
     <DataGrid
-      sx={{ border: 0 }}
+      apiRef={apiRef}
+      ref={tableRef}
+      rowHeight={widthTier === "narrow" ? 44 : 52}
+      columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
+      sx={{
+        border: 0,
+        "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textOverflow: "clip" },
+        "& .MuiTablePagination-toolbar": { minHeight: 44, px: 1 },
+      }}
       checkboxSelection
       rows={rows}
       columns={allColumns}
       getRowId={getRowId}
       loading={loading}
       initialState={INITIAL_STATE}
+      columnVisibilityModel={visibility}
+      onColumnVisibilityModelChange={model => updateHiddenColumns(tableType, Object.keys(model).filter(field => model[field] === false && field !== GRID_CHECKBOX_SELECTION_COL_DEF.field))}
+      slots={{ footer: ResultFooter }}
+      slotProps={{
+        footer: { resultTableType: tableType, compact: widthTier === "narrow" },
+        columnsManagement: {
+          // MUI's Reset returns to the mount-time saved choices, not the app defaults.
+          // The footer's Reset columns owns that action instead.
+          disableResetButton: true,
+          getTogglableColumns: columns => columns.filter(column => column.field !== GRID_CHECKBOX_SELECTION_COL_DEF.field).map(column => column.field),
+        },
+      }}
+      hideFooterSelectedRowCount={widthTier === "narrow"}
       pageSizeOptions={DATA_GRID_PAGE_SIZES}
       isRowSelectable={isRowSelectable}
       rowSelectionModel={selection}
       onRowSelectionModelChange={onSelectionChange}
       disableRowSelectionExcludeModel
     />
-  );
+    <AutosizePriceColumns apiRef={apiRef} rows={rows} visibility={visibility} />
+  </>);
 }
 
 /** The selection column, with a tooltip on the checkbox of a row that has no prices. */
 function checkboxColumn<R extends PricedRow>(rowNoun: string): GridColDef<R> {
   return {
     ...GRID_CHECKBOX_SELECTION_COL_DEF,
+    hideable: false,
+    width: 44,
+    minWidth: 44,
     renderCell: (params: GridRenderCellParams<R>) =>
       hasPrices(params.row) ? (
         <GridCellCheckboxRenderer {...params} />
@@ -66,4 +102,36 @@ function checkboxColumn<R extends PricedRow>(rowNoun: string): GridColDef<R> {
         </Tooltip>
       ),
   };
+}
+
+declare module "@mui/x-data-grid" {
+  interface FooterPropsOverrides {
+    resultTableType: ResultTableType;
+    compact: boolean;
+  }
+}
+
+function ResultFooter({ resultTableType, compact }: { resultTableType: ResultTableType, compact: boolean }) {
+  const { updateHiddenColumns } = useSettings();
+  return (
+    <GridFooterContainer sx={{ minHeight: 44 }}>
+      <Toolbar aria-label="Results columns" style={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, padding: "0 4px" }}>
+        <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" sx={compact ? { minWidth: 0, px: 0.5 } : undefined} startIcon={<ViewColumnIcon />} />} />}>
+          Columns
+        </ColumnsPanelTrigger>
+        {!compact && <ToolbarButton render={<Button size="small" />} onClick={() => updateHiddenColumns(resultTableType, DEFAULT_HIDDEN_COLUMNS[resultTableType])}>
+          Reset columns
+        </ToolbarButton>}
+      </Toolbar>
+      <GridFooter sx={{
+        border: 0, flex: "1 1 auto", minWidth: 0, minHeight: 44,
+        ...(compact && {
+          "& .MuiTablePagination-selectLabel, & .MuiTablePagination-input": { display: "none" },
+          "& .MuiTablePagination-toolbar": { p: 0 },
+          "& .MuiTablePagination-actions": { ml: 0 },
+          "& .MuiTablePagination-displayedRows": { m: 0 },
+        }),
+      }} />
+    </GridFooterContainer>
+  );
 }

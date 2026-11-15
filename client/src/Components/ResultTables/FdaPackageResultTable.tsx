@@ -1,7 +1,7 @@
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import type { FdaProductDetail } from "../../library/types";
+import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
 import { fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
@@ -13,7 +13,9 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "ndcPackageCode",
     headerName: "Package NDC",
-    width: 125
+    width: 120,
+    minWidth: 120,
+    cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
@@ -21,10 +23,28 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     headerName: "Brand Name",
     width: 150,
   },
+  {
+    field: "strengthNumber",
+    headerName: "Strength",
+    valueGetter: (_, row) => row.strengthNumber.map((strength, i) => `${strength} ${row.strengthUnit[i]}`).join(", "),
+  },
+  {
+    field: "packageDescription",
+    headerName: "Package Description",
+    width: 250,
+  },
   ...PRICE_COLUMNS.history,
   {
+    field: "productTypeName",
+    headerName: "OTC Drug",
+    valueGetter: (_, row) => isFdaProductOtc(row.productTypeName) ? "Yes" : "No",
+  },
+  {
     field: "productNdc",
-    headerName: "Product NDC"
+    headerName: "Product NDC",
+    width: 120,
+    minWidth: 120,
+    cellClassName: "ndc-cell"
   },
   {
     field: "nonProprietaryName",
@@ -37,11 +57,6 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     headerName: "Sample",
     valueGetter: (_, row) => (row.samplePackage ? "Yes" : "No"),
     width: 75
-  },
-  {
-    field: "packageDescription",
-    headerName: "Package Description",
-    width: 250,
   },
   {
     field: "dosageFormName",
@@ -76,6 +91,7 @@ export default function FdaPackageResultTable({ products, loading }: Props) {
 
   return (
     <ResultTable
+      tableType="fdaPackage"
       rows={rows}
       columns={COLUMNS}
       getRowId={getRowId}

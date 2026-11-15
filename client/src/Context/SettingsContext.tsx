@@ -1,15 +1,17 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { loadSettings, saveSettings, watchSettings } from "../library/persist";
-import { DEFAULT_SETTINGS, type AppSettings } from "../library/settings";
+import { DEFAULT_SETTINGS, type AppSettings, type ResultTableType } from "../library/settings";
 
 type SettingsContextType = {
   settings: AppSettings;
   updateSettings: (changes: Partial<AppSettings>) => void;
+  updateHiddenColumns: (table: ResultTableType, fields: string[]) => void;
 };
 
 export const SettingsContext = createContext<SettingsContextType>({
   settings: DEFAULT_SETTINGS,
   updateSettings: () => { },
+  updateHiddenColumns: () => { },
 });
 
 /**
@@ -27,7 +29,11 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     setSettings(prev => ({ ...prev, ...changes }));
   }, []);
 
-  const value = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
+  const updateHiddenColumns = useCallback((table: ResultTableType, fields: string[]) => {
+    setSettings(prev => ({ ...prev, hiddenColumns: { ...prev.hiddenColumns, [table]: fields } }));
+  }, []);
+
+  const value = useMemo(() => ({ settings, updateSettings, updateHiddenColumns }), [settings, updateSettings, updateHiddenColumns]);
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };

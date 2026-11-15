@@ -78,6 +78,14 @@ describe("fdaPackageRows", () => {
       .toEqual([["1-1-1", "1-1", "Brand 1-1", [10]], ["1-1-2", "1-1", "Brand 1-1", []]]);
   });
 
+  it("carries multi-ingredient strengths and OTC status from each package's product", () => {
+    const parent = { ...product("1-1", [fdaPackage("1-1-1", [])]), strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/1"], productTypeName: "HUMAN OTC DRUG" };
+    const [row] = fdaPackageRows([parent]);
+    expect(row.strengthNumber).toEqual(["10", "20"]);
+    expect(row.strengthUnit).toEqual(["mg/1", "mg/1"]);
+    expect(row.productTypeName).toBe("HUMAN OTC DRUG");
+  });
+
   it("keys prices by the package it holds them, whatever NDC the prices carry", () => {
     const [row] = fdaPackageRows([product("1-1", [fdaPackage("1-1-1", [nadacPrice("0001101", "2025-01-01", 10)])])]);
     expect(row.priceSummaries).toHaveLength(1);

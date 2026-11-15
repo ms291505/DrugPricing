@@ -146,6 +146,28 @@ there.
 
 ## Stage 2 — Make results easier to inspect
 
+Implemented 2026-11-15 on `codex/browser-usability-stage-2`. Browser review settled these details:
+
+- Columns and Reset columns sit at the left of the pagination footer. Below the table's `sm`
+  width, only Columns remains, with pagination on the same row; Reset columns is omitted on
+  phones. This replaced the initial toolbar and wrapping footer during review with the author.
+- Narrow tables use 44px rows and headers, less footer padding, and no outer table padding on
+  phones. Complete NDCs and Latest Price fit even at 320px viewport width.
+- Price columns size to the rendered contents, including headers, after data, visibility,
+  pagination or sort changes. Latest Price is capped at its existing 125px width, Min/Max at
+  115px. Hidden pages defer measurement until shown; a small observer handles visibility so
+  the table itself does not re-render on a route or workspace tab switch.
+- Hidden fields are saved per table type in Settings, validated independently, and followed
+  across windows. Reset restores the app defaults; MUI's mount-time Reset is suppressed because
+  it would restore the saved choices from mount instead.
+- Package rows now carry product strength and OTC status. The planned Price Activity column
+  remains deferred to Stage 3.
+- Validation: 253 tests, lint and build pass. Browser checks covered FDA product/package and
+  NADAC defaults, keyboard column selection, reload persistence, changes and reset across
+  windows, desktop footer placement, and 320px/375px phone layouts.
+
+Original scope:
+
 Add a visible, labeled Columns action and Reset columns to both search pages' results, in the
 same place on each (D1). MUI Data Grid's community columns panel does this; the shared
 `ResultTable` has no toolbar today.

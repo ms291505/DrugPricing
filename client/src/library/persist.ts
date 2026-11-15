@@ -8,7 +8,7 @@ import {
   type BrandGeneric, type FdaCriteria, type NadacCriteria,
 } from "./searchCriteria";
 import { isValidNadacSearch } from "./nadacSearch";
-import { DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
+import { readHiddenColumns, DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -322,6 +322,7 @@ export function loadSettings(): AppSettings {
   return {
     barStyle: raw && isBarStyle(raw.barStyle) ? raw.barStyle : DEFAULT_SETTINGS.barStyle,
     colorMode: raw && isColorMode(raw.colorMode) ? raw.colorMode : DEFAULT_SETTINGS.colorMode,
+    hiddenColumns: readHiddenColumns(raw && raw.hiddenColumns),
   };
 }
 

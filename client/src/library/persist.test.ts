@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_HIDDEN_COLUMNS } from "./settings";
 import { FULL_WINDOW } from "./dates";
 import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
@@ -198,10 +199,10 @@ describe("pruneStoredState", () => {
   });
 });
 
-describe("watchOtherWindows", () => {
-  const storageEvent = (key: string | null, newValue: string | null) =>
-    Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue });
+const storageEvent = (key: string | null, newValue: string | null) =>
+  Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue });
 
+describe("watchOtherWindows", () => {
   const fdaTab = (criteria: typeof fdaCriteria) => ({
     type: "fda" as const, criteria, detailLevel: "product" as const,
     pinnedItems: [],
@@ -251,7 +252,7 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(settingsKey, value));
 
     expect(onConflict).not.toHaveBeenCalled();
-    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark" });
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
     persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
@@ -259,20 +260,48 @@ describe("watchOtherWindows", () => {
 
 describe("settings", () => {
   it("defaults when nothing or something unreadable is saved", () => {
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
     localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie", colorMode: "sepia" } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
   });
 
   it("round-trips what saveSettings wrote", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
+  });
+
+  it("round-trips independent column choices and follows another window", () => {
+    const hiddenColumns = { fdaProduct: ["proprietaryName"], fdaPackage: [], nadac: ["minPrice", "maxPrice", "ndcDescription"] };
+    const settings = { barStyle: "dot" as const, colorMode: "light" as const, hiddenColumns };
+    const onSettings = vi.fn();
+    const onConflict = vi.fn();
+    persist.watchSettings(onSettings);
+    persist.watchOtherWindows(onConflict);
+    const key = `drugpricing.v${persist.VERSION}.settings`;
+    const value = JSON.stringify({ version: persist.VERSION, data: settings });
+    localStorage.setItem(key, value);
+    window.dispatchEvent(storageEvent(key, value));
+    expect(onSettings).toHaveBeenCalledWith(settings);
+    expect(onConflict).not.toHaveBeenCalled();
+    persist.saveSettings(settings);
+    persist.pruneStoredState([]);
+    expect(persist.loadSettings()).toEqual(settings);
+  });
+
+  it("validates hidden columns independently without discarding valid settings", () => {
+    const key = `drugpricing.v${persist.VERSION}.settings`;
+    localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: {
+      colorMode: "light", hiddenColumns: { fdaProduct: ["latestPrice", 42, null, "latestPrice", "__check__"], fdaPackage: "bad", nadac: [] },
+    } }));
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", hiddenColumns: {
+      fdaProduct: ["latestPrice"], fdaPackage: DEFAULT_HIDDEN_COLUMNS.fdaPackage, nadac: [],
+    } });
   });
 
   it("survives pruning, which only removes tab state and old versions", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
     persist.pruneStoredState([]);
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", hiddenColumns: DEFAULT_HIDDEN_COLUMNS });
   });
 });
 
