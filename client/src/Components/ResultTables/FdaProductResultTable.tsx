@@ -2,7 +2,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
-import { fdaProductRows, type FdaProductRow } from "../../library/resultRows";
+import { formatStrength, fdaProductRows, type FdaProductRow } from "../../library/resultRows";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
@@ -15,13 +15,25 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "productNdc",
     headerName: "Product NDC",
-    width: 110
+    width: 120,
+    minWidth: 120,
+    cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
     field: "proprietaryName",
     headerName: "Brand Name",
     width: 150
+  },
+  {
+    field: "strengthNumber",
+    headerName: "Strength",
+    valueGetter: (_, product) => formatStrength(product)
+  },
+  {
+    field: "dosageFormName",
+    headerName: "Form",
+    valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
   },
   ...PRICE_COLUMNS.history,
   {
@@ -31,21 +43,9 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
     valueGetter: (_, product) => (product.nonProprietaryName.join(", "))
   },
   {
-    field: "dosageFormName",
-    headerName: "Form",
-    valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
-  },
-  {
     field: "routeName",
     headerName: "Route",
     valueGetter: (_, product) => (product.routeName.join(", "))
-  },
-  {
-    field: "strengthNumber",
-    headerName: "Strength",
-    valueGetter: (_, product) => (
-      product.strengthNumber.map((s, i) => (s + " " + product.strengthUnit[i])).join(", ")
-    )
   },
   {
     field: "labelerName",
@@ -84,6 +84,7 @@ export default function FdaProductResultTable({ products, loading }: Props) {
 
   return (
     <ResultTable
+      tableType="fdaProduct"
       rows={rows}
       columns={COLUMNS}
       getRowId={getRowId}

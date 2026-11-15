@@ -12,7 +12,9 @@ const COLUMNS: GridColDef<NadacRow>[] = [
   {
     field: "ndc",
     headerName: "NDC",
-    width: 110
+    width: 120,
+    minWidth: 120,
+    cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
@@ -38,6 +40,7 @@ export default function NadacResultTable({ nadacPrices, loading }: Props) {
 
   return (
     <ResultTable
+      tableType="nadac"
       rows={rows}
       columns={COLUMNS}
       getRowId={getRowId}

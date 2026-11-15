@@ -89,6 +89,20 @@ same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price 
 sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
 on a phone it must show without scrolling.
 
+`ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
+width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
+visible columns match defaults. Column visibility choices
+are saved per table type in Settings (`columnOverrides`), shared by standalone pages and
+workspace tabs and followed by other windows. Save only deviations from `DEFAULT_HIDDEN_COLUMNS`,
+merge them over current defaults, and clear them on Reset: saving the complete default model
+would freeze defaults for browsers that never customized. Validate each table and field independently.
+
+`AutosizePriceColumns` measures rendered prices after data, visibility, paging, sorting and
+filtering changes, capped at each column's `maxWidth`. It is a separate component so only its
+small visibility observer re-renders on a page/tab switch; the table does not. Hidden pages
+measure nothing until shown. Narrow tables use 44px rows and headers. NDC columns use tabular
+digits and minimum widths that fit the complete source identifier.
+
 ### Workspace
 
 `WorkspaceContext` owns the tabs, `layoutMode` and `paneAssignment`; `TabInstance` renders a
@@ -219,7 +233,9 @@ the workspace.
   A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
   the existing app and search pages mounted.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
-  never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
+  never change (`barStyle`, `colorMode`), plus per-table column visibility overrides
+  (`columnOverrides`) edited from the results footer. They are saved once under
+  `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). The panel opens
   from the gear in the app bar and from Settings in the workspace drawer. New preferences go
   here, not in the search panel.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fdaPackageRows, fdaProductRows, nadacRows } from "./resultRows";
+import { formatStrength, fdaPackageRows, fdaProductRows, nadacRows } from "./resultRows";
 import { FULL_WINDOW } from "./dates";
 import { createFdaCriteria, refineFda } from "./searchCriteria";
 import { type FdaPackageDetail, type FdaProductDetail, type NadacPrice } from "./types";
@@ -78,8 +78,26 @@ describe("fdaPackageRows", () => {
       .toEqual([["1-1-1", "1-1", "Brand 1-1", [10]], ["1-1-2", "1-1", "Brand 1-1", []]]);
   });
 
+  it("carries multi-ingredient strengths and OTC status from each package's product", () => {
+    const parent = { ...product("1-1", [fdaPackage("1-1-1", [])]), strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/1"], productTypeName: "HUMAN OTC DRUG" };
+    const [row] = fdaPackageRows([parent]);
+    expect(row.strengthNumber).toEqual(["10", "20"]);
+    expect(row.strengthUnit).toEqual(["mg/1", "mg/1"]);
+    expect(row.productTypeName).toBe("HUMAN OTC DRUG");
+  });
+
   it("keys prices by the package it holds them, whatever NDC the prices carry", () => {
     const [row] = fdaPackageRows([product("1-1", [fdaPackage("1-1-1", [nadacPrice("0001101", "2025-01-01", 10)])])]);
     expect(row.priceSummaries).toHaveLength(1);
+  });
+});
+
+describe("formatStrength", () => {
+  it.each([
+    { strengthNumber: [], strengthUnit: [], expected: "" },
+    { strengthNumber: ["2.5"], strengthUnit: ["mg/1"], expected: "2.5 mg/1" },
+    { strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/5mL"], expected: "10 mg/1, 20 mg/5mL" },
+  ])("formats $expected for both FDA table levels", ({ strengthNumber, strengthUnit, expected }) => {
+    expect(formatStrength({ strengthNumber, strengthUnit })).toBe(expected);
   });
 });
