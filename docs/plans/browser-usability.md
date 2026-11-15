@@ -219,6 +219,13 @@ example shows the table users will see.
 
 ## Stage 3 — Make charts intentional while preserving discovery
 
+Implementation started 2026-11-15 on `codex/browser-usability-stage-3`, from the integration
+branch after Stage 2 merged. The separate mixed-unit cards prerequisite is implemented in its
+own commit. Compare latest prices / Compare price histories now start hidden and toggle live
+cards without saving the toggle state. The remaining price activity, event section, chart
+callouts and help updates are pending. The open presentation details below have been raised
+with the author before implementing those paths.
+
 Prerequisite: land "Mixed units become separate cards" from docs/future-work.md first, as its
 own change. Both rewrite the code that creates charts.
 

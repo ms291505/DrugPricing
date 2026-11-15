@@ -69,7 +69,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   chart with its unit. Unit charts share one date axis.
 - New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
   one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
-- Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
+- Live Compare charts start hidden; the two Compare toggles show/hide them, retaining their
+  choice across searches while mounted, never in storage. They are gated on total **series**
+  count, not price rows (`shouldAutoChart`), before splitting into one card per pricing unit.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
   time"), the subtitle the count and dates. Price-change cards name the percent, date and package.
 

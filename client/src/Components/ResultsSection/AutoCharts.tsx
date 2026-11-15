@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { Grid } from "@mui/material";
+import { Button, Grid, Stack, Typography } from "@mui/material";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
-import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
+import { HALF_WIDTH_GRID_SIZE, MAX_AUTO_CHART_SERIES } from "../../library/constants";
 import { shouldAutoChart } from "../../library/chartSeries";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { DateWindow } from "../../library/dates";
@@ -25,20 +25,36 @@ type Props = {
 };
 
 /**
- * A search's bar and line auto charts, as half-width grid items, when the result is small
- * enough to chart (`shouldAutoChart`). They're derived from the result on every change; pinning
- * one keeps a copy.
+ * Opt-in live comparisons. Toggle choices survive searches while mounted, but are never saved.
+ * The total series cap applies before splitting into one card per pricing unit.
  */
 export default function AutoCharts({ prices, history, origin, colors, dateWindow }: Props) {
+  const [showLatest, setShowLatest] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
-  if (!shouldAutoChart(prices)) return null;
-  return <>{groups.map(group => <UnitAutoCharts key={group.pricingUnit}
-    prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-    unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
-  />)}</>;
+  const canCompare = shouldAutoChart(prices);
+  if (!prices.length) return null;
+  return <>
+    <Grid size={12}>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center" }}>
+        <Button size="small" variant={showLatest ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showLatest}
+          onClick={() => setShowLatest(value => !value)}>Compare latest prices</Button>
+        <Button size="small" variant={showHistory ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showHistory}
+          onClick={() => setShowHistory(value => !value)}>Compare price histories</Button>
+        {!canCompare && <Typography variant="body2" color="text.secondary">
+          Compare up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
+        </Typography>}
+      </Stack>
+    </Grid>
+    {canCompare && groups.map(group => <UnitAutoCharts key={group.pricingUnit}
+      prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+      unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
+      showLatest={showLatest} showHistory={showHistory}
+    />)}
+  </>;
 }
 
-function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffix }: Props & { unitSuffix: string }) {
+function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffix, showLatest, showHistory }: Props & { unitSuffix: string, showLatest: boolean, showHistory: boolean }) {
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
   const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
@@ -46,7 +62,7 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
   const subtitle = chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices);
 
   return (<>
-    <Grid size={HALF_WIDTH_GRID_SIZE}>
+    {showLatest && <Grid size={HALF_WIDTH_GRID_SIZE}>
       <ExplorerGridItem
         fill
         title={barTitle}
@@ -65,8 +81,8 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
           onBarValueChange={setBarValue}
         />
       </ExplorerGridItem>
-    </Grid>
-    <Grid size={HALF_WIDTH_GRID_SIZE}>
+    </Grid>}
+    {showHistory && <Grid size={HALF_WIDTH_GRID_SIZE}>
       <ExplorerGridItem
         title={lineTitle}
         subtitle={subtitle}
@@ -77,6 +93,6 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
       >
         <LineViz nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={dateWindow} />
       </ExplorerGridItem>
-    </Grid>
+    </Grid>}
   </>);
 }
