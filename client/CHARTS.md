@@ -67,6 +67,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   average and keeps the packages' min–max as `rangeKey(ndc)`.
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
+- New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
+  one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
 - Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
   time"), the subtitle the count and dates. Price-change cards name the percent, date and package.

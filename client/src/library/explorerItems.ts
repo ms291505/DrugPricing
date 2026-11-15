@@ -1,3 +1,4 @@
+import { pricingUnitLabel, splitByPricingUnit } from "./prices";
 import type { ChartPrice } from "./types";
 import { quoted } from "./searchCriteria";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
@@ -199,6 +200,17 @@ export function createChartItem({
       filtered,
     },
   };
+}
+
+/** New cards contain one pricing unit; legacy mixed-unit snapshots still render with UnitSplit. */
+export function createChartItems(options: NewChartItem): ChartItem[] {
+  const groups = splitByPricingUnit(options.prices);
+  return groups.map(({ pricingUnit, nadacPrices }) => createChartItem({
+    ...options,
+    prices: nadacPrices,
+    defaultTitle: groups.length > 1
+      ? `${options.defaultTitle} · per ${pricingUnitLabel(pricingUnit)}` : options.defaultTitle,
+  }));
 }
 
 /** Provenance chip text, e.g. "Products · 2 of 7 · from “humira”" or "NDCs · 6 · from “eliquis” · filtered". */

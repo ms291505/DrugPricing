@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
+  chartDataBounds, createChartItem, createChartItems, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
   type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { FULL_WINDOW } from "./dates";
@@ -133,5 +133,36 @@ describe("createChartItem colors and bar value", () => {
     const line = createChartItem({ chartType: "line", prices: productB, defaultTitle: "T", origin, dateWindow: FULL_WINDOW, barValue: "average" });
     expect(bar.barValue).toBe("average");
     expect("barValue" in line).toBe(false);
+  });
+});
+
+describe("createChartItems", () => {
+  it("splits units without losing colors, history, dates or provenance", () => {
+    const mixed = [...packageA1, ...series("A", 20, "milliliter"), ...productB];
+    const items = createChartItems({ chartType: "line", prices: mixed, defaultTitle: "Compare",
+      origin: { ...origin, resultPrices: [...mixed, ...series("C", 8)] }, dateWindow: FULL_WINDOW,
+      colors: new Map([["A", "series-a"], ["B", "series-b"]]) });
+    expect(items).toHaveLength(2);
+    expect(items.map(item => new Set(item.series.map(s => s.unit)).size)).toEqual([1, 1]);
+    expect(items.map(item => item.defaultTitle)).toEqual(["Compare · per each", "Compare · per mL"]);
+    expect(items.map(item => item.source)).toEqual([
+      { searchLabel: "humira", seriesKind: "product",
+        seriesCount: 2, resultSeriesCount: 3, filtered: false },
+      { searchLabel: "humira", seriesKind: "product", seriesCount: 1, resultSeriesCount: 3, filtered: false },
+    ]);
+    expect(items[1].series[0]).toMatchObject({ color: "series-a", points: series("A", 20, "milliliter").map(p => [p.asOfDate.getTime(), p.nadacPerUnit]) });
+    expect(items[0].dateWindow).toEqual(FULL_WINDOW);
+    expect(items[0].id).not.toBe(items[1].id);
+  });
+
+  it("keeps a single-unit title and identifies genuinely filtered packages", () => {
+    const [item] = createChartItems({ chartType: "bar", prices: packageA1, defaultTitle: "Compare",
+      origin, dateWindow: FULL_WINDOW, barValue: "average" });
+    expect(item.defaultTitle).toBe("Compare");
+    expect(item.source.filtered).toBe(true);
+    expect(item.barValue).toBe("average");
+  });
+  it("does not create empty cards", () => {
+    expect(createChartItems({ chartType: "line", prices: [], defaultTitle: "Compare", origin, dateWindow: FULL_WINDOW })).toEqual([]);
   });
 });

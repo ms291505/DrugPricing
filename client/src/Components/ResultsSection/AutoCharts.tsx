@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Grid } from "@mui/material";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
@@ -10,6 +10,8 @@ import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitl
 import type { DateWindow } from "../../library/dates";
 import type { BarValue, ChartOrigin } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
+
+import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
 
 type Props = {
   /** The page's result as shown, at the series level the charts draw. */
@@ -28,12 +30,19 @@ type Props = {
  * one keeps a copy.
  */
 export default function AutoCharts({ prices, history, origin, colors, dateWindow }: Props) {
-  const [barValue, setBarValue] = useState<BarValue>("latest");
+  const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
   if (!shouldAutoChart(prices)) return null;
+  return <>{groups.map(group => <UnitAutoCharts key={group.pricingUnit}
+    prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+    unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
+  />)}</>;
+}
 
+function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffix }: Props & { unitSuffix: string }) {
+  const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
-  const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels);
-  const lineTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels);
+  const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
+  const lineTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
   const subtitle = chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices);
 
   return (<>

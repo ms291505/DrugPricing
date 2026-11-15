@@ -1,9 +1,10 @@
+import toast from "react-hot-toast";
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import SsidChartIcon from "@mui/icons-material/SsidChart";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
-import { createChartItem, withLoadedHistory, type ChartOrigin, type ChartType } from "../../library/explorerItems";
+import { createChartItems, withLoadedHistory, type ChartOrigin, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { DateWindow } from "../../library/dates";
 import type { ChartPrice } from "../../library/types";
@@ -22,21 +23,23 @@ type Props = {
 
 /** Charts the table's selected rows as a new pinned line or bar chart, which then stays as it is. */
 export default function ChartSelectedControl({ prices, history, selection, origin, dateWindow, colors }: Props) {
-  const { addItem } = usePinActions();
+  const { addItems } = usePinActions();
   const count = selection.ids.size;
 
   const handleChart = (chartType: ChartType) => {
     const ndcs = new Set([...selection.ids].map(String));
     const chartPrices = prices.filter(price => ndcs.has(price.ndc));
     if (chartPrices.length === 0) return;
-    addItem(createChartItem({
+    const items = createChartItems({
       chartType,
       prices: withLoadedHistory(chartPrices, history()),
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartPrices)),
       origin,
       dateWindow,
       colors,
-    }), { focus: true });
+    });
+    addItems(items, { focus: true });
+    if (items.length > 1) toast.success(`Added ${items.length} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`);
   };
 
   return (
