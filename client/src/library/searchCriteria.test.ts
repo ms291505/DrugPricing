@@ -477,4 +477,14 @@ describe("FDA to NADAC handoff", () => {
     expect(fdaHasPricesInWindow({ products: [] }, FULL_WINDOW)).toBe(false);
     expect(fdaHasPricesInWindow({ products: [product("12345-1234", [fdaPackage("12345-1234-01", [])])] }, FULL_WINDOW)).toBe(false);
   });
+
+  it("allows the no-price handoff alongside the default hidden-results hint", () => {
+    const result = { products: [product("12345-1234", [fdaPackage("12345-1234-01", [])])] };
+    const criteria = createFdaCriteria();
+    const shown = refineFda(result, criteria, FULL_WINDOW);
+    expect(shown.products).toEqual([]);
+    const hidden = fdaHiddenCounts(result, shown, criteria, FULL_WINDOW, "product");
+    expect(hiddenResultsHint(hidden)).toEqual({ kind: "include", key: "includeResultsWithoutPrices", count: 1 });
+    expect(fdaHasPricesInWindow(result, FULL_WINDOW)).toBe(false);
+  });
 });

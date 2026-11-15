@@ -75,7 +75,7 @@ export default memo(function FdaResults({ view }: Props) {
         />
       </Box>}
       notice={<>
-        {isSuccess && onTryNadac && data && !hint && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
+        {isSuccess && onTryNadac && data && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
           action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
           {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
         </Alert>}
