@@ -29,11 +29,13 @@ export const VERSION = 1;
 const APP_PREFIX = "drugpricing.";
 const PREFIX = `${APP_PREFIX}v${VERSION}`;
 const WORKSPACE_KEY = `${PREFIX}.workspace`;
+const SEARCH_PINS_KEY = `${PREFIX}.search-pins`;
+const LAST_SEARCH_SOURCE_KEY = `${PREFIX}.last-search-source`;
 const SETTINGS_KEY = `${PREFIX}.settings`;
 const TAB_KEY_PREFIX = `${PREFIX}.tab.`;
 export const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
 
-/** Tab ids for the standalone /fda-search and /nadac-search pages, which are not workspace tabs. */
+/** Tab ids for the standalone /search/fda and /search/nadac pages, which are not workspace tabs. */
 export const STANDALONE_TAB_IDS = { fda: "page-fda", nadac: "page-nadac" } as const;
 
 /** How every stored value is wrapped. */
@@ -58,18 +60,20 @@ function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
   }
 }
 
-function write<T>(key: string, data: T): void {
-  if (readOnly) return;
+function write<T>(key: string, data: T): boolean {
+  if (readOnly) return false;
   try {
     const value = JSON.stringify({ version: VERSION, data } satisfies Envelope<T>);
     localStorage.setItem(key, value);
     lastWritten.set(key, value);
+    return true;
   } catch (error) {
     console.warn("Could not save to localStorage:", error);
     if (!warnedWriteFailure) {
       warnedWriteFailure = true;
       toast.error("Couldn't save your workspace: browser storage is full or unavailable.");
     }
+    return false;
   }
 }
 
@@ -287,14 +291,24 @@ export function watchOtherWindows(onConflict: () => void): () => void {
   const handleStorage = (event: StorageEvent) => {
     if (readOnly || event.storageArea !== localStorage) return;
     if (event.key !== null && !event.key.startsWith(PREFIX + ".")) return;
-    // Settings are safe to share: every window follows them (`watchSettings`).
-    if (event.key === SETTINGS_KEY) return;
+    // Settings and the last navigation source can be shared without endangering tab state.
+    if (event.key === SETTINGS_KEY || event.key === LAST_SEARCH_SOURCE_KEY) return;
     if (event.key !== null && lastWritten.has(event.key) && lastWritten.get(event.key) === event.newValue) return;
     readOnly = true;
     onConflict();
   };
   window.addEventListener("storage", handleStorage);
   return () => window.removeEventListener("storage", handleStorage);
+}
+
+export type SearchSource = "fda" | "nadac";
+
+export function loadLastSearchSource(): SearchSource | null {
+  return read(LAST_SEARCH_SOURCE_KEY, oneOf<SearchSource>(["fda", "nadac"]));
+}
+
+export function saveLastSearchSource(source: SearchSource): void {
+  write(LAST_SEARCH_SOURCE_KEY, source);
 }
 
 // --- Settings ------------------------------------------------------------------------------
@@ -411,4 +425,32 @@ export function saveTabState(tabId: string, state: PersistedTab): void {
 
 export function removeTabState(tabId: string): void {
   remove(tabKey(tabId));
+}
+
+/** Standalone searches share pins; workspace tabs continue to own theirs individually. */
+export function loadSearchPins(): PersistedExplorerState {
+  const shared = read(SEARCH_PINS_KEY, isObject);
+  if (shared && Array.isArray(shared.pinnedItems)) return loadExplorerState(shared);
+  const legacy = [loadFdaTabState(STANDALONE_TAB_IDS.fda), loadNadacTabState(STANDALONE_TAB_IDS.nadac)]
+    .flatMap(state => state?.pinnedItems ?? []);
+  return { pinnedItems: [...new Map(legacy.map(item => [item.id, item])).values()] };
+}
+
+export function saveSearchPins(pinnedItems: ExplorerItem[]): void {
+  // Never erase the legacy copies until the shared snapshots have been saved successfully.
+  if (!write(SEARCH_PINS_KEY, { pinnedItems })) return;
+  for (const tabId of Object.values(STANDALONE_TAB_IDS)) {
+    const raw = read(tabKey(tabId), isObject);
+    if (raw && Array.isArray(raw.pinnedItems) && raw.pinnedItems.length > 0) {
+      write(tabKey(tabId), { ...raw, pinnedItems: [] });
+    }
+  }
+}
+
+/** Save criteria without copying the shared pins back into a source's legacy storage slot. */
+export function saveStandaloneSearch(state: Omit<PersistedFdaTab, "pinnedItems"> | Omit<PersistedNadacTab, "pinnedItems">): void {
+  const tabId = STANDALONE_TAB_IDS[state.type];
+  const raw = read(tabKey(tabId), isObject);
+  // Preserve any unmigrated snapshots if the shared save failed (e.g. browser storage is full).
+  write(tabKey(tabId), { ...state, pinnedItems: validItems(raw?.pinnedItems) });
 }

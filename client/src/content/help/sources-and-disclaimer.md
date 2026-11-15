@@ -6,3 +6,8 @@ The data come from two public sources:
 CMS’s pharmacy pricing page links to survey information and data field definitions.
 
 DrugPricing is a personal learning project and is not affiliated with or endorsed by CMS or the FDA. NADAC is a survey-based estimate of what retail community pharmacies pay to acquire a drug. It is not what a patient pays, a retail price, or a reimbursement rate. The data may be incomplete or out of date, and nothing here is medical, financial, or pricing advice.
+
+NADAC participation is voluntary. Its estimates reflect submitted retail community pharmacy
+invoices, rather than every pharmacy’s costs. Discounts and rebates not shown at the drug
+line item level on an invoice are excluded. See the
+[CMS NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf).

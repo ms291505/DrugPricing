@@ -129,8 +129,9 @@ without changing the content model or modal design.
 ## Implementation record
 
 Implemented modal and standalone shared-topic presentations together, including contextual
-links, local navigation and topic filtering. Standalone Help does not mount workspace storage
-providers, so opening a reference tab cannot initialize or prune saved workspaces. The published
+links, local navigation and topic filtering. Direct standalone Help loads do not mount workspace storage
+providers, so opening a reference tab cannot initialize or prune saved workspaces. Same-tab
+navigation from the app retains the already-mounted providers and search pages. The published
 copy is in `client/src/content/help/`; the original draft retains deferred factual checks.
 
 Fixed interactive results examples remain a follow-up. Browser-history integration for modal
@@ -164,21 +165,16 @@ Help. Where each stands:
   accessible name and tooltip), which is what Stage 1 specifies; Stage 1 keeps it in the
   reworked bar and adds no second one. The drawer's Help button stays.
 - **The index lists Welcome and About this project.** Welcome is a topic under Start here.
-  About this project is a link in the same group (`HELP_PAGE_LINKS`), leading to `/about`; it
-  closes the modal. When Stage 1's welcome page ships, decide whether the Welcome entry should
-  lead to it instead of (or as well as) the topic.
+  Welcome page and About this project are links in the same group (`HELP_PAGE_LINKS`), leading
+  to `/welcome` and `/about`; either closes the modal. The Welcome article stays available.
 - **The welcome page links to topics by ID.** These IDs exist and are stable: `nadac`,
   `ndcs-products-and-packages`, `what-the-prices-mean`, `pinning-and-comparing`,
   `which-search-to-use` ([welcome copy](../content/welcome.md)). Open one with
   `openHelp(id)`.
-- **Modal-first stays.** Once Search stays mounted, opening `/help` in the same tab won't cost
-  the search page its state, which was one reason for the modal. The other reason still
-  holds: the modal answers a question without leaving the page or the scroll position, and the
-  separate tab covers reading alongside the app. For Stage 1: `/help` is rendered outside
-  `AppShell` (`AppContent` in `App.tsx`) so that a Help tab never mounts workspace storage.
-  Stage 1's "Search stays mounted on a help page" applies to same-tab navigation, which the
-  app doesn't offer today (Help pages open in a new tab); if Stage 1 adds same-tab links to
-  `/help`, it has to choose between that rule and the storage isolation.
+- **Modal-first stays.** Search now stays mounted across routes. The modal answers a question
+  without leaving the page or its scroll position, and the separate tab covers reading
+  alongside the app. `AppContent` avoids workspace storage providers on a direct Help load;
+  once someone enters the app, navigating to Help preserves the existing mounted app.
 
 Validation (first version): client build and lint passed; all 228 tests passed. Browser checks covered topic
 filtering, internal Back, Escape, preserved unsubmitted NADAC text, mobile drawer focus return,

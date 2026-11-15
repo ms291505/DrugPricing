@@ -1,8 +1,15 @@
 # Welcome page content
 
 Started 2026-11-13. Draft copy for the app's home page at `/welcome`, decided in
-[the usability plan](../plans/browser-usability.md) (Stage 1, "Welcome"). Nothing here is
-built: today `/welcome` shows the onboarding text (`OnBoarding`) and nothing links to it.
+[the usability plan](../plans/browser-usability.md) (Stage 1, "Welcome"). Implemented 2026-11-15 in `client/src/Components/Welcome.tsx`: the three original idea
+lines, topic links and two primary actions. Browser review added the NADAC survey explainer,
+package-level wording and shared standalone pins. The shipped component is the source of truth
+for the final wording; the copy below records the earlier draft. The optional fourth idea
+remains draft copy.
+
+The NADAC explanation and limitations were checked against the
+[CMS methodology (February 2024)](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf)
+on 2026-11-15. Help's NADAC and Sources and disclaimer articles carry the supporting links.
 
 This is the home page, not a help page. It is shown at the bare site address on a first
 visit, and the app name in the bar leads back to it. The help content has its own

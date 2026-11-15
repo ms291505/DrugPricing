@@ -604,3 +604,9 @@ Not Help content, but worth fixing where they live:
    It is the most interesting content and the fastest to go stale.
 4. Should "Things to try" wait for linkable searches, so each row opens its search?
 5. Should Help show live facts (latest loaded week, first week of history) from `app-init`?
+
+## Published copy
+
+The articles in `client/src/content/help/` are the published copy, checked against the
+[CMS February 2024 NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf)
+on 2026-11-15.

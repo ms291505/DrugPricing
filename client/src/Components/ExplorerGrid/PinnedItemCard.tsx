@@ -51,9 +51,9 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   // Chart selected feedback: bring the new card into view and move focus to its heading,
   // so keyboard and screen-reader users land on what they just created.
   useEffect(() => {
-    if (!focusOnAdd) return;
     const card = cardRef.current;
-    card?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    if (!focusOnAdd || !card?.checkVisibility()) return;
+    card.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
     headingRef.current?.focus({ preventScroll: true });
     // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
     // and grow past their placeholders, pushing the card down. Once the scroll stops, center the
@@ -62,7 +62,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let checks = 0;
     const settle = () => {
-      if (!card) return;
+      if (!card.checkVisibility()) return;
       const { top, bottom } = card.getBoundingClientRect();
       const offCenter = Math.abs((top + bottom) / 2 - window.innerHeight / 2);
       if (offCenter > SETTLED_PX) {

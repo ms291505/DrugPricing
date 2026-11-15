@@ -119,6 +119,27 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   tab change, so only the search panels read it (`useRenameAfterSearch`), and `NadacResults` and
   `FdaResults` are `memo`'d.
 
+### Standalone Search navigation
+
+`/search/fda` and `/search/nadac` mount each source on its first visit, then keep it mounted
+across all routes (`KeptPage`, using the workspace tabs' shared `hiddenPaneSx` and
+`PageVisibleContext`). Memoized page elements preserve state and avoid route-switch renders;
+`KeptPage` restores each page's document scroll. Source tabs live inside the standalone search
+panels; workspace tabs omit them. `/search` returns to the last source (FDA initially), saved
+under `drugpricing.v<VERSION>.last-search-source`, separate from Settings. Bare and unknown
+addresses show Welcome until a source has been visited, then return to that source. Legacy
+`/fda-search` and `/nadac-search` addresses redirect. Empty FDA results offer a one-click
+handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts`;
+only that explicit handoff changes NADAC's draft and runs the copied terms.
+
+Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
+`PinnedItemsProvider` around just the two `/search` sources, with one `PinnedSection` below
+the active source. Their shared snapshots live in
+`drugpricing.v<VERSION>.search-pins`; `loadSearchPins` merges legacy standalone pins, and
+`saveSearchPins` clears the old copies only after a successful shared save. Workspace
+`TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
+the workspace.
+
 ### Data rules that apply everywhere
 
 - **Dates:** API dates are calendar days that `new Date("YYYY-MM-DD")` reads as UTC midnight.
@@ -195,7 +216,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   modal that navigates closes itself.
 - **Help** is a catalog (`library/help.ts`; topic IDs are URLs, never rename one) and one
   Markdown article per topic in `src/content/help/`, shown in the modal and at `/help/:topic`.
-  `/help` renders outside `AppShell`, so a Help tab never mounts workspace storage.
+  A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
+  the existing app and search pages mounted.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). The panel opens

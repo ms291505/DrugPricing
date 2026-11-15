@@ -2,6 +2,9 @@
 snapshot: new searches, filters and dates don't change it. That lets you search for one drug,
 pin it, search for another, and compare.
 
+The standalone **FDA search** and **NADAC search** share their Pinned collection, so you can
+compare charts from both sources. Each **Workspace tab** has its own separate pins.
+
 On a pinned chart you can:
 
 - change its **dates** from the dates chip, without affecting anything else;
