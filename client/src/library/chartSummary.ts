@@ -81,7 +81,7 @@ function changeSentence(span: ChartChangeSpan): string {
 }
 
 /**
- * A line chart's summary: the change it calls out (price-change cards), the series count and
+ * A line chart's summary: the change it calls out (legacy change-span pins), the series count and
  * dates, the latest prices, and the largest change, then how to use the keyboard.
  *
  * @param prices - one pricing unit, already clipped to the chart's dates
@@ -102,11 +102,11 @@ export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeS
     sentences.push(`Highest latest price: ${latestOf(byLatest[0], lastDate)}; lowest: ${latestOf(byLatest[byLatest.length - 1], lastDate)}.`);
   }
 
-  // A price-change card already leads with its change.
+  // Legacy change-span pins already lead with their change. Product changes use package events.
   const change = changeSpan || seriesKind === "product" ? null : largestChange(prices);
   if (seriesKind === "product") {
     const events = derivePriceEvents(prices, seriesKind);
-    if (events.length) sentences.push(`${events.length} significant package changes. ${events.slice(0, 3).map(e => `${e.packageNdc}: ${eventLabel(e.change)}.`).join(" ")}`);
+    if (events.length) sentences.push(`${events.length} significant package ${events.length === 1 ? "change" : "changes"}. ${events.slice(0, 3).map(e => `${e.packageNdc}: ${eventLabel(e.change)}.`).join(" ")}`);
   }
   if (change) {
     const direction = change.ratio < 0 ? "down" : "up";

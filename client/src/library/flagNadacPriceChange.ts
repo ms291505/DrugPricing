@@ -1,7 +1,7 @@
 import { splitByPricingUnit, seriesByDate } from "./prices";
-import type { ChartPrice, FdaProductDetail, NadacPrice, NadacPriceChange, PackagePriceChange } from "./types";
+import type { ChartPrice, FdaProductDetail, NadacPriceChange, PackagePriceChange } from "./types";
 
-/** One package's prices, under the NDC its price-change cards show. */
+/** One package's prices, under its displayed NDC. */
 export type PackagePrices = {
   /** As shown: dashed from the FDA, NADAC's stored form on a NADAC search. */
   packageNdc: string,
@@ -50,17 +50,6 @@ export function flagPriceChanges(packages: PackagePrices[], threshold: number = 
       return flagPackagePriceChanges(normalized, threshold).map(priceChange => ({ packageNdc, priceChange }));
     });
   });
-}
-
-/** A NADAC result's prices, package by package (a NADAC NDC is a package). */
-export function nadacPackagePrices(prices: NadacPrice[]): PackagePrices[] {
-  const byNdc = new Map<string, NadacPrice[]>();
-  for (const price of prices) {
-    const packagePrices = byNdc.get(price.ndc);
-    if (packagePrices) packagePrices.push(price);
-    else byNdc.set(price.ndc, [price]);
-  }
-  return [...byNdc].map(([packageNdc, packagePrices]) => ({ packageNdc, prices: packagePrices }));
 }
 
 /** FDA products' prices, package by package, under each package's dashed NDC. */

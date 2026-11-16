@@ -232,8 +232,8 @@ The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author di
 - New product pins retain package identity per point. Older product pins still draw, but
   without those identities cannot infer package events from their averages. Legacy stored
   change spans remain supported.
-- Package sparklines currently show at every width; the phone presentation is ready for
-  author review. The Columns control can hide Price Activity independently.
+- Package sparklines remain visible on phones when Price Activity is shown, as confirmed
+  by the author during PR review. The Columns control can hide Price Activity independently.
 
 Validation includes boundary/classification, grouping, gap, snapshot and persistence tests;
 Eliquis's six-package event and product/package selection; NADAC parity; a 344-package
@@ -432,8 +432,7 @@ isolation and multi-window storage behavior.
 
 ## Still open
 
-- After building: whether the sparkline shows on phones (author's choice from the real thing),
-  and whether 5% still reads right on real searches.
+- Whether 5% still reads right on real searches.
 
 ## What the rough mockup showed
 

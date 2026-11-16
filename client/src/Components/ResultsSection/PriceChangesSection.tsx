@@ -27,9 +27,9 @@ export default function PriceChangesSection({ prices, history, origin, colors, p
     headingRef.current.focus({ preventScroll: true });
     headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [current]);
+  const window = useMemo(() => current ? aroundPriceEvent(current.group.events) : null, [current]);
   if (!groups.length) return null;
   const title = current ? `Price change · ${formatDate(current.group.date)} · per ${pricingUnitLabel(current.group.pricingUnit)}` : "";
-  const window = current ? aroundPriceEvent(current.group.events) : null;
   return <Box component="section" aria-labelledby={headingId} sx={{ minWidth: 0, px: { xs: 1, sm: 0 } }}>
     <Typography id={headingId} component="h3" variant="subtitle1">Price changes</Typography>
     <Typography variant="body2" color="text.secondary">Package changes of 10% or more in these dates and filters.</Typography>

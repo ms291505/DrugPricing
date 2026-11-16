@@ -1,3 +1,4 @@
+import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
 import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
@@ -79,7 +80,7 @@ type Props = {
   products: FdaProductDetail[],
   loading: boolean,
   dateWindow?: DateWindow,
-  activitySelection?: { ids: string[] },
+  activitySelection?: ActivitySelectionRequest,
 }
 
 /** The FDA search's results at product level: one row per product. */

@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import { NadacResultTable } from "../ResultTables";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch";
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
@@ -8,8 +8,7 @@ import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { clearNadacRefine, hiddenResultsHint, nadacResultsLabel, showAllNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
-import type { PriceEventGroup } from "../../library/priceActivity";
-import toast from "react-hot-toast";
+import useActivitySelection from "../../hooks/useActivitySelection";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
 
@@ -36,15 +35,7 @@ export default memo(function NadacResults({ view }: Props) {
   const colors = useSeriesColors(origin.resultPrices, prices);
   const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
 
-  const [activitySelection, setActivitySelection] = useState<{ ids: string[] }>();
-  const selectAffected = (group: PriceEventGroup) => {
-    const ids = [...new Set(group.events.map(e => e.packageNdc))];
-    const combined = new Set(selectedRows.ids);
-    ids.forEach(id => combined.add(id));
-    setSelectedRows({ type: "include", ids: combined });
-    setActivitySelection({ ids });
-    toast.success(`${ids.length} affected ${ids.length === 1 ? "row" : "rows"} selected · ${combined.size} selected in total`);
-  };
+  const { activitySelection, selectAffected } = useActivitySelection(selectedRows, setSelectedRows);
 
   if (loaded === null) return null;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fdaPackagePrices, flagPriceChanges, nadacPackagePrices } from "./flagNadacPriceChange";
+import { fdaPackagePrices, flagPriceChanges } from "./flagNadacPriceChange";
 import type { FdaProductDetail, NadacPrice } from "./types";
 
 describe("flagPriceChanges", () => {
@@ -11,7 +11,7 @@ describe("flagPriceChanges", () => {
       price("A", "2026-01-14", 5.52), price("B", "2026-01-07", 2), price("A", "2026-01-07", 9.69),
       price("B", "2026-01-14", 2.05),
     ];
-    const changes = flagPriceChanges(nadacPackagePrices(prices));
+    const changes = flagPriceChanges(["A", "B"].map(packageNdc => ({ packageNdc, prices: prices.filter(p => p.ndc === packageNdc) })));
     expect(changes.map(c => [c.packageNdc, c.priceChange.oldPrice, c.priceChange.newPrice])).toEqual([["A", 9.69, 5.52]]);
     // The result isn't reordered in place.
     expect(prices.map(p => p.nadacPerUnit)).toEqual([5.52, 2, 9.69, 2.05]);

@@ -1,4 +1,4 @@
-import { memo, useCallback, useContext, useMemo, useState } from "react";
+import { memo, useCallback, useContext, useMemo } from "react";
 import { Alert, Button, Box } from "@mui/material";
 import { FdaPackageResultTable, FdaProductResultTable } from "../ResultTables";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
@@ -12,7 +12,7 @@ import { foundMessage, type Noun } from "../../library/searchToasts";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import type { PriceEventGroup } from "../../library/priceActivity";
-import toast from "react-hot-toast";
+import useActivitySelection from "../../hooks/useActivitySelection";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
 import { TryNadacContext } from "../../Context/searchNavigation";
@@ -51,16 +51,11 @@ export default memo(function FdaResults({ view }: Props) {
   const levelHistory = useCallback(() => history(fdaResultDetailLevel), [history, fdaResultDetailLevel]);
   const packageHistory = useCallback(() => history("package"), [history]);
 
-  const [activitySelection, setActivitySelection] = useState<{ ids: string[] }>();
+  const { activitySelection, selectAffected: selectAffectedRows } = useActivitySelection(selectedRows, setSelectedRows);
   const selectAffected = (group: PriceEventGroup) => {
-    const ids = [...new Set(group.events.map(e => e.packageNdc))];
     const switching = fdaResultDetailLevel === "product";
     if (switching) setFdaResultDetailLevel("package");
-    const combined = new Set(switching ? [] : selectedRows.ids);
-    ids.forEach(id => combined.add(id));
-    setSelectedRows({ type: "include", ids: combined });
-    setActivitySelection({ ids });
-    toast.success(`${ids.length} affected ${ids.length === 1 ? "row" : "rows"} selected · ${combined.size} selected in total`);
+    selectAffectedRows(group, switching);
   };
 
   if (loaded === null) return null;

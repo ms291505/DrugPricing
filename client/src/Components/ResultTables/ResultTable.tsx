@@ -1,4 +1,6 @@
-import { useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
+import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
+import toast from "react-hot-toast";
+import { gridExpandedSortedRowIdsSelector, useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
 import { Button, Tooltip, Typography } from "@mui/material";
 import { useEffect, useMemo, useRef } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
@@ -7,7 +9,7 @@ import useWidthTier from "../../hooks/useWidthTier";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
 import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
-import { activityCounts, comparePriceActivity } from "../../library/priceActivity";
+import { activityCounts } from "../../library/priceActivity";
 import { formatWindow, type DateWindow } from "../../library/dates";
 import type { PricedRow } from "../../library/resultRows";
 
@@ -22,7 +24,7 @@ type Props<R extends PricedRow> = {
   rowNoun: string,
   loading: boolean,
   dateWindow?: DateWindow,
-  activitySelection?: { ids: string[] },
+  activitySelection?: ActivitySelectionRequest,
   /** The rows picked for Add Chart. */
   selection: GridRowSelectionModel,
   onSelectionChange: (selection: GridRowSelectionModel) => void,
@@ -53,11 +55,17 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
     if (handledSelection.current === activitySelection) return;
     if (!activitySelection || !apiRef.current) return;
     const api = apiRef.current;
-    const sorted = [...rows].sort((a, b) => comparePriceActivity(a.priceActivity, b.priceActivity));
     const ids = new Set(activitySelection.ids);
-    const index = sorted.findIndex(row => ids.has(String(getRowId(row))));
-    if (index < 0) { handledSelection.current = activitySelection; return; }
     api.setSortModel([{ field: "priceActivity", sort: "asc" }]);
+    // Use the grid's actual order: column filters may hide some or all affected rows.
+    const sortedIds = gridExpandedSortedRowIdsSelector(apiRef);
+    const index = sortedIds.findIndex(id => ids.has(String(id)));
+    if (index < 0) {
+      handledSelection.current = activitySelection;
+      activitySelection.onHandled();
+      toast("No affected rows are visible with the current column filters.");
+      return;
+    }
     const pageSize = api.state.pagination.paginationModel.pageSize;
     api.setPage(Math.floor(index / pageSize));
     const frame = requestAnimationFrame(() => {
@@ -66,14 +74,15 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       const columns = api.getVisibleColumns();
       const field = columns.find(column => column.field === "latestPrice")?.field
         ?? columns.find(column => column.field !== GRID_CHECKBOX_SELECTION_COL_DEF.field)?.field;
-      if (field) api.setCellFocus(getRowId(sorted[index]), field);
+      if (field) api.setCellFocus(sortedIds[index], field);
+      activitySelection.onHandled();
     });
     return () => cancelAnimationFrame(frame);
   }, [activitySelection, apiRef, rows, getRowId]);
 
   return (<>
     <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-      {rows.length} {tableType === "fdaProduct" ? "products" : "packages"}: {activityCounts(rows.map(row => row.priceActivity))}
+      {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
       {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
     </Typography>
     <DataGrid
