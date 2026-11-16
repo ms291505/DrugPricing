@@ -67,6 +67,12 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   once stored. `filtered` compares whole series, not windows. What a series is is stored as
   `seriesKind` (`"product" | "package" | "ndc"`); wording comes from one table in
   `explorerItems.ts`.
+- A product pin's provenance chip switches its transient view to package lines only when every
+  stored point has a known `packageNdc`. `packageLevelView` derives package series from that
+  snapshot, preserving dates and units; the original item and its settings stay intact so the
+  same chip switches back to product averages. Legacy or partial identities disable the switch.
+  Never fill an unknown package identity from a product NDC. In newly created snapshots,
+  `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned, `h4` for a focused chart inside the Price changes section), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is

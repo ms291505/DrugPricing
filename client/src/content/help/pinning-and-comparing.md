@@ -12,3 +12,8 @@ On a pinned chart you can:
   axis. Leave it off for drugs at very different prices, or the cheap one becomes a flat line;
 - see where it came from: the chip under the title names the search, how many of its results
   the chart shows, and "filtered" if filters were on.
+
+For a pinned **product** chart with saved package identities, select its **Products** chip to see
+the stored package price lines. Select the **Packages** chip to return to product averages. This
+switch changes only the chart view; it keeps the same dates and snapshot. Older product pins may
+not have package identities and can't be switched.
