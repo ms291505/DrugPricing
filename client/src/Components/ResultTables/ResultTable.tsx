@@ -9,6 +9,7 @@ import useWidthTier from "../../hooks/useWidthTier";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
 import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
+import { orderColumns } from "../../library/columnOrder";
 import { activityCounts } from "../../library/priceActivity";
 import { formatWindow, type DateWindow } from "../../library/dates";
 import type { PricedRow } from "../../library/resultRows";
@@ -18,6 +19,11 @@ type Props<R extends PricedRow> = {
   tableType: ResultTableType,
   /** The table's own columns; the selection checkboxes come first. Keep it stable (a module constant). */
   columns: GridColDef<R>[],
+  /**
+   * Field names to show first, in this order, when the table itself is narrow (below `sm`); the
+   * other columns follow in `columns` order. Keep it stable (a module constant).
+   */
+  narrowOrder?: readonly string[],
   /** A row's id is the `ndc` of its chart prices, which Add Chart filters the selection on. */
   getRowId: (row: R) => GridRowId,
   /** What a row is, for the checkbox tooltip of a row without prices: "product", "package". */
@@ -42,13 +48,19 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
  * (`createPriceColumns`) and checkboxes that pick rows for Add Chart. A row without prices can't
  * be charted, so it can't be selected, and its checkbox says why.
  */
-export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, getRowId, rowNoun, loading, selection, onSelectionChange, activitySelection, dateWindow }: Props<R>) {
+export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, narrowOrder, getRowId, rowNoun, loading, selection, onSelectionChange, activitySelection, dateWindow }: Props<R>) {
   const apiRef = useGridApiRef();
   const { settings, updateColumnOverrides } = useSettings();
   const overrides = settings.columnOverrides[tableType];
   const visibility = useMemo(() => columnVisibilityModel(DEFAULT_HIDDEN_COLUMNS[tableType], overrides), [overrides, tableType]);
   const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
-  const allColumns = useMemo(() => [checkboxColumn<R>(rowNoun), ...columns], [rowNoun, columns]);
+  // The same column objects either way, so the grid keeps its sort, page, selection and visibility.
+  // Only a table with a narrow order rebuilds its columns: a new array resets dragged widths.
+  const narrow = narrowOrder !== undefined && widthTier === "narrow";
+  const allColumns = useMemo(
+    () => [checkboxColumn<R>(rowNoun), ...(narrow && narrowOrder ? orderColumns(columns, narrowOrder) : columns)],
+    [rowNoun, columns, narrow, narrowOrder],
+  );
 
   const handledSelection = useRef<typeof activitySelection>(undefined);
   useEffect(() => {
@@ -123,7 +135,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       onRowSelectionModelChange={onSelectionChange}
       disableRowSelectionExcludeModel
     />
-    <AutosizePriceColumns apiRef={apiRef} rows={rows} visibility={visibility} />
+    <AutosizePriceColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
   </>);
 }
 

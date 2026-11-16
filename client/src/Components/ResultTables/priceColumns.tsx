@@ -40,65 +40,62 @@ type PriceColumnOptions = {
 
 /**
  * The price columns every result table shares. `latest` goes near the left so a phone shows it
- * without scrolling; `history` sits further right. Every price carries its unit, and sorting groups
- * rows by unit.
+ * without scrolling; `history` (`latestDate`, then the min and max `range`) sits further right.
+ * Every price carries its unit, and sorting groups rows by unit.
  *
  * A row priced in several units (a few products whose packages differ, e.g. packets per each and
  * canisters per gram) shows "Mixed units" instead of prices, and still its latest price date.
  */
-export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averagesPackages }: PriceColumnOptions = {}): { latest: GridColDef<R>, history: GridColDef<R>[] } {
-  return {
-    latest: {
-      field: "latestPrice",
-      headerName: "Latest Price",
-      description: averagesPackages ? "Average of the product's packages on its latest price date" : undefined,
-      type: "number",
-      width: 125,
-      minWidth: 90,
-      maxWidth: 125,
-      valueGetter: (_, row) => singleUnit(row)?.latest,
-      valueFormatter: unitPrice,
-      getSortComparator: byUnitThenPrice,
-      renderCell: ({ row, formattedValue, hasFocus }) => row.priceSummaries.length > 1
-        ? <MixedUnits tabIndex={hasFocus ? 0 : -1} pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
-        : formattedValue as string,
-    },
-    history: [
-      {
-        field: "latestPriceDate",
-        headerName: "Latest Price Date",
-        width: 135,
-        // The value is a timestamp, which the text filters can't match against the shown date.
-        filterable: false,
-        valueGetter: (_, row) => latestSummary(row.priceSummaries)?.latestDate,
-        valueFormatter: (value: number | undefined) => value === undefined ? NO_PRICE : formatDate(value),
-      },
-      {
-        field: "minPrice",
-        headerName: "Min Price",
-        description: averagesPackages ? "Lowest of the product's daily average across its packages" : undefined,
-        type: "number",
-        width: 115,
-        minWidth: 80,
-        maxWidth: 115,
-        valueGetter: (_, row) => singleUnit(row)?.min,
-        valueFormatter: unitPrice,
-        getSortComparator: byUnitThenPrice,
-      },
-      {
-        field: "maxPrice",
-        headerName: "Max Price",
-        description: averagesPackages ? "Highest of the product's daily average across its packages" : undefined,
-        type: "number",
-        width: 115,
-        minWidth: 80,
-        maxWidth: 115,
-        valueGetter: (_, row) => singleUnit(row)?.max,
-        valueFormatter: unitPrice,
-        getSortComparator: byUnitThenPrice,
-      },
-    ],
+export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averagesPackages }: PriceColumnOptions = {}) {
+  const latest: GridColDef<R> = {
+    field: "latestPrice",
+    headerName: "Latest Price",
+    description: averagesPackages ? "Average of the product's packages on its latest price date" : undefined,
+    type: "number",
+    width: 125,
+    minWidth: 90,
+    maxWidth: 125,
+    valueGetter: (_, row) => singleUnit(row)?.latest,
+    valueFormatter: unitPrice,
+    getSortComparator: byUnitThenPrice,
+    renderCell: ({ row, formattedValue, hasFocus }) => row.priceSummaries.length > 1
+      ? <MixedUnits tabIndex={hasFocus ? 0 : -1} pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
+      : formattedValue as string,
   };
+  const latestDate: GridColDef<R> = {
+    field: "latestPriceDate",
+    headerName: "Latest Price Date",
+    width: 135,
+    // The value is a timestamp, which the text filters can't match against the shown date.
+    filterable: false,
+    valueGetter: (_, row) => latestSummary(row.priceSummaries)?.latestDate,
+    valueFormatter: (value: number | undefined) => value === undefined ? NO_PRICE : formatDate(value),
+  };
+  const minPrice: GridColDef<R> = {
+    field: "minPrice",
+    headerName: "Min Price",
+    description: averagesPackages ? "Lowest of the product's daily average across its packages" : undefined,
+    type: "number",
+    width: 115,
+    minWidth: 80,
+    maxWidth: 115,
+    valueGetter: (_, row) => singleUnit(row)?.min,
+    valueFormatter: unitPrice,
+    getSortComparator: byUnitThenPrice,
+  };
+  const maxPrice: GridColDef<R> = {
+    field: "maxPrice",
+    headerName: "Max Price",
+    description: averagesPackages ? "Highest of the product's daily average across its packages" : undefined,
+    type: "number",
+    width: 115,
+    minWidth: 80,
+    maxWidth: 115,
+    valueGetter: (_, row) => singleUnit(row)?.max,
+    valueFormatter: unitPrice,
+    getSortComparator: byUnitThenPrice,
+  };
+  return { latest, latestDate, range: [minPrice, maxPrice], history: [latestDate, minPrice, maxPrice] };
 }
 
 type MixedUnitsProps = {

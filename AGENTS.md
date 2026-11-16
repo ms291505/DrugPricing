@@ -87,7 +87,9 @@ lists its columns, and renders `ResultTable` (paging, and the selection that Cha
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
 sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
-on a phone it must show without scrolling.
+on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
+tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own
+width tier), since the checkbox, Brand Name and NDC before the price don't fit a phone.
 
 `ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
 width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
