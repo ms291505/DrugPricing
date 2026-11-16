@@ -78,6 +78,8 @@ type Props = {
   /** Some refine field is away from its default, so "Clear filters" has something to do. */
   canClear: boolean,
   onClear: () => void,
+  /** Standalone-only action beside the filter controls. Workspace tabs omit it. */
+  standaloneAction?: ReactNode,
 };
 
 /**
@@ -89,7 +91,7 @@ type Props = {
  */
 export default function SearchPanel({
   label, layout: forcedLayout, heading, navigation, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
-  moreFilters, moreFilterCount, canClear, onClear,
+  moreFilters, moreFilterCount, canClear, onClear, standaloneAction,
 }: Props) {
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -164,7 +166,7 @@ export default function SearchPanel({
         </Box>
       </Box>
       <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
           <Button
             size="small"
             aria-expanded={moreOpen}
@@ -174,7 +176,10 @@ export default function SearchPanel({
           >
             More filters{!moreOpen && moreFilterCount > 0 ? ` (${moreFilterCount})` : ""}
           </Button>
-          <Button size="small" sx={{ ml: "auto" }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          <Button size="small" sx={{ ml: "auto", order: 1 }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", order: stacked ? 2 : 0, minWidth: 0 }}>
+            {standaloneAction}
+          </Box>}
         </Box>
         <Collapse in={moreOpen} id={moreId}>
           <Box sx={{
