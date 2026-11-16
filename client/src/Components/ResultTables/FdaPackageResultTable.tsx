@@ -12,7 +12,11 @@ import { createPriceColumns } from "./priceColumns";
 const PRICE_COLUMNS = createPriceColumns<FdaPackageRow>();
 
 const COLUMNS: GridColDef<FdaPackageRow>[] = [
-  // The full code, so a phone fits it and the latest price without scrolling.
+  {
+    field: "proprietaryName",
+    headerName: "Brand Name",
+    width: 150,
+  },
   {
     field: "ndcPackageCode",
     headerName: "Package NDC",
@@ -21,11 +25,8 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
-  {
-    field: "proprietaryName",
-    headerName: "Brand Name",
-    width: 150,
-  },
+  PRICE_COLUMNS.latestDate,
+  activityColumn<FdaPackageRow>(),
   {
     field: "strengthNumber",
     headerName: "Strength",
@@ -36,8 +37,7 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     headerName: "Package Description",
     width: 250,
   },
-  activityColumn<FdaPackageRow>(),
-  ...PRICE_COLUMNS.history,
+  ...PRICE_COLUMNS.range,
   {
     field: "productTypeName",
     headerName: "OTC Drug",

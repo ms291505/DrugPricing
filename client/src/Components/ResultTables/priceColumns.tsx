@@ -40,14 +40,14 @@ type PriceColumnOptions = {
 
 /**
  * The price columns every result table shares. `latest` goes near the left so a phone shows it
- * without scrolling; `history` sits further right. Every price carries its unit, and sorting groups
+ * without scrolling; `history` (`latestDate`, then the min and max `range`) sits further right. Every price carries its unit, and sorting groups
  * rows by unit.
  *
  * A row priced in several units (a few products whose packages differ, e.g. packets per each and
  * canisters per gram) shows "Mixed units" instead of prices, and still its latest price date.
  */
-export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averagesPackages }: PriceColumnOptions = {}): { latest: GridColDef<R>, history: GridColDef<R>[] } {
-  return {
+export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averagesPackages }: PriceColumnOptions = {}): { latest: GridColDef<R>, latestDate: GridColDef<R>, range: GridColDef<R>[], history: GridColDef<R>[] } {
+  const columns: { latest: GridColDef<R>, history: [GridColDef<R>, ...GridColDef<R>[]] } = {
     latest: {
       field: "latestPrice",
       headerName: "Latest Price",
@@ -99,6 +99,9 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
       },
     ],
   };
+  // `history` is the usual order; a table that wants the date apart from the range uses the pieces.
+  const [latestDate, ...range] = columns.history;
+  return { ...columns, latestDate, range };
 }
 
 type MixedUnitsProps = {
