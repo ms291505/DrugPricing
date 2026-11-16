@@ -14,11 +14,11 @@ solid line marks the change, and the readout rests on its date until you point a
 **Pin** keeps a copy, and **Close** or the same button again closes it. To see every
 result together, use **Compare price histories**.
 
-In a chart's own event list or readout, **Around this change** focuses that chart's dates
+In a chart's own **Price changes** list below the plot, **Around this change** focuses that chart's dates
 around the event. It never chooses a different event for you.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
-same date share one label; their exact values stay in the readout and the chart's event list.
+same date share one label; their exact values stay in the chart's event list.
 A product marker means one or more packages changed, not that its average made that change.
 Older product pins without package identities cannot show those package markers. A pinned
 line chart's menu can turn **Show price changes** off or on.

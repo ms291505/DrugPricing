@@ -232,7 +232,7 @@ The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author di
 - Events group by date, pricing unit and direction. Exact values stay expandable, with five
   groups initially and Show all for the rest.
 - Around this change belongs to an explicit event. It focuses the current chart from its
-  readout/event list. (In the search event list it was later replaced by Chart this change;
+  event list below the plot (the docked readout no longer lists events). (In the search event list it was later replaced by Chart this change;
   see Price changes section.) The ambiguous
   chart-wide Around change preset is removed; no largest/latest event is chosen automatically.
 - Product activity labels count affected packages and name the largest movement. Product
@@ -301,7 +301,7 @@ Callouts become general:
   prices; those are in the readout and at Package level.
 - Line charts only. Bar charts have nothing to mark.
 - A chart made from selected rows opens on the search dates like any other. Around this
-  change is an action on a specific event in its readout/event list. It focuses that event's
+  change is an action on a specific event in its event list below the plot. It focuses that event's
   dates; there is no chart-wide preset choosing an event.
 
 ### Price Activity column
