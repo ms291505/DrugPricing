@@ -25,10 +25,11 @@ export default function Welcome() {
         <Typography variant="h6" component="p" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: "36em" }}>
           Explore US drug acquisition prices, week by week. Search for a drug, chart its price history, and pin charts side by side to compare.
         </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ pt: 2, width: { xs: "100%", sm: "auto" } }}>
+        {/* A grid of equal columns, so side by side both buttons take the wider label's width. */}
+        <Box sx={{ display: "grid", gridAutoFlow: { xs: "row", sm: "column" }, gridAutoColumns: "1fr", gap: 2, pt: 2, width: { xs: "100%", sm: "auto" } }}>
           <Button variant="contained" size="large" component={RouterLink} to="/search" sx={{ px: 4 }}>Find a drug</Button>
           <Button variant="outlined" size="large" component={RouterLink} to="/workspace" sx={{ px: 4 }}>Open workspace</Button>
-        </Stack>
+        </Box>
       </Stack>
     </Paper>
 
