@@ -9,9 +9,9 @@ The **Price changes** list groups these events by date, pricing unit and directi
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
 
-**Chart this change** opens one chart of that group's packages over the search's dates, with
-the readout locked on the change date. Click the chart or **Unlock** to explore other dates,
-**Pin** to keep a copy, and **Close** or the same button again to close it. To see every
+**Chart this change** opens one chart of that group's packages over the search's dates. A
+solid line marks the change, and the readout rests on its date until you point at another.
+**Pin** keeps a copy, and **Close** or the same button again closes it. To see every
 result together, use **Compare price histories**.
 
 In a chart's own event list or readout, **Around this change** focuses that chart's dates

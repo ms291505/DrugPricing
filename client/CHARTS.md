@@ -45,9 +45,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
   closes stays so while the page is mounted. Its one action, Chart this change, toggles one
-  package chart (one unit) under the list over the page's shown dates, its readout locked on
-  the change date (`eventDate`, the lock's dashed line marks it). A pin keeps `eventDate`;
-  pins without it, including old zoomed ones, draw as before. In a chart's event list/readout,
+  package chart (one unit) under the list over the page's shown dates. `eventDate` marks the
+  change with a solid line (the lock's is thin and dashed), and the readout rests on that date
+  instead of the latest, without that date's event list (the group is described above the
+  chart). A pin keeps `eventDate`; pins without it, including old zoomed ones, draw as before. In a chart's event list/readout,
   Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
   change preset chooses an event implicitly.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
@@ -141,8 +142,8 @@ tooltip that floats over the plot or sits under a finger. The box is recharts' `
 rendered there through `portal` (`DOCKED_TOOLTIP` keeps it showing between points), so hovering
 re-renders only the readout, not the chart.
 
-- **What it shows:** the hovered point; else the locked one; else, on a line chart, the latest
-  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
+- **What it shows:** the hovered point; else the locked one; else, on a line chart, the
+  chart's `eventDate` ("· this change") or the latest date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
   `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
   under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).

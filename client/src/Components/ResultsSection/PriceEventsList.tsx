@@ -19,11 +19,16 @@ type Props = {
   details?: { isOpen: (key: string) => boolean, onToggle: (key: string, open: boolean) => void },
   /** Narrow: the amount folds under the percent. */
   compact?: boolean,
+  /** Show all groups, when the caller needs to know which are shown; else the list keeps it. */
+  showAll?: boolean,
+  onShowAllChange?: (showAll: boolean) => void,
 };
 
 /** Events retain exact per-package values, even when the summary combines a date/unit/direction. */
-export default function PriceEventsList({ groups, actionLabel, onAction, expanded, details, compact = false }: Props) {
-  const [showAll, setShowAll] = useState(false);
+export default function PriceEventsList({ groups, actionLabel, onAction, expanded, details, compact = false, ...props }: Props) {
+  const [ownShowAll, setOwnShowAll] = useState(false);
+  const showAll = props.showAll ?? ownShowAll;
+  const setShowAll = props.onShowAllChange ?? setOwnShowAll;
   const listId = useId();
   return <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -50,7 +55,7 @@ export default function PriceEventsList({ groups, actionLabel, onAction, expande
       })}
     </Box>
     {groups.length > PRICE_CHANGE_GROUP_LIMIT && <Button size="small" sx={{ alignSelf: "flex-start" }}
-      aria-expanded={showAll} aria-controls={listId} onClick={() => setShowAll(value => !value)}>
+      aria-expanded={showAll} aria-controls={listId} onClick={() => setShowAll(!showAll)}>
       {showAll ? "Show fewer" : `Show all ${groups.length} events`}
     </Button>}
   </Box>;
@@ -73,7 +78,7 @@ function PackageTable({ group, compact }: { group: PriceEventGroup, compact: boo
       width: "auto",
       "& th, & td": { px: 1, py: 0.5, borderColor: "divider", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", verticalAlign: "top" },
       "& th:first-of-type, & td:first-of-type": { pl: 0 },
-      "& th": { color: "text.secondary", typography: "caption", fontWeight: 600 },
+      "& thead th": { color: "text.secondary", typography: "caption", fontWeight: 600 },
       "& tbody tr:last-of-type td": { borderBottom: 0 },
     }}>
       <Box component="caption" sx={visuallyHidden}>{priceEventGroupLabel(group)}: prices per {unit}</Box>
@@ -91,7 +96,7 @@ function PackageTable({ group, compact }: { group: PriceEventGroup, compact: boo
           const { percent, amount } = signedChange(event.change);
           const note = previousObservationNote(event, group);
           return <TableRow key={`${event.seriesNdc}:${event.packageNdc}`}>
-            <TableCell>
+            <TableCell component="th" scope="row">
               {event.packageNdc}
               {note && <Box component="span" sx={{ display: "block", color: "text.secondary", typography: "caption" }}>{note}</Box>}
             </TableCell>

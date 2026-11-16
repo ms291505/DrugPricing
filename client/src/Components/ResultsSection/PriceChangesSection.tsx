@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import { derivePriceEvents, groupPriceEvents, type PriceEventGroup } from "../../library/priceActivity";
+import { derivePriceEvents, groupPriceEvents, PRICE_CHANGE_GROUP_LIMIT, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
 import type { ChartOrigin } from "../../library/explorerItems";
 import { formatDate, type DateWindow } from "../../library/dates";
@@ -40,21 +40,49 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
   // The section's own width: a workspace pane can be narrow in a wide window.
   const [sectionRef, widthTier] = useWidthTier<HTMLElement>();
   const [focus, setFocus] = useState<{ prices: ChartPrice[], group: PriceEventGroup, history: ChartPrice[], trigger: HTMLButtonElement } | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const sectionHeadingRef = useRef<HTMLHeadingElement>(null);
+  // Whether focus was in the chart card when it last moved: a card that unmounts takes it to `body`.
+  const focusInCard = useRef(false);
   const current = focus?.prices === prices ? focus : null;
+  const stale = focus !== null && current === null;
   useEffect(() => {
     if (!current || !headingRef.current?.checkVisibility()) return;
     headingRef.current.focus({ preventScroll: true });
     headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [current]);
-  const close = () => { if (current) { setFocus(null); current.trigger.focus(); } };
+  // New prices closed the chart: if focus was in it, it lands on the section's heading.
+  useEffect(() => {
+    if (!stale) return;
+    if (focusInCard.current && (document.activeElement === null || document.activeElement === document.body))
+      sectionHeadingRef.current?.focus({ preventScroll: true });
+    focusInCard.current = false;
+  }, [stale]);
+  const close = () => {
+    if (!current) return;
+    setFocus(null);
+    focusInCard.current = false;
+    if (current.trigger.isConnected) current.trigger.focus();
+    else sectionHeadingRef.current?.focus();
+  };
+  // "Show fewer" unmounts the triggers past the limit: a chart whose trigger goes closes with it.
+  const onShowAllChange = (next: boolean) => {
+    setShowAll(next);
+    if (!next && current && groups.findIndex(group => group.key === current.group.key) >= PRICE_CHANGE_GROUP_LIMIT) {
+      setFocus(null);
+      focusInCard.current = false;
+    }
+  };
   // Package details start open from `md` up and closed below; a group the user toggled keeps that.
   const defaultOpen = widthTier === "wide";
   const title = current ? `Price change · ${formatDate(current.group.date)} · per ${pricingUnitLabel(current.group.pricingUnit)}` : "";
   return <Box component="section" ref={sectionRef} aria-labelledby={headingId} sx={{ minWidth: 0, px: { xs: 1, sm: 0 } }}>
-    <Typography id={headingId} component="h3" variant="subtitle1">Price changes</Typography>
+    <Typography id={headingId} ref={sectionHeadingRef} tabIndex={-1} component="h3" variant="subtitle1"
+      sx={{ "&:focus": { outline: "none" } }}>Price changes</Typography>
     <Typography variant="body2" color="text.secondary">Package changes of 10% or more in these dates and filters.</Typography>
     <PriceEventsList groups={groups} actionLabel="Chart this change" compact={widthTier === "narrow"}
+      showAll={showAll} onShowAllChange={onShowAllChange}
       expanded={{ key: current?.group.key ?? null, controls: chartId }}
       details={{ isOpen: key => detailsChoice.get(key) ?? defaultOpen, onToggle: onDetailsToggle }}
       onAction={(group, trigger) => {
@@ -62,8 +90,10 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
         const affected = new Set(group.events.map(e => e.packageNdc));
         setFocus({ prices, group, trigger, history: history().filter(p => affected.has(p.ndc) && p.pricingUnit === group.pricingUnit) });
       }} />
-    {/* Keyed by the change, so the readout's lock starts on each new change's date. */}
-    {current && <Box id={chartId} key={current.group.key} sx={{ mt: 1 }}><ExplorerGridItem title={title} headingLevel={4} headingRef={headingRef}
+    {/* Keyed by the change, so each change's chart starts with a fresh readout and legend. */}
+    {current && <Box id={chartId} key={current.group.key} sx={{ mt: 1 }}
+      onFocus={() => { focusInCard.current = true; }}
+      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) focusInCard.current = false; }}><ExplorerGridItem title={title} headingLevel={4} headingRef={headingRef}
       actions={<><PinButton title={title} chartType="line" prices={current.history} history={() => current.history}
         origin={origin} colors={colors} dateWindow={dateWindow} eventDate={current.group.date} />
         <Button size="small" onClick={close}>Close</Button></>}>

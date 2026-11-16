@@ -272,7 +272,7 @@ search dates and the current filters, and labeled as such.
   on Jan 14"), with exact values expandable. Show five groups before Show all.
 - Its one action is **"Chart this change"** (replacing "Select affected rows", "Show affected
   packages" and "Around this change", which the author found confusing): it toggles one chart
-  of the group's packages over the shown dates, readout locked on the change date, with Pin
+  of the group's packages over the shown dates, the change marked and the readout resting on it, with Pin
   and Close. Compare price histories remains the way to see every result together.
 - The search toast keeps "N found" and drops its price-change part (`SearchResultToast`).
 

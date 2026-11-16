@@ -10,14 +10,12 @@ import { useCallback, useState, type KeyboardEvent } from "react";
  *
  * @param currentKey - the point the pointer or the keys last made active, if any
  * @param has - whether the chart's current rows hold a point
- * @param initial - a point to start locked on (a change the chart was opened for)
  */
 export default function useLockedPoint<Key extends string | number>(
   currentKey: () => Key | undefined,
   has: (key: Key) => boolean,
-  initial?: Key,
 ) {
-  const [stored, setStored] = useState<Key | null>(initial ?? null);
+  const [stored, setStored] = useState<Key | null>(null);
   // Adjusting state while rendering (React re-renders at once): the lock goes with its point.
   const locked = stored !== null && has(stored) ? stored : null;
   if (stored !== null && locked === null) setStored(null);

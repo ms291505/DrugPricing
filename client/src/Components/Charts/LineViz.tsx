@@ -40,7 +40,10 @@ type Props = {
   seriesKind?: SeriesKind;
   showPriceChanges?: boolean;
   onAroundChange?: (window: DateWindow) => void;
-  /** The change the chart was opened for: its readout starts locked on that date, which marks it. */
+  /**
+   * The change the chart was opened for: a solid line marks its date, and the readout rests there
+   * (instead of the latest date) without repeating that change's event list.
+   */
   eventDate?: number;
 };
 
@@ -170,11 +173,12 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
       + (events.length ? ` ${events.map(e => `${e.packageNdc}: ${eventLabel(e.change)}.`).join(" ")}` : "") : null;
   });
 
-  // The docked readout: the hovered date, else the locked one, else the latest.
+  // The docked readout: the hovered date, else the locked one, else the chart's change or the latest.
   const [dock, setDock] = useState<HTMLDivElement | null>(null);
   const dates = useMemo(() => new Set(vizData.map(row => row.asOfDate)), [vizData]);
-  const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date), eventDate);
-  const latestDate = vizData.at(-1)?.asOfDate;
+  const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date));
+  const eventShown = eventDate !== undefined && dates.has(eventDate);
+  const restDate = eventShown ? eventDate : vizData.at(-1)?.asOfDate;
   // Unlock unmounts with the lock: give focus back to the chart, not the page.
   const focusBox = useRef<HTMLDivElement>(null);
   const unlockAndFocus = () => {
@@ -235,18 +239,20 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
           active={lock.locked !== null ? false : undefined}
           content={({ active, payload }) => {
             const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
-            const date = hovered?.asOfDate ?? lock.locked ?? latestDate;
+            const date = hovered?.asOfDate ?? lock.locked ?? restDate;
             const row = hovered ?? vizData.find(r => r.asOfDate === date);
             if (date === undefined || !row) return null;
             return (
               <LineReadout
-                events={<PriceEventsList groups={eventGroups.filter(group => group.date === date)}
+                // The chart's own change is described above the chart: don't offer it again here.
+                events={<PriceEventsList groups={eventGroups.filter(group => group.date === date && group.date !== eventDate)}
                   actionLabel="Around this change" compact={isMobile}
                   onAction={group => onAroundChange(aroundPriceEvent(group.events))} />}
                 date={date}
                 unit={unit}
                 rows={tooltipRows(row, shownNdcs)}
                 status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
+                restLabel={eventShown ? "this change" : "latest"}
                 onUnlock={unlockAndFocus}
                 colorFor={colorFor}
                 descriptionFor={isMobile ? undefined : descriptionFor}
@@ -254,6 +260,10 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             );
           }}
         />
+        {/* The chart's change: solid and wider, under the lock's thin dashed line, and kept while locked elsewhere. */}
+        {eventShown
+          ? <ReferenceLine x={eventDate} stroke={chartTheme.textSecondary} strokeWidth={2} />
+          : null}
         {lock.locked !== null
           ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
           : null}
@@ -340,6 +350,8 @@ type LineReadoutProps = {
   unit: string,
   rows: TooltipRow[],
   status: ReadoutStatus,
+  /** What the resting (default) date is: the latest, or the change the chart was opened for. */
+  restLabel: "latest" | "this change",
   onUnlock: () => void,
   colorFor: (ndc: string) => string,
   /** Each series' description, left out on a phone to keep the readout small. */
@@ -350,13 +362,13 @@ type LineReadoutProps = {
  * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
  * description and, for an averaged product, its packages' range beneath on wider screens.
  */
-function LineReadout({ events, date, unit, rows, status, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
+function LineReadout({ events, date, unit, rows, status, restLabel, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
     <ReadoutContent
       header={<ReadoutHeader status={status} onUnlock={onUnlock}>
         <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
         <Box component="span" sx={{ color: "text.secondary" }}>
-          {" "}· per {unit}{status === "default" ? " · latest" : ""}
+          {" "}· per {unit}{status === "default" ? ` · ${restLabel}` : ""}
         </Box>
       </ReadoutHeader>}
     >
