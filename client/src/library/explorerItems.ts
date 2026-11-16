@@ -77,7 +77,7 @@ export type ChartSeriesSnapshot = {
   unit: string,
   points: Array<[number, number]>,
   /** Original package identity per point, so product averages never manufacture change events. */
-  packageNdcs?: string[],
+  packageNdcs?: Array<string | null>,
   /** The series' color on the page it came from. Charts pinned before colors were stored have none. */
   color?: string,
 };
@@ -147,8 +147,8 @@ export function toChartSeries(prices: ChartPrice[], colors?: Map<string, string>
     }
     entry.points.push([price.asOfDate.getTime(), price.nadacPerUnit]);
     if (price.packageNdc || entry.packageNdcs) {
-      entry.packageNdcs ??= entry.points.slice(0, -1).map(() => entry.ndc);
-      entry.packageNdcs.push(price.packageNdc ?? price.ndc);
+      entry.packageNdcs ??= entry.points.slice(0, -1).map(() => null);
+      entry.packageNdcs.push(price.packageNdc ?? null);
     }
   }
   return [...series.values()];
@@ -160,12 +160,56 @@ export function fromChartSeries(series: ChartSeriesSnapshot[]): ChartPrice[] {
     points.map(([time, price], i) => ({
       ndc,
       ndcDescription: label,
-      ...(packageNdcs && { packageNdc: packageNdcs[i] }),
+      ...(packageNdcs?.[i] && { packageNdc: packageNdcs[i] }),
       pricingUnit: unit,
       nadacPerUnit: price,
       asOfDate: new Date(time),
     }))
   );
+}
+
+/** Whether this product snapshot has enough stored identity to switch to package-level series. */
+export function canDrillDownToPackages(item: ChartItem): boolean {
+  return item.source.seriesKind === "product"
+    && item.series.length > 0
+    && item.series.every(series => series.packageNdcs?.length === series.points.length
+      && series.packageNdcs.every(ndc => typeof ndc === "string" && ndc.length > 0));
+}
+
+/**
+ * Derive a package-level view from a pinned product snapshot. The original stays untouched so
+ * switching back restores its exact averaged series; no current search data is consulted.
+ */
+export function packageLevelView(item: ChartItem): ChartItem | null {
+  if (!canDrillDownToPackages(item)) return null;
+  const packageSeries = new Map<string, ChartSeriesSnapshot>();
+  for (const series of item.series) {
+    series.points.forEach((point, index) => {
+      const packageNdc = series.packageNdcs![index];
+      if (!packageNdc) return;
+      const key = `${packageNdc}|${series.unit}`;
+      let target = packageSeries.get(key);
+      if (!target) {
+        target = {
+          ndc: packageNdc,
+          label: packageNdc,
+          unit: series.unit,
+          points: [],
+        };
+        packageSeries.set(key, target);
+      }
+      target.points.push(point);
+    });
+  }
+  const series = [...packageSeries.values()];
+  const count = new Set(series.map(({ ndc }) => ndc)).size;
+  return {
+    ...item,
+    title: undefined,
+    defaultTitle: `Packages from ${itemTitle(item)}`,
+    series,
+    source: { ...item.source, seriesKind: "package", seriesCount: count, resultSeriesCount: count },
+  };
 }
 
 const countNdcs = (series: ChartSeriesSnapshot[]) => new Set(series.map(s => s.ndc)).size;

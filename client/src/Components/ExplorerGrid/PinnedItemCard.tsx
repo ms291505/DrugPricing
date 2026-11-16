@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useRef, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -9,7 +9,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
 import { usePinActions, type PinHighlight } from "../../Context/pinnedItemsContexts";
-import { formatItemSource, isScaleMatched, itemTitle, type ExplorerItem } from "../../library/explorerItems";
+import { canDrillDownToPackages, formatItemSource, isScaleMatched, itemTitle, packageLevelView, type ExplorerItem } from "../../library/explorerItems";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
@@ -40,7 +40,6 @@ const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: r
 /** A pinned item's card. Memoized: its props change only when its own item does. */
 export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, priceRanges }: Props) {
   const { updateItem, removeItem, moveItem } = usePinActions();
-  const title = itemTitle(item);
   const isFull = item.layout.width === "full";
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -97,6 +96,14 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
 
   // The date picker opens from the dates chip, or from "Change dates" in the menu.
   const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
+  const [showPackages, setShowPackages] = useState(false);
+  const packageView = useMemo(
+    () => item.kind === "chart" && showPackages ? packageLevelView(item) : null,
+    [item, showPackages],
+  );
+  const visibleItem = packageView ?? item;
+  const title = itemTitle(visibleItem);
+  const canSwitchLevel = item.kind === "chart" && item.source.seriesKind === "product" && canDrillDownToPackages(item);
 
   const isLineChart = item.kind === "chart" && item.chartType === "line";
   const matched = isScaleMatched(item);
@@ -166,7 +173,19 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
         headingRef={headingRef}
         highlighted={highlighted}
         badges={<>
-          <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          {canSwitchLevel
+            ? <Tooltip title={showPackages ? "Return to product averages" : "Show the stored package price lines"}>
+              <Chip
+                size="small"
+                variant="outlined"
+                clickable
+                component="button"
+                label={formatItemSource(visibleItem.source)}
+                onClick={() => setShowPackages(value => !value)}
+              />
+            </Tooltip>
+            : <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          }
           {item.kind === "chart"
             ? <PinnedChartDates
               item={item}
@@ -188,7 +207,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed: boolean) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={priceRanges} /> : null}
+        {visibleItem.kind === "chart" ? <ChartItemBody item={visibleItem} priceRanges={priceRanges} /> : null}
       </ExplorerGridItem>
     </Grid>
   );

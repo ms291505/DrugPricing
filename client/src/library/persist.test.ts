@@ -86,6 +86,9 @@ describe("loading saved tab state", () => {
           showPriceChanges: false,
           matchScale: true,
         },
+        { ...oldItem, id: "partial-package-identities", dateWindow: FULL_WINDOW, series: [{
+          ...oldItem.series[0], points: [[1, 2], [2, 3]], packageNdcs: ["PKG1", null],
+        }] },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
         // From "Chart this change": the full shown dates, with the change marked.
         { ...oldItem, id: "event", dateWindow: { start: 0, end: 500 }, eventDate: 300 },
@@ -100,6 +103,16 @@ describe("loading saved tab state", () => {
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
     expect(state.pinnedItems[0].matchScale).toBeUndefined();
+  });
+
+  it("round-trips partial package identities without discarding the pin", () => {
+    const partialPin = {
+      ...oldItem,
+      series: [{ ...oldItem.series[0], points: [[1, 2], [2, 3]], packageNdcs: ["PKG1", null] }],
+    } as Parameters<Persist["saveTabState"]>[1]["pinnedItems"][number];
+    persist.saveTabState("partial", { type: "fda", criteria: createFdaCriteria(), detailLevel: "package", pinnedItems: [partialPin] });
+    const restored = loaded(persist.loadFdaTabState("partial")).pinnedItems[0];
+    expect(restored.series[0].packageNdcs).toEqual(["PKG1", null]);
   });
 
   it("defaults a missing or invalid detail level to packages and keeps a saved one", () => {
