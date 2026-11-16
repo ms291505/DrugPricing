@@ -14,5 +14,5 @@ export default function useNadacChartOrigin(): ChartOrigin {
   const { criteria } = useNadacSearchContext();
   const { data } = useNadacSearch();
 
-  return { searchLabel: nadacSearchLabel(criteria), seriesKind: "ndc", resultPrices: data?.prices ?? EMPTY };
+  return { searchSource: "nadac", searchLabel: nadacSearchLabel(criteria), seriesKind: "ndc", resultPrices: data?.prices ?? EMPTY };
 }

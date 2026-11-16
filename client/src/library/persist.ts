@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
 import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
-import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
+import type { BarValue, ChartChangeSpan, ChartItem, ChartSearchSource, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
@@ -99,6 +99,7 @@ const isTabType = oneOf<TabType>(["fda", "nadac", "new", "collection"]);
 const isLayoutMode = oneOf<LayoutMode>(["single", "split-2", "split-4"]);
 const isDetailLevel = oneOf<FdaResultDetailLevel>(["product", "package"]);
 const isSeriesKind = oneOf<SeriesKind>(["product", "package", "ndc"]);
+const isChartSearchSource = oneOf<ChartSearchSource>(["fda", "nadac"]);
 
 const isWorkspaceTab = (x: unknown): x is WorkspaceTab =>
   isObject(x) && isString(x.id) && isString(x.title) && isTabType(x.type);
@@ -150,7 +151,19 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
-  ? x.filter(isStoredExplorerItem).map(item => ({ ...item, dateWindow: item.dateWindow ?? FULL_WINDOW }))
+  ? x.filter(isStoredExplorerItem).map(item => {
+    // This field was added after pins existed. Drop only an invalid value; keep the pin and every
+    // other field, and leave a missing value unknown rather than inferring it from other state.
+    const source = { ...(item.source as unknown as Record<string, unknown>) };
+    const searchSource = source.searchSource;
+    delete source.searchSource;
+    if (isChartSearchSource(searchSource)) source.searchSource = searchSource;
+    return {
+      ...item,
+      source: source as ChartItem["source"],
+      dateWindow: item.dateWindow ?? FULL_WINDOW,
+    };
+  })
   : [];
 
 const isBrandGeneric = oneOf<BrandGeneric>(["all", "brand", "generic"]);

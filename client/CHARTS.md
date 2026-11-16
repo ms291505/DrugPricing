@@ -66,13 +66,20 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   whole unfiltered result (`ChartOrigin.resultPrices`), never from filter state, so it stays true
   once stored. `filtered` compares whole series, not windows. What a series is is stored as
   `seriesKind` (`"product" | "package" | "ndc"`); wording comes from one table in
-  `explorerItems.ts`.
+  `explorerItems.ts`. `searchSource` (`"nadac" | "fda"`) is separate and comes from the chart
+  origin, never inferred from the `seriesKind` or search terms. Old pins without it show "Search
+  source unknown"; invalid values are dropped field by field during persistence, retaining the
+  rest of the pin.
 - A product pin's provenance chip switches its transient view to package lines only when every
   stored point has a known `packageNdc`. `packageLevelView` derives package series from that
   snapshot, preserving dates and units; the original item and its settings stay intact so the
   same chip switches back to product averages. Legacy or partial identities disable the switch.
   Never fill an unknown package identity from a product NDC. In newly created snapshots,
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
+- Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
+  Its tooltip states that every plotted price is NADAC; FDA reference data only finds and groups
+  products. The dates chip is the actual date window, and Match scale shares axes only by pricing
+  unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned, `h4` for a focused chart inside the Price changes section), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is

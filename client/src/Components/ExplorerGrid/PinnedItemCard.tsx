@@ -35,6 +35,14 @@ const SETTLED_PX = 24;
 /** Input that scrolls the page: the user taking over from the centering. */
 const USER_SCROLL_EVENTS = ["wheel", "touchmove", "keydown"] as const;
 
+const sourceBadge = (source: ExplorerItem["source"]) => {
+  switch (source.searchSource) {
+    case "fda": return { label: "FDA Search", detail: "Found and grouped using FDA reference data. Prices are from NADAC." };
+    case "nadac": return { label: "NADAC Search", detail: "Found by NADAC description or NDC. Prices are from NADAC." };
+    default: return { label: "Search source unknown", detail: "This pin predates saved search sources. Prices are from NADAC." };
+  }
+};
+
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** A pinned item's card. Memoized: its props change only when its own item does. */
@@ -103,6 +111,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   );
   const visibleItem = packageView ?? item;
   const title = itemTitle(visibleItem);
+  const source = sourceBadge(item.source);
   const canSwitchLevel = item.kind === "chart" && item.source.seriesKind === "product" && canDrillDownToPackages(item);
 
   const isLineChart = item.kind === "chart" && item.chartType === "line";
@@ -173,6 +182,9 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
         headingRef={headingRef}
         highlighted={highlighted}
         badges={<>
+          <Tooltip title={source.detail}>
+            <Chip size="small" variant="outlined" label={source.label} />
+          </Tooltip>
           {canSwitchLevel
             ? <Tooltip title={showPackages ? "Return to product averages" : "Show the stored package price lines"}>
               <Chip

@@ -115,6 +115,23 @@ describe("loading saved tab state", () => {
     expect(restored.series[0].packageNdcs).toEqual(["PKG1", null]);
   });
 
+  it("restores explicit search sources and drops only an invalid source field", () => {
+    saveRaw("search-source", {
+      type: "fda", criteria: createFdaCriteria(), detailLevel: "package",
+      pinnedItems: [
+        { ...oldItem, id: "known", source: { ...oldItem.source, searchSource: "fda" } },
+        { ...oldItem, id: "unknown", source: { ...oldItem.source, searchSource: "legacy-fda" } },
+        { ...oldItem, id: "missing" },
+      ],
+    });
+    const items = loaded(persist.loadFdaTabState("search-source")).pinnedItems;
+    expect(items.map(item => item.id)).toEqual(["known", "unknown", "missing"]);
+    expect(items[0].source.searchSource).toBe("fda");
+    expect(items[1].source.searchSource).toBeUndefined();
+    expect(items[1].source.searchLabel).toBe("humira");
+    expect(items[2].source.searchSource).toBeUndefined();
+  });
+
   it("defaults a missing or invalid detail level to packages and keeps a saved one", () => {
     saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [] });
     saveRaw("t2", { type: "fda", criteria: createFdaCriteria(), detailLevel: "bogus", pinnedItems: [] });
