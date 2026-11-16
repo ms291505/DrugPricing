@@ -64,7 +64,6 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
   return (<>
     {showLatest && <Grid size={HALF_WIDTH_GRID_SIZE}>
       <ExplorerGridItem
-        fill
         title={barTitle}
         subtitle={subtitle}
         actions={<PinButton
