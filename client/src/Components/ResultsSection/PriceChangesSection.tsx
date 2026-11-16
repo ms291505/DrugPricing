@@ -1,13 +1,11 @@
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import SsidChartIcon from "@mui/icons-material/SsidChart";
+import { Box, Typography } from "@mui/material";
 import { derivePriceEvents, groupPriceEvents, priceEventGroupLabel, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
 import type { ChartOrigin } from "../../library/explorerItems";
-import { formatDate, type DateWindow } from "../../library/dates";
-import { pricingUnitLabel } from "../../library/prices";
+import { type DateWindow } from "../../library/dates";
 import useWidthTier from "../../hooks/useWidthTier";
-import PriceEventsList, { PriceEventDetails } from "./PriceEventsList";
+import PriceEventsList from "./PriceEventsList";
 import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
@@ -74,63 +72,15 @@ type RowProps = Props & {
 };
 
 /**
- * One change: its summary line with the chart button, Package details, and its own chart when
- * open. The open chart is this row's state, so opening or closing one re-renders nothing else.
+ * One change group. Each package row owns its chart, so opening one re-renders nothing else.
  */
 const PriceChangeRow = memo(function PriceChangeRow({
   group, prices, history, origin, colors, dateWindow, compact, detailsOpen, onDetailsToggle, onFocusInChart,
 }: RowProps) {
-  const chartId = useId();
-  // Tied to the page's `prices`: new prices make the chart stale, so it never shows.
-  const [open, setOpen] = useState<{ prices: ChartPrice[], history: ChartPrice[] } | null>(null);
-  const current = open?.prices === prices ? open : null;
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    if (!current || !headingRef.current?.checkVisibility()) return;
-    headingRef.current.focus({ preventScroll: true });
-    headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
-  }, [current]);
-  const toggle = () => {
-    if (current) { setOpen(null); return; }
-    // Computed now, not for every group up front.
-    const affected = new Set(group.events.map(e => e.packageNdc));
-    setOpen({ prices, history: history().filter(p => affected.has(p.ndc) && p.pricingUnit === group.pricingUnit) });
-  };
-  const close = () => {
-    setOpen(null);
-    onFocusInChart(false);
-    buttonRef.current?.focus();
-  };
-  const title = `Price change · ${formatDate(group.date)} · per ${pricingUnitLabel(group.pricingUnit)}`;
-  const isOpen = current !== null;
   return <>
-    <Box sx={{ display: "flex", flexWrap: "nowrap", alignItems: "center", columnGap: 0.5 }}>
-      <Typography variant="subtitle2" component="p" sx={{ flex: "1 1 auto", minWidth: 0 }}>{priceEventGroupLabel(group)}</Typography>
-      <Tooltip title={isOpen ? "Close this chart" : "Chart this change"}>
-        <IconButton ref={buttonRef} size="small" aria-label="Chart this change"
-          aria-expanded={isOpen} aria-controls={isOpen ? chartId : undefined} onClick={toggle}
-          sx={{
-            flexShrink: 0, alignSelf: "flex-start",
-            color: isOpen ? "primary.main" : "text.secondary", bgcolor: isOpen ? "action.selected" : undefined,
-            ...(compact ? { minWidth: 44, minHeight: 44 } : { my: -0.5 }),
-          }}>
-          <SsidChartIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </Box>
-    <PriceEventDetails group={group} open={detailsOpen} onToggle={onDetailsToggle} compact={compact} />
-    {/* Each change's chart starts with a fresh readout and legend: it mounts when opened. */}
-    {current && <Box id={chartId} sx={{ mt: 1, minWidth: 0 }}
-      onFocus={() => onFocusInChart(true)}
-      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) onFocusInChart(false); }}>
-      <ExplorerGridItem title={title} headingLevel={4} headingRef={headingRef}
-        actions={<><PinButton title={title} chartType="line" prices={current.history} history={() => current.history}
-          origin={origin} colors={colors} dateWindow={dateWindow} eventDate={group.date} />
-          <Button size="small" onClick={close}>Close</Button></>}>
-        <LineViz nadacPrices={current.history} title={title} colors={colors} dateWindow={dateWindow} seriesKind="package"
-          eventDate={group.date} />
-      </ExplorerGridItem>
-    </Box>}
+    <Typography variant="subtitle2" component="p">{priceEventGroupLabel(group)}</Typography>
+    <PriceEventDetails group={group} prices={prices} history={history} origin={origin} colors={colors}
+      dateWindow={dateWindow} open={detailsOpen} onToggle={onDetailsToggle} compact={compact}
+      onFocusInChart={onFocusInChart} />
   </>;
 });

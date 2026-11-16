@@ -44,11 +44,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, and shows five groups
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
-  closes stays so while the page is mounted. Its one action is a Chart this change icon button at the end of the group's summary line. It
-  toggles that group's own package chart (one unit), opened directly beneath the group's row over
-  the page's shown dates; each row keeps its own open state (not persisted), so several can be
-  open, and new prices discard them all. Each row is memoized, so opening one redraws no other.
-  Opening moves focus to the chart's heading; Close returns it to that row's button. `eventDate` marks the
+  closes stays so while the page is mounted. Each package row has a single-series Chart this
+  change line-chart button. It toggles that package's chart directly beneath the group over the
+  page's shown dates; each package keeps its own open state (not persisted), so several can be
+  open, and new prices discard them all. Opening moves focus to the chart's heading; Close
+  returns it to that package's button. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
   instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
   no event list and no way to zoom itself: neither the readout nor the plot lists events, and
