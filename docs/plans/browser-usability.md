@@ -400,7 +400,10 @@ Implemented 2026-11-16 on `codex/browser-usability-stage-4`.
   on the original page.
 - A stable workspace action saves the new tab before dispatching its addition, opens it in
   the first pane, and preserves other panes and tab identities. If storage fails, no empty
-  tab opens. Normal restored-tab query behavior suppresses the found toast.
+  tab opens. Each failed add reports its own error even after the general storage warning
+  has already appeared. An untouched blank in the destination pane is replaced by the copy;
+  named blanks, blanks shown in another pane, and existing searches are preserved.
+  Normal restored-tab query behavior suppresses the found toast.
 - A narrow read-only context disables the action after a multi-window conflict; the action
   also checks storage's current read-only flag. A synchronous guard and click count block
   double clicks; returning to Search permits another deliberate copy.

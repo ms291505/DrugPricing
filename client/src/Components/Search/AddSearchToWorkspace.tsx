@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { Box, Button, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
 import { usePageVisible } from "../../Context/pageVisibility";
@@ -11,7 +12,7 @@ import { useNadacSearch } from "../../hooks/useNadacSearch";
 import { fdaSearchLabel, nadacSearchLabel } from "../../library/searchCriteria";
 import { copySearchToWorkspace } from "../../library/workspaceSearch";
 import type { DateWindow } from "../../library/dates";
-import type { PersistedSearchTab } from "../../library/persist";
+import { isStorageReadOnly, type PersistedSearchTab } from "../../library/persist";
 
 function AddSearchToWorkspace({ state, dates, title, ready }: {
   state: PersistedSearchTab, dates: DateWindow | undefined, title: string, ready: boolean,
@@ -34,7 +35,10 @@ function AddSearchToWorkspace({ state, dates, title, ready }: {
             adding.current = true;
             const id = addSearchTab(copySearchToWorkspace(state, dates), title);
             if (id) void navigate("/workspace");
-            else adding.current = false;
+            else {
+              adding.current = false;
+              if (!isStorageReadOnly()) toast.error("Couldn't add the search: browser storage is full or unavailable.");
+            }
           }}>
           Add search to workspace
         </Button>

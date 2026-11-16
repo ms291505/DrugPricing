@@ -1,6 +1,6 @@
 import type { SetStateAction } from "react";
 import { type LayoutMode, } from "./types";
-import { validateTabTitle, type TabType, type WorkspaceTab } from "./tabType.ts";
+import { defaultTitleFor, validateTabTitle, type TabType, type WorkspaceTab } from "./tabType.ts";
 import type { PersistedWorkspace } from "./persist";
 
 export type WorkspaceState = PersistedWorkspace;
@@ -41,11 +41,21 @@ export function replacementTabId(tabs: WorkspaceTab[], id: string, fallbackId: s
  */
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
-    case "add":
+    case "add": {
+      const displaced = state.tabs.find(tab => tab.id === state.paneAssignment[0]);
+      // Reuse only an untouched blank in the destination pane. Keep named blanks and any
+      // blank still shown in another pane, just like existing searches.
+      const replaceBlank = action.show && displaced?.type === "new"
+        && displaced.title === defaultTitleFor("new")
+        && !state.paneAssignment.slice(1).includes(displaced.id);
       return {
-        ...state, tabs: [...state.tabs, action.tab],
+        ...state,
+        tabs: replaceBlank
+          ? state.tabs.map(tab => tab === displaced ? action.tab : tab)
+          : [...state.tabs, action.tab],
         paneAssignment: action.show ? [action.tab.id, ...state.paneAssignment.slice(1)] : state.paneAssignment,
       };
+    }
     case "remove": {
       if (!state.tabs.some(t => t.id === action.id)) return state;
       const replacement = replacementTabId(state.tabs, action.id, action.fallback.id);
