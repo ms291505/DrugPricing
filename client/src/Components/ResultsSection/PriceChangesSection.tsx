@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { derivePriceEvents, groupPriceEvents, priceEventGroupLabel, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
@@ -6,6 +6,7 @@ import type { ChartOrigin } from "../../library/explorerItems";
 import { type DateWindow } from "../../library/dates";
 import useWidthTier from "../../hooks/useWidthTier";
 import PriceEventsList, { PriceEventDetails } from "./PriceEventsList";
+import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 
 type Props = {
   prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
@@ -31,7 +32,6 @@ type ListProps = Props & {
 };
 
 function PriceChanges({ prices, history, origin, colors, dateWindow, groups, detailsChoice, onDetailsToggle }: ListProps) {
-  const headingId = useId();
   // The section's own width: a workspace pane can be narrow in a wide window.
   const [sectionRef, widthTier] = useWidthTier<HTMLElement>();
   const sectionHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -48,15 +48,15 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
   // Package details start open from `md` up and closed below; a group the user toggled keeps that.
   const defaultOpen = widthTier === "wide";
   const compact = widthTier === "narrow";
-  return <Box component="section" ref={sectionRef} aria-labelledby={headingId} sx={{ minWidth: 0, px: { xs: 1, sm: 0 } }}>
-    <Typography id={headingId} ref={sectionHeadingRef} tabIndex={-1} component="h3" variant="subtitle1"
-      sx={{ "&:focus": { outline: "none" } }}>Price changes</Typography>
-    <Typography variant="body2" color="text.secondary">Package changes of 10% or more in these dates and filters.</Typography>
-    <PriceEventsList groups={groups}
-      renderGroup={group => <PriceChangeRow group={group} prices={prices} history={history} origin={origin}
-        colors={colors} dateWindow={dateWindow} compact={compact}
-        detailsOpen={detailsChoice.get(group.key) ?? defaultOpen} onDetailsToggle={onDetailsToggle}
-        onFocusInChart={setFocusInChart} />} />
+  return <Box ref={sectionRef} sx={{ minWidth: 0 }}>
+    <ExplorerGridItem title="Price changes" subtitle="Package changes of 10% or more in these dates and filters."
+      headingLevel={3} headingRef={sectionHeadingRef}>
+      <PriceEventsList groups={groups}
+        renderGroup={group => <PriceChangeRow group={group} prices={prices} history={history} origin={origin}
+          colors={colors} dateWindow={dateWindow} compact={compact}
+          detailsOpen={detailsChoice.get(group.key) ?? defaultOpen} onDetailsToggle={onDetailsToggle}
+          onFocusInChart={setFocusInChart} />} />
+    </ExplorerGridItem>
   </Box>;
 }
 

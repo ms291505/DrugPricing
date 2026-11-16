@@ -41,7 +41,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
-  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, and shows five groups
+  `flagPriceChanges`. Live Compare controls appear directly below the results table. The conditional
+  `PriceChangesSection` follows as a collapsible `ExplorerGridItem` system card, derived from the
+  current search and never stored. It groups by date, pricing unit and direction, and shows five groups
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
   closes stays so while the page is mounted. Each package row has a single-series Chart this

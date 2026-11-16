@@ -11,7 +11,7 @@ type Props = {
   /** The results table. */
   table: ReactNode,
   priceChanges?: ReactNode,
-  /** Live Compare chart cards under the table and event list. */
+  /** Compare controls and live charts directly under the table. */
   children?: ReactNode,
 };
 
@@ -35,8 +35,8 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
       <Paper sx={{
         display: "flex", flexDirection: "column", p: { xs: 0, sm: 1 }, width: "100%", minWidth: 0, boxSizing: "border-box",
       }}>{table}</Paper>
-      {priceChanges}
       <Grid container spacing={1}>{children}</Grid>
+      {priceChanges}
     </Box>
   );
 }
