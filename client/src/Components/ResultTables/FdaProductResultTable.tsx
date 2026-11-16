@@ -18,15 +18,12 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "productNdc",
     headerName: "Product NDC",
-    width: 120,
-    minWidth: 120,
     cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
     field: "proprietaryName",
     headerName: "Brand Name",
-    width: 150
   },
   {
     field: "strengthNumber",
@@ -43,7 +40,6 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",
-    width: 150,
     valueGetter: (_, product) => (product.nonProprietaryName.join(", "))
   },
   {
@@ -54,7 +50,6 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "labelerName",
     headerName: "Labeler",
-    width: 150
   },
   {
     field: "productTypeName",

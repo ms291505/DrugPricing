@@ -99,10 +99,14 @@ workspace tabs and followed by other windows. Save only deviations from `DEFAULT
 merge them over current defaults, and clear them on Reset: saving the complete default model
 would freeze defaults for browsers that never customized. Validate each table and field independently.
 
-`AutosizePriceColumns` measures rendered prices after data, visibility, paging, sorting and
-filtering changes, capped at each column's `maxWidth`. It is a separate component so only its
-small visibility observer re-renders on a page/tab switch; the table does not. Hidden pages
-measure nothing until shown. Narrow tables use 44px rows and headers. NDC columns use tabular
+`AutosizeColumns` sizes every visible data column (not the checkbox) to its widest rendered cell
+or header after data, visibility, paging, sorting, filtering and column-array changes. A column's
+bounds are `minWidth`/`maxWidth` from `COLUMN_BOUNDS` (`library/columnBounds.ts`, by field, with
+optional `medium`/`narrow` overrides for the table's own width tier); `ResultTable` applies them,
+so the table files give no widths, and a tier flip makes a new `columns` array. The grid measures
+the rows it has rendered; a column the user dragged keeps its width until the columns change. It is
+a separate component so only its small visibility observer re-renders on a page/tab switch; the
+table does not. Hidden pages measure nothing until shown. Narrow tables use 44px rows and headers. NDC columns use tabular
 digits and minimum widths that fit the complete source identifier.
 
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,

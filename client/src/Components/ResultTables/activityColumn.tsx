@@ -17,7 +17,7 @@ function ActivityCell({ activity }: { activity: PriceActivity }) {
 
 export function activityColumn<R extends PricedRow>(): GridColDef<R, PriceActivity, string> {
   return {
-    field: "priceActivity", headerName: "Price Activity", width: 360, minWidth: 200,
+    field: "priceActivity", headerName: "Price Activity",
     filterable: false,
     description: "Sorts significant changes first, then other changed, stable and insufficient history.",
     sortComparator: comparePriceActivity,

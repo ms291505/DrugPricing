@@ -15,13 +15,10 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "proprietaryName",
     headerName: "Brand Name",
-    width: 150,
   },
   {
     field: "ndcPackageCode",
     headerName: "Package NDC",
-    width: 120,
-    minWidth: 120,
     cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
@@ -35,7 +32,6 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "packageDescription",
     headerName: "Package Description",
-    width: 250,
   },
   ...PRICE_COLUMNS.range,
   {
@@ -46,21 +42,17 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "productNdc",
     headerName: "Product NDC",
-    width: 120,
-    minWidth: 120,
     cellClassName: "ndc-cell"
   },
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",
-    width: 150,
     valueGetter: (_, row) => (row.nonProprietaryName.join(", "))
   },
   {
     field: "samplePackage",
     headerName: "Sample",
     valueGetter: (_, row) => (row.samplePackage ? "Yes" : "No"),
-    width: 75
   },
   {
     field: "dosageFormName",
@@ -75,7 +67,6 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "labelerName",
     headerName: "Labeler",
-    width: 150
   },
 ];
 
