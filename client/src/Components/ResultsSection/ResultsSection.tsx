@@ -11,7 +11,7 @@ type Props = {
   /** The results table. */
   table: ReactNode,
   priceChanges?: ReactNode,
-  /** Live Compare chart cards under the table and event list. */
+  /** Compare controls and live charts directly under the table. */
   children?: ReactNode,
 };
 
