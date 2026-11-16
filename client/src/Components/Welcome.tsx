@@ -13,10 +13,7 @@ const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Ic
   { title: "Pin a chart to keep it", text: "Charts on a search page follow the search. Pin one and it keeps its data and dates, available in both FDA and NADAC search. Each Workspace tab keeps its own pins.", link: "Pinning and comparing", topic: "pinning-and-comparing", Icon: PushPinOutlined },
 ];
 
-/**
- * The page at `/welcome` (and the bare address until a search source is visited). Only that
- * route renders it; the Help modal's Welcome is `OnBoarding`.
- */
+/** The page at `/welcome`, where the bare address goes until a search source is visited. */
 export default function Welcome() {
   const { openHelp } = useGlobalModalActions();
   return <Stack spacing={{ xs: 3, md: 4 }} sx={{ py: { xs: 2, md: 4 } }}>
@@ -24,7 +21,7 @@ export default function Welcome() {
     <Paper component="section" aria-labelledby="welcome-heading" sx={{ px: { xs: 2, sm: 4 }, py: { xs: 4, md: 6 } }}>
       <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
         <Typography variant="overline" sx={{ color: "primary.main", lineHeight: 1 }}>Welcome to</Typography>
-        <Typography id="welcome-heading" variant="h3" component="h1" sx={{ fontWeight: 500 }}>DrugPricing</Typography>
+        <Typography id="welcome-heading" variant="h3" component="h1" sx={{ fontWeight: 500, fontSize: { xs: "2.5rem", sm: "3rem" } }}>DrugPricing</Typography>
         <Typography variant="h6" component="p" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: "36em" }}>
           Explore US drug acquisition prices, week by week. Search for a drug, chart its price history, and pin charts side by side to compare.
         </Typography>
@@ -36,7 +33,7 @@ export default function Welcome() {
     </Paper>
 
     <Box component="section" aria-labelledby="welcome-ideas">
-      <Typography id="welcome-ideas" variant="h5" component="h2" sx={{ mb: 2 }}>Good to know</Typography>
+      <Typography id="welcome-ideas" variant="h5" component="h2" sx={{ mb: 2 }}>Learn the basics</Typography>
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
         {IDEAS.map(({ title, text, link, topic, Icon }) => <Paper key={topic} sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1 }}>
           <Icon sx={{ color: "primary.main" }} aria-hidden />
@@ -47,7 +44,7 @@ export default function Welcome() {
       </Box>
     </Box>
 
-    <Box component="section" aria-label="About the data">
+    <Box component="section">
       <Divider sx={{ mb: 2 }} />
       <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: "70ch" }}>
         Prices come from NADAC (National Average Drug Acquisition Cost), a CMS benchmark based on invoices voluntarily submitted by retail community pharmacies. It estimates acquisition costs; it does not capture every pharmacy’s actual cost or every drug package.
