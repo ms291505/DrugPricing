@@ -9,11 +9,10 @@ The **Price changes** list groups these events by date, pricing unit and directi
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
 
-The **Chart this change** button (a line-chart icon) at the end of each group's summary line
-opens one chart of that group's packages over the search's dates, directly beneath that group. A
-solid line marks the change, and the readout rests on its date until you point at another. Each
-group opens its own chart, so several can be open at once. **Pin** keeps a copy, and **Close** or
-the same button again closes it. To see every
+Each package row has a **Chart this change** line-chart button. It opens that package's chart over
+the search's dates, directly beneath the group. A solid line marks the change, and the readout
+rests on its date until you point at another. Each package opens its own chart, so several can be
+open at once. **Pin** keeps a copy, and **Close** or the same button again closes it. To see every
 result together, use **Compare price histories**.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
