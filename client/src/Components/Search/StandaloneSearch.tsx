@@ -12,11 +12,13 @@ export default memo(function StandaloneSearch({ source, offer }: {
   offer: NadacOffer | null,
 }) {
   if (source === "fda") return <StandaloneFdaProvider>
-    <FdaSearch searchAction={<AddFdaSearchToWorkspace />} searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+    <FdaSearch searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+    <AddFdaSearchToWorkspace />
   </StandaloneFdaProvider>;
   return <StandaloneNadacProvider>
     <NadacOfferContext value={offer}>
-      <NadacSearch searchAction={<AddNadacSearchToWorkspace />} searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+      <NadacSearch searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+      <AddNadacSearchToWorkspace />
     </NadacOfferContext>
   </StandaloneNadacProvider>;
 });

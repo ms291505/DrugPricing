@@ -393,7 +393,7 @@ The help articles on charts and price changes describe the app as shipped
 
 Implemented 2026-11-16 on `codex/browser-usability-stage-4`.
 
-- A neutral outlined Add search to workspace action sits below the standalone search panel;
+- A neutral outlined Add search to workspace action sits at the end of the standalone page, below the results and pinned charts;
   workspace search tabs don't show it. It requires a successful current query, including empty
   results, and is disabled while a new search is loading or has failed.
 - The copy takes applied criteria only, fixes the requested period as Custom dates, preserves

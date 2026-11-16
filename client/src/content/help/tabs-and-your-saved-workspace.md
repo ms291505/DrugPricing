@@ -12,7 +12,7 @@ data deletes it.
 
 The standalone search pages also save their criteria and pinned charts in this browser.
 
-**Add search to workspace** on a standalone FDA or NADAC search opens an independent tab
+**Add search to workspace**, at the bottom of a standalone FDA or NADAC search page, opens an independent tab
 with the applied search, dates, filters, FDA Products/Packages choice and all pinned charts
 from the Search area. Load a search successfully first. Text you haven't submitted, selected
 rows and scroll position stay on the original page. The copy keeps the current dates as a
