@@ -136,6 +136,9 @@ fitted axis (default) or a `bar` from $0 with a gray range track. Rows are drawn
 `shape`. Don't use recharts' `ErrorBar` (stale scale, ranges at half price) or
 `allowDataOverflow` on the value axis (clips the value labels).
 
+A bar card keeps its natural height (`BAR_ROW_HEIGHT` per row plus the plot's margins), so beside a taller
+line card it simply ends sooner; never stretch it to the row.
+
 ## Docked readout (no floating tooltips)
 
 Each unit chart shows its values in a fixed box above the plot (`ReadoutDock`), never in a

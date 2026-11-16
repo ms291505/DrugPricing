@@ -46,8 +46,7 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_W
   const bounds = dateBounds(clipToWindow(nadacPrices, dateWindow));
 
   return (
-    // Grows when its card fills the grid row (ExplorerGridItem `fill`); the rows spread out.
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
         <Typography variant="caption" color="text.secondary">{caption}</Typography>
         <ToggleButtonGroup
@@ -65,7 +64,6 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_W
       <UnitSplit
         nadacPrices={nadacPrices}
         dateWindow={dateWindow}
-        grow
         renderChart={(unitPrices, pricingUnit) => (
           <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} title={title} colors={colors} barValue={value} />
         )}
@@ -132,9 +130,10 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
 
   return (<>
     <ReadoutDock portalRef={setDock} minHeight={barReadoutHeight(isMobile, rows.some(row => row.packages > 1))} />
-    {/* The box sets the height: its rows' height, or more when the card fills a taller row. The
-        chart is absolutely positioned inside it so its own measured height never feeds back into
-        the row's: in flow, a chart that grew once would hold the row at that height. */}
+    {/* The box sets the height from its row count, so the card ends where its rows do, whatever
+        sits beside it. The chart is absolutely positioned inside it so its own measured height
+        never feeds back into the row's: in flow, a chart that grew once would hold the row at
+        that height. */}
     <Box
       ref={focusBox}
       {...readout.focusProps}
@@ -142,7 +141,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
         readout.focusProps.onKeyDown();
         lock.onKeyDown(event);
       }}
-      sx={{ position: "relative", flexGrow: 1, minHeight: rows.length * BAR_ROW_HEIGHT + 40 }}
+      sx={{ position: "relative", height: rows.length * BAR_ROW_HEIGHT + 40 }}
     >
       <BarChart
         onClick={state => lock.toggle(rowAtIndex(rows, state.activeTooltipIndex)?.ndc)}
