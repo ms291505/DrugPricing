@@ -55,7 +55,8 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
   const visibility = useMemo(() => columnVisibilityModel(DEFAULT_HIDDEN_COLUMNS[tableType], overrides), [overrides, tableType]);
   const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
   // The same column objects either way, so the grid keeps its sort, page, selection and visibility.
-  const narrow = widthTier === "narrow";
+  // Only a table with a narrow order rebuilds its columns: a new array resets dragged widths.
+  const narrow = narrowOrder !== undefined && widthTier === "narrow";
   const allColumns = useMemo(
     () => [checkboxColumn<R>(rowNoun), ...(narrow && narrowOrder ? orderColumns(columns, narrowOrder) : columns)],
     [rowNoun, columns, narrow, narrowOrder],

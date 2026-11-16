@@ -92,7 +92,7 @@ loaded as-of date, never the rows' own newest date); Latest Price shows a warnin
 the date, so Latest Price Date is hidden by default. A row without prices can't be selected. Keep Latest Price second or third:
 on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
 tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own
-width tier), since three columns before the price don't fit a phone.
+width tier), since the checkbox, Brand Name and NDC before the price don't fit a phone.
 
 `ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
 width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
@@ -155,7 +155,7 @@ panels; workspace tabs omit them. `/search` returns to the last source (FDA init
 under `drugpricing.v<VERSION>.last-search-source`, separate from Settings. Bare and unknown
 addresses show Welcome until a source has been visited, then return to that source. Legacy
 `/fda-search` and `/nadac-search` addresses redirect. Empty FDA results offer a one-click
-handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts`;
+handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts` (which also holds the footer slot);
 only that explicit handoff changes NADAC's draft and runs the copied terms.
 
 Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
@@ -166,7 +166,9 @@ the active source. Their shared snapshots live in
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action copies applied criteria with fixed dates,
+Standalone Search's Add search to workspace action sits last on the page, once a search has been run.
+The pins render outside the source providers, so it portals into `SearchFooterSlotContext`'s slot
+below them and still reads its source's criteria. It copies applied criteria with fixed dates,
 FDA detail level and all shared pins. `addSearchTab` writes initial tab state before dispatching
 an add with `show`, so the provider's first read restores it; a failed save opens no tab.
 `WorkspaceReadOnlyContext` is separate from tabs, panes and stable actions. Only controls that

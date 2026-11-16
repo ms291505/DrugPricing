@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState, type Dispatch, type SetStateAction } from "react";
-import { type FdaResultDetailLevel, } from "../library/types";
+import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import {
   applyFdaSearch, createFdaCriteria, fdaLoadRequest,
@@ -43,7 +43,7 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   loaded: null,
   lastSearch: null,
   waiting: false,
-  fdaResultDetailLevel: "product",
+  fdaResultDetailLevel: DEFAULT_FDA_DETAIL_LEVEL,
   setFdaResultDetailLevel: () => { },
   selectedRows: { type: "include", ids: new Set() },
   setSelectedRows: () => { },
@@ -60,7 +60,7 @@ type ProviderProps = {
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
     initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch);
-  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? "product");
+  const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? DEFAULT_FDA_DETAIL_LEVEL);
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
 
