@@ -74,6 +74,8 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
       sx={theme => ({
         border: 0,
+        width: "100%",
+        minWidth: 0,
         "--DataGrid-rowBorderColor": theme.palette.divider,
         "& .MuiDataGrid-columnSeparator": { color: "divider" },
         "& .MuiDataGrid-withBorderColor": { borderColor: "divider" },

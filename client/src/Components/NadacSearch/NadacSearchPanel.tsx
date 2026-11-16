@@ -23,6 +23,7 @@ type Props = {
   /** Forces the panel's layout (default: by its width). */
   layout?: SearchPanelLayout,
   navigation?: ReactNode,
+  standaloneAction?: ReactNode,
 };
 
 /**
@@ -31,7 +32,7 @@ type Props = {
  * search on screen, so it lights up when there is something to run. The tab is named after its
  * first search.
  */
-export default function NadacSearchPanel({ view, layout, navigation }: Props) {
+export default function NadacSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
   const { criteria, setCriteria, search, waiting } = useNadacSearchContext();
   const { isLoading, isError, refetch } = useNadacSearch();
   const renameAfterSearch = useRenameAfterSearch();
@@ -81,6 +82,7 @@ export default function NadacSearchPanel({ view, layout, navigation }: Props) {
       label="NADAC search"
       layout={layout}
       navigation={navigation}
+      standaloneAction={standaloneAction}
       heading="Find a drug"
       description="Search NADAC prices by drug description or NDC."
       onSearch={handleSearch}

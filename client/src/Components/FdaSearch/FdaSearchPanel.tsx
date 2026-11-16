@@ -25,6 +25,7 @@ type Props = {
   /** Forces the panel's layout (default: by its width). */
   layout?: SearchPanelLayout,
   navigation?: ReactNode,
+  standaloneAction?: ReactNode,
 };
 
 /**
@@ -33,7 +34,7 @@ type Props = {
  * on screen, so it lights up when there is something to run. The tab is named after its first
  * search.
  */
-export default function FdaSearchPanel({ view, layout, navigation }: Props) {
+export default function FdaSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
   const { criteria, setCriteria, search, waiting } = useFdaSearchContext();
   const { isLoading, isError, refetch } = useFdaSearch();
   const renameAfterSearch = useRenameAfterSearch();
@@ -57,6 +58,7 @@ export default function FdaSearchPanel({ view, layout, navigation }: Props) {
       label="FDA search"
       layout={layout}
       navigation={navigation}
+      standaloneAction={standaloneAction}
       heading="Find a drug"
       description="Search the FDA directory by brand or generic name to see products, packages and NADAC prices."
       onSearch={handleSearch}

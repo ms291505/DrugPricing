@@ -13,7 +13,7 @@ import { PageVisibleContext } from "./Context/pageVisibility";
 import { hiddenPaneSx } from "./library/paneVisibility";
 import PinnedSection from "./Components/ExplorerGrid/PinnedSection";
 import KeptPage from "./Components/KeptPage";
-import { SearchFooterSlotContext, TryNadacContext, type NadacOffer } from "./Context/searchNavigation";
+import { TryNadacContext, type NadacOffer } from "./Context/searchNavigation";
 import StandaloneSearch from "./Components/Search/StandaloneSearch";
 import { StandalonePinsProvider } from "./Context/StandaloneSearchProviders";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
@@ -99,7 +99,6 @@ function AppShell() {
   // Declarative router navigation changes identity by route; keep the handoff action stable.
   const navigateRef = useRef(navigate);
   useLayoutEffect(() => { navigateRef.current = navigate; }, [navigate]);
-  const [footerSlot, setFooterSlot] = useState<HTMLElement | null>(null);
   const [offer, setOffer] = useState<NadacOffer | null>(null);
   const tryNadac = useCallback((description: string) => {
     setOffer({ description });
@@ -117,14 +116,13 @@ function AppShell() {
     <GlobalModal />
     <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)" }}>
       <KeptPage visible={isWorkspace}>{workspace}</KeptPage>
-      {visited.size > 0 && <TryNadacContext value={tryNadac}><SearchFooterSlotContext value={footerSlot}><StandalonePinsProvider>
+      {visited.size > 0 && <TryNadacContext value={tryNadac}><StandalonePinsProvider>
         {visited.has("fda") && <KeptPage visible={source === "fda"}>{fda}</KeptPage>}
         {visited.has("nadac") && <KeptPage visible={source === "nadac"}>{nadac}</KeptPage>}
         <Box sx={{ gridArea: "2 / 1", minWidth: 0, ...(source ? { mt: 2 } : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
           <PageVisibleContext value={source !== null}>{pins}</PageVisibleContext>
         </Box>
-        <Box ref={setFooterSlot} sx={{ gridArea: "3 / 1", minWidth: 0, ...(source ? {} : { display: "none" }) }} />
-      </StandalonePinsProvider></SearchFooterSlotContext></TryNadacContext>}
+      </StandalonePinsProvider></TryNadacContext>}
       {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
         {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
           <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />

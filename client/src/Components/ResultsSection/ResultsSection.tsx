@@ -32,7 +32,9 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
         {toolbar}
       </Box>
       {notice}
-      <Paper sx={{ p: { xs: 0, sm: 1 } }}>{table}</Paper>
+      <Paper sx={{
+        display: "flex", flexDirection: "column", p: { xs: 0, sm: 1 }, width: "100%", minWidth: 0, boxSizing: "border-box",
+      }}>{table}</Paper>
       {priceChanges}
       <Grid container spacing={1}>{children}</Grid>
     </Box>

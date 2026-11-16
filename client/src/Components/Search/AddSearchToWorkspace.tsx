@@ -1,10 +1,8 @@
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { createPortal } from "react-dom";
-import { Box, Button, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
 import { usePageVisible } from "../../Context/pageVisibility";
-import { useSearchFooterSlot } from "../../Context/searchNavigation";
 import { useWorkspaceActions, useWorkspaceReadOnly } from "../../Context/workspaceContexts";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
@@ -17,14 +15,12 @@ import type { DateWindow } from "../../library/dates";
 import { isStorageReadOnly, type PersistedSearchTab } from "../../library/persist";
 
 /**
- * The last thing on a standalone search page, below the results and the shared pins. Those pins render
- * in App, outside the source's providers, so this portals into the slot App keeps under them while
- * keeping the source's own context. Nothing renders before a search has been run, or while the page is hidden.
+ * The action is rendered in its standalone source's search panel, inside the source providers.
+ * Nothing renders before a search has been run, or while the page is hidden.
  */
 function AddSearchToWorkspace({ state, dates, title, ready, started }: {
   state: PersistedSearchTab, dates: DateWindow | undefined, title: string, ready: boolean, started: boolean,
 }) {
-  const slot = useSearchFooterSlot();
   const { addSearchTab } = useWorkspaceActions();
   const readOnly = useWorkspaceReadOnly();
   const visible = usePageVisible();
@@ -34,11 +30,11 @@ function AddSearchToWorkspace({ state, dates, title, ready, started }: {
   useEffect(() => { if (visible) adding.current = false; }, [visible]);
   const reason = readOnly ? "Reload to use the workspace changed in another window."
     : !ready ? "Load a search successfully before adding it to Workspace." : "";
-  if (!slot || !visible || !started) return null;
-  return createPortal(<Box sx={{ mt: 4, px: { xs: 1, md: 0 }, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
-    <Tooltip title={reason}>
+  if (!visible || !started) return null;
+  return <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+    <Tooltip title={reason || "Copies this search and all pinned charts into a new workspace tab."}>
       <span>
-        <Button variant="outlined" color="inherit" size="small" disabled={!ready || readOnly}
+        <Button type="button" variant="outlined" color="inherit" size="small" disabled={!ready || readOnly}
           onClick={event => {
             if (adding.current || event.detail > 1 || !dates) return;
             adding.current = true;
@@ -53,10 +49,7 @@ function AddSearchToWorkspace({ state, dates, title, ready, started }: {
         </Button>
       </span>
     </Tooltip>
-    <Typography variant="body2" color="text.secondary">
-      Copies this search and all pinned charts into a new workspace tab.
-    </Typography>
-  </Box>, slot);
+  </Box>;
 }
 
 export function AddFdaSearchToWorkspace() {
