@@ -42,7 +42,7 @@ type Props = {
   onAroundChange?: (window: DateWindow) => void;
   /**
    * The change the chart was opened for: a solid line marks its date, and the readout rests there
-   * (instead of the latest date) without repeating that change's event list.
+   * (instead of the latest date).
    */
   eventDate?: number;
 };
@@ -244,10 +244,6 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             if (date === undefined || !row) return null;
             return (
               <LineReadout
-                // The chart's own change is described above the chart: don't offer it again here.
-                events={<PriceEventsList groups={eventGroups.filter(group => group.date === date && group.date !== eventDate)}
-                  actionLabel="Around this change" compact={isMobile}
-                  onAction={group => onAroundChange(aroundPriceEvent(group.events))} />}
                 date={date}
                 unit={unit}
                 rows={tooltipRows(row, shownNdcs)}
@@ -345,7 +341,6 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 }
 
 type LineReadoutProps = {
-  events: React.ReactNode,
   date: number,
   unit: string,
   rows: TooltipRow[],
@@ -362,7 +357,7 @@ type LineReadoutProps = {
  * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
  * description and, for an averaged product, its packages' range beneath on wider screens.
  */
-function LineReadout({ events, date, unit, rows, status, restLabel, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
+function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
     <ReadoutContent
       header={<ReadoutHeader status={status} onUnlock={onUnlock}>
@@ -372,7 +367,6 @@ function LineReadout({ events, date, unit, rows, status, restLabel, onUnlock, co
         </Box>
       </ReadoutHeader>}
     >
-      {events}
       {rows.map(({ ndc, price, range }) => {
         const rangeText = range ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}` : null;
         return (
