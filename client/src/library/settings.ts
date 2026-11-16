@@ -22,10 +22,11 @@ export type TableColumnOverrides = Record<ResultTableType, ColumnVisibilityOverr
 export const RESULT_SELECTION_FIELD = "__check__";
 export const DEFAULT_COLUMN_OVERRIDES: TableColumnOverrides = { fdaProduct: {}, fdaPackage: {}, nadac: {} };
 
+// Latest Price Date is hidden: a stale latest price carries a marker with its date instead.
 export const DEFAULT_HIDDEN_COLUMNS: Record<ResultTableType, string[]> = {
-  fdaProduct: ["minPrice", "maxPrice", "nonProprietaryName", "routeName", "labelerName", "productTypeName", "packageCount"],
-  fdaPackage: ["minPrice", "maxPrice", "productNdc", "nonProprietaryName", "samplePackage", "dosageFormName", "routeName", "labelerName", "productTypeName"],
-  nadac: ["minPrice", "maxPrice"],
+  fdaProduct: ["latestPriceDate", "minPrice", "maxPrice", "nonProprietaryName", "routeName", "labelerName", "productTypeName", "packageCount"],
+  fdaPackage: ["latestPriceDate", "minPrice", "maxPrice", "productNdc", "nonProprietaryName", "samplePackage", "dosageFormName", "routeName", "labelerName", "productTypeName"],
+  nadac: ["latestPriceDate", "minPrice", "maxPrice"],
 };
 
 /** Missing or malformed tables fall back independently; invalid fields don't cost valid choices. */
