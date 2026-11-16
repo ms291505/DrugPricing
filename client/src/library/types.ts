@@ -93,6 +93,9 @@ export function isFdaProductOtc(productTypeName: string) {
 
 export type FdaResultDetailLevel = "product" | "package";
 
+/** What a fresh search, a new tab, and stored state with no valid level show. */
+export const DEFAULT_FDA_DETAIL_LEVEL: FdaResultDetailLevel = "package";
+
 export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
   switch (level) {
     case "product":
