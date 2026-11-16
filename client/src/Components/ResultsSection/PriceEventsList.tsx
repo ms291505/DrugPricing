@@ -1,23 +1,16 @@
-import { Fragment, useCallback, useEffect, useId, useRef, useState, type ReactNode, type SyntheticEvent } from "react";
+import { Fragment, memo, useCallback, useId, useRef, useState, type ReactNode, type SyntheticEvent } from "react";
 import { Box, Button, IconButton, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { visuallyHidden } from "@mui/utils";
 import { formatPrice } from "../../library/chartScale";
 import { pricingUnitLabel } from "../../library/prices";
-import { formatDate, type DateWindow } from "../../library/dates";
-import type { ChartPrice } from "../../library/types";
-import type { ChartOrigin } from "../../library/explorerItems";
-import LineViz from "../Charts/LineViz";
-import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
-import PinButton from "../ExplorerGrid/PinButton";
 import {
   previousObservationNote, priceEventGroupLabel, PRICE_CHANGE_GROUP_LIMIT, PRICE_CHANGE_PACKAGE_LIMIT, signedChange,
-  type PriceEventGroup,
+  type PriceEvent, type PriceEventGroup,
 } from "../../library/priceActivity";
 
 type Props = {
   groups: PriceEventGroup[],
-  /** One row per group: its summary, details and anything it opens. */
   renderGroup: (group: PriceEventGroup) => ReactNode,
 };
 
@@ -41,17 +34,17 @@ export default function PriceEventsList({ groups, renderGroup }: Props) {
 
 type DetailsProps = {
   group: PriceEventGroup,
-  prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
-  dateWindow: DateWindow,
+  openChartIds: ReadonlyMap<string, string>,
+  onToggleChart: (group: PriceEventGroup, event: PriceEvent, chartId: string) => void,
+  onRegisterButton: (key: string, button: HTMLButtonElement | null) => void,
   open: boolean,
   onToggle: (key: string, open: boolean) => void,
   /** Narrow: the amount folds under the percent. */
   compact: boolean,
-  onFocusInChart: (inChart: boolean) => void,
 };
 
 /** A group's Package details disclosure; its open state belongs to the caller. */
-export function PriceEventDetails({ group, prices, history, origin, colors, dateWindow, open, onToggle, compact, onFocusInChart }: DetailsProps) {
+export function PriceEventDetails({ group, openChartIds, onToggleChart, onRegisterButton, open, onToggle, compact }: DetailsProps) {
   return <Box component="details" open={open}
     // A toggle React caused (the default changed) leaves `open` as rendered; only the user's differs.
     onToggle={(event: SyntheticEvent<HTMLDetailsElement>) => {
@@ -60,8 +53,8 @@ export function PriceEventDetails({ group, prices, history, origin, colors, date
     }}
     sx={{ fontSize: "0.875rem", color: "text.secondary", maxWidth: "100%", "& > summary": { cursor: "pointer", width: "fit-content" } }}>
     <summary>Package details</summary>
-    <PackageTable group={group} prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-      compact={compact} onFocusInChart={onFocusInChart} />
+    <PackageTable group={group} openChartIds={openChartIds} onToggleChart={onToggleChart}
+      onRegisterButton={onRegisterButton} compact={compact} />
   </Box>;
 }
 
@@ -70,7 +63,7 @@ export function PriceEventDetails({ group, prices, history, origin, colors, date
  * the date, unit and direction, so rows repeat none of them.
  */
 function PackageTable(props: Omit<DetailsProps, "open" | "onToggle">) {
-  const { group, prices, history, origin, colors, dateWindow, compact, onFocusInChart } = props;
+  const { group, openChartIds, onToggleChart, onRegisterButton, compact } = props;
   const [showAll, setShowAll] = useState(false);
   const tableId = useId();
   const unit = pricingUnitLabel(group.pricingUnit);
@@ -97,9 +90,12 @@ function PackageTable(props: Omit<DetailsProps, "open" | "onToggle">) {
         </TableRow>
       </TableHead>
       <TableBody>
-        {events.map(event => <PackageEventRow key={`${event.seriesNdc}:${event.packageNdc}`} event={event} group={group}
-          prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow} compact={compact}
-          onFocusInChart={onFocusInChart} glyph={glyph} glyphColor={glyphColor} />)}
+        {events.map(event => {
+          const key = eventKey(group, event);
+          return <PackageEventRow key={key} event={event} group={group} chartId={openChartIds.get(key)}
+            onToggleChart={onToggleChart} onRegisterButton={onRegisterButton} compact={compact}
+            glyph={glyph} glyphColor={glyphColor} />;
+        })}
       </TableBody>
     </Table>
     {capped && <Button size="small" sx={{ ml: -0.5 }} aria-expanded={showAll} aria-controls={tableId}
@@ -109,34 +105,27 @@ function PackageTable(props: Omit<DetailsProps, "open" | "onToggle">) {
   </Box>;
 }
 
-function PackageEventRow({ event, group, prices, history, origin, colors, dateWindow, compact, onFocusInChart, glyph, glyphColor }:
-  Omit<DetailsProps, "open" | "onToggle"> & { event: PriceEventGroup["events"][number], glyph: string, glyphColor: string }) {
-  const chartId = useId();
-  const [open, setOpen] = useState<{ prices: ChartPrice[], history: ChartPrice[] } | null>(null);
-  const current = open?.prices === prices ? open : null;
+const PackageEventRow = memo(function PackageEventRow({ event, group, chartId, onToggleChart, onRegisterButton, compact, glyph, glyphColor }:
+  Omit<DetailsProps, "open" | "onToggle" | "openChartIds"> & {
+    event: PriceEvent, chartId?: string, glyph: string, glyphColor: string,
+  }) {
+  const id = useId().replaceAll(":", "");
+  const key = eventKey(group, event);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const title = `Price change · ${formatDate(group.date)} · ${event.packageNdc} · per ${pricingUnitLabel(group.pricingUnit)}`;
   const { percent, amount } = signedChange(event.change);
   const note = previousObservationNote(event, group);
-  useEffect(() => {
-    if (!current || !headingRef.current?.checkVisibility()) return;
-    headingRef.current.focus({ preventScroll: true });
-    headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
-  }, [current]);
-  const toggle = useCallback(() => {
-    if (current) { setOpen(null); return; }
-    setOpen({ prices, history: history().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit) });
-  }, [current, prices, history, event.packageNdc, group.pricingUnit]);
-  const close = () => { setOpen(null); onFocusInChart(false); buttonRef.current?.focus(); };
+  const assignRef = useCallback((button: HTMLButtonElement | null) => {
+    buttonRef.current = button;
+    onRegisterButton(key, button);
+  }, [key, onRegisterButton]);
   return <Fragment>
     <TableRow>
       <TableCell component="th" scope="row">
         {event.packageNdc}
-        <Tooltip title={current ? "Close this chart" : "Chart this change"}>
-          <IconButton ref={buttonRef} size="small" aria-label={`${current ? "Close" : "Chart"} price change for ${event.packageNdc}`}
-            aria-expanded={!!current} aria-controls={current ? chartId : undefined} onClick={toggle}
-            sx={{ ml: 0.5, color: current ? "primary.main" : "text.secondary", ...(compact ? { minWidth: 44, minHeight: 44 } : {}) }}>
+        <Tooltip title={chartId ? "Close this chart" : "Chart this change"}>
+          <IconButton ref={assignRef} size="small" aria-label={`${chartId ? "Close" : "Chart"} price change for ${event.packageNdc}`}
+            aria-expanded={!!chartId} aria-controls={chartId} onClick={() => onToggleChart(group, event, chartId ?? `${id}-chart`)}
+            sx={{ ml: 0.5, color: chartId ? "primary.main" : "text.secondary", ...(compact ? { minWidth: 44, minHeight: 44 } : {}) }}>
             <ShowChartIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -149,20 +138,10 @@ function PackageEventRow({ event, group, prices, history, origin, colors, dateWi
       </TableCell>
       {!compact && <TableCell align="right" sx={{ color: "text.secondary" }}>{amount}</TableCell>}
     </TableRow>
-    {current && <TableRow><TableCell colSpan={compact ? 4 : 5} sx={{
-      "&&": { whiteSpace: "normal", p: 0, border: 0 },
-    }}>
-      <Box id={chartId} sx={{ mt: 1, minWidth: 0 }}
-      onFocus={() => onFocusInChart(true)}
-      onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) onFocusInChart(false); }}>
-      <ExplorerGridItem title={title} headingLevel={4} headingRef={headingRef}
-        actions={<><PinButton title={title} chartType="line" prices={current.history} history={() => current.history}
-          origin={origin} colors={colors} dateWindow={dateWindow} eventDate={group.date} />
-          <Button size="small" onClick={close}>Close</Button></>}>
-        <LineViz nadacPrices={current.history} title={title} colors={colors} dateWindow={dateWindow} seriesKind="package"
-          eventDate={group.date} />
-      </ExplorerGridItem>
-      </Box>
-    </TableCell></TableRow>}
   </Fragment>;
+});
+
+function eventKey(group: PriceEventGroup, event: PriceEvent) {
+  const { startDate, endDate, oldPrice, newPrice } = event.change;
+  return `${group.key}:${event.seriesNdc}:${event.packageNdc}:${startDate.getTime()}:${endDate.getTime()}:${oldPrice}:${newPrice}`;
 }
