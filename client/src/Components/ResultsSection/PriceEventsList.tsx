@@ -149,7 +149,9 @@ function PackageEventRow({ event, group, prices, history, origin, colors, dateWi
       </TableCell>
       {!compact && <TableCell align="right" sx={{ color: "text.secondary" }}>{amount}</TableCell>}
     </TableRow>
-    {current && <TableRow><TableCell colSpan={compact ? 4 : 5} sx={{ whiteSpace: "normal", p: 0, border: 0 }}>
+    {current && <TableRow><TableCell colSpan={compact ? 4 : 5} sx={{
+      "&&": { whiteSpace: "normal", p: 0, border: 0 },
+    }}>
       <Box id={chartId} sx={{ mt: 1, minWidth: 0 }}
       onFocus={() => onFocusInChart(true)}
       onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) onFocusInChart(false); }}>
