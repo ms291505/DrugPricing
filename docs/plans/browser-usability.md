@@ -389,6 +389,27 @@ The help articles on charts and price changes describe the app as shipped
 
 ## Stage 4 — Carry a search into Workspace
 
+Implemented 2026-11-16 on `codex/browser-usability-stage-4`.
+
+- A neutral outlined Add search to workspace action sits below the standalone search panel;
+  workspace search tabs don't show it. It requires a successful current query, including empty
+  results, and is disabled while a new search is loading or has failed.
+- The copy takes applied criteria only, fixes the requested period as Custom dates, preserves
+  refinements and FDA detail level, and deep-copies all shared standalone pins with their own
+  data and date windows. Draft text, row selection, scroll and live Compare visibility stay
+  on the original page.
+- A stable workspace action saves the new tab before dispatching its addition, opens it in
+  the first pane, and preserves other panes and tab identities. If storage fails, no empty
+  tab opens. Normal restored-tab query behavior suppresses the found toast.
+- A narrow read-only context disables the action after a multi-window conflict; the action
+  also checks storage's current read-only flag. A synchronous guard and click count block
+  double clicks; returning to Search permits another deliberate copy.
+- Validation covers snapshot independence, fixed dates, unchanged tab identities, initial-save
+  failure and read-only writes. Browser checks cover FDA draft exclusion and package/filter
+  copying, double-click protection, NADAC keyboard copying at phone width, reload restoration,
+  shared pins, independent edits and disabling after another window writes.
+
+
 Decided: build it, after Stage 3. The workspace redo has no date, so the bridge is worth
 having even though tabs-as-searches is not the long-term model (D5).
 

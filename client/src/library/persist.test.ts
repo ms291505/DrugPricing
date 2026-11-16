@@ -58,6 +58,18 @@ const oldItem = {
 };
 
 describe("loading saved tab state", () => {
+  it("reports a failed initial tab save so callers can avoid opening an empty search", async () => {
+    const toast = (await import("react-hot-toast")).default;
+    const error = vi.spyOn(toast, "error").mockImplementation(() => "toast");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("localStorage", { setItem: () => { throw new Error("Full"); } });
+    expect(persist.saveTabState("copy", { type: "fda", criteria: fdaCriteria,
+      detailLevel: "package", pinnedItems: [] })).toBe(false);
+    expect(error).toHaveBeenCalledOnce();
+    error.mockRestore();
+    warn.mockRestore();
+  });
+
   it("round-trips what saveTabState wrote", () => {
     const state = {
       type: "nadac" as const,
@@ -237,7 +249,8 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(persist.tabKey("t3"), "written elsewhere"));
     expect(onConflict).toHaveBeenCalledTimes(1);
 
-    persist.saveTabState("t1", fdaTab(fdaCriteria));
+    expect(persist.isStorageReadOnly()).toBe(true);
+    expect(persist.saveTabState("t1", fdaTab(fdaCriteria))).toBe(false);
     persist.removeTabState("t1");
     expect(localStorage.getItem(persist.tabKey("t1"))).toBe(before);
   });

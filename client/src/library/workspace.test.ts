@@ -18,6 +18,14 @@ describe("workspaceReducer", () => {
     prev.tabs.forEach((t, i) => expect(next.tabs[i]).toBe(t));
   });
 
+  it("opens an imported search in the first pane without changing other tabs or layout", () => {
+    const prev = { ...workspace(["a", "b"]), layoutMode: "split-2" as const };
+    const next = workspaceReducer(prev, { type: "add", tab: tab("copy"), show: true });
+    expect(next.paneAssignment).toEqual(["copy", "b"]);
+    expect(next.layoutMode).toBe("split-2");
+    prev.tabs.forEach((t, i) => expect(next.tabs[i]).toBe(t));
+  });
+
   it("starts over with one tab, alone in a single pane", () => {
     const fresh: WorkspaceTab = { id: "new", type: "new", title: "New Tab" };
     const next = workspaceReducer({ ...workspace(["a", "b"]), layoutMode: "split-2" }, { type: "reset", tab: fresh });

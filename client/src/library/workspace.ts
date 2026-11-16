@@ -6,7 +6,7 @@ import type { PersistedWorkspace } from "./persist";
 export type WorkspaceState = PersistedWorkspace;
 
 export type WorkspaceAction =
-  | { type: "add", tab: WorkspaceTab }
+  | { type: "add", tab: WorkspaceTab, show?: boolean }
   /** `fallback` replaces the tab if it is the only one; the caller creates it, so this stays pure. */
   | { type: "remove", id: string, fallback: WorkspaceTab }
   | { type: "rename", id: string, title: string }
@@ -42,7 +42,10 @@ export function replacementTabId(tabs: WorkspaceTab[], id: string, fallbackId: s
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
     case "add":
-      return { ...state, tabs: [...state.tabs, action.tab] };
+      return {
+        ...state, tabs: [...state.tabs, action.tab],
+        paneAssignment: action.show ? [action.tab.id, ...state.paneAssignment.slice(1)] : state.paneAssignment,
+      };
     case "remove": {
       if (!state.tabs.some(t => t.id === action.id)) return state;
       const replacement = replacementTabId(state.tabs, action.id, action.fallback.id);

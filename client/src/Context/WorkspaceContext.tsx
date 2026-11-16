@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState, t
 import type { LayoutMode } from "../library/types";
 import { replacementTabId, workspaceReducer, type WorkspaceState } from "../library/workspace";
 import { defaultTitleFor, type TabType, type WorkspaceTab } from "../library/tabType";
-import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows } from "../library/persist";
+import { loadWorkspace, pruneStoredState, removeTabState, saveWorkspace, watchOtherWindows, saveTabState, isStorageReadOnly, type PersistedSearchTab } from "../library/persist";
 import toast from "react-hot-toast";
 import { Box, Button } from "@mui/material";
 import type { ExplorerItem } from "../library/explorerItems";
 import {
+  WorkspaceReadOnlyContext,
   MobileDrawerContext,
   WorkspaceActionsContext,
   WorkspacePanesContext,
@@ -38,6 +39,7 @@ function initWorkspace(): WorkspaceState {
 export const WorkspaceContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [workspace, dispatch] = useReducer(workspaceReducer, undefined, initWorkspace);
   const { tabs, layoutMode, paneAssignment } = workspace;
+  const [readOnly, setReadOnly] = useState(isStorageReadOnly);
   const [mobileDrawerIsOpen, setMobileDrawerIsOpen] = useState(false);
   const mobileDrawerToggle = useRef<HTMLButtonElement>(null);
 
@@ -73,6 +75,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   // Another window changed the saved workspace: this one stops saving (persist.ts) and asks
   // for a reload, rather than overwriting the newer data with its own older copy.
   useEffect(() => watchOtherWindows(() => {
+    setReadOnly(true);
     toast(
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         Your workspace changed in another window. Changes here won't be saved.
@@ -89,6 +92,15 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       title: title ?? defaultTitleFor(tabType),
     };
     dispatch({ type: "add", tab });
+    return tab.id;
+  }, []);
+
+  const addSearchTab = useCallback((state: PersistedSearchTab, title: string) => {
+    if (isStorageReadOnly()) return null;
+    const tab: WorkspaceTab = { id: crypto.randomUUID(), type: state.type, title };
+    // Providers read once on mount: a failed save must never open an empty tab.
+    if (!saveTabState(tab.id, state)) return null;
+    dispatch({ type: "add", tab, show: true });
     return tab.id;
   }, []);
 
@@ -136,6 +148,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
 
   const actions = useMemo<WorkspaceActions>(() => ({
     addTab,
+    addSearchTab,
     removeTab,
     renameTab,
     changeTabType,
@@ -146,7 +159,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     addToCollection,
     clearWorkspace,
     registerTab,
-  }), [addTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment, addToCollection, clearWorkspace, registerTab]);
+  }), [addTab, addSearchTab, removeTab, renameTab, changeTabType, setLayoutMode, setPaneAssigment, addToCollection, clearWorkspace, registerTab]);
 
   const panes = useMemo(() => ({ layoutMode, paneAssignment }), [layoutMode, paneAssignment]);
 
@@ -157,7 +170,9 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
       <WorkspaceTabsContext.Provider value={tabs}>
         <WorkspacePanesContext.Provider value={panes}>
           <MobileDrawerContext.Provider value={mobileDrawer}>
-            {children}
+            <WorkspaceReadOnlyContext.Provider value={readOnly}>
+              {children}
+            </WorkspaceReadOnlyContext.Provider>
           </MobileDrawerContext.Provider>
         </WorkspacePanesContext.Provider>
       </WorkspaceTabsContext.Provider>

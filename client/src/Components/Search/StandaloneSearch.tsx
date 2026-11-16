@@ -4,6 +4,7 @@ import { NadacOfferContext, type NadacOffer } from "../../Context/searchNavigati
 import { type SearchSource } from "../../library/persist";
 import FdaSearch from "../FdaSearch";
 import NadacSearch from "../NadacSearch";
+import { AddFdaSearchToWorkspace, AddNadacSearchToWorkspace } from "./AddSearchToWorkspace";
 import SearchSourceTabs from "./SearchSourceTabs";
 
 export default memo(function StandaloneSearch({ source, offer }: {
@@ -11,11 +12,11 @@ export default memo(function StandaloneSearch({ source, offer }: {
   offer: NadacOffer | null,
 }) {
   if (source === "fda") return <StandaloneFdaProvider>
-    <FdaSearch searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+    <FdaSearch searchAction={<AddFdaSearchToWorkspace />} searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
   </StandaloneFdaProvider>;
   return <StandaloneNadacProvider>
     <NadacOfferContext value={offer}>
-      <NadacSearch searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
+      <NadacSearch searchAction={<AddNadacSearchToWorkspace />} searchNavigation={<SearchSourceTabs source={source} />} pinnedSection={null} />
     </NadacOfferContext>
   </StandaloneNadacProvider>;
 });

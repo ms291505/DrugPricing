@@ -376,6 +376,10 @@ export type PersistedCollectionTab = {
   type: "collection"
 } & PersistedExplorerState;
 
+export type PersistedSearchTab = PersistedFdaTab | PersistedNadacTab;
+
+export const isStorageReadOnly = () => readOnly;
+
 type PersistedTab = PersistedFdaTab | PersistedNadacTab | PersistedCollectionTab;
 
 /*
@@ -424,8 +428,8 @@ export function loadCollectionTabState(tabId: string): PersistedCollectionTab | 
   };
 }
 
-export function saveTabState(tabId: string, state: PersistedTab): void {
-  write(tabKey(tabId), state);
+export function saveTabState(tabId: string, state: PersistedTab): boolean {
+  return write(tabKey(tabId), state);
 }
 
 export function removeTabState(tabId: string): void {

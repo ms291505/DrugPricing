@@ -1,0 +1,60 @@
+import { useEffect, useRef } from "react";
+import { Box, Button, Tooltip } from "@mui/material";
+import { useNavigate } from "react-router";
+import { usePageVisible } from "../../Context/pageVisibility";
+import { useWorkspaceActions, useWorkspaceReadOnly } from "../../Context/workspaceContexts";
+import { useFdaSearchContext } from "../../Context/FdaSearchContext";
+import { useNadacSearchContext } from "../../Context/NadacSearchContext";
+import { usePinnedItems } from "../../Context/pinnedItemsContexts";
+import useFdaSearch from "../../hooks/useFdaSearch";
+import { useNadacSearch } from "../../hooks/useNadacSearch";
+import { fdaSearchLabel, nadacSearchLabel } from "../../library/searchCriteria";
+import { copySearchToWorkspace } from "../../library/workspaceSearch";
+import type { DateWindow } from "../../library/dates";
+import type { PersistedSearchTab } from "../../library/persist";
+
+function AddSearchToWorkspace({ state, dates, title, ready }: {
+  state: PersistedSearchTab, dates: DateWindow | undefined, title: string, ready: boolean,
+}) {
+  const { addSearchTab } = useWorkspaceActions();
+  const readOnly = useWorkspaceReadOnly();
+  const visible = usePageVisible();
+  const navigate = useNavigate();
+  const adding = useRef(false);
+  // Returning to the search permits a deliberate second copy. Two clicks before leaving don't.
+  useEffect(() => { if (visible) adding.current = false; }, [visible]);
+  const reason = readOnly ? "Reload to use the workspace changed in another window."
+    : !ready ? "Load a search successfully before adding it to Workspace." : "";
+  return <Box sx={{ px: { xs: 1, md: 0 } }}>
+    <Tooltip title={reason}>
+      <span>
+        <Button variant="outlined" color="inherit" size="small" disabled={!ready || readOnly}
+          onClick={event => {
+            if (adding.current || event.detail > 1 || !dates) return;
+            adding.current = true;
+            const id = addSearchTab(copySearchToWorkspace(state, dates), title);
+            if (id) void navigate("/workspace");
+            else adding.current = false;
+          }}>
+          Add search to workspace
+        </Button>
+      </span>
+    </Tooltip>
+  </Box>;
+}
+
+export function AddFdaSearchToWorkspace() {
+  const { criteria, requested, loaded, fdaResultDetailLevel } = useFdaSearchContext();
+  const { isSuccess } = useFdaSearch();
+  const pinnedItems = usePinnedItems();
+  return <AddSearchToWorkspace state={{ type: "fda", criteria, detailLevel: fdaResultDetailLevel, pinnedItems }}
+    dates={requested?.dates} title={fdaSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} />;
+}
+
+export function AddNadacSearchToWorkspace() {
+  const { criteria, requested, loaded } = useNadacSearchContext();
+  const { isSuccess } = useNadacSearch();
+  const pinnedItems = usePinnedItems();
+  return <AddSearchToWorkspace state={{ type: "nadac", criteria, pinnedItems }}
+    dates={requested?.dates} title={nadacSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} />;
+}
