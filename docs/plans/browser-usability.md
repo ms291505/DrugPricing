@@ -226,8 +226,9 @@ The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author di
 
 - Events group by date, pricing unit and direction. Exact values stay expandable, with five
   groups initially and Show all for the rest.
-- Around this change belongs to an explicit event. It opens a focused package chart from the
-  search event list and focuses the current chart from its readout/event list. The ambiguous
+- Around this change belongs to an explicit event. It focuses the current chart from its
+  readout/event list. (In the search event list it was later replaced by Chart this change;
+  see Price changes section.) The ambiguous
   chart-wide Around change preset is removed; no largest/latest event is chosen automatically.
 - Product activity labels count affected packages and name the largest movement. Product
   sparklines are omitted because one package's line could misrepresent the product.
@@ -269,11 +270,10 @@ search dates and the current filters, and labeled as such.
 - Each entry gives the date, the percent, the old → new price with its unit, and the packages
   affected. Group changes by date, pricing unit and direction ("6 packages dropped about 43%
   on Jan 14"), with exact values expandable. Show five groups before Show all.
-- Its action is **"Select affected rows"**: it adds those rows to the selection and sorts the
-  table by Price Activity so they are in view. It creates no chart; the user adjusts the
-  selection and uses Line or Bar. Say how many rows were selected.
-- **At product level** the affected things are packages, which aren't rows. The action there
-  reads **"Show affected packages"**: it switches Detail Level to Package and selects them.
+- Its one action is **"Chart this change"** (replacing "Select affected rows", "Show affected
+  packages" and "Around this change", which the author found confusing): it toggles one chart
+  of the group's packages over the shown dates, readout locked on the change date, with Pin
+  and Close. Compare price histories remains the way to see every result together.
 - The search toast keeps "N found" and drops its price-change part (`SearchResultToast`).
 
 ### Change callouts on line charts
@@ -382,7 +382,7 @@ drift, one observation, a gap, a sub-cent price, mixed units, and a product whos
 disagree. Reuse `seriesByDate` and `flagPriceChanges`; don't add a second price math.
 
 Acceptance: Eliquis's related drops are discoverable without six automatic charts, and
-"Select affected rows" then Line gives one chart with them called out; events and states
+"Chart this change" gives one chart with them called out; events and states
 respect search dates and filters; no mixed-unit figures; saved pins are unchanged by later
 searches and old pins still draw; both search pages behave the same.
 

@@ -41,12 +41,15 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
-  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, keeps
-  exact values expandable, and shows five groups before Show all. Select affected rows adds
-  to selection and sorts/paginates the table to an affected row; at product level it switches
-  to packages first. It never pins a chart. Around this change opens that event's focused
-  package chart; the same action in a chart's event list/readout focuses that chart's dates.
-  No chart-wide Around change preset chooses an event implicitly.
+  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, and shows five groups
+  before Show all. Each group's Package details is a small table (NDC, was, now, change), open
+  by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
+  closes stays so while the page is mounted. Its one action, Chart this change, toggles one
+  package chart (one unit) under the list over the page's shown dates, its readout locked on
+  the change date (`eventDate`, the lock's dashed line marks it). A pin keeps `eventDate`;
+  pins without it, including old zoomed ones, draw as before. In a chart's event list/readout,
+  Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
+  change preset chooses an event implicitly.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
   average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
