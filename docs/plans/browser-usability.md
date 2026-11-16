@@ -182,7 +182,8 @@ Default columns, in order after the selection checkbox:
 | Table | Default columns |
 | --- | --- |
 | FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form, Latest Price Date |
-| FDA packages | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity, Latest Price Date |
+| FDA packages, wide | Brand Name, Package NDC, Latest Price, Latest Price Date, Price Activity, Strength, Package Description |
+| FDA packages, narrow (table below `sm`) | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity, Latest Price Date |
 | NADAC | NDC, Latest Price, Description, Price Activity, Latest Price Date |
 
 - Price Activity is built in Stage 3 and joins the defaults then.
@@ -192,7 +193,8 @@ Default columns, in order after the selection checkbox:
 - Generic Name is hidden by default. Everything else stays in the Columns tool: Min and Max
   Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
   table.
-- Latest Price stays second (the phone rule in AGENTS.md).
+- Latest Price stays second (the phone rule in AGENTS.md), except on the wide FDA package table,
+  where it is third; a narrow one keeps the old order so the price still shows on a phone.
 
 Column choices are saved in Settings (`library/settings.ts`), once per table type, so they
 apply on both search pages and in every workspace tab and follow other windows. Save only
@@ -391,7 +393,7 @@ The help articles on charts and price changes describe the app as shipped
 
 Implemented 2026-11-16 on `codex/browser-usability-stage-4`.
 
-- A neutral outlined Add search to workspace action sits below the standalone search panel;
+- A neutral outlined Add search to workspace action sits at the end of the standalone page, below the results and pinned charts;
   workspace search tabs don't show it. It requires a successful current query, including empty
   results, and is disabled while a new search is loading or has failed.
 - The copy takes applied criteria only, fixes the requested period as Custom dates, preserves

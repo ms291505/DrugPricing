@@ -11,7 +11,11 @@ import { createPriceColumns } from "./priceColumns";
 const PRICE_COLUMNS = createPriceColumns<FdaPackageRow>();
 
 const COLUMNS: GridColDef<FdaPackageRow>[] = [
-  // The full code, so a phone fits it and the latest price without scrolling.
+  {
+    field: "proprietaryName",
+    headerName: "Brand Name",
+    width: 150,
+  },
   {
     field: "ndcPackageCode",
     headerName: "Package NDC",
@@ -20,11 +24,8 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
-  {
-    field: "proprietaryName",
-    headerName: "Brand Name",
-    width: 150,
-  },
+  PRICE_COLUMNS.latestDate,
+  activityColumn<FdaPackageRow>(),
   {
     field: "strengthNumber",
     headerName: "Strength",
@@ -35,8 +36,7 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
     headerName: "Package Description",
     width: 250,
   },
-  activityColumn<FdaPackageRow>(),
-  ...PRICE_COLUMNS.history,
+  ...PRICE_COLUMNS.range,
   {
     field: "productTypeName",
     headerName: "OTC Drug",
@@ -78,6 +78,10 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   },
 ];
 
+// The order on a narrow table (a phone): the NDC and Latest Price lead, so the price shows without
+// scrolling (checkbox 44 + NDC 120 + price up to 125 = 289px). Wider tables use COLUMNS' own order.
+const NARROW_ORDER = ["ndcPackageCode", "latestPrice", "proprietaryName", "strengthNumber", "packageDescription", "priceActivity", "latestPriceDate"];
+
 // Package NDC: the `ndc` of package-level prices.
 const getRowId = (row: FdaPackageRow) => row.ndcPackageCode;
 
@@ -99,6 +103,7 @@ export default function FdaPackageResultTable({ products, loading, dateWindow }:
       tableType="fdaPackage"
       rows={rows}
       columns={COLUMNS}
+      narrowOrder={NARROW_ORDER}
       getRowId={getRowId}
       rowNoun="package"
       loading={loading}

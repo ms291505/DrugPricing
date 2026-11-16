@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { type FdaResultDetailLevel, type LayoutMode } from "./types";
+import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
@@ -405,7 +405,7 @@ export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
   return {
     type: "fda",
     criteria: isObject(raw.criteria) ? readFdaCriteria(raw.criteria) : legacyFdaCriteria(raw),
-    detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : "product",
+    detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : DEFAULT_FDA_DETAIL_LEVEL,
     ...loadExplorerState(raw),
   };
 }
