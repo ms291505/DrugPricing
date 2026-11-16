@@ -11,8 +11,6 @@ import { clearFdaRefine, fdaResultsLabel, fdaRowCount, hiddenResultsHint, showAl
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
-import type { PriceEventGroup } from "../../library/priceActivity";
-import useActivitySelection from "../../hooks/useActivitySelection";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
 import { TryNadacContext } from "../../Context/searchNavigation";
@@ -36,7 +34,7 @@ type Props = {
 export default memo(function FdaResults({ view }: Props) {
   const onTryNadac = useContext(TryNadacContext);
   const { isLoading, isSuccess, data } = useFdaSearch();
-  const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setSelectedRows, setFdaResultDetailLevel, setCriteria } = useFdaSearchContext();
+  const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden, history } = view;
   const origin = useFdaChartOrigin();
@@ -50,13 +48,6 @@ export default memo(function FdaResults({ view }: Props) {
   const packageColors = useSeriesColors(packageOrigin.resultPrices, packageNadacPrices);
   const levelHistory = useCallback(() => history(fdaResultDetailLevel), [history, fdaResultDetailLevel]);
   const packageHistory = useCallback(() => history("package"), [history]);
-
-  const { activitySelection, selectAffected: selectAffectedRows } = useActivitySelection(selectedRows, setSelectedRows);
-  const selectAffected = (group: PriceEventGroup) => {
-    const switching = fdaResultDetailLevel === "product";
-    if (switching) setFdaResultDetailLevel("package");
-    selectAffectedRows(group, switching);
-  };
 
   if (loaded === null) return null;
 
@@ -88,10 +79,10 @@ export default memo(function FdaResults({ view }: Props) {
         />
         : null}</>}
       priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
-        origin={packageOrigin} colors={packageColors} productLevel={fdaResultDetailLevel === "product"} onSelect={selectAffected} />}
+        origin={packageOrigin} colors={packageColors} dateWindow={dateWindow} />}
       table={fdaResultDetailLevel === "product"
-        ? <FdaProductResultTable products={products} loading={isLoading} activitySelection={activitySelection} dateWindow={dateWindow} />
-        : <FdaPackageResultTable products={products} loading={isLoading} activitySelection={activitySelection} dateWindow={dateWindow} />}
+        ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
+        : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
     >
       <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow} />
     </ResultsSection>

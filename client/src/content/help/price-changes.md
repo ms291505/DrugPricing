@@ -4,18 +4,18 @@ rounded to a tenth of a percent at the cutoff. A package with just one observati
 insufficient history. Product activity comes from its packages, never from their average.
 
 A significant change is a move of at least 10% between consecutive package observations.
-The **Price changes** list groups these events by date, pricing unit and direction. Expand
-**Package details** for each package's exact percentage and old → new price per unit. When
-observations are more than a week apart, the details name both dates; the change may have
-happened anywhere in that span.
+The **Price changes** list groups these events by date, pricing unit and direction.
+**Package details** lists each package's price before and after, and its change in percent
+and dollars per unit; it starts open on wide screens. When observations are more than a week
+apart, the group names both dates; the change may have happened anywhere in that span.
 
-**Select affected rows** adds the packages to your selection, sorts by Price Activity and
-brings an affected row into view. At FDA product level, **Show affected packages** switches to
-packages first. Adjust the selection, then use **Line** or **Bar** to pin a chart.
+**Chart this change** opens one chart of that group's packages over the search's dates. A
+solid line marks the change, and the readout rests on its date until you point at another.
+**Pin** keeps a copy, and **Close** or the same button again closes it. To see every
+result together, use **Compare price histories**.
 
-**Around this change** belongs to a specific event. In the search's event list it opens a
-focused chart of the affected packages. In a chart's event list or readout it focuses that
-chart's dates around the event. It never chooses a different event for you.
+In a chart's own event list or readout, **Around this change** focuses that chart's dates
+around the event. It never chooses a different event for you.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
 same date share one label; their exact values stay in the readout and the chart's event list.

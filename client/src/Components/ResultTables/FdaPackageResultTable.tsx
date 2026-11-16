@@ -1,4 +1,3 @@
-import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
 import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
@@ -93,11 +92,10 @@ type Props = {
   products: FdaProductDetail[],
   loading: boolean,
   dateWindow?: DateWindow,
-  activitySelection?: ActivitySelectionRequest,
 }
 
 /** The FDA search's results at package level: one row per package. */
-export default function FdaPackageResultTable({ products, loading, activitySelection, dateWindow }: Props) {
+export default function FdaPackageResultTable({ products, loading, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useFdaSearchContext();
   const reference = useAsOfReference(dateWindow);
   const rows = useMemo(() => fdaPackageRows(products, reference), [products, reference]);
@@ -105,7 +103,6 @@ export default function FdaPackageResultTable({ products, loading, activitySelec
   return (
     <ResultTable
       dateWindow={dateWindow}
-      activitySelection={activitySelection}
       tableType="fdaPackage"
       rows={rows}
       columns={COLUMNS}

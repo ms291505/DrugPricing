@@ -19,6 +19,8 @@ type Props = {
   origin: ChartOrigin,
   dateWindow: DateWindow,
   changeSpan?: ChartChangeSpan,
+  /** Line charts opened for one change: its date, which the pin keeps marked. */
+  eventDate?: number,
   /** The page's series colors, kept with the pinned copy. */
   colors?: Map<string, string>,
   barValue?: BarValue,
@@ -28,12 +30,12 @@ type Props = {
  * Pins a system (auto) chart: copies it into the tab's Pinned section as a frozen snapshot,
  * which then survives new searches and filter changes.
  */
-export default function PinButton({ title, chartType, prices, history, origin, dateWindow, changeSpan, colors, barValue }: Props) {
+export default function PinButton({ title, chartType, prices, history, origin, dateWindow, changeSpan, eventDate, colors, barValue }: Props) {
   const { addItems } = usePinActions();
 
   const handlePin = () => {
     const items = createChartItems({
-      chartType, prices: withLoadedHistory(prices, history()), defaultTitle: title, origin, dateWindow, changeSpan,
+      chartType, prices: withLoadedHistory(prices, history()), defaultTitle: title, origin, dateWindow, changeSpan, eventDate,
       colors, barValue,
     });
     addItems(items);

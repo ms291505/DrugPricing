@@ -57,6 +57,13 @@ describe("createChartItem provenance", () => {
     });
     expect(item.changeSpan).toEqual(span);
   });
+
+  it("keeps a change's date on line charts only, and only when given", () => {
+    expect("eventDate" in make(productB)).toBe(false);
+    const options = { prices: productB, defaultTitle: "T", origin, dateWindow: FULL_WINDOW, eventDate: day("2025-03-01") };
+    expect(createChartItem({ ...options, chartType: "line" }).eventDate).toBe(day("2025-03-01"));
+    expect("eventDate" in createChartItem({ ...options, chartType: "bar" })).toBe(false);
+  });
 });
 
 describe("withLoadedHistory", () => {
