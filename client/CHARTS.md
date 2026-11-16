@@ -119,7 +119,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 - **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
   package event has old/new dots and a dashed old price; one pill per date gives agreed prices
   or a change count. Exact package values and gap spans are in the Price changes section under the results
-  table and in View data; the readout shows only prices.
+  table (package charts' View data has exact prices); the readout shows only prices.
   Product markers come only from actual package events, never jumps in their average.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy

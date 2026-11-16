@@ -294,7 +294,7 @@ Callouts become general:
   the item, on by default. Live Compare cards always show them and get no menu.
 - **One label per date on a multi-series chart.** Each series keeps its dots and dashed old
   price; the date gets one pill: the prices when the series agree, otherwise a count
-  ("6 changes"), with exact values in the Price changes section under the table and View data.
+  ("6 changes"), with exact values in the Price changes section under the table.
 - **A product line never gets a callout from its own average**, which can jump when a package
   joins or leaves. When one of its packages had a significant change in the dates shown, the
   line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new

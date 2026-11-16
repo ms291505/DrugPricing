@@ -58,7 +58,7 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
       sx={{ "&:focus": { outline: "none" } }}>Price changes</Typography>
     <Typography variant="body2" color="text.secondary">Package changes of 10% or more in these dates and filters.</Typography>
     <PriceEventsList groups={groups}
-      renderGroup={group => <PriceChangeRow key={group.key} group={group} prices={prices} history={history} origin={origin}
+      renderGroup={group => <PriceChangeRow group={group} prices={prices} history={history} origin={origin}
         colors={colors} dateWindow={dateWindow} compact={compact}
         detailsOpen={detailsChoice.get(group.key) ?? defaultOpen} onDetailsToggle={onDetailsToggle}
         onFocusInChart={setFocusInChart} />} />
@@ -105,12 +105,13 @@ const PriceChangeRow = memo(function PriceChangeRow({
   const title = `Price change · ${formatDate(group.date)} · per ${pricingUnitLabel(group.pricingUnit)}`;
   const isOpen = current !== null;
   return <>
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 0.5 }}>
-      <Typography variant="subtitle2" component="p">{priceEventGroupLabel(group)}</Typography>
-      <Tooltip title="Chart this change">
+    <Box sx={{ display: "flex", flexWrap: "nowrap", alignItems: "center", columnGap: 0.5 }}>
+      <Typography variant="subtitle2" component="p" sx={{ flex: "1 1 auto", minWidth: 0 }}>{priceEventGroupLabel(group)}</Typography>
+      <Tooltip title={isOpen ? "Close this chart" : "Chart this change"}>
         <IconButton ref={buttonRef} size="small" aria-label="Chart this change"
           aria-expanded={isOpen} aria-controls={isOpen ? chartId : undefined} onClick={toggle}
           sx={{
+            flexShrink: 0, alignSelf: "flex-start",
             color: isOpen ? "primary.main" : "text.secondary", bgcolor: isOpen ? "action.selected" : undefined,
             ...(compact ? { minWidth: 44, minHeight: 44 } : { my: -0.5 }),
           }}>

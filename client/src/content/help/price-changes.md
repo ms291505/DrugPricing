@@ -17,7 +17,8 @@ the same button again closes it. To see every
 result together, use **Compare price histories**.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
-same date share one label; their exact values are in the list above and in the chart's **View data**.
+same date share one label; their per-package changes are in the search's Price changes section or at Package level, and a
+package chart's **View data** has its exact prices.
 A product marker means one or more packages changed, not that its average made that change.
 Older product pins without package identities cannot show those package markers. A pinned
 line chart's menu can turn **Show price changes** off or on.

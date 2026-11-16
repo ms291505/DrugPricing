@@ -12,16 +12,11 @@ type Props = {
   groups: PriceEventGroup[],
   /** One row per group: its summary, details and anything it opens. */
   renderGroup: (group: PriceEventGroup) => ReactNode,
-  /** Show all groups, when the caller needs to know which are shown; else the list keeps it. */
-  showAll?: boolean,
-  onShowAllChange?: (showAll: boolean) => void,
 };
 
 /** Events retain exact per-package values, even when the summary combines a date/unit/direction. */
-export default function PriceEventsList({ groups, renderGroup, ...props }: Props) {
-  const [ownShowAll, setOwnShowAll] = useState(false);
-  const showAll = props.showAll ?? ownShowAll;
-  const setShowAll = props.onShowAllChange ?? setOwnShowAll;
+export default function PriceEventsList({ groups, renderGroup }: Props) {
+  const [showAll, setShowAll] = useState(false);
   const listId = useId();
   return <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
