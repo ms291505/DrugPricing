@@ -161,7 +161,10 @@ the active source. Their shared snapshots live in
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action copies applied criteria with fixed dates,
+Standalone Search's Add search to workspace action sits last on the page, below the results and the
+shared pins, and shows only once a search has loaded. App's shared pins render outside the source
+providers, so each source portals the button into the slot under them (`SearchFooterSlotContext`),
+keeping its own context. It copies applied criteria with fixed dates,
 FDA detail level and all shared pins. `addSearchTab` writes initial tab state before dispatching
 an add with `show`, so the provider's first read restores it; a failed save opens no tab.
 `WorkspaceReadOnlyContext` is separate from tabs, panes and stable actions. Only controls that
