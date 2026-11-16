@@ -25,6 +25,11 @@ describe("flagPriceChanges", () => {
     expect(nadacPrices[0].nadacPerUnit).toBe(5.52);
   });
 
+  it("keeps the package boundary guard and does not flag two zero observations", () => {
+    expect(() => flagPriceChanges([{ packageNdc: "A", prices: [price("A", "2026-01-07", 10), price("B", "2026-01-14", 5)] }])).toThrow("different drug packages");
+    expect(flagPriceChanges([{ packageNdc: "A", prices: [price("A", "2026-01-07", 0), price("A", "2026-01-14", 0)] }])).toEqual([]);
+  });
+
   it("ignores changes under the threshold, and flags one exactly at it", () => {
     const prices = (later: number) => [price("A", "2026-01-07", 10), price("A", "2026-01-14", later)];
     expect(flagPriceChanges([{ packageNdc: "A", prices: prices(10.99) }])).toEqual([]);

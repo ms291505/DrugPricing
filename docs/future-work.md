@@ -6,11 +6,6 @@ they fit. When something is done, delete it here. The code and its PR are the re
 
 ## Decided
 
-### Usability round from the user-testing notes (2026-11-01)
-
-The core results, readouts and separate cards per pricing unit have shipped. Chart discovery and
-price activity continue in [browser usability stage 3](plans/browser-usability.md).
-
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC

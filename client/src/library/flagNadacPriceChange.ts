@@ -1,17 +1,18 @@
-import type { FdaProductDetail, NadacPrice, NadacPriceChange, PackagePriceChange } from "./types";
+import { splitByPricingUnit, seriesByDate } from "./prices";
+import type { ChartPrice, FdaProductDetail, NadacPrice, NadacPriceChange, PackagePriceChange } from "./types";
 
 /** One package's prices, under the NDC its price-change cards show. */
 export type PackagePrices = {
   /** As shown: dashed from the FDA, NADAC's stored form on a NADAC search. */
   packageNdc: string,
-  prices: NadacPrice[],
+  prices: ChartPrice[],
 };
 
 /**
  * The changes of at least `threshold` between one package's consecutive prices. Leaves `prices`
  * as it is: it may be React Query's cached result.
  */
-function flagPackagePriceChanges(prices: NadacPrice[], threshold: number): NadacPriceChange[] {
+function flagPackagePriceChanges(prices: ChartPrice[], threshold: number): NadacPriceChange[] {
   const sorted = [...prices].sort((a, b) => a.asOfDate.getTime() - b.asOfDate.getTime());
   const priceChanges: NadacPriceChange[] = [];
 
@@ -21,6 +22,7 @@ function flagPackagePriceChanges(prices: NadacPrice[], threshold: number): Nadac
 
     if (last.ndc !== current.ndc) throw new Error("Tried to flag prices from different drug packages.");
 
+    if (current.nadacPerUnit === last.nadacPerUnit) continue;
     const percentage = (current.nadacPerUnit - last.nadacPerUnit) / last.nadacPerUnit;
     if (Math.abs(percentage) < threshold) continue;
 
@@ -39,8 +41,15 @@ function flagPackagePriceChanges(prices: NadacPrice[], threshold: number): Nadac
 
 /** Flags each package's price changes against its own prices. Both search pages use it. */
 export function flagPriceChanges(packages: PackagePrices[], threshold: number = 0.10): PackagePriceChange[] {
-  return packages.flatMap(({ packageNdc, prices }) =>
-    flagPackagePriceChanges(prices, threshold).map(priceChange => ({ packageNdc, priceChange })));
+  return packages.flatMap(({ packageNdc, prices }) => {
+    if (new Set(prices.map(price => price.ndc)).size > 1) throw new Error("Tried to flag prices from different drug packages.");
+    return splitByPricingUnit(prices).flatMap(group => {
+      // A package/date may repeat in old snapshots; use the shared per-date math.
+      const points = [...seriesByDate(group.nadacPrices).values()].flat();
+      const normalized = points.map(point => ({ ...group.nadacPrices[0], asOfDate: new Date(point.asOfDate), nadacPerUnit: point.average }));
+      return flagPackagePriceChanges(normalized, threshold).map(priceChange => ({ packageNdc, priceChange }));
+    });
+  });
 }
 
 /** A NADAC result's prices, package by package (a NADAC NDC is a package). */
@@ -60,18 +69,4 @@ export function fdaPackagePrices(products: FdaProductDetail[]): PackagePrices[] 
     packageNdc: pkg.ndcPackageCode,
     prices: pkg.nadacPrices,
   })));
-}
-
-export function getAllPricesForFlaggedPackages(change: PackagePriceChange, prices: NadacPrice[]) {
-
-  const values = [...prices.filter(n => n.ndc === change.packageNdc)];
-
-  return values.length > 0 ? values : [];
-};
-
-export function percentageChangeToString(percentage: number) {
-  return Intl.NumberFormat("default", {
-    style: "percent",
-    minimumFractionDigits: 1
-  }).format(percentage);
 }

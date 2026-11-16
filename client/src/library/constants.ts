@@ -23,9 +23,7 @@ export const CONSTANT = {
 
 export const SMALL_SPACING = 1;
 
-/** Price-change charts are auto-added only when there are this many flagged changes or fewer. */
-export const MAX_AUTO_PRICE_CHANGE_CHARTS = 9;
-/** Auto-added charts are drawn only when they would show this many series (NDCs) or fewer. */
+/** Live Compare charts are offered only when they would show this many series (NDCs) or fewer. */
 export const MAX_AUTO_CHART_SERIES = 8;
 /** Grid size of a half-width chart card on both search pages: full width below `md`. */
 export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };

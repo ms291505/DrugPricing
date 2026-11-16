@@ -37,7 +37,7 @@ export default function ChartSelectedControl({ prices, history, selection, origi
       origin,
       dateWindow,
       colors,
-    });
+    }, unitPrices => chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(unitPrices)));
     addItems(items, { focus: true });
     if (items.length > 1) toast.success(`Added ${items.length} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`);
   };

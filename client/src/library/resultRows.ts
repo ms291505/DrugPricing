@@ -1,3 +1,5 @@
+import { packageActivity, productActivity, type PriceActivity } from "./priceActivity";
+import { fdaPackagePrices } from "./flagNadacPriceChange";
 import { fdaProductsToNadacPrices } from "./fdaDataToNadacPrices";
 import { latestSummary, summarizeByUnit, type UnitPriceSummary } from "./prices";
 import type { ChartPrice, FdaPackageDetail, FdaProductDetail } from "./types";
@@ -8,7 +10,7 @@ import type { ChartPrice, FdaPackageDetail, FdaProductDetail } from "./types";
  */
 
 /** A results-table row with its prices summarized once per unit. Empty when the row has no prices. */
-export type PricedRow = { priceSummaries: UnitPriceSummary[] };
+export type PricedRow = { priceSummaries: UnitPriceSummary[], priceActivity: PriceActivity };
 
 export type NadacRow = PricedRow & {
   ndc: string,
@@ -32,10 +34,16 @@ export type FdaPackageRow = FdaPackageDetail & PricedRow & {
 
 /** One row per NDC, described by its latest description. */
 export function nadacRows(prices: ChartPrice[]): NadacRow[] {
+  const packages = new Map<string, ChartPrice[]>();
+  for (const price of prices) {
+    const pkg = packages.get(price.ndc);
+    if (pkg) pkg.push(price); else packages.set(price.ndc, [price]);
+  }
   return [...summarizeByUnit(prices)].map(([ndc, priceSummaries]) => ({
     ndc,
     ndcDescription: latestSummary(priceSummaries)!.label,
     priceSummaries,
+    priceActivity: packageActivity(packages.get(ndc) ?? []),
   }));
 }
 
@@ -45,7 +53,7 @@ export function nadacRows(prices: ChartPrice[]): NadacRow[] {
  */
 export function fdaProductRows(products: FdaProductDetail[]): FdaProductRow[] {
   const summaries = summarizeByUnit(fdaProductsToNadacPrices(products, "product"));
-  return products.map(product => ({ ...product, priceSummaries: summaries.get(product.productNdc) ?? [] }));
+  return products.map(product => ({ ...product, priceSummaries: summaries.get(product.productNdc) ?? [], priceActivity: productActivity(fdaPackagePrices([product])) }));
 }
 
 /** One row per package, priced like its package-level chart. */
@@ -53,6 +61,7 @@ export function fdaPackageRows(products: FdaProductDetail[]): FdaPackageRow[] {
   const summaries = summarizeByUnit(fdaProductsToNadacPrices(products, "package"));
   return products.flatMap(product => product.fdaPackageDetails.map(fdaPackage => ({
     ...fdaPackage,
+    priceActivity: packageActivity(fdaPackage.nadacPrices),
     productNdc: product.productNdc,
     proprietaryName: product.proprietaryName,
     nonProprietaryName: product.nonProprietaryName,

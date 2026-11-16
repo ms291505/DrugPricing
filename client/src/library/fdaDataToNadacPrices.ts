@@ -15,12 +15,12 @@ function createProductDescription(prod: FdaProductDetail): string {
 export function fdaProductsToNadacPrices(
   products: FdaProductDetail[],
   fdaResultDetailLevel: FdaResultDetailLevel
-): NadacPrice[] {
+): (NadacPrice & { packageNdc?: string })[] {
   return products.flatMap(fdaProduct => fdaProduct
     .fdaPackageDetails.flatMap(fdaPackage => (
       fdaPackage.nadacPrices.map(price =>
         fdaResultDetailLevel === "product"
-          ? { ...price, ndc: fdaProduct.productNdc, ndcDescription: createProductDescription(fdaProduct) }
+          ? { ...price, packageNdc: fdaPackage.ndcPackageCode, ndc: fdaProduct.productNdc, ndcDescription: createProductDescription(fdaProduct) }
           : { ...price, ndc: fdaPackage.ndcPackageCode, ndcDescription: fdaPackage.packageDescription }
       )
     )));

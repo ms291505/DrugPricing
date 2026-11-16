@@ -37,7 +37,10 @@ export type NadacPriceChange = {
  * The fields a chart reads from a price. Both live search results (`NadacPrice`) and pinned
  * chart snapshots (see `explorerItems.ts`) provide them.
  */
-export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit">;
+export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit"> & {
+  /** Original package identity, retained when FDA prices are keyed by product. */
+  packageNdc?: string,
+};
 
 export type FdaPackageDetail = {
   id: number,

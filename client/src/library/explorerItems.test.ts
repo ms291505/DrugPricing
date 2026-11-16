@@ -3,6 +3,7 @@ import {
   chartDataBounds, createChartItem, createChartItems, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
   type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
+import { chartTitle, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -162,6 +163,13 @@ describe("createChartItems", () => {
     expect(item.source.filtered).toBe(true);
     expect(item.barValue).toBe("average");
   });
+  it("generates titles from each unit's series rather than the whole selection", () => {
+    const items = createChartItems({ chartType: "line", prices: [...productB, ...packageA1, ...series("C", 20, "milliliter"), ...series("D", 10, "milliliter"), ...series("E", 5, "milliliter")],
+      defaultTitle: "5 products", origin, dateWindow: FULL_WINDOW },
+    prices => chartTitle("line", "test", "product", seriesLabels(prices)));
+    expect(items.map(item => item.defaultTitle)).toEqual(["Test: 2 products over time · per each", "Test: 3 products over time · per mL"]);
+  });
+
   it("does not create empty cards", () => {
     expect(createChartItems({ chartType: "line", prices: [], defaultTitle: "Compare", origin, dateWindow: FULL_WINDOW })).toEqual([]);
   });

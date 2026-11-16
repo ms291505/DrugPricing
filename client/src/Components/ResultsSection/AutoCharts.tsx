@@ -91,7 +91,7 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
           colors={colors}
         />}
       >
-        <LineViz nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={dateWindow} />
+        <LineViz seriesKind={origin.seriesKind} nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={dateWindow} />
       </ExplorerGridItem>
     </Grid>}
   </>);

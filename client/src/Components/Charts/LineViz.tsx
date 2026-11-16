@@ -1,6 +1,6 @@
 import HelpButton from "../Help/HelpButton";
-import { useId, useMemo, useRef, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { cloneElement, useId, useMemo, useRef, useState } from "react";
+import { Box, Button, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
@@ -17,8 +17,11 @@ import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from ".
 import SeriesLegend from "./SeriesLegend.tsx";
 import ChartData, { LineDataTable } from "./ChartData.tsx";
 import { lineCsv, lineDataRows } from "../../library/chartCsv.ts";
-import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
-import type { ChartChangeSpan } from "../../library/explorerItems.ts";
+import { clipToWindow, dateBounds, formatDate, formatWindow, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
+import { lineChangeCallouts } from "../../library/lineChanges";
+import { aroundPriceEvent, derivePriceEvents, eventLabel, groupPriceEvents } from "../../library/priceActivity";
+import PriceEventsList from "../ResultsSection/PriceEventsList";
+import type { ChartChangeSpan, SeriesKind } from "../../library/explorerItems.ts";
 import useChartTheme from "../../hooks/useChartTheme.ts";
 import useMobile from "../../hooks/useMobile.ts";
 
@@ -34,13 +37,22 @@ type Props = {
   changeSpan?: ChartChangeSpan;
   /** Shared price range per pricing unit ("Match scale"); units not in it fit their own data. */
   priceRanges?: Map<string, [number, number]>;
+  seriesKind?: SeriesKind;
+  showPriceChanges?: boolean;
+  onAroundChange?: (window: DateWindow) => void;
 };
 
-export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges }: Props) {
+export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges, seriesKind = "ndc", showPriceChanges = true, onAroundChange }: Props) {
+  const [focused, setFocused] = useState<{ prices: ChartPrice[], original: DateWindow, window: DateWindow } | null>(null);
+  const effectiveWindow = focused?.prices === nadacPrices && focused.original === dateWindow ? focused.window : dateWindow;
+  const around = (window: DateWindow) => {
+    if (onAroundChange) onAroundChange(window);
+    else setFocused({ prices: nadacPrices, original: dateWindow, window });
+  };
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
-  const shownPrices = useMemo(() => clipToWindow(nadacPrices, dateWindow), [nadacPrices, dateWindow]);
+  const shownPrices = useMemo(() => clipToWindow(nadacPrices, effectiveWindow), [nadacPrices, effectiveWindow]);
   const bounds = useMemo(() => dateBounds(shownPrices), [shownPrices]);
-  const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
+  const xDomain: [number, number] = [effectiveWindow.start ?? bounds?.first ?? 0, effectiveWindow.end ?? bounds?.last ?? 0];
 
   // Legend toggles are view state. A new set of series in the dates starts with every series shown.
   const seriesKey = useMemo(() => seriesSetKey(shownPrices.map(price => price.ndc)), [shownPrices]);
@@ -54,9 +66,13 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const showAll = (group: string[]) => update(current => showGroup(current, group));
 
   return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    {focused?.prices === nadacPrices && focused.original === dateWindow && <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+      <Typography variant="caption" color="text.secondary">Focused dates: {formatWindow(effectiveWindow, bounds)}</Typography>
+      <Button size="small" onClick={() => setFocused(null)}>Show original dates</Button>
+    </Box>}
     <UnitSplit
       nadacPrices={nadacPrices}
-      dateWindow={dateWindow}
+      dateWindow={effectiveWindow}
       renderChart={(unitPrices, pricingUnit) => (
         <UnitLineChart
           nadacPrices={unitPrices}
@@ -68,13 +84,16 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
           onShowAll={showAll}
           xDomain={xDomain}
           changeSpan={changeSpan}
+          seriesKind={seriesKind}
+          showPriceChanges={showPriceChanges}
+          onAroundChange={around}
           priceRange={priceRanges?.get(pricingUnit)}
         />
       )}
     />
     {bounds
-      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
-        <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
+      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, effectiveWindow))}>
+        <LineDataTable prices={nadacPrices} dateWindow={effectiveWindow} bounds={bounds} />
       </ChartData>
       : null}
   </Box>);
@@ -97,9 +116,12 @@ type UnitLineChartProps = {
   xDomain: [number, number];
   changeSpan?: ChartChangeSpan;
   priceRange?: [number, number];
+  seriesKind: SeriesKind;
+  showPriceChanges: boolean;
+  onAroundChange: (window: DateWindow) => void;
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange, seriesKind, showPriceChanges, onAroundChange }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const descriptionId = useId();
@@ -114,6 +136,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 
   const { rows: vizData, rangeNdcs, packageCounts } = useMemo(() => createLineVizData(nadacPrices), [nadacPrices]);
 
+  const visiblePrices = useMemo(() => nadacPrices.filter(p => shownNdcs.includes(p.ndc)), [nadacPrices, shownNdcs]);
+  const callouts = useMemo(() => showPriceChanges ? lineChangeCallouts(visiblePrices, seriesKind) : [], [visiblePrices, seriesKind, showPriceChanges]);
+  const eventGroups = useMemo(() => groupPriceEvents(derivePriceEvents(visiblePrices, seriesKind)), [visiblePrices, seriesKind]);
   const descriptionFor = (ndc: string) => nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
 
   const unit = pricingUnitLabel(pricingUnit);
@@ -136,7 +161,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const readout = useChartReadout((row: LineVizRow) => row.asOfDate, date => {
     const row = vizData.find(r => r.asOfDate === date);
     const rows = row ? tooltipRows(row, shownNdcs) : [];
-    return rows.length ? lineAnnouncement(date, unit, rows) : null;
+    const events = eventGroups.filter(group => group.date === date).flatMap(group => group.events);
+    return rows.length ? lineAnnouncement(date, unit, rows)
+      + (events.length ? ` ${events.map(e => `${e.packageNdc}: ${eventLabel(e.change)}.`).join(" ")}` : "") : null;
   });
 
   // The docked readout: the hovered date, else the locked one, else the latest.
@@ -152,6 +179,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   };
   const rangeCount = shownNdcs.filter(ndc => rangeNdcs.has(ndc)).length;
 
+  const legacySpanVisible = changeSpan && changeSpan.start >= xStart && changeSpan.end <= xEnd;
   const changeColor = changeSpan?.direction === "rise" ? chartTheme.rise
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
@@ -208,6 +236,8 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             if (date === undefined || !row) return null;
             return (
               <LineReadout
+                events={<PriceEventsList groups={eventGroups.filter(group => group.date === date)}
+                  onFocus={group => onAroundChange(aroundPriceEvent(group.events))} />}
                 date={date}
                 unit={unit}
                 rows={tooltipRows(row, shownNdcs)}
@@ -222,7 +252,20 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
         {lock.locked !== null
           ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
           : null}
-        {changeSpan ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
+        {showPriceChanges && legacySpanVisible && !callouts.some(c => c.date === changeSpan.end)
+          ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
+        {callouts.flatMap(callout => {
+          const color = callout.events.every(e => e.change.percentage < 0) ? chartTheme.drop
+            : callout.events.every(e => e.change.percentage > 0) ? chartTheme.rise : chartTheme.textSecondary;
+          const refs = callout.spans.flatMap((span, i) => changeCallout(span,
+            span.direction === "drop" ? chartTheme.drop : chartTheme.rise, xDomain, chartTheme,
+            i === 0 ? callout.label : null).map(ref => cloneElement(ref, { key: `${callout.date}:${i}:${ref.key}` })));
+          const markers = callout.markers.map(marker => <ReferenceDot key={`${callout.date}:${marker.ndc}`}
+            x={callout.date} y={marker.price} r={5} fill={color} stroke={chartTheme.paper} />);
+          const first = callout.markers[0];
+          return [...refs, ...markers, ...(first ? [cloneElement(changePill(callout.label, callout.date,
+            first.price, color, xDomain, chartTheme), { key: `${callout.date}:product-label` })] : [])];
+        })}
         {bandNdcs.map((ndc) => (
           <Area
             key={rangeKey(ndc)}
@@ -258,6 +301,10 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
       </ComposedChart>
     </Box>
     {readout.liveRegion}
+    {eventGroups.length > 0 && <Box component="details" sx={{ fontSize: "0.875rem" }}>
+      <summary>Price changes ({eventGroups.length} {eventGroups.length === 1 ? "event" : "events"})</summary>
+      <PriceEventsList groups={eventGroups} onFocus={group => onAroundChange(aroundPriceEvent(group.events))} />
+    </Box>}
     {/* One series is named by the card's title; a legend would only repeat it. */}
     {ndcs.length > 1
       ? <SeriesLegend
@@ -273,7 +320,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
         onHighlight={setHighlighted}
       />
       : null}
-    <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, changeSpan)}</Box>
+    <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, showPriceChanges && legacySpanVisible ? changeSpan : undefined, seriesKind)}</Box>
     {/* Said once here rather than in every tooltip row. */}
     {bandCaption
       ? <Typography variant="caption" color="text.secondary">{bandCaption}<HelpButton topic="charts" /></Typography>
@@ -282,6 +329,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
 }
 
 type LineReadoutProps = {
+  events: React.ReactNode,
   date: number,
   unit: string,
   rows: TooltipRow[],
@@ -296,7 +344,7 @@ type LineReadoutProps = {
  * The prices on one date, highest first: a swatch, the NDC and the price per row, with the
  * description and, for an averaged product, its packages' range beneath on wider screens.
  */
-function LineReadout({ date, unit, rows, status, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
+function LineReadout({ events, date, unit, rows, status, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
     <ReadoutContent
       header={<ReadoutHeader status={status} onUnlock={onUnlock}>
@@ -306,6 +354,7 @@ function LineReadout({ date, unit, rows, status, onUnlock, colorFor, description
         </Box>
       </ReadoutHeader>}
     >
+      {events}
       {rows.map(({ ndc, price, range }) => {
         const rangeText = range ? `Packages ${formatPrice(range[0])}–${formatPrice(range[1])}` : null;
         return (
@@ -338,6 +387,7 @@ function changeCallout(
   color: string,
   xDomain: [number, number],
   chartTheme: ReturnType<typeof useChartTheme>,
+  label?: string | null,
 ) {
   const { from, to } = span;
   // Pinned before the prices were stored: mark the date and label the percent.
@@ -353,17 +403,35 @@ function changeCallout(
     ];
   }
 
-  const text = `${formatPriceLabel(from)} → ${formatPriceLabel(to)}`;
+  const text = label ?? `${formatPriceLabel(from)} → ${formatPriceLabel(to)}`;
+  const pill = changePill(text, span.end, (from + to) / 2, color, xDomain, chartTheme);
+
+  return [
+    <ReferenceLine
+      key="old-price"
+      segment={[{ x: span.end, y: from }, { x: xDomain[1], y: from }]}
+      stroke={chartTheme.textSecondary}
+      strokeDasharray="4 4"
+    />,
+    <ReferenceDot key="from" x={span.end} y={from} r={4} fill={chartTheme.paper} stroke={chartTheme.textSecondary} strokeWidth={2} />,
+    <ReferenceDot key="to" x={span.end} y={to} r={5} fill={color} stroke={chartTheme.paper} strokeWidth={2} />,
+    ...(label === null ? [] : [pill]),
+  ];
+}
+
+/** A shared per-date label for package spans and product package-event markers. */
+function changePill(text: string, date: number, price: number, color: string,
+  xDomain: [number, number], chartTheme: ReturnType<typeof useChartTheme>) {
   // Beside the step on the side with more room, halfway between the two prices.
-  const placeLeft = (span.end - xDomain[0]) / (xDomain[1] - xDomain[0] || 1) > 0.6;
+  const placeLeft = (date - xDomain[0]) / (xDomain[1] - xDomain[0] || 1) > 0.5;
   const pillWidth = text.length * 7 + 16;
   const pillHeight = 22;
 
-  const pill = (
+  return (
     <ReferenceDot
       key="callout"
-      x={span.end}
-      y={(from + to) / 2}
+      x={date}
+      y={price}
       r={0}
       ifOverflow="visible"
       label={({ viewBox }: { viewBox?: { x?: number, y?: number } }) => {
@@ -381,15 +449,4 @@ function changeCallout(
     />
   );
 
-  return [
-    <ReferenceLine
-      key="old-price"
-      segment={[{ x: span.end, y: from }, { x: xDomain[1], y: from }]}
-      stroke={chartTheme.textSecondary}
-      strokeDasharray="4 4"
-    />,
-    <ReferenceDot key="from" x={span.end} y={from} r={4} fill={chartTheme.paper} stroke={chartTheme.textSecondary} strokeWidth={2} />,
-    <ReferenceDot key="to" x={span.end} y={to} r={5} fill={color} stroke={chartTheme.paper} strokeWidth={2} />,
-    pill,
-  ];
 }

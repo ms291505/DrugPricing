@@ -1,8 +1,10 @@
+import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
 import { formatStrength, fdaProductRows, type FdaProductRow } from "../../library/resultRows";
+import { activityColumn } from "./activityColumn";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
@@ -30,6 +32,7 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
     headerName: "Strength",
     valueGetter: (_, product) => formatStrength(product)
   },
+  activityColumn<FdaProductRow>(),
   {
     field: "dosageFormName",
     headerName: "Form",
@@ -75,15 +78,19 @@ type Props = {
   /** The search's products after the page filter. */
   products: FdaProductDetail[],
   loading: boolean,
+  dateWindow?: DateWindow,
+  activitySelection?: { ids: string[] },
 }
 
 /** The FDA search's results at product level: one row per product. */
-export default function FdaProductResultTable({ products, loading }: Props) {
+export default function FdaProductResultTable({ products, loading, activitySelection, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useFdaSearchContext();
   const rows = useMemo(() => fdaProductRows(products), [products]);
 
   return (
     <ResultTable
+      dateWindow={dateWindow}
+      activitySelection={activitySelection}
       tableType="fdaProduct"
       rows={rows}
       columns={COLUMNS}

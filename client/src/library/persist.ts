@@ -103,10 +103,13 @@ const isSeriesKind = oneOf<SeriesKind>(["product", "package", "ndc"]);
 const isWorkspaceTab = (x: unknown): x is WorkspaceTab =>
   isObject(x) && isString(x.id) && isString(x.title) && isTabType(x.type);
 
+const isPricePoints = (x: unknown): x is Array<[number, number]> => Array.isArray(x)
+  && x.every(p => Array.isArray(p) && p.length === 2 && p.every(v => typeof v === "number" && Number.isFinite(v)));
+
 const isSeriesSnapshot = (x: unknown): x is ChartSeriesSnapshot =>
   isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit)
-  && (x.color === undefined || isString(x.color)) && Array.isArray(x.points)
-  && x.points.every(p => Array.isArray(p) && p.length === 2 && typeof p[0] === "number" && typeof p[1] === "number");
+  && (x.color === undefined || isString(x.color)) && isPricePoints(x.points)
+  && (x.packageNdcs === undefined || (isStringArray(x.packageNdcs) && x.packageNdcs.length === x.points.length));
 
 const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x === "number";
 
@@ -139,7 +142,8 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
   && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
   && (x.barValue === undefined || isBarValue(x.barValue))
-  && (x.matchScale === undefined || typeof x.matchScale === "boolean");
+  && (x.matchScale === undefined || typeof x.matchScale === "boolean")
+  && (x.showPriceChanges === undefined || typeof x.showPriceChanges === "boolean");
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)

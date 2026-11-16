@@ -1,5 +1,5 @@
 import { SERIES_KIND_LABELS, type ChartType, type SeriesKind } from "./explorerItems";
-import { clipToWindow, dateBounds, formatDate, formatWindow, type DateWindow } from "./dates";
+import { clipToWindow, dateBounds, formatWindow, type DateWindow } from "./dates";
 import type { ChartPrice } from "./types";
 
 /*
@@ -24,11 +24,6 @@ export function chartTitle(chartType: ChartType, searchLabel: string, seriesKind
     ? seriesLabels[0]
     : `${capitalize(searchLabel)}: ${seriesCountLabel(seriesLabels.length, seriesKind)}`;
   return chartType === "line" ? `${subject} over time` : `${subject} compared`;
-}
-
-/** "-43.0% on Jan 14, 2026 · 0003-0893-21": the change, the first date at the new price, the package. */
-export function priceChangeTitle(percentLabel: string, changeDate: number, packageNdc: string): string {
-  return `${percentLabel} on ${formatDate(changeDate)} · ${packageNdc}`;
 }
 
 /** One label per series (NDC), in order of appearance. */
