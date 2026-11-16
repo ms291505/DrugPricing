@@ -47,7 +47,7 @@ export default function Welcome() {
 
     <Box component="section">
       <Divider sx={{ mb: 2 }} />
-      <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: "70ch" }}>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Prices come from NADAC (National Average Drug Acquisition Cost), a CMS benchmark based on invoices voluntarily submitted by retail community pharmacies. It estimates acquisition costs; it does not capture every pharmacy’s actual cost or every drug package.
       </Typography>
       <Stack direction="row" spacing={3} useFlexGap flexWrap="wrap" sx={{ mt: 1.5, typography: "body2" }}>
