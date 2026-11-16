@@ -1,4 +1,4 @@
-import { useId, useState, type SyntheticEvent } from "react";
+import { useId, useState, type ReactNode, type SyntheticEvent } from "react";
 import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { formatPrice } from "../../library/chartScale";
@@ -10,54 +10,52 @@ import {
 
 type Props = {
   groups: PriceEventGroup[],
-  /** The one action per group, e.g. "Chart this change". */
-  actionLabel: string,
-  onAction: (group: PriceEventGroup, trigger: HTMLButtonElement) => void,
-  /** When the action opens a chart: the group whose chart is open, and the chart's id. */
-  expanded?: { key: string | null, controls: string },
-  /** Package details open state per group, else native and collapsed. */
-  details?: { isOpen: (key: string) => boolean, onToggle: (key: string, open: boolean) => void },
-  /** Narrow: the amount folds under the percent. */
-  compact?: boolean,
+  /** One row per group: its summary, details and anything it opens. */
+  renderGroup: (group: PriceEventGroup) => ReactNode,
   /** Show all groups, when the caller needs to know which are shown; else the list keeps it. */
   showAll?: boolean,
   onShowAllChange?: (showAll: boolean) => void,
 };
 
 /** Events retain exact per-package values, even when the summary combines a date/unit/direction. */
-export default function PriceEventsList({ groups, actionLabel, onAction, expanded, details, compact = false, ...props }: Props) {
+export default function PriceEventsList({ groups, renderGroup, ...props }: Props) {
   const [ownShowAll, setOwnShowAll] = useState(false);
   const showAll = props.showAll ?? ownShowAll;
   const setShowAll = props.onShowAllChange ?? setOwnShowAll;
   const listId = useId();
   return <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {(showAll ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group => {
-        const open = details?.isOpen(group.key);
-        // A toggle React caused (the default changed) leaves `open` as rendered; only the user's differs.
-        const onToggle = details && ((event: SyntheticEvent<HTMLDetailsElement>) => {
-          const now = event.currentTarget.open;
-          if (now !== open) details.onToggle(group.key, now);
-        });
-        const isExpanded = expanded ? expanded.key === group.key : undefined;
-        return <Box key={group.key} sx={{ borderTop: 1, borderColor: "divider", pt: 1, display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-start" }}>
-          <Typography variant="subtitle2" component="p">{priceEventGroupLabel(group)}</Typography>
-          <Box component="details" open={open} onToggle={onToggle}
-            sx={{ fontSize: "0.875rem", color: "text.secondary", maxWidth: "100%", "& > summary": { cursor: "pointer", width: "fit-content" } }}>
-            <summary>Package details</summary>
-            <PackageTable group={group} compact={compact} />
-          </Box>
-          <Button size="small" sx={{ ml: -0.5 }} onClick={event => onAction(group, event.currentTarget)}
-            aria-expanded={isExpanded} aria-controls={isExpanded ? expanded?.controls : undefined}>
-            {actionLabel}
-          </Button>
-        </Box>;
-      })}
+      {(showAll ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group =>
+        <Box key={group.key} sx={{ borderTop: 1, borderColor: "divider", pt: 1, display: "flex", flexDirection: "column", gap: 0.5, alignItems: "stretch", minWidth: 0 }}>
+          {renderGroup(group)}
+        </Box>)}
     </Box>
     {groups.length > PRICE_CHANGE_GROUP_LIMIT && <Button size="small" sx={{ alignSelf: "flex-start" }}
       aria-expanded={showAll} aria-controls={listId} onClick={() => setShowAll(!showAll)}>
       {showAll ? "Show fewer" : `Show all ${groups.length} events`}
     </Button>}
+  </Box>;
+}
+
+type DetailsProps = {
+  group: PriceEventGroup,
+  open: boolean,
+  onToggle: (key: string, open: boolean) => void,
+  /** Narrow: the amount folds under the percent. */
+  compact: boolean,
+};
+
+/** A group's Package details disclosure; its open state belongs to the caller. */
+export function PriceEventDetails({ group, open, onToggle, compact }: DetailsProps) {
+  return <Box component="details" open={open}
+    // A toggle React caused (the default changed) leaves `open` as rendered; only the user's differs.
+    onToggle={(event: SyntheticEvent<HTMLDetailsElement>) => {
+      const now = event.currentTarget.open;
+      if (now !== open) onToggle(group.key, now);
+    }}
+    sx={{ fontSize: "0.875rem", color: "text.secondary", maxWidth: "100%", "& > summary": { cursor: "pointer", width: "fit-content" } }}>
+    <summary>Package details</summary>
+    <PackageTable group={group} compact={compact} />
   </Box>;
 }
 

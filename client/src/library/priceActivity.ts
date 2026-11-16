@@ -1,6 +1,5 @@
-import { formatDate, windowAround } from "./dates";
+import { formatDate } from "./dates";
 import { fittedPriceAxis, formatPrice } from "./chartScale";
-import { PRICE_CHANGE_WINDOW_MONTHS } from "./constants";
 import { flagPriceChanges, type PackagePrices } from "./flagNadacPriceChange";
 import { pricingUnitLabel, seriesByDate, splitByPricingUnit } from "./prices";
 import type { ChartPrice, NadacPriceChange } from "./types";
@@ -99,12 +98,6 @@ export function previousObservationNote(event: PriceEvent, group: PriceEventGrou
   if (event.change.endDate.getTime() - start <= WEEK) return null;
   if (group.events.every(e => e.change.startDate.getTime() === start)) return null;
   return `Previous price ${formatDate(start)}`;
-}
-
-/** A chart's event list or readout: zooms that chart's dates to an explicit event. */
-export function aroundPriceEvent(events: PriceEvent[]) {
-  return windowAround(Math.min(...events.map(e => e.change.startDate.getTime())),
-    Math.max(...events.map(e => e.change.endDate.getTime())), PRICE_CHANGE_WINDOW_MONTHS);
 }
 
 export type PriceActivity = {

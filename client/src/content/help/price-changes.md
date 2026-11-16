@@ -9,16 +9,15 @@ The **Price changes** list groups these events by date, pricing unit and directi
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
 
-**Chart this change** opens one chart of that group's packages over the search's dates. A
-solid line marks the change, and the readout rests on its date until you point at another.
-**Pin** keeps a copy, and **Close** or the same button again closes it. To see every
+The **Chart this change** button (a line-chart icon) at the end of each group's summary line
+opens one chart of that group's packages over the search's dates, directly beneath that group. A
+solid line marks the change, and the readout rests on its date until you point at another. Each
+group opens its own chart, so several can be open at once. **Pin** keeps a copy, and **Close** or
+the same button again closes it. To see every
 result together, use **Compare price histories**.
 
-In a chart's own **Price changes** list below the plot, **Around this change** focuses that
-chart's dates around the event. It never chooses a different event for you.
-
 Line charts mark significant changes in the dates they show. Several series changing on the
-same date share one label; their exact values stay in the chart's event list.
+same date share one label; their exact values are in the list above and in the chart's **View data**.
 A product marker means one or more packages changed, not that its average made that change.
 Older product pins without package identities cannot show those package markers. A pinned
 line chart's menu can turn **Show price changes** off or on.

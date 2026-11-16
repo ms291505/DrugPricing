@@ -231,9 +231,9 @@ The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author di
 
 - Events group by date, pricing unit and direction. Exact values stay expandable, with five
   groups initially and Show all for the rest.
-- Around this change belongs to an explicit event. It focuses the current chart from its
-  event list below the plot (the docked readout no longer lists events). (In the search event list it was later replaced by Chart this change;
-  see Price changes section.) The ambiguous
+- Around this change belonged to an explicit event, in the chart's event list below the plot.
+  It was later replaced in the search event list by Chart this change (see Price changes
+  section), and the chart's own list and Around this change were then removed (`chart-no-event-list`). The ambiguous
   chart-wide Around change preset is removed; no largest/latest event is chosen automatically.
 - Product activity labels count affected packages and name the largest movement. Product
   sparklines are omitted because one package's line could misrepresent the product.
@@ -276,7 +276,7 @@ search dates and the current filters, and labeled as such.
   affected. Group changes by date, pricing unit and direction ("6 packages dropped about 43%
   on Jan 14"), with exact values expandable. Show five groups before Show all.
 - Its one action is **"Chart this change"** (replacing "Select affected rows", "Show affected
-  packages" and "Around this change", which the author found confusing): it toggles one chart
+  packages" and "Around this change", which the author found confusing): an icon button on the group's summary line (not a text button under the details) toggles that group's own chart, opened beneath its row,
   of the group's packages over the shown dates, the change marked and the readout resting on it, with Pin
   and Close. Compare price histories remains the way to see every result together.
 - The search toast keeps "N found" and drops its price-change part (`SearchResultToast`).
@@ -294,15 +294,14 @@ Callouts become general:
   the item, on by default. Live Compare cards always show them and get no menu.
 - **One label per date on a multi-series chart.** Each series keeps its dots and dashed old
   price; the date gets one pill: the prices when the series agree, otherwise a count
-  ("6 changes"), with exact values in the event list below the plot.
+  ("6 changes"), with exact values in the Price changes section under the table and View data.
 - **A product line never gets a callout from its own average**, which can jump when a package
   joins or leaves. When one of its packages had a significant change in the dates shown, the
   line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new
-  prices; those are in the event list and at Package level.
+  prices; those are in the Price changes section and at Package level.
 - Line charts only. Bar charts have nothing to mark.
-- A chart made from selected rows opens on the search dates like any other. Around this
-  change is an action on a specific event in its event list below the plot. It focuses that event's
-  dates; there is no chart-wide preset choosing an event.
+- A chart made from selected rows opens on the search dates like any other. A chart card has
+  no event list and no Around this change; exact event values are in the Price changes section.
 
 ### Price Activity column
 

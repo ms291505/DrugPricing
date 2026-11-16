@@ -44,13 +44,17 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, and shows five groups
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
-  closes stays so while the page is mounted. Its one action, Chart this change, toggles one
-  package chart (one unit) under the list over the page's shown dates. `eventDate` marks the
+  closes stays so while the page is mounted. Its one action is a Chart this change icon button at the end of the group's summary line. It
+  toggles that group's own package chart (one unit), opened directly beneath the group's row over
+  the page's shown dates; each row keeps its own open state (not persisted), so several can be
+  open, and new prices discard them all. Each row is memoized, so opening one redraws no other.
+  Opening moves focus to the chart's heading; Close returns it to that row's button. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
-  instead of the latest. A pin keeps `eventDate`; pins without it, including old zoomed ones,
-  draw as before. In a chart's own "Price changes" list below the plot (the readout has no event
-  list), Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
-  change preset chooses an event implicitly.
+  instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
+  no event list and no way to zoom itself: neither the readout nor the plot lists events, and
+  there is no Around this change. Legacy pins that stored a zoomed `dateWindow` (made by the old
+  Around this change) still load and draw that window; the pinned card's Dates control is the
+  only thing that changes a pin's `dateWindow` now.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
   average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
@@ -114,8 +118,8 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   most products price every package the same per unit (liquids' bottle sizes are the exception).
 - **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
   package event has old/new dots and a dashed old price; one pill per date gives agreed prices
-  or a change count. Exact package values and gap spans are in the event list below the plot; the
-  readout shows only prices.
+  or a change count. Exact package values and gap spans are in the Price changes section under the results
+  table and in View data; the readout shows only prices.
   Product markers come only from actual package events, never jumps in their average.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy
