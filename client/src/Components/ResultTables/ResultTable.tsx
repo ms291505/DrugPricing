@@ -2,12 +2,13 @@ import { useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, To
 import { Button, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
-import AutosizePriceColumns from "./AutosizePriceColumns";
+import AutosizeColumns from "./AutosizeColumns";
 import useWidthTier from "../../hooks/useWidthTier";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
 import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
 import { orderColumns } from "../../library/columnOrder";
+import { applyColumnBounds } from "../../library/columnBounds";
 import { activityCounts } from "../../library/priceActivity";
 import { formatWindow, type DateWindow } from "../../library/dates";
 import type { PricedRow } from "../../library/resultRows";
@@ -51,12 +52,14 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
   const overrides = settings.columnOverrides[tableType];
   const visibility = useMemo(() => columnVisibilityModel(DEFAULT_HIDDEN_COLUMNS[tableType], overrides), [overrides, tableType]);
   const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
-  // The same column objects either way, so the grid keeps its sort, page, selection and visibility.
-  // Only a table with a narrow order rebuilds its columns: a new array resets dragged widths.
+  // The same column objects while the tier and narrow order stay: the grid keeps its sort, page,
+  // selection and visibility. A new array (a tier flip changes the bounds; the narrow order flips
+  // the order) resets dragged widths, and the columns are measured again anyway.
   const narrow = narrowOrder !== undefined && widthTier === "narrow";
+  const tierColumns = useMemo(() => applyColumnBounds(columns, widthTier), [columns, widthTier]);
   const allColumns = useMemo(
-    () => [checkboxColumn<R>(rowNoun), ...(narrow && narrowOrder ? orderColumns(columns, narrowOrder) : columns)],
-    [rowNoun, columns, narrow, narrowOrder],
+    () => [checkboxColumn<R>(rowNoun), ...(narrow && narrowOrder ? orderColumns(tierColumns, narrowOrder) : tierColumns)],
+    [rowNoun, tierColumns, narrow, narrowOrder],
   );
 
   return (<>
@@ -102,7 +105,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
       onRowSelectionModelChange={onSelectionChange}
       disableRowSelectionExcludeModel
     />
-    <AutosizePriceColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
+    <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
   </>);
 }
 

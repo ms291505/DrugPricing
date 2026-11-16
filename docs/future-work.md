@@ -196,3 +196,9 @@ context needs to be rethought, so probably no need to stick to this mailbox desi
 
 The Collections proof of concept (`Components/Collection/`, a registered tab type the tab creator
 doesn't offer) stays in the code until then. It is an early step toward this.
+
+## Font
+
+`theme.ts` names "DM Sans" first in `fontFamily`, but no font is loaded anywhere (no link,
+`@font-face` or `@fontsource`), so the app renders in the system font. Either load DM Sans or drop
+the name.

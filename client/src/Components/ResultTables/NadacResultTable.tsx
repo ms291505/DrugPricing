@@ -15,15 +15,12 @@ const COLUMNS: GridColDef<NadacRow>[] = [
   {
     field: "ndc",
     headerName: "NDC",
-    width: 120,
-    minWidth: 120,
     cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
     field: "ndcDescription",
     headerName: "Description",
-    width: 350
   },
   activityColumn<NadacRow>(),
   ...PRICE_COLUMNS.history,
