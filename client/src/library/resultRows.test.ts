@@ -3,6 +3,10 @@ import { formatStrength, fdaPackageRows, fdaProductRows, nadacRows } from "./res
 import { FULL_WINDOW } from "./dates";
 import { createFdaCriteria, refineFda } from "./searchCriteria";
 import { type FdaPackageDetail, type FdaProductDetail, type NadacPrice } from "./types";
+import type { AsOfReference } from "./prices";
+
+/** An open window with the last loaded date unknown: the fallback reference. */
+const UNKNOWN: AsOfReference = { windowEnd: null, lastLoaded: null };
 
 const nadacPrice = (ndc: string, iso: string, nadacPerUnit: number, pricingUnit = "each"): NadacPrice => ({
   id: 0, ndc, ndcDescription: `Drug ${ndc}`, nadacPerUnit, pricingUnit, asOfDate: new Date(iso),
@@ -29,7 +33,7 @@ describe("nadacRows", () => {
       { ...nadacPrice("1", "2025-02-01", 2), ndcDescription: "NEW" },
       { ...nadacPrice("1", "2025-01-01", 1), ndcDescription: "OLD" },
       nadacPrice("2", "2025-01-01", 5),
-    ]);
+    ], UNKNOWN);
     expect(rows.map(row => [row.ndc, row.ndcDescription, row.priceSummaries[0].latest])).toEqual([["1", "NEW", 2], ["2", "Drug 2", 5]]);
   });
 });
@@ -40,13 +44,13 @@ describe("fdaProductRows", () => {
       fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 10)]),
       fdaPackage("1-1-2", [nadacPrice("112", "2025-01-01", 20)]),
       fdaPackage("1-1-3", []),
-    ])]);
+    ])], UNKNOWN);
     expect(row.priceSummaries).toHaveLength(1);
     expect(row.priceSummaries[0]).toMatchObject({ ndc: "1-1", latest: 15, packages: 2 });
   });
 
   it("leaves a product with no priced packages without prices", () => {
-    const [row] = fdaProductRows([product("1-1", [fdaPackage("1-1-1", [])])]);
+    const [row] = fdaProductRows([product("1-1", [fdaPackage("1-1-1", [])])], UNKNOWN);
     expect(row.priceSummaries).toEqual([]);
   });
 
@@ -54,7 +58,7 @@ describe("fdaProductRows", () => {
     const [row] = fdaProductRows([product("1-1", [
       fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 1, "each")]),
       fdaPackage("1-1-2", [nadacPrice("112", "2025-02-01", 0.5, "gram")]),
-    ])]);
+    ])], UNKNOWN);
     expect(row.priceSummaries.map(summary => [summary.pricingUnit, summary.latest])).toEqual([["each", 1], ["gram", 0.5]]);
   });
 
@@ -63,8 +67,8 @@ describe("fdaProductRows", () => {
       fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 10)]),
       fdaPackage("1-1-2", [nadacPrice("112", "2025-01-01", 30)], true),
     ])] };
-    expect(fdaProductRows(data.products)[0].priceSummaries[0].latest).toBe(20);
-    expect(fdaProductRows(refineFda(data, createFdaCriteria(), FULL_WINDOW).products)[0].priceSummaries[0].latest).toBe(10);
+    expect(fdaProductRows(data.products, UNKNOWN)[0].priceSummaries[0].latest).toBe(20);
+    expect(fdaProductRows(refineFda(data, createFdaCriteria(), FULL_WINDOW).products, UNKNOWN)[0].priceSummaries[0].latest).toBe(10);
   });
 });
 
@@ -73,21 +77,21 @@ describe("fdaPackageRows", () => {
     const rows = fdaPackageRows([product("1-1", [
       fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 10)]),
       fdaPackage("1-1-2", []),
-    ])]);
+    ])], UNKNOWN);
     expect(rows.map(row => [row.ndcPackageCode, row.productNdc, row.proprietaryName, row.priceSummaries.map(s => s.latest)]))
       .toEqual([["1-1-1", "1-1", "Brand 1-1", [10]], ["1-1-2", "1-1", "Brand 1-1", []]]);
   });
 
   it("carries multi-ingredient strengths and OTC status from each package's product", () => {
     const parent = { ...product("1-1", [fdaPackage("1-1-1", [])]), strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/1"], productTypeName: "HUMAN OTC DRUG" };
-    const [row] = fdaPackageRows([parent]);
+    const [row] = fdaPackageRows([parent], UNKNOWN);
     expect(row.strengthNumber).toEqual(["10", "20"]);
     expect(row.strengthUnit).toEqual(["mg/1", "mg/1"]);
     expect(row.productTypeName).toBe("HUMAN OTC DRUG");
   });
 
   it("keys prices by the package it holds them, whatever NDC the prices carry", () => {
-    const [row] = fdaPackageRows([product("1-1", [fdaPackage("1-1-1", [nadacPrice("0001101", "2025-01-01", 10)])])]);
+    const [row] = fdaPackageRows([product("1-1", [fdaPackage("1-1-1", [nadacPrice("0001101", "2025-01-01", 10)])])], UNKNOWN);
     expect(row.priceSummaries).toHaveLength(1);
   });
 });

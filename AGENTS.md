@@ -88,7 +88,7 @@ carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart wou
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
 sorted by unit first. Each unit's summary is `stale` when its latest price is before
 `currentAsOfDate` (`library/prices.ts`: the shown dates' snapped end, capped at app-init's last
-loaded as-of date, never the rows' own newest date); Latest Price shows a warning triangle with
+loaded as-of date, not the rows' own newest date, which it falls back to only when app-init fails); Latest Price shows a warning triangle with
 the date, so Latest Price Date is hidden by default. A row without prices can't be selected. Keep Latest Price second or third:
 on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
 tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own

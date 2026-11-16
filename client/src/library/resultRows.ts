@@ -1,7 +1,7 @@
 import { packageActivity, productActivity, type PriceActivity } from "./priceActivity";
 import { fdaPackagePrices } from "./flagNadacPriceChange";
 import { fdaProductsToNadacPrices } from "./fdaDataToNadacPrices";
-import { latestSummary, summarizeByUnit, UNKNOWN_AS_OF_REFERENCE, type AsOfReference, type UnitPriceSummary } from "./prices";
+import { latestSummary, summarizeByUnit, type AsOfReference, type UnitPriceSummary } from "./prices";
 import type { ChartPrice, FdaPackageDetail, FdaProductDetail } from "./types";
 
 /*
@@ -35,7 +35,7 @@ export type FdaPackageRow = FdaPackageDetail & PricedRow & {
 };
 
 /** One row per NDC, described by its latest description. */
-export function nadacRows(prices: ChartPrice[], reference: AsOfReference = UNKNOWN_AS_OF_REFERENCE): NadacRow[] {
+export function nadacRows(prices: ChartPrice[], reference: AsOfReference): NadacRow[] {
   const packages = new Map<string, ChartPrice[]>();
   for (const price of prices) {
     const pkg = packages.get(price.ndc);
@@ -53,13 +53,13 @@ export function nadacRows(prices: ChartPrice[], reference: AsOfReference = UNKNO
  * One row per product, priced like its product-level chart: its packages averaged per date. Pass
  * the products after the page filter, so a filtered-out package doesn't count.
  */
-export function fdaProductRows(products: FdaProductDetail[], reference: AsOfReference = UNKNOWN_AS_OF_REFERENCE): FdaProductRow[] {
+export function fdaProductRows(products: FdaProductDetail[], reference: AsOfReference): FdaProductRow[] {
   const summaries = summarizeByUnit(fdaProductsToNadacPrices(products, "product"), reference);
   return products.map(product => ({ ...product, priceSummaries: summaries.get(product.productNdc) ?? [], priceActivity: productActivity(fdaPackagePrices([product])) }));
 }
 
 /** One row per package, priced like its package-level chart. */
-export function fdaPackageRows(products: FdaProductDetail[], reference: AsOfReference = UNKNOWN_AS_OF_REFERENCE): FdaPackageRow[] {
+export function fdaPackageRows(products: FdaProductDetail[], reference: AsOfReference): FdaPackageRow[] {
   const summaries = summarizeByUnit(fdaProductsToNadacPrices(products, "package"), reference);
   return products.flatMap(product => product.fdaPackageDetails.map(fdaPackage => ({
     ...fdaPackage,

@@ -134,9 +134,6 @@ export type AsOfReference = {
   lastLoaded: number | null,
 };
 
-/** An open window, before the last loaded date is known: the newest price shown is current. */
-export const UNKNOWN_AS_OF_REFERENCE: AsOfReference = { windowEnd: null, lastLoaded: null };
-
 /**
  * The as-of date a series' latest price must reach to be current: the shown dates' end, but no
  * later than the last loaded as-of date. The end is snapped forward to an as-of date in the result
@@ -145,7 +142,12 @@ export const UNKNOWN_AS_OF_REFERENCE: AsOfReference = { windowEnd: null, lastLoa
  * stopped being priced still shows them as stale.
  *
  * Without the last loaded date (app-init failed), it falls back to the newest price shown, which
- * is certainly loaded; that misses a result in which every row is stale.
+ * is certainly loaded; that misses a result in which every row is stale. (The window end is
+ * ignored then: the prices are already clipped to it.)
+ *
+ * Known edge: with an open window (or one ending past the data), if a new NADAC week loads during
+ * the session and app-init refetches while a tab's search result is still cached, `lastLoaded`
+ * moves past that result and every row in the tab shows stale until its search reloads.
  *
  * @param prices - the prices shown, already clipped to the window
  * @returns null when there is nothing to compare against
@@ -170,7 +172,7 @@ export function currentAsOfDate({ windowEnd, lastLoaded }: AsOfReference, prices
  * @param prices - prices clipped to the dates shown
  * @returns each series' summaries, one per unit, keyed by NDC in the order series first appear
  */
-export function summarizeByUnit(prices: ChartPrice[], reference: AsOfReference = UNKNOWN_AS_OF_REFERENCE): Map<Ndc, UnitPriceSummary[]> {
+export function summarizeByUnit(prices: ChartPrice[], reference: AsOfReference): Map<Ndc, UnitPriceSummary[]> {
   const current = currentAsOfDate(reference, prices);
   const summaries = new Map<Ndc, UnitPriceSummary[]>(prices.map(price => [price.ndc, []]));
   for (const { pricingUnit, nadacPrices } of splitByPricingUnit(prices)) {
