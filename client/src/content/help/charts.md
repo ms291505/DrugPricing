@@ -30,7 +30,6 @@ Live comparisons support up to eight series. With more results, select rows and 
 or **Bar** to chart a smaller group.
 
 Line charts mark significant package price changes. Expand **Price changes** below the plot
-for exact values and **Around this change**. This
-focuses that specific event. A product marker comes from a package event, never from a jump
-in the average when a package joins or leaves. Pinned line charts have a **Show price changes**
-menu option; see the Price changes help topic for the thresholds and activity labels.
+for exact values and **Around this change**. This focuses that specific event. A product marker
+comes from a package event, never from a jump in the average when a package joins or leaves.
+Pinned line charts have a **Show price changes** menu option; see the Price changes help topic for the thresholds and activity labels.

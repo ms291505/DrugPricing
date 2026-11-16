@@ -47,8 +47,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   closes stays so while the page is mounted. Its one action, Chart this change, toggles one
   package chart (one unit) under the list over the page's shown dates. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
-  instead of the latest. A pin keeps `eventDate`; pins without it, including old zoomed ones, draw as before. In a chart's own
-  "Price changes" list below the plot (the readout has no event list), Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
+  instead of the latest. A pin keeps `eventDate`; pins without it, including old zoomed ones,
+  draw as before. In a chart's own "Price changes" list below the plot (the readout has no event
+  list), Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
   change preset chooses an event implicitly.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
@@ -113,7 +114,8 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   most products price every package the same per unit (liquids' bottle sizes are the exception).
 - **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
   package event has old/new dots and a dashed old price; one pill per date gives agreed prices
-  or a change count. Exact package values and gap spans are in the event list below the plot; the readout shows only prices.
+  or a change count. Exact package values and gap spans are in the event list below the plot; the
+  readout shows only prices.
   Product markers come only from actual package events, never jumps in their average.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy

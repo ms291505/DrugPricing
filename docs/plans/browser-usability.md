@@ -294,11 +294,11 @@ Callouts become general:
   the item, on by default. Live Compare cards always show them and get no menu.
 - **One label per date on a multi-series chart.** Each series keeps its dots and dashed old
   price; the date gets one pill: the prices when the series agree, otherwise a count
-  ("6 changes"), with exact values in the readout.
+  ("6 changes"), with exact values in the event list below the plot.
 - **A product line never gets a callout from its own average**, which can jump when a package
   joins or leaves. When one of its packages had a significant change in the dates shown, the
   line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new
-  prices; those are in the readout and at Package level.
+  prices; those are in the event list and at Package level.
 - Line charts only. Bar charts have nothing to mark.
 - A chart made from selected rows opens on the search dates like any other. Around this
   change is an action on a specific event in its event list below the plot. It focuses that event's

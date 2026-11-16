@@ -14,8 +14,8 @@ solid line marks the change, and the readout rests on its date until you point a
 **Pin** keeps a copy, and **Close** or the same button again closes it. To see every
 result together, use **Compare price histories**.
 
-In a chart's own **Price changes** list below the plot, **Around this change** focuses that chart's dates
-around the event. It never chooses a different event for you.
+In a chart's own **Price changes** list below the plot, **Around this change** focuses that
+chart's dates around the event. It never chooses a different event for you.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
 same date share one label; their exact values stay in the chart's event list.
