@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { compareUnitPrices, latestSummary, seriesByDate, splitByPricingUnit, summarizeByUnit, summarizePrices, type UnitPriceSummary } from "./prices";
+import { compareUnitPrices, currentAsOfDate, latestSummary, seriesByDate, splitByPricingUnit, summarizeByUnit, summarizePrices, type AsOfReference, type UnitPriceSummary } from "./prices";
 import type { ChartPrice } from "./types";
 
 const price = (ndc: string, iso: string, nadacPerUnit: number): ChartPrice =>
   ({ ndc, ndcDescription: `Drug ${ndc}`, pricingUnit: "each", nadacPerUnit, asOfDate: new Date(iso) });
+
+/** An open window with the last loaded date unknown: the fallback reference. */
+const UNKNOWN: AsOfReference = { windowEnd: null, lastLoaded: null };
 
 describe("seriesByDate", () => {
   it("merges each series' prices on a date into their average and spread, oldest first", () => {
@@ -62,14 +65,14 @@ describe("summarizeByUnit", () => {
     ({ ...price(ndc, iso, nadacPerUnit), pricingUnit });
 
   it("is empty without prices", () => {
-    expect(summarizeByUnit([]).size).toBe(0);
+    expect(summarizeByUnit([], UNKNOWN).size).toBe(0);
   });
 
   it("summarizes each series with its pricing unit, in the order series first appear", () => {
     const summaries = summarizeByUnit([
       price("B", "2025-01-01", 5),
       price("P", "2025-01-01", 10), price("P", "2025-01-01", 20), price("P", "2025-02-01", 30),
-    ]);
+    ], UNKNOWN);
     expect([...summaries.keys()]).toEqual(["B", "P"]);
     expect(summaries.get("P")).toHaveLength(1);
     expect(summaries.get("P")![0]).toMatchObject({ latest: 30, average: 22.5, min: 15, max: 30, packages: 2, pricingUnit: "each" });
@@ -78,7 +81,7 @@ describe("summarizeByUnit", () => {
   it("summarizes each unit of a series on its own, never averaging across units", () => {
     const summaries = summarizeByUnit([
       priceIn("P", "milliliter", "2025-01-01", 1), priceIn("P", "each", "2025-02-01", 100), priceIn("P", "milliliter", "2025-03-01", 3),
-    ]);
+    ], UNKNOWN);
     expect(summaries.get("P")!.map(s => [s.pricingUnit, s.latest, s.min, s.max, s.latestDate])).toEqual([
       ["milliliter", 3, 1, 3, Date.parse("2025-03-01")],
       ["each", 100, 100, 100, Date.parse("2025-02-01")],
@@ -92,7 +95,7 @@ describe("summarizeByUnit", () => {
       priceIn("P", "gram", "2025-01-01", 0.2), priceIn("P", "gram", "2025-01-01", 0.4),
       priceIn("P", "each", "2025-02-01", 4), priceIn("P", "each", "2025-02-01", 6),
       priceIn("P", "gram", "2025-02-01", 0.6),
-    ]);
+    ], UNKNOWN);
     expect(summaries.get("P")!.map(s => [s.pricingUnit, s.latest, s.min, s.max, s.packages])).toEqual([
       ["each", 5, 2, 5, 2],
       ["gram", 0.6, expect.closeTo(0.3), 0.6, 2],
@@ -100,9 +103,73 @@ describe("summarizeByUnit", () => {
   });
 });
 
+describe("currentAsOfDate", () => {
+  const nov11 = Date.parse("2026-11-11");
+  const jun3 = Date.parse("2026-06-03");
+  const shown = [price("A", "2026-05-27", 1)];
+
+  it("is the last loaded as-of date for an open window or one ending after the data", () => {
+    expect(currentAsOfDate({ windowEnd: null, lastLoaded: nov11 }, shown)).toBe(nov11);
+    // A typed end after the last load (or today, when presets fell back to it) never counts.
+    expect(currentAsOfDate({ windowEnd: Date.parse("2026-11-16"), lastLoaded: nov11 }, shown)).toBe(nov11);
+  });
+
+  it("is the shown dates' end when it is earlier, whatever the rows' own dates", () => {
+    expect(currentAsOfDate({ windowEnd: jun3, lastLoaded: nov11 }, shown)).toBe(jun3);
+    expect(currentAsOfDate({ windowEnd: jun3, lastLoaded: nov11 }, [])).toBe(jun3);
+  });
+
+  it("falls back to the newest price shown while the last loaded date is unknown", () => {
+    expect(currentAsOfDate({ windowEnd: null, lastLoaded: null }, [price("A", "2026-05-20", 1), price("B", "2026-05-27", 1)]))
+      .toBe(Date.parse("2026-05-27"));
+    expect(currentAsOfDate({ windowEnd: null, lastLoaded: null }, [])).toBeNull();
+  });
+
+  it("falls back to the newest price shown for a closed window too, since prices are clipped to it", () => {
+    expect(currentAsOfDate({ windowEnd: jun3, lastLoaded: null }, [price("A", "2026-05-20", 1), price("B", "2026-05-27", 1)]))
+      .toBe(Date.parse("2026-05-27"));
+    expect(currentAsOfDate({ windowEnd: jun3, lastLoaded: null }, [])).toBeNull();
+  });
+});
+
+describe("summarizeByUnit stale", () => {
+  const reference = { windowEnd: Date.parse("2026-11-11"), lastLoaded: Date.parse("2026-11-11") };
+  const stale = (prices: ChartPrice[], ref = reference) =>
+    [...summarizeByUnit(prices, ref)].map(([ndc, summaries]) => [ndc, summaries.map(s => [s.pricingUnit, s.stale])]);
+
+  it("is fresh when priced on the current as-of date, and stale when last priced before it", () => {
+    expect(stale([
+      price("FRESH", "2026-11-04", 1), price("FRESH", "2026-11-11", 1),
+      price("OLD", "2026-11-04", 1),
+    ])).toEqual([["FRESH", [["each", false]]], ["OLD", [["each", true]]]]);
+  });
+
+  it("marks every row stale when none reaches the window's end", () => {
+    expect(stale([price("A", "2026-03-04", 1), price("B", "2026-04-01", 1)]))
+      .toEqual([["A", [["each", true]]], ["B", [["each", true]]]]);
+  });
+
+  it("gives a series without prices no summaries, so nothing to mark", () => {
+    expect(summarizeByUnit([], reference).size).toBe(0);
+  });
+
+  it("keeps a product fresh while any of its packages is priced on the current date", () => {
+    // Product-level prices: two packages share the product's NDC; one stopped in March.
+    expect(stale([price("P", "2026-03-04", 1), price("P", "2026-03-04", 2), price("P", "2026-11-11", 3)]))
+      .toEqual([["P", [["each", false]]]]);
+  });
+
+  it("marks each unit of a mixed-unit series on its own", () => {
+    expect(stale([
+      { ...price("P", "2026-11-11", 1), pricingUnit: "each" },
+      { ...price("P", "2026-03-04", 0.5), pricingUnit: "gram" },
+    ])).toEqual([["P", [["each", false], ["gram", true]]]]);
+  });
+});
+
 describe("latestSummary", () => {
   const summary = (pricingUnit: string, iso: string) =>
-    summarizeByUnit([{ ...price("P", iso, 1), pricingUnit }]).get("P")![0];
+    summarizeByUnit([{ ...price("P", iso, 1), pricingUnit }], UNKNOWN).get("P")![0];
 
   it("is the summary priced most recently", () => {
     const newer = summary("gram", "2025-03-01");

@@ -8,7 +8,6 @@ import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { clearNadacRefine, hiddenResultsHint, nadacResultsLabel, showAllNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
-import useActivitySelection from "../../hooks/useActivitySelection";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
 
@@ -27,15 +26,13 @@ type Props = {
  */
 export default memo(function NadacResults({ view }: Props) {
   const { isLoading, isSuccess } = useNadacSearch();
-  const { criteria, loaded, lastSearch, selectedRows, setSelectedRows, setCriteria } = useNadacSearchContext();
+  const { criteria, loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { prices, dateWindow, hidden, history } = view;
   const origin = useNadacChartOrigin();
   // Live comparisons show the whole refined result, so it is also the visible set.
   const colors = useSeriesColors(origin.resultPrices, prices);
   const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
-
-  const { activitySelection, selectAffected } = useActivitySelection(selectedRows, setSelectedRows);
 
   if (loaded === null) return null;
 
@@ -56,8 +53,8 @@ export default memo(function NadacResults({ view }: Props) {
             : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
         />
         : null}
-      priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} onSelect={selectAffected} />}
-      table={<NadacResultTable nadacPrices={prices} loading={isLoading} activitySelection={activitySelection} dateWindow={dateWindow} />}
+      priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow} />}
+      table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
     >
       <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow} />
     </ResultsSection>

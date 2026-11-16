@@ -8,6 +8,8 @@ import type { SeriesKind } from "./explorerItems";
 
 export const PRICE_ACTIVITY_BAND = 0.05;
 export const PRICE_CHANGE_GROUP_LIMIT = 5;
+/** Package rows a group's listing shows before Show all: one product can have dozens of packages. */
+export const PRICE_CHANGE_PACKAGE_LIMIT = 8;
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 const percent = (value: number) => `${Number((Math.abs(value) * 100).toFixed(1))}%`;
 const inBand = (value: number) => Math.round(Math.abs(value) * 1000) / 1000 < PRICE_ACTIVITY_BAND;
@@ -82,6 +84,24 @@ export function eventLabel(change: NadacPriceChange): string {
   return `${change.percentage < 0 ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${eventDates(change)}`;
 }
 
+/** A package's change as signed figures for a group's package listing: "−43%", "−$4.17". */
+export function signedChange(change: NadacPriceChange): { percent: string, amount: string } {
+  const sign = change.percentage < 0 ? "−" : "+";
+  return { percent: sign + percent(change.percentage), amount: sign + formatPrice(Math.abs(change.newPrice - change.oldPrice)) };
+}
+
+/**
+ * When a package's previous observation was more than a week before the change and the group's
+ * label can't say so for every package (their previous observations differ): that date.
+ */
+export function previousObservationNote(event: PriceEvent, group: PriceEventGroup): string | null {
+  const start = event.change.startDate.getTime();
+  if (event.change.endDate.getTime() - start <= WEEK) return null;
+  if (group.events.every(e => e.change.startDate.getTime() === start)) return null;
+  return `Previous price ${formatDate(start)}`;
+}
+
+/** A chart's event list or readout: zooms that chart's dates to an explicit event. */
 export function aroundPriceEvent(events: PriceEvent[]) {
   return windowAround(Math.min(...events.map(e => e.change.startDate.getTime())),
     Math.max(...events.map(e => e.change.endDate.getTime())), PRICE_CHANGE_WINDOW_MONTHS);

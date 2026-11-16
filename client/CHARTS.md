@@ -41,12 +41,16 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
-  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, keeps
-  exact values expandable, and shows five groups before Show all. Select affected rows adds
-  to selection and sorts/paginates the table to an affected row; at product level it switches
-  to packages first. It never pins a chart. Around this change opens that event's focused
-  package chart; the same action in a chart's event list/readout focuses that chart's dates.
-  No chart-wide Around change preset chooses an event implicitly.
+  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, and shows five groups
+  before Show all. Each group's Package details is a small table (NDC, was, now, change), open
+  by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
+  closes stays so while the page is mounted. Its one action, Chart this change, toggles one
+  package chart (one unit) under the list over the page's shown dates. `eventDate` marks the
+  change with a solid line (the lock's is thin and dashed), and the readout rests on that date
+  instead of the latest, without that date's event list (the group is described above the
+  chart). A pin keeps `eventDate`; pins without it, including old zoomed ones, draw as before. In a chart's event list/readout,
+  Around this change focuses that chart's dates (`aroundPriceEvent`). No chart-wide Around
+  change preset chooses an event implicitly.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
   average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
@@ -138,8 +142,8 @@ tooltip that floats over the plot or sits under a finger. The box is recharts' `
 rendered there through `portal` (`DOCKED_TOOLTIP` keeps it showing between points), so hovering
 re-renders only the readout, not the chart.
 
-- **What it shows:** the hovered point; else the locked one; else, on a line chart, the latest
-  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
+- **What it shows:** the hovered point; else the locked one; else, on a line chart, the
+  chart's `eventDate` ("· this change") or the latest date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
   `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
   under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).

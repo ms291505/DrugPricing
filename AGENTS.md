@@ -86,7 +86,10 @@ lists its columns, and renders `ResultTable` (paging, and the selection that Cha
 `ResultsSection` gives it its `Paper`. Rows are built in `library/resultRows.ts` (tested): each
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
-sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
+sorted by unit first. Each unit's summary is `stale` when its latest price is before
+`currentAsOfDate` (`library/prices.ts`: the shown dates' snapped end, capped at app-init's last
+loaded as-of date, not the rows' own newest date, which it falls back to only when app-init fails); Latest Price shows a warning triangle with
+the date, so Latest Price Date is hidden by default. A row without prices can't be selected. Keep Latest Price second or third:
 on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
 tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own
 width tier), since the checkbox, Brand Name and NDC before the price don't fit a phone.
@@ -112,8 +115,10 @@ digits and minimum widths that fit the complete source identifier.
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,
 using a rounded 5% range cutoff and 10% significant steps. Products use their packages' states,
 not an averaged line; only package rows have sparklines. The shared event list groups by date,
-unit and direction; selecting affected rows sorts and pages to one. Around this change always
-focuses an explicit event. Live Compare cards start hidden and are never stored. New product
+unit and direction, each with its packages' old and new prices; its one action, Chart this
+change, charts that group's packages over the shown dates with the change marked and the readout
+resting on it. A chart's own event list keeps Around this change, which zooms that chart to an
+explicit event. Live Compare cards start hidden and are never stored. New product
 pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
 
 ### Workspace
