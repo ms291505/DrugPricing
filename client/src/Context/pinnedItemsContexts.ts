@@ -12,6 +12,7 @@ export type PinHighlight = {
 };
 
 export type PinActions = {
+  addItems: (items: ExplorerItem[], options?: { focus?: boolean }) => void;
   addItem: (item: ExplorerItem, options?: { focus?: boolean }) => void;
   updateItem: (id: string, update: (item: ExplorerItem) => ExplorerItem) => void;
   removeItem: (id: string) => void;

@@ -139,6 +139,11 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
           </MenuItem>
           : null
         }
+        {isLineChart && <MenuItem role="menuitemcheckbox" aria-checked={item.showPriceChanges !== false}
+          onClick={runAndClose(() => updateItem(item.id, prev => ({ ...prev, showPriceChanges: prev.showPriceChanges === false })))}>
+          <ListItemIcon>{item.showPriceChanges !== false ? <CheckIcon fontSize="small" /> : null}</ListItemIcon>
+          <ListItemText>Show price changes</ListItemText>
+        </MenuItem>}
         <MenuItem onClick={runAndClose(() => updateItem(item.id, prev => ({
           ...prev, layout: { ...prev.layout, width: isFull ? "half" : "full" },
         })))}>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartSubtitle, chartTitle, priceChangeTitle, seriesLabels } from "./chartTitles";
+import { chartSubtitle, chartTitle, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -14,10 +14,6 @@ describe("chart titles", () => {
 
   it("names a single series by its own label", () => {
     expect(chartTitle("line", "humira", "package", ["HUMIRA KIT 40 mg"])).toBe("HUMIRA KIT 40 mg over time");
-  });
-
-  it("puts the change, its date and the package in a price-change title", () => {
-    expect(priceChangeTitle("-43.0%", Date.parse("2026-01-14"), "0003-0893-21")).toBe("-43.0% on Jan 14, 2026 · 0003-0893-21");
   });
 
   it("subtitles with the count and the dates shown", () => {

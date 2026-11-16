@@ -10,15 +10,16 @@ type Props = {
   notice?: ReactNode,
   /** The results table. */
   table: ReactNode,
-  /** Grid items under the table: the auto charts, then the price-change cards. */
+  priceChanges?: ReactNode,
+  /** Live Compare chart cards under the table and event list. */
   children?: ReactNode,
 };
 
 /**
  * The frame of both search pages' results: a heading and toolbar, the table, then the auto
- * charts and price-change cards (half width each). Pinned items sit below it, outside.
+ * comparisons and event list. Pinned items sit below it, outside.
  */
-export default function ResultsSection({ searchLabel, toolbar, notice, table, children }: Props) {
+export default function ResultsSection({ searchLabel, toolbar, notice, table, priceChanges, children }: Props) {
   const headingId = useId();
   return (
     <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", minWidth: 0 }}>
@@ -32,6 +33,7 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, ch
       </Box>
       {notice}
       <Paper sx={{ p: { xs: 0, sm: 1 } }}>{table}</Paper>
+      {priceChanges}
       <Grid container spacing={1}>{children}</Grid>
     </Box>
   );

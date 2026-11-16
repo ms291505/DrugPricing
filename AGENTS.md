@@ -103,6 +103,13 @@ small visibility observer re-renders on a page/tab switch; the table does not. H
 measure nothing until shown. Narrow tables use 44px rows and headers. NDC columns use tabular
 digits and minimum widths that fit the complete source identifier.
 
+Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,
+using a rounded 5% range cutoff and 10% significant steps. Products use their packages' states,
+not an averaged line; only package rows have sparklines. The shared event list groups by date,
+unit and direction; selecting affected rows sorts and pages to one. Around this change always
+focuses an explicit event. Live Compare cards start hidden and are never stored. New product
+pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
+
 ### Workspace
 
 `WorkspaceContext` owns the tabs, `layoutMode` and `paneAssignment`; `TabInstance` renders a
@@ -202,7 +209,7 @@ the workspace.
 - **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
   `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone
   page while mounted. Errors (`QueryErrorToast`) come back each time the page is shown. Results
-  ("N products found") and flagged price changes (`SearchResultToast`) show once per Search,
+  ("N products found") (`SearchResultToast`) show once per Search,
   waiting if it arrived while hidden, and never for the search a restored tab re-runs on load
   or for a change of dates, fetched or not (`useNewSearchResult`). App-wide toasts: failed storage writes, another window's changes, Pin.
 

@@ -1,12 +1,16 @@
-import { useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
-import { Button, Tooltip } from "@mui/material";
-import { useMemo } from "react";
+import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
+import toast from "react-hot-toast";
+import { gridExpandedSortedRowIdsSelector, useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
+import { Button, Tooltip, Typography } from "@mui/material";
+import { useEffect, useMemo, useRef } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import AutosizePriceColumns from "./AutosizePriceColumns";
 import useWidthTier from "../../hooks/useWidthTier";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
 import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
+import { activityCounts } from "../../library/priceActivity";
+import { formatWindow, type DateWindow } from "../../library/dates";
 import type { PricedRow } from "../../library/resultRows";
 
 type Props<R extends PricedRow> = {
@@ -19,6 +23,8 @@ type Props<R extends PricedRow> = {
   /** What a row is, for the checkbox tooltip of a row without prices: "product", "package". */
   rowNoun: string,
   loading: boolean,
+  dateWindow?: DateWindow,
+  activitySelection?: ActivitySelectionRequest,
   /** The rows picked for Add Chart. */
   selection: GridRowSelectionModel,
   onSelectionChange: (selection: GridRowSelectionModel) => void,
@@ -36,7 +42,7 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
  * (`createPriceColumns`) and checkboxes that pick rows for Add Chart. A row without prices can't
  * be charted, so it can't be selected, and its checkbox says why.
  */
-export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, getRowId, rowNoun, loading, selection, onSelectionChange }: Props<R>) {
+export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, getRowId, rowNoun, loading, selection, onSelectionChange, activitySelection, dateWindow }: Props<R>) {
   const apiRef = useGridApiRef();
   const { settings, updateColumnOverrides } = useSettings();
   const overrides = settings.columnOverrides[tableType];
@@ -44,7 +50,41 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
   const [tableRef, widthTier] = useWidthTier<HTMLDivElement>();
   const allColumns = useMemo(() => [checkboxColumn<R>(rowNoun), ...columns], [rowNoun, columns]);
 
+  const handledSelection = useRef<typeof activitySelection>(undefined);
+  useEffect(() => {
+    if (handledSelection.current === activitySelection) return;
+    if (!activitySelection || !apiRef.current) return;
+    const api = apiRef.current;
+    const ids = new Set(activitySelection.ids);
+    api.setSortModel([{ field: "priceActivity", sort: "asc" }]);
+    // Use the grid's actual order: column filters may hide some or all affected rows.
+    const sortedIds = gridExpandedSortedRowIdsSelector(apiRef);
+    const index = sortedIds.findIndex(id => ids.has(String(id)));
+    if (index < 0) {
+      handledSelection.current = activitySelection;
+      activitySelection.onHandled();
+      toast("No affected rows are visible with the current column filters.");
+      return;
+    }
+    const pageSize = api.state.pagination.paginationModel.pageSize;
+    api.setPage(Math.floor(index / pageSize));
+    const frame = requestAnimationFrame(() => {
+      handledSelection.current = activitySelection;
+      api.scrollToIndexes({ rowIndex: index });
+      const columns = api.getVisibleColumns();
+      const field = columns.find(column => column.field === "latestPrice")?.field
+        ?? columns.find(column => column.field !== GRID_CHECKBOX_SELECTION_COL_DEF.field)?.field;
+      if (field) api.setCellFocus(sortedIds[index], field);
+      activitySelection.onHandled();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activitySelection, apiRef, rows, getRowId]);
+
   return (<>
+    <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+      {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
+      {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
+    </Typography>
     <DataGrid
       apiRef={apiRef}
       ref={tableRef}

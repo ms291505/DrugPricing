@@ -6,31 +6,6 @@ they fit. When something is done, delete it here. The code and its PR are the re
 
 ## Decided
 
-### Usability round from the user-testing notes (2026-11-01)
-
-Goal: make the core flow usable (search, results table, chart and compare) before adding
-anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
-`dev`. Pinned-chart performance, the Results section (built as
-[docs/plans/search-filters.md](plans/search-filters.md)) and the docked chart readout are built. One
-step is left:
-
-**Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. Today a
-mixed-unit chart is one card that `UnitSplit` splits, with a "Mixed units" chip.
-
-- **Pin and Chart selected.** `createChartItem` (`library/explorerItems.ts`) gets a sibling
-  that splits the prices with `splitByPricingUnit` and returns one item per unit, each title
-  naming its unit. The pinned-items provider adds them in one state update and highlights and
-  focuses the first. With more than one, a toast says why: "Added 2 charts, one per pricing
-  unit (EA, ML)."
-- **Auto charts.** Both pages draw one bar card and one line card per unit. `shouldAutoChart`
-  stays gated on the total series count. Each card's Pin pins only its unit.
-- **Older pins.** `UnitSplit` stays, so pins saved with mixed units still render split. New
-  items are always one unit, so the chip leaves the new paths. No `VERSION` bump.
-- Tests: titles, colors carried per unit, and `source` per item. Check it with Wegovy and
-  Rybelsus.
-
-Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
-
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC

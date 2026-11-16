@@ -3,8 +3,7 @@ import { Box, Button, Chip, Popover, Tooltip } from "@mui/material";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { chartDataBounds, type ChartItem } from "../../library/explorerItems";
-import { formatWindow, resolveChartDates, windowAround } from "../../library/dates";
-import { PRICE_CHANGE_WINDOW_MONTHS } from "../../library/constants";
+import { formatWindow, resolveChartDates } from "../../library/dates";
 import ChartDatesControl from "./ChartDatesControl";
 
 type Props = {
@@ -27,9 +26,7 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
 
   const dataBounds = chartDataBounds(item);
   const label = formatWindow(item.dateWindow, dataBounds);
-  const focusPreset = item.changeSpan
-    ? { label: "Around change", dateWindow: windowAround(item.changeSpan.start, item.changeSpan.end, PRICE_CHANGE_WINDOW_MONTHS) }
-    : undefined;
+
 
   return (
     <>
@@ -62,7 +59,6 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
               ...prev, dateWindow: resolveChartDates(chartDates, dataBounds),
             }))}
             bounds={dataBounds}
-            focusPreset={focusPreset}
           />
           <Button size="small" sx={{ alignSelf: "flex-end" }} onClick={onClose}>Done</Button>
         </Box>

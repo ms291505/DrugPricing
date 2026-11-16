@@ -6,7 +6,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, auto charts, price-change charts) are derived from the
+- *System* items (the results table, live Compare charts and price events) are derived from the
   current search on every render and never stored.
 - *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
   (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
@@ -40,11 +40,16 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   over the view's `history`). After a narrowing that didn't fetch, more is loaded than shown;
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
-- Price-change charts (`PriceChangeCards`, on both search pages) are flagged per package over the
-  refined result (`flagPriceChanges`), so only inside the search's dates. Each opens on
-  ±`PRICE_CHANGE_WINDOW_MONTHS` around the change (`changeSpan`, stored on pinned copies too) and
-  toggles to the full history. Past `MAX_AUTO_PRICE_CHANGE_CHARTS` a note gives the count
-  instead of charting them.
+- Significant package events are derived over the refined result by `derivePriceEvents` and
+  `flagPriceChanges`. `PriceChangesSection` groups by date, pricing unit and direction, keeps
+  exact values expandable, and shows five groups before Show all. Select affected rows adds
+  to selection and sorts/paginates the table to an affected row; at product level it switches
+  to packages first. It never pins a chart. Around this change opens that event's focused
+  package chart; the same action in a chart's event list/readout focuses that chart's dates.
+  No chart-wide Around change preset chooses an event implicitly.
+- Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
+  5% cutoff; significant steps remain 10%. Product state comes from packages, never their
+  average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
 - **"Match scale" is per chart.** A pinned line chart's menu toggles `ChartItem.matchScale`; the
   matched charts in one unit share a fitted axis (`matchedPriceRange`) and show a "Matched scale"
   chip. New pins start unmatched. A tab-wide switch put $0.25 metformin on humira's $0–$8K axis,
@@ -55,7 +60,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `seriesKind` (`"product" | "package" | "ndc"`); wording comes from one table in
   `explorerItems.ts`.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
-  `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+  `h3` inside Pinned, `h4` for a focused chart inside the Price changes section), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
 
@@ -67,9 +72,13 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   average and keeps the packages' min–max as `rangeKey(ndc)`.
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
-- Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
+- New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
+  one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
+- Live Compare charts start hidden; the two Compare toggles show/hide them, retaining their
+  choice across searches while mounted, never in storage. They are gated on total **series**
+  count, not price rows (`shouldAutoChart`), before splitting into one card per pricing unit.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
-  time"), the subtitle the count and dates. Price-change cards name the percent, date and package.
+  time"), the subtitle the count and dates. Focused event charts name the event date and unit.
 
 ## Axes and labels
 
@@ -99,10 +108,14 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   spread is dropped on its own $5.5K–$8K axis and on the 7-product $2K–$7K axis. A dropped band
   still shows its range in the readout (from `md` up), View data and the CSV. Bands are rare:
   most products price every package the same per unit (liquids' bottle sizes are the exception).
-- **Price changes** are called out on the line: dots at the old and new price, the old price
-  continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined in
-  `palette.chart.drop` or `chart.rise` (today the success and error colors). The percent stays in the title. Spans pinned before prices
-  were stored get a dashed line labeled with the percent.
+- **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
+  package event has old/new dots and a dashed old price; one pill per date gives agreed prices
+  or a change count. Exact package values and gap spans are in the readout and event list.
+  Product markers come only from actual package events, never jumps in their average.
+  New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
+  old product pins without this identity still draw, but cannot infer package events. A legacy
+  `changeSpan` remains a fallback inside its dates. Pinned line charts save `showPriceChanges`
+  (absent means on); live comparisons always mark events. Bars have no event markers.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown
   series can't be hidden. Hiding never recolors. Hidden series leave the axis fit

@@ -69,7 +69,8 @@ describe("loading saved tab state", () => {
         {
           ...oldItem, dateWindow: { start: 100, end: null },
           changeSpan: { start: 1, end: 2, label: "-43.0%", direction: "drop" },
-          series: [{ ...oldItem.series[0], color: "#56B4E9" }],
+          series: [{ ...oldItem.series[0], color: "#56B4E9", packageNdcs: ["PKG1"] }],
+          showPriceChanges: false,
           matchScale: true,
         },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
@@ -95,6 +96,8 @@ describe("loading saved tab state", () => {
         { ...oldItem, id: "bad-bar-value", chartType: "bar", barValue: "median" },
         { ...oldItem, id: "bad-color", series: [{ ...oldItem.series[0], color: 3 }] },
         { ...oldItem, id: "bad-match", matchScale: "yes" },
+        { ...oldItem, id: "bad-events", showPriceChanges: "yes" },
+        { ...oldItem, id: "bad-package-points", series: [{ ...oldItem.series[0], packageNdcs: [] }] },
         { ...oldItem, id: "good" },
       ],
     });

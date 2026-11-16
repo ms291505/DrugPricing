@@ -15,7 +15,7 @@ type Props = {
   collapsed?: boolean,
   onCollapsedChange?: (collapsed: boolean) => void,
   defaultCollapsed?: boolean,
-  headingLevel?: 2 | 3,
+  headingLevel?: 2 | 3 | 4,
   /** Briefly outline the card, e.g. right after it was added. */
   highlighted?: boolean,
   /** The heading is focusable (tabIndex -1) so new cards can receive focus. */

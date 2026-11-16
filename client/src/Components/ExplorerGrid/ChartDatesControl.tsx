@@ -20,8 +20,6 @@ type Props = {
   bounds: DateBounds | null,
   /** The date inputs' limits, when they aren't `bounds` (null: none). */
   inputBounds?: DateBounds | null,
-  /** An extra preset, e.g. the dates around a price change. */
-  focusPreset?: { label: string, dateWindow: DateWindow },
   /**
    * Adds a Custom preset and says the dates in a line of text beside the label. The date inputs
    * open in a popover under Custom, so nothing around the control moves and no room is kept for
@@ -64,12 +62,11 @@ const isCustom = (value: ChartDates) => value.kind === "window" && !isFullWindow
  * dates are fixed. Used by each pinned chart, and by the search panels' Dates (`DatesField`).
  */
 export default function ChartDatesControl({
-  value, onChange, bounds, inputBounds = bounds, focusPreset, customPreset = false, typedDelayMs = 0, label = "Chart dates",
+  value, onChange, bounds, inputBounds = bounds, customPreset = false, typedDelayMs = 0, label = "Chart dates",
 }: Props) {
   const labelId = useId();
 
   const presets: Preset[] = [
-    ...(focusPreset ? [{ key: "focus", label: focusPreset.label, chartDates: { kind: "window", dateWindow: focusPreset.dateWindow } as const }] : []),
     { key: "all", label: "All", chartDates: ALL_DATES },
     // "Recent" needs data to count back from.
     ...(bounds

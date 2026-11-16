@@ -1,3 +1,4 @@
+import { pricingUnitLabel, splitByPricingUnit } from "./prices";
 import type { ChartPrice } from "./types";
 import { quoted } from "./searchCriteria";
 import { inWindow, type DateBounds, type DateWindow } from "./dates";
@@ -75,6 +76,8 @@ export type ChartSeriesSnapshot = {
   label: string,
   unit: string,
   points: Array<[number, number]>,
+  /** Original package identity per point, so product averages never manufacture change events. */
+  packageNdcs?: string[],
   /** The series' color on the page it came from. Charts pinned before colors were stored have none. */
   color?: string,
 };
@@ -106,6 +109,8 @@ export type ChartItem = ExplorerItemBase & {
   barValue?: BarValue,
   /** Line charts: share a price axis with the other matched line charts in the same unit. */
   matchScale?: boolean,
+  /** Line-chart event callouts; absent on older pins means enabled. */
+  showPriceChanges?: boolean,
 };
 
 export type ExplorerItem = ChartItem;
@@ -139,16 +144,21 @@ export function toChartSeries(prices: ChartPrice[], colors?: Map<string, string>
       series.set(key, entry);
     }
     entry.points.push([price.asOfDate.getTime(), price.nadacPerUnit]);
+    if (price.packageNdc || entry.packageNdcs) {
+      entry.packageNdcs ??= entry.points.slice(0, -1).map(() => entry.ndc);
+      entry.packageNdcs.push(price.packageNdc ?? price.ndc);
+    }
   }
   return [...series.values()];
 }
 
 /** Expands a chart snapshot back into the prices `LineViz` and `BarViz` draw. */
 export function fromChartSeries(series: ChartSeriesSnapshot[]): ChartPrice[] {
-  return series.flatMap(({ ndc, label, unit, points }) =>
-    points.map(([time, price]) => ({
+  return series.flatMap(({ ndc, label, unit, points, packageNdcs }) =>
+    points.map(([time, price], i) => ({
       ndc,
       ndcDescription: label,
+      ...(packageNdcs && { packageNdc: packageNdcs[i] }),
       pricingUnit: unit,
       nadacPerUnit: price,
       asOfDate: new Date(time),
@@ -199,6 +209,17 @@ export function createChartItem({
       filtered,
     },
   };
+}
+
+/** New cards contain one pricing unit; legacy mixed-unit snapshots still render with UnitSplit. */
+export function createChartItems(options: NewChartItem, titleForPrices?: (prices: ChartPrice[]) => string): ChartItem[] {
+  const groups = splitByPricingUnit(options.prices);
+  return groups.map(({ pricingUnit, nadacPrices }) => createChartItem({
+    ...options,
+    prices: nadacPrices,
+    defaultTitle: groups.length > 1
+      ? `${titleForPrices?.(nadacPrices) ?? options.defaultTitle} · per ${pricingUnitLabel(pricingUnit)}` : options.defaultTitle,
+  }));
 }
 
 /** Provenance chip text, e.g. "Products · 2 of 7 · from “humira”" or "NDCs · 6 · from “eliquis” · filtered". */

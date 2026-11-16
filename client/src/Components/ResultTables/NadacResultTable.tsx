@@ -1,8 +1,11 @@
+import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
+import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import type { NadacPrice } from "../../library/types";
 import { nadacRows, type NadacRow } from "../../library/resultRows";
+import { activityColumn } from "./activityColumn";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
@@ -22,6 +25,7 @@ const COLUMNS: GridColDef<NadacRow>[] = [
     headerName: "Description",
     width: 350
   },
+  activityColumn<NadacRow>(),
   ...PRICE_COLUMNS.history,
 ];
 
@@ -30,16 +34,20 @@ const getRowId = (row: NadacRow) => row.ndc;
 type Props = {
   nadacPrices: NadacPrice[],
   loading: boolean,
+  dateWindow?: DateWindow,
+  activitySelection?: ActivitySelectionRequest,
 }
 
 /** The NADAC search's results: one row per NDC. */
-export default function NadacResultTable({ nadacPrices, loading }: Props) {
+export default function NadacResultTable({ nadacPrices, loading, activitySelection, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useNadacSearchContext();
 
   const rows = useMemo(() => nadacRows(nadacPrices), [nadacPrices]);
 
   return (
     <ResultTable
+      dateWindow={dateWindow}
+      activitySelection={activitySelection}
       tableType="nadac"
       rows={rows}
       columns={COLUMNS}

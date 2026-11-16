@@ -70,6 +70,9 @@ function PinnedChart({ item, priceRanges }: Props) {
           colors={colors}
           dateWindow={item.dateWindow}
           changeSpan={item.changeSpan}
+          seriesKind={item.source.seriesKind}
+          showPriceChanges={item.showPriceChanges !== false}
+          onAroundChange={dateWindow => updateItem(item.id, prev => ({ ...prev, dateWindow }))}
           priceRanges={priceRanges}
         />
       );

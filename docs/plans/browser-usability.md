@@ -219,8 +219,27 @@ example shows the table users will see.
 
 ## Stage 3 — Make charts intentional while preserving discovery
 
-Prerequisite: land "Mixed units become separate cards" from docs/future-work.md first, as its
-own change. Both rewrite the code that creates charts.
+Implemented on `codex/browser-usability-stage-3`, started 2026-11-15 and completed 2026-11-16.
+The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author discussion settled:
+
+- Events group by date, pricing unit and direction. Exact values stay expandable, with five
+  groups initially and Show all for the rest.
+- Around this change belongs to an explicit event. It opens a focused package chart from the
+  search event list and focuses the current chart from its readout/event list. The ambiguous
+  chart-wide Around change preset is removed; no largest/latest event is chosen automatically.
+- Product activity labels count affected packages and name the largest movement. Product
+  sparklines are omitted because one package's line could misrepresent the product.
+- New product pins retain package identity per point. Older product pins still draw, but
+  without those identities cannot infer package events from their averages. Legacy stored
+  change spans remain supported.
+- Package sparklines remain visible on phones when Price Activity is shown, as confirmed
+  by the author during PR review. The Columns control can hide Price Activity independently.
+
+Validation includes boundary/classification, grouping, gap, snapshot and persistence tests;
+Eliquis's six-package event and product/package selection; NADAC parity; a 344-package
+metformin search with the five-group limit and paging to an affected row; mixed-unit
+semaglutide pins with accurate per-unit counts; old pins and saved callout toggles; and phone
+column/event layouts. Client tests, lint and production build pass.
 
 ### How charts are made
 
@@ -246,10 +265,8 @@ week-to-week change of 10% or more per package (`flagPriceChanges`, unchanged), 
 search dates and the current filters, and labeled as such.
 
 - Each entry gives the date, the percent, the old → new price with its unit, and the packages
-  affected. Changes on the same date may be grouped ("6 packages dropped about 43% on Jan 14"),
-  with each package's exact values still reachable. *Open detail:* the grouping rule (same
-  date and direction is the minimum; rounded percentages alone are not enough) and how many
-  entries show before the list is cut.
+  affected. Group changes by date, pricing unit and direction ("6 packages dropped about 43%
+  on Jan 14"), with exact values expandable. Show five groups before Show all.
 - Its action is **"Select affected rows"**: it adds those rows to the selection and sorts the
   table by Price Activity so they are in view. It creates no chart; the user adjusts the
   selection and uses Line or Bar. Say how many rows were selected.
@@ -276,9 +293,9 @@ Callouts become general:
   line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new
   prices; those are in the readout and at Package level.
 - Line charts only. Bar charts have nothing to mark.
-- A chart made from selected rows opens on the search dates like any other. "Around change"
-  stays a preset in the dates picker. *Open detail:* which change the preset centers on when
-  a chart has several.
+- A chart made from selected rows opens on the search dates like any other. Around this
+  change is an action on a specific event in its readout/event list. It focuses that event's
+  dates; there is no chart-wide preset choosing an event.
 
 ### Price Activity column
 
@@ -320,9 +337,8 @@ only when every package is. Packages with one observation are left out of that r
 product is Insufficient history only when all its packages are. Measured this way, 16% of
 products are Stable over 12 months (77% of brand products, 9% of generic), close to the
 package share because 69% of products have one priced package; it falls to 6% for products
-with 5–9 packages. *Open detail:* the product label's wording when packages differ
-(candidate: "1 of 3 packages dropped 25% on Apr 1") and which line its sparkline draws.
-Mixed-unit rows show "Mixed units" as the price columns do.
+with 5–9 packages. Product labels count affected packages and describe the largest movement;
+product sparklines are omitted, as settled with the author. Mixed-unit rows show "Mixed units" as the price columns do.
 
 **Sparkline:** a step line over the dates shown, small enough to sit beside the label at
 normal row height. It is an attention cue, not the analysis. Each row has its own vertical
@@ -416,10 +432,7 @@ isolation and multi-window storage behavior.
 
 ## Still open
 
-- The *open details* above: event grouping and list length, the "Around change" preset
-  with several changes, product-row label wording and sparkline.
-- After building: whether the sparkline shows on phones (author's choice from the real thing),
-  and whether 5% still reads right on real searches.
+- Whether 5% still reads right on real searches.
 
 ## What the rough mockup showed
 
