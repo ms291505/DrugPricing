@@ -94,6 +94,15 @@ Left out of the plan, to revisit once it ships:
   `> 0.05` compares $/each with $/mL (`ResultTables/priceColumns.tsx`). Sorting already groups by
   unit (`compareUnitPrices`). Make the filters unit-aware (a custom filter operator that also
   picks the unit), or set `filterable: false` on the three price columns.
+- **NADAC description search misses an NDC's current name.** `update_drug_package` inserts
+  with `ON CONFLICT ("Ndc") DO NOTHING`, so `DrugPackages` keeps the first description an NDC
+  was loaded with, while results show the latest. On dev (2026-11-16), 234 NDCs differ, and 37
+  latest names (22 Rx) aren't contained in any stored name: "AJOVY 225 MG/1.5 ML AUTOINJECTOR
+  (3 PACK)" is stored as "AJOVY 225 MG/1.5 ML AUTOINJECT", so typing the name the table shows
+  finds nothing. Either update the stored description to the latest, or search every
+  description an NDC has had. Either way it changes what typed searches find. Autocomplete's
+  view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
+  follows the fix with no change of its own. Small.
 - **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 
