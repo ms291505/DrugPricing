@@ -1,13 +1,19 @@
 import HelpButton from "../Help/HelpButton";
 import type { GridApiCommon, GridColDef, GridComparatorFn, GridSortCellParams, GridSortDirection } from "@mui/x-data-grid";
 import { Box, Tooltip } from "@mui/material";
-import { compareUnitPrices, latestSummary, pricingUnitLabel } from "../../library/prices";
+import WarningAmberRounded from "@mui/icons-material/WarningAmberRounded";
+import { compareUnitPrices, latestSummary, pricingUnitLabel, type UnitPriceSummary } from "../../library/prices";
 import type { PricedRow } from "../../library/resultRows";
 import { formatPrice } from "../../library/chartScale";
 import { formatDate } from "../../library/dates";
 
 /** Shown for a row without prices, and for the price columns of a row priced in several units. */
 const NO_PRICE = "—";
+
+/** The stale marker's icon size and its gap to the price, in px: the Latest Price column's width allows for both. */
+const STALE_MARKER_SIZE = 16;
+const STALE_MARKER_GAP = 4;
+const STALE_MARKER_WIDTH = STALE_MARKER_SIZE + STALE_MARKER_GAP;
 
 /** The row's summary when it is priced in exactly one unit: prices in different units never combine. */
 const singleUnit = (row: PricedRow) => row.priceSummaries.length === 1 ? row.priceSummaries[0] : undefined;
@@ -45,6 +51,9 @@ type PriceColumnOptions = {
  *
  * A row priced in several units (a few products whose packages differ, e.g. packets per each and
  * canisters per gram) shows "Mixed units" instead of prices, and still its latest price date.
+ *
+ * A latest price older than the dates shown reach (`stale`, from `summarizeByUnit`) carries a
+ * warning triangle saying when it was last priced, so the Latest Price Date column can stay hidden.
  */
 export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averagesPackages }: PriceColumnOptions = {}): { latest: GridColDef<R>, latestDate: GridColDef<R>, range: GridColDef<R>[], history: GridColDef<R>[] } {
   const columns: { latest: GridColDef<R>, history: [GridColDef<R>, ...GridColDef<R>[]] } = {
@@ -55,13 +64,22 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
       type: "number",
       width: 125,
       minWidth: 90,
-      maxWidth: 125,
+      // Room for the widest price and a stale marker beside it (`STALE_MARKER_WIDTH`).
+      maxWidth: 125 + STALE_MARKER_WIDTH,
       valueGetter: (_, row) => singleUnit(row)?.latest,
       valueFormatter: unitPrice,
       getSortComparator: byUnitThenPrice,
-      renderCell: ({ row, formattedValue, hasFocus }) => row.priceSummaries.length > 1
-        ? <MixedUnits tabIndex={hasFocus ? 0 : -1} pricingUnits={row.priceSummaries.map(summary => summary.pricingUnit)} hint={mixedUnitsHint} />
-        : formattedValue as string,
+      renderCell: ({ row, formattedValue, hasFocus }) => {
+        const tabIndex = hasFocus ? 0 : -1;
+        if (row.priceSummaries.length > 1) return <MixedUnits tabIndex={tabIndex} summaries={row.priceSummaries} hint={mixedUnitsHint} />;
+        const summary = singleUnit(row);
+        return summary?.stale
+          ? <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: `${STALE_MARKER_GAP}px` }}>
+              <StaleMarker tabIndex={tabIndex} label={`Last priced ${formatDate(summary.latestDate)}`} />
+              {formattedValue as string}
+            </Box>
+          : formattedValue as string;
+      },
     },
     history: [
       {
@@ -104,19 +122,45 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
   return { ...columns, latestDate, range };
 }
 
+/**
+ * A warning triangle before a latest price that is older than the dates shown reach (the row's
+ * `stale` summary). It sits on the price's left, so right-aligned prices still line up. It is
+ * focusable like the cell's other controls, and a tap opens its tooltip at once (a phone has no hover).
+ */
+function StaleMarker({ label, tabIndex }: { label: string, tabIndex: number }) {
+  return (
+    <Tooltip title={label} enterTouchDelay={0}>
+      <Box component="span" role="img" aria-label={label} tabIndex={tabIndex}
+        sx={{ display: "inline-flex", color: "warning.main", borderRadius: 1, "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main" } }}>
+        <WarningAmberRounded sx={{ fontSize: STALE_MARKER_SIZE }} />
+      </Box>
+    </Tooltip>
+  );
+}
+
+/** "g last priced Mar 4, 2026": a unit of a mixed-unit row, its date apart from the others'. */
+const unitLastPriced = (summary: UnitPriceSummary) => `${pricingUnitLabel(summary.pricingUnit)} last priced ${formatDate(summary.latestDate)}`;
+
 type MixedUnitsProps = {
-  pricingUnits: string[],
+  summaries: UnitPriceSummary[],
   tabIndex: number,
   hint?: string,
 }
 
-/** Says the row has prices but no single figure for them, and (on hover or tap) where they are. */
-function MixedUnits({ pricingUnits, hint, tabIndex }: MixedUnitsProps) {
-  const units = pricingUnits.map(pricingUnitLabel).join(", ");
-  const title = `Priced in more than one unit (${units}).` + (hint ? ` ${hint}` : "");
+/**
+ * Says the row has prices but no single figure for them, and (on hover or tap) where they are and
+ * when each unit was last priced. A stale marker names the units that are stale.
+ */
+function MixedUnits({ summaries, hint, tabIndex }: MixedUnitsProps) {
+  const units = summaries.map(summary => pricingUnitLabel(summary.pricingUnit)).join(", ");
+  const title = `Priced in more than one unit (${units}): ${summaries.map(unitLastPriced).join("; ")}.` + (hint ? ` ${hint}` : "");
+  const stale = summaries.filter(summary => summary.stale);
   return (
     // No gap: the button's own padding spaces it, and the column has no width to spare.
     <Box component="span" sx={{ display: "inline-flex", alignItems: "center", color: "text.secondary" }}>
+      {stale.length > 0 && <Box component="span" sx={{ display: "inline-flex", mr: `${STALE_MARKER_GAP}px` }}>
+        <StaleMarker tabIndex={tabIndex} label={stale.map(unitLastPriced).join("; ")} />
+      </Box>}
       {/* A tap opens it at once: a phone has no hover. The help button sits outside it, so a tap
           on the button opens Help without also flashing the hint. */}
       <Tooltip title={title} enterTouchDelay={0}><span>Mixed units</span></Tooltip>

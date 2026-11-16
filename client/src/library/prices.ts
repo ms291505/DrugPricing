@@ -120,21 +120,62 @@ export function summarizePrices(prices: ChartPrice[]): PriceSummary[] {
   });
 }
 
-/** One series summarized in a single pricing unit. */
-export type UnitPriceSummary = PriceSummary & { pricingUnit: string };
+/**
+ * One series summarized in a single pricing unit. `stale`: its latest price is older than the
+ * dates shown reach (`currentAsOfDate`), so the series stopped being priced in this unit.
+ */
+export type UnitPriceSummary = PriceSummary & { pricingUnit: string, stale: boolean };
+
+/** What decides the as-of date a current price reaches (`currentAsOfDate`). */
+export type AsOfReference = {
+  /** The end of the dates shown, already snapped to an as-of date (`snapToAsOfDates`); null when open. */
+  windowEnd: number | null,
+  /** The last loaded NADAC as-of date (app-init); null while it is unknown. */
+  lastLoaded: number | null,
+};
+
+/** An open window, before the last loaded date is known: the newest price shown is current. */
+export const UNKNOWN_AS_OF_REFERENCE: AsOfReference = { windowEnd: null, lastLoaded: null };
+
+/**
+ * The as-of date a series' latest price must reach to be current: the shown dates' end, but no
+ * later than the last loaded as-of date. The end is snapped forward to an as-of date in the result
+ * when one is in reach, and the last loaded date is one, so this is a loaded week, never "today"
+ * or a typed date beyond the data. It doesn't depend on the rows, so a search whose rows all
+ * stopped being priced still shows them as stale.
+ *
+ * Without the last loaded date (app-init failed), it falls back to the newest price shown, which
+ * is certainly loaded; that misses a result in which every row is stale.
+ *
+ * @param prices - the prices shown, already clipped to the window
+ * @returns null when there is nothing to compare against
+ */
+export function currentAsOfDate({ windowEnd, lastLoaded }: AsOfReference, prices: ChartPrice[]): number | null {
+  if (lastLoaded !== null) return windowEnd === null ? lastLoaded : Math.min(windowEnd, lastLoaded);
+  let newest: number | null = null;
+  for (const price of prices) {
+    const time = price.asOfDate.getTime();
+    if (newest === null || time > newest) newest = time;
+  }
+  return newest;
+}
 
 /**
  * Summarizes each series per pricing unit, since units never mix. Almost every series has one
  * unit, but a few FDA products have packages priced in different units (cholestyramine packets
- * per each, its canisters per gram).
+ * per each, its canisters per gram). Each unit is marked `stale` on its own, against
+ * `currentAsOfDate`; at FDA product level that is the packages' average, so a product is stale
+ * only when none of its packages (in that unit) is priced at the current as-of date.
  *
+ * @param prices - prices clipped to the dates shown
  * @returns each series' summaries, one per unit, keyed by NDC in the order series first appear
  */
-export function summarizeByUnit(prices: ChartPrice[]): Map<Ndc, UnitPriceSummary[]> {
+export function summarizeByUnit(prices: ChartPrice[], reference: AsOfReference = UNKNOWN_AS_OF_REFERENCE): Map<Ndc, UnitPriceSummary[]> {
+  const current = currentAsOfDate(reference, prices);
   const summaries = new Map<Ndc, UnitPriceSummary[]>(prices.map(price => [price.ndc, []]));
   for (const { pricingUnit, nadacPrices } of splitByPricingUnit(prices)) {
     for (const summary of summarizePrices(nadacPrices)) {
-      summaries.get(summary.ndc)!.push({ ...summary, pricingUnit });
+      summaries.get(summary.ndc)!.push({ ...summary, pricingUnit, stale: current !== null && summary.latestDate < current });
     }
   }
   return summaries;

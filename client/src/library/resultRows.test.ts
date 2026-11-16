@@ -92,6 +92,28 @@ describe("fdaPackageRows", () => {
   });
 });
 
+describe("stale latest prices", () => {
+  const reference = { windowEnd: Date.parse("2025-03-05"), lastLoaded: Date.parse("2025-11-12") };
+  const stopped = fdaPackage("1-1-1", [nadacPrice("111", "2025-01-01", 10)]);
+  const current = fdaPackage("1-1-2", [nadacPrice("112", "2025-03-05", 20)]);
+
+  it("marks a NADAC row against the shown dates' end, not the last load", () => {
+    const rows = nadacRows([nadacPrice("1", "2025-03-05", 1), nadacPrice("2", "2025-02-26", 1)], reference);
+    expect(rows.map(row => [row.ndc, row.priceSummaries[0].stale])).toEqual([["1", false], ["2", true]]);
+  });
+
+  it("marks a package by its own prices, and a product by its packages' average line", () => {
+    expect(fdaPackageRows([product("1-1", [stopped, current])], reference).map(row => row.priceSummaries[0].stale))
+      .toEqual([true, false]);
+    expect(fdaProductRows([product("1-1", [stopped, current])], reference)[0].priceSummaries[0].stale).toBe(false);
+    expect(fdaProductRows([product("1-1", [stopped])], reference)[0].priceSummaries[0].stale).toBe(true);
+  });
+
+  it("gives a row without prices nothing to mark", () => {
+    expect(fdaPackageRows([product("1-1", [fdaPackage("1-1-3", [])])], reference)[0].priceSummaries).toEqual([]);
+  });
+});
+
 describe("formatStrength", () => {
   it.each([
     { strengthNumber: [], strengthUnit: [], expected: "" },

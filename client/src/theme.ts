@@ -77,6 +77,8 @@ const COLORS = {
   graphite: "#424242",
   red: "#d32f2f",
   forestGreen: "#2e7d32",
+  // MUI's `orange[900]` (its default light `warning.dark`): its `warning.main` is under 3:1 on the cards.
+  burntOrange: "#e65100",
 };
 
 /**
@@ -183,6 +185,11 @@ export const lightTheme = createTheme({
     // The dark theme's cyan, deepened to read on a light page (6:1 as text on the cards).
     "primary": {
       "main": COLORS.teal,
+      "contrastText": COLORS.white
+    },
+    // Icons in it (the results table's stale price marker) need 3:1 on the cards.
+    "warning": {
+      "main": COLORS.burntOrange,
       "contrastText": COLORS.white
     },
     // Off-white cards on a grey page: softer than pure white, and the surfaces stand apart.
