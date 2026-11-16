@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartDataBounds, createChartItem, createChartItems, formatItemSource, isScaleMatched, matchedPriceRange, samePriceRanges, withLoadedHistory,
+  canDrillDownToPackages, chartDataBounds, createChartItem, createChartItems, formatItemSource, isScaleMatched, matchedPriceRange, packageLevelView, samePriceRanges, withLoadedHistory,
   type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { chartTitle, seriesLabels } from "./chartTitles";
@@ -13,6 +13,8 @@ const day = (iso: string) => Date.parse(iso);
 /** One price per date for a series. Product-level series repeat an NDC once per package. */
 const series = (ndc: string, nadacPerUnit: number, unit = "each"): ChartPrice[] =>
   DATES.map(iso => ({ ndc, ndcDescription: `Drug ${ndc}`, pricingUnit: unit, nadacPerUnit, asOfDate: new Date(iso) }));
+const price = (ndc: string, nadacPerUnit: number, pricingUnit = "each", iso = "2025-01-01"): ChartPrice =>
+  ({ ndc, ndcDescription: `Drug ${ndc}`, pricingUnit, nadacPerUnit, asOfDate: new Date(iso) });
 
 // Product A has two packages (both priced under product NDC "A"); product B has one.
 const packageA1 = series("A", 10);
@@ -179,5 +181,37 @@ describe("createChartItems", () => {
 
   it("does not create empty cards", () => {
     expect(createChartItems({ chartType: "line", prices: [], defaultTitle: "Compare", origin, dateWindow: FULL_WINDOW })).toEqual([]);
+  });
+});
+
+describe("pinned product package drilldown", () => {
+  it("splits stored product points by package and unit, preserving prices and dates", () => {
+    const original = createChartItem({ chartType: "line", defaultTitle: "Products", prices: [
+      { ...price("P1", 10, "each", "2025-01-01"), packageNdc: "PKG-A" },
+      { ...price("P1", 12, "each", "2025-01-01"), packageNdc: "PKG-B" },
+      { ...price("P1", 20, "gram", "2025-01-08"), packageNdc: "PKG-A" },
+      { ...price("P2", 30, "each", "2025-01-08"), packageNdc: "PKG-A" },
+    ], origin, dateWindow: { start: day("2025-01-01"), end: day("2025-01-08") } });
+    const view = packageLevelView(original)!;
+    expect(view.source).toMatchObject({ searchLabel: "humira", seriesKind: "package", seriesCount: 2 });
+    expect(view.dateWindow).toEqual(original.dateWindow);
+    expect(view.series.map(({ ndc, unit, points }) => [ndc, unit, points])).toEqual([
+      ["PKG-A", "each", [[day("2025-01-01"), 10], [day("2025-01-08"), 30]]],
+      ["PKG-B", "each", [[day("2025-01-01"), 12]]],
+      ["PKG-A", "gram", [[day("2025-01-08"), 20]]],
+    ]);
+    expect(original.series).toHaveLength(3);
+    expect(original.source.seriesKind).toBe("product");
+  });
+
+  it("does not offer drilldown for legacy snapshots without complete package identities", () => {
+    const legacy = createChartItem({ chartType: "line", defaultTitle: "Products", prices: [price("P1", 10)], origin, dateWindow: FULL_WINDOW });
+    expect(canDrillDownToPackages(legacy)).toBe(false);
+    expect(packageLevelView(legacy)).toBeNull();
+    const incomplete = { ...legacy, series: [{ ...legacy.series[0], packageNdcs: ["PKG-A", "PKG-B"] }] };
+    expect(canDrillDownToPackages(incomplete)).toBe(false);
+    const partial = { ...legacy, series: [{ ...legacy.series[0], packageNdcs: [null] }] };
+    expect(canDrillDownToPackages(partial)).toBe(false);
+    expect(packageLevelView(partial)).toBeNull();
   });
 });

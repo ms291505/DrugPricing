@@ -109,7 +109,9 @@ const isPricePoints = (x: unknown): x is Array<[number, number]> => Array.isArra
 const isSeriesSnapshot = (x: unknown): x is ChartSeriesSnapshot =>
   isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit)
   && (x.color === undefined || isString(x.color)) && isPricePoints(x.points)
-  && (x.packageNdcs === undefined || (isStringArray(x.packageNdcs) && x.packageNdcs.length === x.points.length));
+  && (x.packageNdcs === undefined || (Array.isArray(x.packageNdcs)
+    && x.packageNdcs.length === x.points.length
+    && x.packageNdcs.every(ndc => ndc === null || (typeof ndc === "string" && ndc.length > 0))));
 
 const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x === "number";
 
