@@ -86,7 +86,7 @@ export function ReadoutHeader({ children, status, onUnlock }: HeaderProps) {
   const isMobile = useMobile();
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 24, flexShrink: 0 }}>
-      <Typography variant="body2" sx={{ flexGrow: 1, minWidth: 0 }}>{children}</Typography>
+      <Typography variant="body2" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>{children}</Typography>
       {status === "locked"
         ? <Button size="small" sx={{ py: 0, minWidth: 0 }} onClick={onUnlock}>Unlock</Button>
         : <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>

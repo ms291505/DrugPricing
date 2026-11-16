@@ -11,7 +11,7 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
-import { barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
+import { BAR_DESCRIPTION_LINES, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
 import useLockedPoint from "../../hooks/useLockedPoint";
 import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock";
@@ -299,8 +299,27 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
         <Box component="span" sx={{ color: "text.secondary" }}> · per {unit}</Box>
       </ReadoutHeader>}
     >
-      {compact ? null : <Typography variant="caption" color="text.secondary">{row.label}</Typography>}
-      <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+      {compact ? null : (
+        // Clamped to the lines `barReadoutHeight` reserves; the full text is the title.
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          title={row.label}
+          sx={{
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: BAR_DESCRIPTION_LINES,
+            lineClamp: BAR_DESCRIPTION_LINES,
+            overflow: "hidden",
+            overflowWrap: "anywhere",
+            lineHeight: "20px",
+            flexShrink: 0,
+          }}
+        >
+          {row.label}
+        </Typography>
+      )}
+      <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums" }}>
         {barValue === "latest"
           ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
           : <>Average <b>{formatPrice(row.average)}</b></>}
@@ -308,12 +327,12 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
         {compact ? null : <>{" · "}Range {formatPrice(row.min)}–{formatPrice(row.max)}</>}
       </Typography>
       {compact
-        ? <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+        ? <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums" }}>
           Range {formatPrice(row.min)}–{formatPrice(row.max)}
         </Typography>
         : null}
       {row.packages > 1 && !compact
-        ? <Typography variant="caption" color="text.secondary">Average of {row.packages} packages</Typography>
+        ? <Typography variant="caption" color="text.secondary" noWrap>Average of {row.packages} packages</Typography>
         : null}
     </ReadoutContent>
   );
