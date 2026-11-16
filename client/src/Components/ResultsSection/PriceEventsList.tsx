@@ -28,7 +28,7 @@ export default function PriceEventsList({ groups, renderGroup }: Props) {
   return <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {(showAll ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group =>
-        <Box key={group.key} sx={{ width: "100%", borderTop: 1, borderBottom: 1, borderColor: "divider", pt: 1, pb: 1, display: "flex", flexDirection: "column", gap: 0.5, alignItems: "stretch", minWidth: 0 }}>
+        <Box key={group.key} sx={{ width: "100%", borderBottom: 1, borderColor: "divider", pt: 1, pb: 1, display: "flex", flexDirection: "column", gap: 0.5, alignItems: "stretch", minWidth: 0 }}>
           {renderGroup(group)}
         </Box>)}
     </Box>

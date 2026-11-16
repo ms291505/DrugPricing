@@ -4,7 +4,9 @@ rounded to a tenth of a percent at the cutoff. A package with just one observati
 insufficient history. Product activity comes from its packages, never from their average.
 
 A significant change is a move of at least 10% between consecutive package observations.
-The **Price changes** list groups these events by date, pricing unit and direction.
+The **Price changes** collapsible card below the results groups these events by date, pricing unit
+and direction. The Compare controls are directly below the results table and appear before this
+conditional card.
 **Package details** lists each package's price before and after, and its change in percent
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.

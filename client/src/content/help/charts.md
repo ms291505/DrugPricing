@@ -1,4 +1,5 @@
-Use **Compare latest prices** or **Compare price histories** to show a live overview. These
+The **Compare latest prices** and **Compare price histories** controls sit directly below the
+results table. Use one to show a live overview. These
 cards follow the search and filters until you hide them. They start hidden after a reload.
 Select rows and use **Line** or **Bar** to pin a snapshot directly, or pin a live overview.
 
