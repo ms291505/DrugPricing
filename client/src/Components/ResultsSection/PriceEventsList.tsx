@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode, type SyntheticEvent } from "react";
-import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { formatPrice } from "../../library/chartScale";
 import { pricingUnitLabel } from "../../library/prices";
