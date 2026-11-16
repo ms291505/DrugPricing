@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_COLUMN_OVERRIDES, columnVisibilityModel, columnOverridesFromModel, RESULT_SELECTION_FIELD } from "./settings";
 import { FULL_WINDOW } from "./dates";
+import { DEFAULT_FDA_DETAIL_LEVEL } from "./types";
 import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
 type Persist = typeof import("./persist");
@@ -97,6 +98,18 @@ describe("loading saved tab state", () => {
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
     expect(state.pinnedItems[0].matchScale).toBeUndefined();
+  });
+
+  it("defaults a missing or invalid detail level to packages and keeps a saved one", () => {
+    saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [] });
+    saveRaw("t2", { type: "fda", criteria: createFdaCriteria(), detailLevel: "bogus", pinnedItems: [] });
+    saveRaw("t3", { type: "fda", criteria: createFdaCriteria(), detailLevel: "product", pinnedItems: [] });
+    persist.saveTabState("t4", { type: "fda", criteria: createFdaCriteria(), detailLevel: "product", pinnedItems: [] });
+    expect(DEFAULT_FDA_DETAIL_LEVEL).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t1")).detailLevel).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t2")).detailLevel).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t3")).detailLevel).toBe("product");
+    expect(loaded(persist.loadFdaTabState("t4")).detailLevel).toBe("product");
   });
 
   it("drops only the malformed items and fields", () => {
