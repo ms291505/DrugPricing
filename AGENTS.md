@@ -150,7 +150,7 @@ panels; workspace tabs omit them. `/search` returns to the last source (FDA init
 under `drugpricing.v<VERSION>.last-search-source`, separate from Settings. Bare and unknown
 addresses show Welcome until a source has been visited, then return to that source. Legacy
 `/fda-search` and `/nadac-search` addresses redirect. Empty FDA results offer a one-click
-handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts`;
+handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts` (which also holds the footer slot);
 only that explicit handoff changes NADAC's draft and runs the copied terms.
 
 Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
@@ -161,10 +161,9 @@ the active source. Their shared snapshots live in
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action sits last on the page, below the results and the
-shared pins, and shows only once a search has loaded. App's shared pins render outside the source
-providers, so each source portals the button into the slot under them (`SearchFooterSlotContext`),
-keeping its own context. It copies applied criteria with fixed dates,
+Standalone Search's Add search to workspace action sits last on the page, once a search has been run.
+The pins render outside the source providers, so it portals into `SearchFooterSlotContext`'s slot
+below them and still reads its source's criteria. It copies applied criteria with fixed dates,
 FDA detail level and all shared pins. `addSearchTab` writes initial tab state before dispatching
 an add with `show`, so the provider's first read restores it; a failed save opens no tab.
 `WorkspaceReadOnlyContext` is separate from tabs, panes and stable actions. Only controls that
