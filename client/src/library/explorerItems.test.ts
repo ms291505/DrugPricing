@@ -27,6 +27,13 @@ const make = (prices: ChartPrice[], dateWindow = FULL_WINDOW) =>
   createChartItem({ chartType: "line", prices, defaultTitle: "Test", origin, dateWindow });
 
 describe("createChartItem provenance", () => {
+  it("captures the explicit source system when the search origin supplies it", () => {
+    const fromFda = createChartItem({ chartType: "line", prices: productB, defaultTitle: "Test",
+      origin: { ...origin, searchSource: "fda" }, dateWindow: FULL_WINDOW });
+    expect(fromFda.source.searchSource).toBe("fda");
+    expect(make(productB).source.searchSource).toBeUndefined();
+  });
+
   it("is not filtered when the chart has every price of its series", () => {
     const item = make([...packageA1, ...packageA2]);
     expect(item.source).toMatchObject({ seriesCount: 1, resultSeriesCount: 2, filtered: false });

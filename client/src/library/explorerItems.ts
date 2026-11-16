@@ -17,6 +17,7 @@ export type ExplorerItemWidth = "half" | "full";
 
 /** What one chart series is. Stored as a kind, not display text, so wording can change later. */
 export type SeriesKind = "product" | "package" | "ndc";
+export type ChartSearchSource = "nadac" | "fda";
 
 export const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: string, chip: string }> = {
   product: { singular: "product", plural: "products", chip: "Products" },
@@ -29,6 +30,8 @@ export const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: 
  * compared with the full search result, never from page filter state, so it stays true once stored.
  */
 export type ExplorerItemSource = {
+  /** Search system that produced this snapshot; absent on older pins and unknown on display. */
+  searchSource?: ChartSearchSource,
   /** What was searched, e.g. "humira" or "NDC 3089321". */
   searchLabel: string,
   seriesKind: SeriesKind,
@@ -44,6 +47,8 @@ export type ExplorerItemSource = {
  * result at that level, unfiltered, to compare the chart's data against.
  */
 export type ChartOrigin = {
+  /** Search system the chart was created from. */
+  searchSource?: ChartSearchSource,
   searchLabel: string,
   seriesKind: SeriesKind,
   resultPrices: ChartPrice[],
@@ -250,6 +255,7 @@ export function createChartItem({
     ...(chartType === "line" && eventDate !== undefined && { eventDate }),
     ...(chartType === "bar" && barValue && { barValue }),
     source: {
+      ...(origin.searchSource && { searchSource: origin.searchSource }),
       searchLabel: origin.searchLabel,
       seriesKind: origin.seriesKind,
       seriesCount: countNdcs(series),
