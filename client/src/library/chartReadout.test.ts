@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barAnnouncement, barReadoutHeight, lineAnnouncement, lineReadoutHeight, READOUT_MAX_HEIGHT, rowAtIndex, tooltipRows } from "./chartReadout";
+import { BAR_DESCRIPTION_LINES, barAnnouncement, barReadoutHeight, lineAnnouncement, lineReadoutHeight, READOUT_MAX_HEIGHT, rowAtIndex, tooltipRows } from "./chartReadout";
 import { rangeKey, type LineVizRow } from "./createLineVizData";
 
 const JAN_13 = Date.parse("2026-01-13");
@@ -74,9 +74,18 @@ describe("rowAtIndex", () => {
 });
 
 describe("barReadoutHeight", () => {
-  it("fits one row in full (an NDC row draws 86 px at 1440), and the packages line for a product", () => {
-    expect(barReadoutHeight(false, false)).toBe(86);
-    expect(barReadoutHeight(false, true) - barReadoutHeight(false, false)).toBe(24);
+  it("reserves the description's two clamped lines, the value line, and the packages line for a product", () => {
+    // frame 14 + header 24 + gap 4 + 3 lines (60) + 1 gap (4)
+    expect(barReadoutHeight(false, false)).toBe(106);
+    // plus the packages line (20) and one more gap (4)
+    expect(barReadoutHeight(false, true)).toBe(130);
+  });
+
+  it("reserves the description at its clamp, so a short and a long one give one height", () => {
+    expect(BAR_DESCRIPTION_LINES).toBe(2);
+    // 106 px is what a wrapped two-line description drew: the most a clamped one can. A one-line
+    // description (86 px) used to reserve only that, and the dock grew 20 px under the pointer.
+    expect(barReadoutHeight(false, false) - 20).toBe(86);
   });
 
   it("holds the value and range lines on a phone, without the packages line", () => {

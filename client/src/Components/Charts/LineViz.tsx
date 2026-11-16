@@ -341,7 +341,7 @@ type LineReadoutProps = {
 function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
     <ReadoutContent
-      header={<ReadoutHeader status={status} onUnlock={onUnlock}>
+      header={<ReadoutHeader status={status} onUnlock={onUnlock} title={`${formatDate(date)} · per ${unit}${status === "default" ? ` · ${restLabel}` : ""}`}>
         <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
         <Box component="span" sx={{ color: "text.secondary" }}>
           {" "}· per {unit}{status === "default" ? ` · ${restLabel}` : ""}
@@ -354,14 +354,19 @@ function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, 
           <Box key={ndc}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: colorFor(ndc), flexShrink: 0 }} />
-              <Typography variant="body2" sx={{ flexGrow: 1 }}>{ndc}</Typography>
-              <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{formatPrice(price)}</Typography>
+              <Typography variant="body2" noWrap title={ndc} sx={{ flexGrow: 1, minWidth: 0 }}>{ndc}</Typography>
+              <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600, flexShrink: 0 }}>{formatPrice(price)}</Typography>
             </Box>
             {descriptionFor
-              ? <Typography variant="caption" color="text.secondary" component="div" sx={{ pl: 2.25 }}>
-                {descriptionFor(ndc)}
-                {rangeText ? <><br />{rangeText}</> : null}
-              </Typography>
+              ? <Box sx={{ pl: 2.25 }}>
+                {/* One ellipsised line each, so a row is never taller than `lineReadoutHeight` reserves. */}
+                <Typography variant="caption" color="text.secondary" component="div" noWrap title={descriptionFor(ndc)}>
+                  {descriptionFor(ndc)}
+                </Typography>
+                {rangeText
+                  ? <Typography variant="caption" color="text.secondary" component="div" noWrap>{rangeText}</Typography>
+                  : null}
+              </Box>
               : null}
           </Box>
         );

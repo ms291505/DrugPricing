@@ -32,7 +32,9 @@ export default memo(function ChartItemBody({ item, priceRanges }: Props) {
   const isMobile = useMobile();
 
   if (!near) {
-    // The readout above the plot reserves its height up front, so it can be counted here.
+    // The readout above the plot reserves its height up front, so it can be counted here. Known
+    // gap: a pinned bar of an averaged product draws a taller dock (its "Average of N packages"
+    // line, 24 px more) than this counts, since the snapshot doesn't say so without a scan.
     const readout = item.chartType === "bar"
       ? barReadoutHeight(isMobile, false)
       : lineReadoutHeight(new Set(item.series.map(series => series.ndc)).size, isMobile);
