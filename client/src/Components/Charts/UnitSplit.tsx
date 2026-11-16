@@ -9,15 +9,13 @@ type Props = {
   /** Only prices in this window are drawn. */
   dateWindow?: DateWindow,
   renderChart: (nadacPrices: ChartPrice[], pricingUnit: string) => ReactNode,
-  /** Grow into a taller parent, sharing the extra height between the unit charts (BarViz). */
-  grow?: boolean,
 }
 
 /**
  * Renders one chart per pricing unit so $/each and $/mL never share a y-axis,
  * and captions each chart with its unit.
  */
-export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, renderChart, grow = false }: Props) {
+export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, renderChart }: Props) {
   // Kept across renders, so each unit chart can keep what it derived from its prices.
   const groups = useMemo(() => splitByPricingUnit(clipToWindow(nadacPrices, dateWindow)), [nadacPrices, dateWindow]);
   const isMixed = groups.length > 1;
@@ -31,7 +29,7 @@ export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, rende
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: grow ? 1 : undefined }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, }}>
       {isMixed
         ? <Chip
           size="small"
@@ -43,7 +41,7 @@ export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, rende
         : null
       }
       {groups.map(({ pricingUnit, nadacPrices: unitPrices }) => (
-        <Box key={pricingUnit} sx={grow ? { flexGrow: 1, display: "flex", flexDirection: "column" } : undefined}>
+        <Box key={pricingUnit}>
           <Typography variant="caption" color="text.secondary" component="p">
             USD per {pricingUnitLabel(pricingUnit)}
           </Typography>
