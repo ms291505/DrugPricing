@@ -11,10 +11,12 @@ const OPTIONS: GridAutosizeOptions = {
 };
 
 /** Only this small observer re-renders when a kept page is shown; the table stays untouched. */
-export default function AutosizePriceColumns({ apiRef, rows, visibility }: {
+export default function AutosizePriceColumns({ apiRef, rows, visibility, columns }: {
   apiRef: RefObject<GridApi | null>,
   rows: PricedRow[],
   visibility: Record<string, boolean>,
+  /** The table's columns: a new array (the narrow/wide order flipped) is measured again. */
+  columns: unknown,
 }) {
   const visible = usePageVisible();
   useEffect(() => {
@@ -36,6 +38,6 @@ export default function AutosizePriceColumns({ apiRef, rows, visibility }: {
       cancelAnimationFrame(frame);
       unsubscribe.forEach(stop => stop?.());
     };
-  }, [apiRef, rows, visibility, visible]);
+  }, [apiRef, rows, visibility, columns, visible]);
   return null;
 }

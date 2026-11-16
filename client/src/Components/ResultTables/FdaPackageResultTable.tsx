@@ -79,6 +79,10 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   },
 ];
 
+// The order on a narrow table (a phone): the NDC and Latest Price lead, so the price shows without
+// scrolling (checkbox 44 + NDC 120 + price up to 125 = 289px). Wider tables use COLUMNS' own order.
+const NARROW_ORDER = ["ndcPackageCode", "latestPrice", "proprietaryName", "strengthNumber", "packageDescription", "priceActivity", "latestPriceDate"];
+
 // Package NDC: the `ndc` of package-level prices.
 const getRowId = (row: FdaPackageRow) => row.ndcPackageCode;
 
@@ -102,6 +106,7 @@ export default function FdaPackageResultTable({ products, loading, activitySelec
       tableType="fdaPackage"
       rows={rows}
       columns={COLUMNS}
+      narrowOrder={NARROW_ORDER}
       getRowId={getRowId}
       rowNoun="package"
       loading={loading}
