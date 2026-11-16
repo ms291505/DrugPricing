@@ -120,10 +120,9 @@ source identifier.
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,
 using a rounded 5% range cutoff and 10% significant steps. Products use their packages' states,
 not an averaged line; only package rows have sparklines. The shared event list groups by date,
-unit and direction, each with its packages' old and new prices; its one action, Chart this
-change, charts that group's packages over the shown dates with the change marked and the readout
-resting on it. A chart's own event list keeps Around this change, which zooms that chart to an
-explicit event. Live Compare cards start hidden and are never stored. New product
+unit and direction, each with its packages' old and new prices; its one action, a Chart this
+change icon button on the group's summary line, opens that group's packages as a chart in its own
+row over the shown dates with the change marked and the readout resting on it. A chart card has no event list and no Around this change. Live Compare cards start hidden and are never stored. New product
 pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
 
 ### Workspace

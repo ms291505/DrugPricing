@@ -1,6 +1,6 @@
 import HelpButton from "../Help/HelpButton";
 import { cloneElement, useId, useMemo, useRef, useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
@@ -17,10 +17,9 @@ import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from ".
 import SeriesLegend from "./SeriesLegend.tsx";
 import ChartData, { LineDataTable } from "./ChartData.tsx";
 import { lineCsv, lineDataRows } from "../../library/chartCsv.ts";
-import { clipToWindow, dateBounds, formatDate, formatWindow, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
+import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates.ts";
 import { lineChangeCallouts } from "../../library/lineChanges";
-import { aroundPriceEvent, derivePriceEvents, eventLabel, groupPriceEvents } from "../../library/priceActivity";
-import PriceEventsList from "../ResultsSection/PriceEventsList";
+import { derivePriceEvents, eventLabel, groupPriceEvents } from "../../library/priceActivity";
 import type { ChartChangeSpan, SeriesKind } from "../../library/explorerItems.ts";
 import useChartTheme from "../../hooks/useChartTheme.ts";
 import useMobile from "../../hooks/useMobile.ts";
@@ -39,7 +38,6 @@ type Props = {
   priceRanges?: Map<string, [number, number]>;
   seriesKind?: SeriesKind;
   showPriceChanges?: boolean;
-  onAroundChange?: (window: DateWindow) => void;
   /**
    * The change the chart was opened for: a solid line marks its date, and the readout rests there
    * (instead of the latest date).
@@ -47,17 +45,11 @@ type Props = {
   eventDate?: number;
 };
 
-export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges, seriesKind = "ndc", showPriceChanges = true, onAroundChange, eventDate }: Props) {
-  const [focused, setFocused] = useState<{ prices: ChartPrice[], original: DateWindow, window: DateWindow } | null>(null);
-  const effectiveWindow = focused?.prices === nadacPrices && focused.original === dateWindow ? focused.window : dateWindow;
-  const around = (window: DateWindow) => {
-    if (onAroundChange) onAroundChange(window);
-    else setFocused({ prices: nadacPrices, original: dateWindow, window });
-  };
+export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges, seriesKind = "ndc", showPriceChanges = true, eventDate }: Props) {
   // Charts split by unit share one date axis: the window, with open ends at the data's dates.
-  const shownPrices = useMemo(() => clipToWindow(nadacPrices, effectiveWindow), [nadacPrices, effectiveWindow]);
+  const shownPrices = useMemo(() => clipToWindow(nadacPrices, dateWindow), [nadacPrices, dateWindow]);
   const bounds = useMemo(() => dateBounds(shownPrices), [shownPrices]);
-  const xDomain: [number, number] = [effectiveWindow.start ?? bounds?.first ?? 0, effectiveWindow.end ?? bounds?.last ?? 0];
+  const xDomain: [number, number] = [dateWindow.start ?? bounds?.first ?? 0, dateWindow.end ?? bounds?.last ?? 0];
 
   // Legend toggles are view state. A new set of series in the dates starts with every series shown.
   const seriesKey = useMemo(() => seriesSetKey(shownPrices.map(price => price.ndc)), [shownPrices]);
@@ -71,13 +63,9 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const showAll = (group: string[]) => update(current => showGroup(current, group));
 
   return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-    {focused?.prices === nadacPrices && focused.original === dateWindow && <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
-      <Typography variant="caption" color="text.secondary">Focused dates: {formatWindow(effectiveWindow, bounds)}</Typography>
-      <Button size="small" onClick={() => setFocused(null)}>Show original dates</Button>
-    </Box>}
     <UnitSplit
       nadacPrices={nadacPrices}
-      dateWindow={effectiveWindow}
+      dateWindow={dateWindow}
       renderChart={(unitPrices, pricingUnit) => (
         <UnitLineChart
           nadacPrices={unitPrices}
@@ -91,15 +79,14 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
           changeSpan={changeSpan}
           seriesKind={seriesKind}
           showPriceChanges={showPriceChanges}
-          onAroundChange={around}
           eventDate={eventDate}
           priceRange={priceRanges?.get(pricingUnit)}
         />
       )}
     />
     {bounds
-      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, effectiveWindow))}>
-        <LineDataTable prices={nadacPrices} dateWindow={effectiveWindow} bounds={bounds} />
+      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
+        <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
       </ChartData>
       : null}
   </Box>);
@@ -124,11 +111,10 @@ type UnitLineChartProps = {
   priceRange?: [number, number];
   seriesKind: SeriesKind;
   showPriceChanges: boolean;
-  onAroundChange: (window: DateWindow) => void;
   eventDate?: number;
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange, seriesKind, showPriceChanges, onAroundChange, eventDate }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange, seriesKind, showPriceChanges, eventDate }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const descriptionId = useId();
@@ -312,11 +298,6 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
       </ComposedChart>
     </Box>
     {readout.liveRegion}
-    {eventGroups.length > 0 && <Box component="details" sx={{ fontSize: "0.875rem" }}>
-      <summary>Price changes ({eventGroups.length} {eventGroups.length === 1 ? "event" : "events"})</summary>
-      <PriceEventsList groups={eventGroups} actionLabel="Around this change" compact={isMobile}
-        onAction={group => onAroundChange(aroundPriceEvent(group.events))} />
-    </Box>}
     {/* One series is named by the card's title; a legend would only repeat it. */}
     {ndcs.length > 1
       ? <SeriesLegend
