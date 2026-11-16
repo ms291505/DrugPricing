@@ -181,17 +181,22 @@ Default columns, in order after the selection checkbox:
 
 | Table | Default columns |
 | --- | --- |
-| FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form, Latest Price Date |
-| FDA packages, wide | Brand Name, Package NDC, Latest Price, Latest Price Date, Price Activity, Strength, Package Description |
-| FDA packages, narrow (table below `sm`) | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity, Latest Price Date |
-| NADAC | NDC, Latest Price, Description, Price Activity, Latest Price Date |
+| FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form |
+| FDA packages, wide | Brand Name, Package NDC, Latest Price, Price Activity, Strength, Package Description |
+| FDA packages, narrow (table below `sm`) | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity |
+| NADAC | NDC, Latest Price, Description, Price Activity |
+
+- **Latest Price Date is hidden by default** (Columns brings it back, directly after Latest
+  Price on the wide FDA package table and last on the narrow one). For almost every row it is
+  the last loaded week; a latest price older than the shown dates' end carries a warning
+  triangle with its date instead (`stale`, `currentAsOfDate` in `library/prices.ts`).
 
 - Price Activity is built in Stage 3 and joins the defaults then.
 - **Strength is new on the package table** (from the package's product) and shown by default:
   without it two strengths in the same pack size differ only by NDC. The product table already
   has it, joining multi-ingredient strengths with commas. NADAC's Description carries it.
-- Generic Name is hidden by default. Everything else stays in the Columns tool: Min and Max
-  Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
+- Generic Name is hidden by default. Everything else stays in the Columns tool: Latest Price
+  Date, Min and Max Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
   table.
 - Latest Price stays second (the phone rule in AGENTS.md), except on the wide FDA package table,
   where it is third; a narrow one keeps the old order so the price still shows on a phone.

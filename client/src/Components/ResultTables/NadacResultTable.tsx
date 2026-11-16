@@ -1,6 +1,7 @@
 import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
+import { useAsOfReference } from "../../hooks/useAppInit";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import type { NadacPrice } from "../../library/types";
 import { nadacRows, type NadacRow } from "../../library/resultRows";
@@ -40,7 +41,8 @@ type Props = {
 export default function NadacResultTable({ nadacPrices, loading, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useNadacSearchContext();
 
-  const rows = useMemo(() => nadacRows(nadacPrices), [nadacPrices]);
+  const reference = useAsOfReference(dateWindow);
+  const rows = useMemo(() => nadacRows(nadacPrices, reference), [nadacPrices, reference]);
 
   return (
     <ResultTable

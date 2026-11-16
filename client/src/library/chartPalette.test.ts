@@ -31,6 +31,12 @@ describe.each(Object.entries(THEMES))("%s chart palette", (_mode, theme) => {
   });
 });
 
+describe.each(Object.entries(THEMES))("%s warning color", (_mode, theme) => {
+  it("is at least 3:1 against the card background, for the stale price marker icon", () => {
+    expect(contrast(theme.palette.warning.main, theme.palette.background.paper)).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("themedSeriesColor", () => {
   it("draws a pinned color in the same slot of the current palette, whichever mode it came from", () => {
     expect(themedSeriesColor(CHART_SERIES_COLORS[3], LIGHT_CHART_SERIES_COLORS)).toBe(LIGHT_CHART_SERIES_COLORS[3]);
