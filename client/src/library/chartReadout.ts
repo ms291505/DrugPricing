@@ -51,6 +51,8 @@ const DOCK_FRAME = 12 + 2;
 const HEADER = 24;
 const GAP = 4;
 const LINE = 20;
+/** The height of one text line in a readout, px. */
+export const READOUT_LINE_HEIGHT = LINE;
 
 /**
  * The height a line chart's docked readout reserves for its series, so moving between dates (some

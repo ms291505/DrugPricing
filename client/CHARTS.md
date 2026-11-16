@@ -157,7 +157,7 @@ re-renders only the readout, not the chart.
   `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
   under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).
-  Every readout line is one ellipsised line (full text in a `title` where it is a description),
+  Every readout line is one ellipsised line (its full text in a `title`),
   except the bar readout's description, which clamps at two lines and is always reserved at two,
   so the dock's height never depends on the text or the card's width.
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a

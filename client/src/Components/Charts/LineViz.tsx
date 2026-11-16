@@ -341,7 +341,7 @@ type LineReadoutProps = {
 function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, descriptionFor }: LineReadoutProps) {
   return (
     <ReadoutContent
-      header={<ReadoutHeader status={status} onUnlock={onUnlock}>
+      header={<ReadoutHeader status={status} onUnlock={onUnlock} title={`${formatDate(date)} · per ${unit}${status === "default" ? ` · ${restLabel}` : ""}`}>
         <Box component="span" sx={{ fontWeight: 600 }}>{formatDate(date)}</Box>
         <Box component="span" sx={{ color: "text.secondary" }}>
           {" "}· per {unit}{status === "default" ? ` · ${restLabel}` : ""}
@@ -354,7 +354,7 @@ function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, 
           <Box key={ndc}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: colorFor(ndc), flexShrink: 0 }} />
-              <Typography variant="body2" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>{ndc}</Typography>
+              <Typography variant="body2" noWrap title={ndc} sx={{ flexGrow: 1, minWidth: 0 }}>{ndc}</Typography>
               <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 600, flexShrink: 0 }}>{formatPrice(price)}</Typography>
             </Box>
             {descriptionFor

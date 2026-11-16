@@ -79,14 +79,16 @@ type HeaderProps = {
   children: ReactNode,
   status: ReadoutStatus,
   onUnlock: () => void,
+  /** The header's full text, shown on hover when it is ellipsised. */
+  title?: string,
 };
 
 /** The readout's first line: what it shows, then Unlock while locked or a hint on how to lock. */
-export function ReadoutHeader({ children, status, onUnlock }: HeaderProps) {
+export function ReadoutHeader({ children, status, onUnlock, title }: HeaderProps) {
   const isMobile = useMobile();
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 24, flexShrink: 0 }}>
-      <Typography variant="body2" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>{children}</Typography>
+      <Typography variant="body2" noWrap title={title} sx={{ flexGrow: 1, minWidth: 0 }}>{children}</Typography>
       {status === "locked"
         ? <Button size="small" sx={{ py: 0, minWidth: 0 }} onClick={onUnlock}>Unlock</Button>
         : <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>

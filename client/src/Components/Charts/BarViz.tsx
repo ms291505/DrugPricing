@@ -11,7 +11,7 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
-import { BAR_DESCRIPTION_LINES, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
+import { BAR_DESCRIPTION_LINES, READOUT_LINE_HEIGHT, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
 import useLockedPoint from "../../hooks/useLockedPoint";
 import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock";
@@ -289,9 +289,13 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
       />
     );
   }
+  const rangeText = `Range ${formatPrice(row.min)}–${formatPrice(row.max)}`;
+  const valueText = (barValue === "latest"
+    ? `Latest ${formatPrice(row.latest)} · ${formatDate(row.latestDate)}`
+    : `Average ${formatPrice(row.average)}`) + (compact ? "" : ` · ${rangeText}`);
   return (
     <ReadoutContent
-      header={<ReadoutHeader status={status} onUnlock={onUnlock}>
+      header={<ReadoutHeader status={status} onUnlock={onUnlock} title={`${row.ndc} · per ${unit}`}>
         <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
           <Box component="span" sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
           <Box component="span" sx={{ fontWeight: 600 }}>{row.ndc}</Box>
@@ -312,27 +316,27 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
             lineClamp: BAR_DESCRIPTION_LINES,
             overflow: "hidden",
             overflowWrap: "anywhere",
-            lineHeight: "20px",
+            lineHeight: `${READOUT_LINE_HEIGHT}px`,
             flexShrink: 0,
           }}
         >
           {row.label}
         </Typography>
       )}
-      <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums" }}>
+      <Typography variant="body2" noWrap title={valueText} sx={{ fontVariantNumeric: "tabular-nums" }}>
         {barValue === "latest"
           ? <>Latest <b>{formatPrice(row.latest)}</b> · {formatDate(row.latestDate)}</>
           : <>Average <b>{formatPrice(row.average)}</b></>}
         {/* On a phone the two would wrap at some prices, changing the readout's height. */}
-        {compact ? null : <>{" · "}Range {formatPrice(row.min)}–{formatPrice(row.max)}</>}
+        {compact ? null : <>{" · "}{rangeText}</>}
       </Typography>
       {compact
-        ? <Typography variant="body2" noWrap sx={{ fontVariantNumeric: "tabular-nums" }}>
-          Range {formatPrice(row.min)}–{formatPrice(row.max)}
+        ? <Typography variant="body2" noWrap title={rangeText} sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {rangeText}
         </Typography>
         : null}
       {row.packages > 1 && !compact
-        ? <Typography variant="caption" color="text.secondary" noWrap>Average of {row.packages} packages</Typography>
+        ? <Typography variant="caption" color="text.secondary" noWrap title={`Average of ${row.packages} packages`}>Average of {row.packages} packages</Typography>
         : null}
     </ReadoutContent>
   );
