@@ -89,7 +89,7 @@ same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price 
 sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
 on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
 tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own
-width tier), since three columns before the price don't fit a phone.
+width tier), since the checkbox, Brand Name and NDC before the price don't fit a phone.
 
 `ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
 width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
