@@ -111,6 +111,8 @@ export type ChartItem = ExplorerItemBase & {
   matchScale?: boolean,
   /** Line-chart event callouts; absent on older pins means enabled. */
   showPriceChanges?: boolean,
+  /** Line charts opened for one price change: its date, where the readout starts locked. */
+  eventDate?: number,
 };
 
 export type ExplorerItem = ChartItem;
@@ -175,13 +177,14 @@ type NewChartItem = {
   origin: ChartOrigin,
   dateWindow: DateWindow,
   changeSpan?: ChartChangeSpan,
+  eventDate?: number,
   /** The page's series colors, kept with the snapshot. */
   colors?: Map<string, string>,
   barValue?: BarValue,
 };
 
 export function createChartItem({
-  chartType, prices, defaultTitle, origin, dateWindow, changeSpan, colors, barValue,
+  chartType, prices, defaultTitle, origin, dateWindow, changeSpan, eventDate, colors, barValue,
 }: NewChartItem): ChartItem {
   const series = toChartSeries(prices, colors);
   const resultSeries = toChartSeries(origin.resultPrices);
@@ -200,6 +203,7 @@ export function createChartItem({
     series,
     dateWindow,
     ...(changeSpan && { changeSpan }),
+    ...(chartType === "line" && eventDate !== undefined && { eventDate }),
     ...(chartType === "bar" && barValue && { barValue }),
     source: {
       searchLabel: origin.searchLabel,

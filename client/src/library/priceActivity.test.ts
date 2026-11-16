@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activitySparklinePath, priceEventGroupLabel, aroundPriceEvent, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, productActivity } from "./priceActivity";
+import { activitySparklinePath, priceEventGroupLabel, aroundPriceEvent, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
@@ -59,6 +59,21 @@ describe("event groups and callouts", () => {
     const drop = groups.find(g => g.pricingUnit === "each" && g.direction === "drop")!;
     expect(drop.events.map(e => [e.packageNdc, e.change.oldPrice, e.change.newPrice])).toEqual([["A", 10, 5], ["B", 20, 11]]);
     expect(aroundPriceEvent(drop.events)).toEqual({ start: Date.parse("2025-10-07"), end: Date.parse("2026-04-14") });
+  });
+  it("gives each package's change as signed percent and amount", () => {
+    const [drop] = derivePriceEvents(series([9.69, 5.52]), "package");
+    expect(signedChange(drop.change)).toEqual({ percent: "−43%", amount: "−$4.17" });
+    const [rise] = derivePriceEvents(series([0.2, 0.225]), "package");
+    expect(signedChange(rise.change)).toEqual({ percent: "+12.5%", amount: "+$0.025" });
+  });
+  it("notes a package's previous observation only when the group label can't give it for all", () => {
+    const gap = series([10, 5]); gap[0].asOfDate = new Date("2025-12-03"); gap[1].asOfDate = new Date("2026-01-14");
+    const weekly = series([10, 5], "B", "each", Date.parse("2026-01-07"));
+    const [mixed] = groupPriceEvents(derivePriceEvents([...gap, ...weekly], "package"));
+    expect(mixed.events).toHaveLength(2);
+    expect(mixed.events.map(e => previousObservationNote(e, mixed))).toEqual(["Previous price Dec 3, 2025", null]);
+    const [alone] = groupPriceEvents(derivePriceEvents(gap, "package"));
+    expect(previousObservationNote(alone.events[0], alone)).toBeNull();
   });
   it("limits events to the dates actually shown", () => {
     const shown = clipToWindow(series([8, 6, 6]), { start: Date.parse("2026-01-14"), end: null });

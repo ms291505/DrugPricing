@@ -143,7 +143,8 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
   && (x.barValue === undefined || isBarValue(x.barValue))
   && (x.matchScale === undefined || typeof x.matchScale === "boolean")
-  && (x.showPriceChanges === undefined || typeof x.showPriceChanges === "boolean");
+  && (x.showPriceChanges === undefined || typeof x.showPriceChanges === "boolean")
+  && (x.eventDate === undefined || Number.isFinite(x.eventDate));
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)

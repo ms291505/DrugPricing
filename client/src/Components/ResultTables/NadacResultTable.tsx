@@ -1,4 +1,3 @@
-import type { ActivitySelectionRequest } from "../../hooks/useActivitySelection";
 import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
@@ -35,11 +34,10 @@ type Props = {
   nadacPrices: NadacPrice[],
   loading: boolean,
   dateWindow?: DateWindow,
-  activitySelection?: ActivitySelectionRequest,
 }
 
 /** The NADAC search's results: one row per NDC. */
-export default function NadacResultTable({ nadacPrices, loading, activitySelection, dateWindow }: Props) {
+export default function NadacResultTable({ nadacPrices, loading, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useNadacSearchContext();
 
   const rows = useMemo(() => nadacRows(nadacPrices), [nadacPrices]);
@@ -47,7 +45,6 @@ export default function NadacResultTable({ nadacPrices, loading, activitySelecti
   return (
     <ResultTable
       dateWindow={dateWindow}
-      activitySelection={activitySelection}
       tableType="nadac"
       rows={rows}
       columns={COLUMNS}

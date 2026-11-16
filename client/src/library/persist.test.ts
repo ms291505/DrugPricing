@@ -86,6 +86,8 @@ describe("loading saved tab state", () => {
           matchScale: true,
         },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
+        // From "Chart this change": the full shown dates, with the change marked.
+        { ...oldItem, id: "event", dateWindow: { start: 0, end: 500 }, eventDate: 300 },
       ],
     } as Parameters<Persist["saveTabState"]>[1];
     persist.saveTabState("t1", state);
@@ -109,6 +111,7 @@ describe("loading saved tab state", () => {
         { ...oldItem, id: "bad-color", series: [{ ...oldItem.series[0], color: 3 }] },
         { ...oldItem, id: "bad-match", matchScale: "yes" },
         { ...oldItem, id: "bad-events", showPriceChanges: "yes" },
+        { ...oldItem, id: "bad-event-date", eventDate: "2026-01-14" },
         { ...oldItem, id: "bad-package-points", series: [{ ...oldItem.series[0], packageNdcs: [] }] },
         { ...oldItem, id: "good" },
       ],

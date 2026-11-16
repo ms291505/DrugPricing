@@ -40,9 +40,11 @@ type Props = {
   seriesKind?: SeriesKind;
   showPriceChanges?: boolean;
   onAroundChange?: (window: DateWindow) => void;
+  /** The change the chart was opened for: its readout starts locked on that date, which marks it. */
+  eventDate?: number;
 };
 
-export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges, seriesKind = "ndc", showPriceChanges = true, onAroundChange }: Props) {
+export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_WINDOW, changeSpan, priceRanges, seriesKind = "ndc", showPriceChanges = true, onAroundChange, eventDate }: Props) {
   const [focused, setFocused] = useState<{ prices: ChartPrice[], original: DateWindow, window: DateWindow } | null>(null);
   const effectiveWindow = focused?.prices === nadacPrices && focused.original === dateWindow ? focused.window : dateWindow;
   const around = (window: DateWindow) => {
@@ -87,6 +89,7 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
           seriesKind={seriesKind}
           showPriceChanges={showPriceChanges}
           onAroundChange={around}
+          eventDate={eventDate}
           priceRange={priceRanges?.get(pricingUnit)}
         />
       )}
@@ -119,9 +122,10 @@ type UnitLineChartProps = {
   seriesKind: SeriesKind;
   showPriceChanges: boolean;
   onAroundChange: (window: DateWindow) => void;
+  eventDate?: number;
 };
 
-function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange, seriesKind, showPriceChanges, onAroundChange }: UnitLineChartProps) {
+function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onToggle, onShowAll, xDomain, changeSpan, priceRange, seriesKind, showPriceChanges, onAroundChange, eventDate }: UnitLineChartProps) {
   const chartTheme = useChartTheme();
   const isMobile = useMobile();
   const descriptionId = useId();
@@ -169,7 +173,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   // The docked readout: the hovered date, else the locked one, else the latest.
   const [dock, setDock] = useState<HTMLDivElement | null>(null);
   const dates = useMemo(() => new Set(vizData.map(row => row.asOfDate)), [vizData]);
-  const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date));
+  const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date), eventDate);
   const latestDate = vizData.at(-1)?.asOfDate;
   // Unlock unmounts with the lock: give focus back to the chart, not the page.
   const focusBox = useRef<HTMLDivElement>(null);
@@ -237,7 +241,8 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             return (
               <LineReadout
                 events={<PriceEventsList groups={eventGroups.filter(group => group.date === date)}
-                  onFocus={group => onAroundChange(aroundPriceEvent(group.events))} />}
+                  actionLabel="Around this change" compact={isMobile}
+                  onAction={group => onAroundChange(aroundPriceEvent(group.events))} />}
                 date={date}
                 unit={unit}
                 rows={tooltipRows(row, shownNdcs)}
@@ -303,7 +308,8 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
     {readout.liveRegion}
     {eventGroups.length > 0 && <Box component="details" sx={{ fontSize: "0.875rem" }}>
       <summary>Price changes ({eventGroups.length} {eventGroups.length === 1 ? "event" : "events"})</summary>
-      <PriceEventsList groups={eventGroups} onFocus={group => onAroundChange(aroundPriceEvent(group.events))} />
+      <PriceEventsList groups={eventGroups} actionLabel="Around this change" compact={isMobile}
+        onAction={group => onAroundChange(aroundPriceEvent(group.events))} />
     </Box>}
     {/* One series is named by the card's title; a legend would only repeat it. */}
     {ndcs.length > 1
