@@ -36,11 +36,25 @@ Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
 Description, FDA Brand name and FDA Generic name fields, including likely corrections of
 misspellings ("eliqus" → ELIQUIS) under "Did you mean". Picking one fills the field; Search
-still runs the search. Built on pg_trgm: a materialized view of FDA names (refreshed by both ETL
-paths) and the existing trigram index on `DrugPackages`, served by two `suggest` endpoints.
-Labeler, dosage form and route fields are out of scope.
+still runs the search, and suggestions follow the page's Include boxes (OTC, results without
+prices). Built on pg_trgm: one materialized view of NADAC descriptions and FDA brand and
+generic names (refreshed by both ETL paths), served by one `suggestions` endpoint. Labeler,
+dosage form and route fields are out of scope.
 
 Size: medium. One PR, or two (database + server, then client).
+
+Left out of the plan, to revisit once it ships:
+
+- **The 5-character search minimum blocks short names.** 17 priced brand names (YAZ, SOMA,
+  AZOR, ONFI, ELLA…) and the generic urea can't be searched on their own, so suggestions leave
+  them out. `LikePattern` now stops `_____` matching everything, which was the minimum's first
+  reason; the other is result size, which 5 characters doesn't bound well either ("phate").
+  Decide whether a picked suggestion, or 3 characters, may search. Both servers and
+  `library/constants.ts` hold the minimum.
+- **Suggest the drug word** ("ELIQUIS") rather than a full strength description, if
+  suggestions that narrow to one strength turn out to confuse users.
+- **Narrow one FDA field's suggestions by the other's draft**, if Brand + Generic searches
+  built from independent suggestions often land on nothing.
 
 ## Cleanups
 
