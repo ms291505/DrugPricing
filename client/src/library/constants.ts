@@ -27,3 +27,8 @@ export const SMALL_SPACING = 1;
 export const MAX_AUTO_CHART_SERIES = 8;
 /** Grid size of a half-width chart card on both search pages: full width below `md`. */
 export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };
+
+/** The stale marker's icon size and its gap to the price, in px: the Latest Price column's maximum allows for both. */
+export const STALE_MARKER_SIZE = 16;
+export const STALE_MARKER_GAP = 4;
+export const STALE_MARKER_WIDTH = STALE_MARKER_SIZE + STALE_MARKER_GAP;

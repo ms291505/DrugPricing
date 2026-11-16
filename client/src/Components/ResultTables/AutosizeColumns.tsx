@@ -32,7 +32,6 @@ export default function AutosizeColumns({ apiRef, rows, visibility, columns }: {
   useEffect(() => {
     if (!visible) return;
     let frame = 0;
-    let measuring = false;
     const schedule = () => {
       cancelAnimationFrame(frame);
       // Wait until the new page/rows are rendered before measuring them.
@@ -41,8 +40,7 @@ export default function AutosizeColumns({ apiRef, rows, visibility, columns }: {
         if (!api) return;
         const fields = api.getAllColumns().map(column => column.field)
           .filter(field => field !== GRID_CHECKBOX_SELECTION_COL_DEF.field && !dragged.current.has(field));
-        measuring = true;
-        void api.autosizeColumns({ ...OPTIONS, columns: fields }).finally(() => { measuring = false; });
+        void api.autosizeColumns({ ...OPTIONS, columns: fields });
       });
     };
     schedule();
@@ -51,8 +49,8 @@ export default function AutosizeColumns({ apiRef, rows, visibility, columns }: {
       api?.subscribeEvent("paginationModelChange", schedule),
       api?.subscribeEvent("sortModelChange", schedule),
       api?.subscribeEvent("filterModelChange", schedule),
-      // The grid reports its own autosizing too; anything else is the user dragging a column.
-      api?.subscribeEvent("columnWidthChange", ({ colDef }) => { if (!measuring) dragged.current.add(colDef.field); }),
+      // Published only while the user drags a column's edge, never by autosizing or a double-click.
+      api?.subscribeEvent("columnResize", ({ colDef }) => { dragged.current.add(colDef.field); }),
     ];
     return () => {
       cancelAnimationFrame(frame);

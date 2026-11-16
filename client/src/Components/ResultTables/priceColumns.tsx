@@ -6,14 +6,10 @@ import { compareUnitPrices, latestSummary, pricingUnitLabel, type UnitPriceSumma
 import type { PricedRow } from "../../library/resultRows";
 import { formatPrice } from "../../library/chartScale";
 import { formatDate } from "../../library/dates";
+import { STALE_MARKER_GAP, STALE_MARKER_SIZE } from "../../library/constants";
 
 /** Shown for a row without prices, and for the price columns of a row priced in several units. */
 const NO_PRICE = "—";
-
-/** The stale marker's icon size and its gap to the price, in px: the Latest Price column's width allows for both. */
-const STALE_MARKER_SIZE = 16;
-const STALE_MARKER_GAP = 4;
-const STALE_MARKER_WIDTH = STALE_MARKER_SIZE + STALE_MARKER_GAP;
 
 /** The row's summary when it is priced in exactly one unit: prices in different units never combine. */
 const singleUnit = (row: PricedRow) => row.priceSummaries.length === 1 ? row.priceSummaries[0] : undefined;
@@ -61,10 +57,6 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     headerName: "Latest Price",
     description: averagesPackages ? "Average of the product's packages on its latest price date" : undefined,
     type: "number",
-    width: 125,
-    minWidth: 90,
-    // Room for the widest price and a stale marker beside it (`STALE_MARKER_WIDTH`).
-    maxWidth: 125 + STALE_MARKER_WIDTH,
     valueGetter: (_, row) => singleUnit(row)?.latest,
     valueFormatter: unitPrice,
     getSortComparator: byUnitThenPrice,
@@ -84,7 +76,6 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
   const latestDate: GridColDef<R> = {
     field: "latestPriceDate",
     headerName: "Latest Price Date",
-    width: 135,
     // The value is a timestamp, which the text filters can't match against the shown date.
     filterable: false,
     valueGetter: (_, row) => latestSummary(row.priceSummaries)?.latestDate,
@@ -95,9 +86,6 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     headerName: "Min Price",
     description: averagesPackages ? "Lowest of the product's daily average across its packages" : undefined,
     type: "number",
-    width: 115,
-    minWidth: 80,
-    maxWidth: 115,
     valueGetter: (_, row) => singleUnit(row)?.min,
     valueFormatter: unitPrice,
     getSortComparator: byUnitThenPrice,
@@ -107,9 +95,6 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     headerName: "Max Price",
     description: averagesPackages ? "Highest of the product's daily average across its packages" : undefined,
     type: "number",
-    width: 115,
-    minWidth: 80,
-    maxWidth: 115,
     valueGetter: (_, row) => singleUnit(row)?.max,
     valueFormatter: unitPrice,
     getSortComparator: byUnitThenPrice,

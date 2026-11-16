@@ -43,3 +43,15 @@ describe("applyColumnBounds", () => {
     expect(applyColumnBounds([a, other], "wide", table)[1]).toBe(other);
   });
 });
+
+describe("COLUMN_BOUNDS", () => {
+  // The columns are defined in components, which a Node test can't import: read their field names.
+  const sources = import.meta.glob<string>("../Components/ResultTables/*.tsx", { query: "?raw", import: "default", eager: true });
+  const fields = new Set(Object.values(sources).flatMap(source => [...source.matchAll(/\bfield: "(\w+)"/g)].map(match => match[1])));
+
+  it("has an entry for every result-table column, and none for a column that does not exist", () => {
+    expect(fields.size).toBeGreaterThan(15);
+    expect([...fields].filter(field => !(field in COLUMN_BOUNDS))).toEqual([]);
+    expect(Object.keys(COLUMN_BOUNDS).filter(field => !fields.has(field))).toEqual([]);
+  });
+});

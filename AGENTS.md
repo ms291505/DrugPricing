@@ -103,14 +103,19 @@ merge them over current defaults, and clear them on Reset: saving the complete d
 would freeze defaults for browsers that never customized. Validate each table and field independently.
 
 `AutosizeColumns` sizes every visible data column (not the checkbox) to its widest rendered cell
-or header after data, visibility, paging, sorting, filtering and column-array changes. A column's
-bounds are `minWidth`/`maxWidth` from `COLUMN_BOUNDS` (`library/columnBounds.ts`, by field, with
-optional `medium`/`narrow` overrides for the table's own width tier); `ResultTable` applies them,
-so the table files give no widths, and a tier flip makes a new `columns` array. The grid measures
-the rows it has rendered; a column the user dragged keeps its width until the columns change. It is
-a separate component so only its small visibility observer re-renders on a page/tab switch; the
-table does not. Hidden pages measure nothing until shown. Narrow tables use 44px rows and headers. NDC columns use tabular
-digits and minimum widths that fit the complete source identifier.
+or header after data, visibility, paging, sorting, filtering and column-array changes. Bounds are
+`minWidth`/`maxWidth` from `COLUMN_BOUNDS` (`library/columnBounds.ts`, by field, with optional
+`medium`/`narrow` overrides for the table's own width tier). `ResultTable` applies them, so no
+column def gives a width, and a test requires every column to have an entry. The rule: autosize
+already floors a column at its header, so `min` is only the content floor and `max` is the widest
+real content or unsorted header (narrow may go lower and ellipsise). A tier flip makes a new
+`columns` array. The grid measures only the rows it has rendered. A column the user dragged
+(`columnResize`, published only by drag moves) keeps its width until the columns change.
+
+`AutosizeColumns` is a separate component so only its small visibility observer re-renders on a
+page/tab switch; the table does not. Hidden pages measure nothing until shown. Narrow tables use
+44px rows and headers. NDC columns use tabular digits and a fixed width that fits the complete
+source identifier.
 
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,
 using a rounded 5% range cutoff and 10% significant steps. Products use their packages' states,
