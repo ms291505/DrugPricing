@@ -5,10 +5,7 @@ import type { ChartPrice } from "../../library/types";
 import type { ChartOrigin } from "../../library/explorerItems";
 import { type DateWindow } from "../../library/dates";
 import useWidthTier from "../../hooks/useWidthTier";
-import PriceEventsList from "./PriceEventsList";
-import LineViz from "../Charts/LineViz";
-import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
-import PinButton from "../ExplorerGrid/PinButton";
+import PriceEventsList, { PriceEventDetails } from "./PriceEventsList";
 
 type Props = {
   prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
