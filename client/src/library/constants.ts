@@ -5,8 +5,6 @@ export const DEFAULT_NADAC_SEARCH_MONTHS = 12;
  * change fills at most 40% of the chart height. Lower is stricter; 1 is about a $0 baseline.
  */
 export const MAX_AXIS_EXAGGERATION = 4;
-/** Price-change charts focus on this many months either side of the change. */
-export const PRICE_CHANGE_WINDOW_MONTHS = 3;
 export const MIN_NDC_DESCRIPTION_LENGTH = 5;
 export const MIN_NDC_LENGTH = 5;
 export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;

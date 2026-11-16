@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activitySparklinePath, priceEventGroupLabel, aroundPriceEvent, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, previousObservationNote, productActivity, signedChange } from "./priceActivity";
+import { activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
@@ -58,7 +58,6 @@ describe("event groups and callouts", () => {
     expect(groups).toHaveLength(3);
     const drop = groups.find(g => g.pricingUnit === "each" && g.direction === "drop")!;
     expect(drop.events.map(e => [e.packageNdc, e.change.oldPrice, e.change.newPrice])).toEqual([["A", 10, 5], ["B", 20, 11]]);
-    expect(aroundPriceEvent(drop.events)).toEqual({ start: Date.parse("2025-10-07"), end: Date.parse("2026-04-14") });
   });
   it("gives each package's change as signed percent and amount", () => {
     const [drop] = derivePriceEvents(series([9.69, 5.52]), "package");

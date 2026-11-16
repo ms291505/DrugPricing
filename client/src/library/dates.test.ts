@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addMonths, ALL_DATES, clipToWindow, formatDate, formatWindow, fromDateInput, FULL_WINDOW,
-  isValidWindow, resolveChartDates, toDateInput, windowAround, windowEndingAt,
+  isValidWindow, resolveChartDates, toDateInput, windowEndingAt,
 } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -55,12 +55,6 @@ describe("formatting", () => {
 });
 
 describe("window builders", () => {
-  it("puts whole months either side of a change", () => {
-    const w = windowAround(day("2026-01-06"), day("2026-01-13"), 3);
-    expect(toDateInput(w.start)).toBe("2025-10-06");
-    expect(toDateInput(w.end)).toBe("2026-04-13");
-  });
-
   it("clamps to the end of a shorter month instead of rolling over", () => {
     expect(toDateInput(addMonths(day("2026-05-31"), -3))).toBe("2026-02-28");
     expect(toDateInput(addMonths(day("2026-11-30"), 3))).toBe("2027-02-28");

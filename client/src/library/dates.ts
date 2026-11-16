@@ -63,10 +63,6 @@ export function addMonths(time: number, months: number): number {
   return date.getTime();
 }
 
-/** A window from `months` before `start` to `months` after `end`. */
-export const windowAround = (start: number, end: number, months: number): ClosedDateWindow =>
-  ({ start: addMonths(start, -months), end: addMonths(end, months) });
-
 /** The last `months` months up to `last`. */
 export const windowEndingAt = (last: number, months: number): ClosedDateWindow =>
   ({ start: addMonths(last, -months), end: last });
