@@ -11,11 +11,13 @@ conditional card.
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
 
-Each package row has a **Chart this change** line-chart button. It opens that package's chart over
-the search's dates, directly beneath the group. A solid line marks the change, and the readout
-rests on its date until you point at another. Each package opens its own chart, so several can be
-open at once. **Pin** keeps a copy, and **Close** or the same button again closes it. To see every
-result together, use **Compare price histories**.
+Each package row has a **Chart this change** line-chart button. It opens that package's own
+unpinned chart card below the Price changes card, over the search's dates. A solid line marks the
+change, and the readout rests on its date until you point at another. Collapsing Price changes
+leaves these charts open, and several packages can have charts open at once. **Pin** keeps a copy,
+and **Close** or the same button again closes the chart. Close returns focus to the package button,
+or to the Price changes heading when that button is hidden. New prices close all event charts. To
+see every result together, use **Compare price histories**.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
 same date share one label; their per-package changes are in the search's Price changes section or at Package level, and a

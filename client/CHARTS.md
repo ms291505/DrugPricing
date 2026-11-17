@@ -47,10 +47,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
   closes stays so while the page is mounted. Each package row has a single-series Chart this
-  change line-chart button. It toggles that package's chart directly beneath the group over the
-  page's shown dates; each package keeps its own open state (not persisted), so several can be
-  open, and new prices discard them all. Opening moves focus to the chart's heading; Close
-  returns it to that package's button. `eventDate` marks the
+  change line-chart button. It toggles that package's unpinned `ExplorerGridItem` below the Price
+  changes card over the page's shown dates; each package keeps its own open state (not persisted),
+  so several can be open. Collapsing Price changes leaves these cards open; new prices discard
+  them all. Opening moves focus to the chart's heading; Close returns it to the package button or,
+  if that button is hidden by a collapsed section, the Price changes heading. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
   instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
   no event list and no way to zoom itself: neither the readout nor the plot lists events, and
@@ -83,7 +84,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   products. The dates chip is the actual date window, and Match scale shares axes only by pricing
   unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
-  `h3` inside Pinned, `h4` for a focused chart inside the Price changes section), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+  `h3` inside Pinned and for Price changes or event charts), with a collapse toggle wired with
+  `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
 

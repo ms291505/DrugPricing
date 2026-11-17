@@ -123,8 +123,11 @@ not an averaged line; only package rows have sparklines. Live Compare controls s
 the results table, ahead of the conditional Price changes card. Price changes is a collapsible,
 derived ExplorerGridItem system card, never stored; its event list groups by date, unit and
 direction, each with its packages' old and new prices. Each package row has a Chart this change
-line-chart button that opens that package alone in an inline chart over the shown dates, with the
-change marked and the readout resting on it. A chart card has no event list and no Around this
+line-chart button that opens that package alone in its own unpinned ExplorerGridItem below the
+Price changes card, over the shown dates, with the change marked and the readout resting on it.
+The package chart stays open when Price changes is collapsed; Close returns focus to its button,
+or to the Price changes heading when that button is hidden. New prices discard open charts. A
+chart card has no event list and no Around this
 change. Live Compare cards start hidden and are never stored. New product
 pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
 
