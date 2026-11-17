@@ -102,7 +102,14 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
 /** A topic in the index or under Related topics. */
 function TopicLink({ id, title, standalone, onClick }: { id: HelpTopicId, title: string, standalone: boolean, onClick: () => void }) {
   return <ListItemButton data-help-topic={id} component={standalone ? RouterLink : "button"} to={standalone ? `/help/${id}` : undefined}
-    onClick={onClick} sx={{ width: "100%", textAlign: "left" }}>
+    onClick={onClick} sx={{
+      width: "100%",
+      textAlign: "left",
+      color: "primary.main",
+      "& .MuiListItemText-primary": { textDecoration: "underline", textUnderlineOffset: "0.15em" },
+      "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" },
+      "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+    }}>
     <ListItemText primary={title} />
   </ListItemButton>;
 }
