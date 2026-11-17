@@ -1,8 +1,8 @@
 # Price-change scans and pinned event lists
 
-Status: draft for review. Do not implement the scan threshold, event-list persistence, or card
-lifecycle until this plan is reviewed. The independent Compare-button label/icon change is already
-in the worktree and is not part of the dependent implementation gate.
+Status: ready for user review; implementation is paused until the user explicitly asks to proceed.
+Do not implement the scan threshold, event-list persistence, or card lifecycle before that go-ahead.
+The independent Compare-button label/icon change is parked at `/private/tmp/price-change-auto-buttons.patch`.
 
 ## Goal
 
@@ -65,7 +65,8 @@ button on the automatic list and each explicit scan copies a snapshot containing
 - source metadata and search label, series kind and counts;
 - the exact shown date window and the threshold percentage;
 - event groups with date, unit, direction, package NDC, source series identity, and each event's
-  previous/current dates and prices. Store numeric UTC timestamps, not `Date` objects;
+  previous/current dates and prices. Store finite numeric UTC timestamps and finite prices, not
+  `Date` objects or derived percentages;
 - each involved package's full available (already loaded) history, with package NDC, unit, label,
   dates, prices and assigned color slot. Store each package/unit history once per list even when
   it appears in several groups. The stored date window controls what the chart shows. This supplies
@@ -109,6 +110,8 @@ close an already opened chart; each chart remains until its own Close action. Ca
 color, dates and event date when opened. If its source button is gone, Close returns focus to the
 available pinned-section heading. A chart explicitly pinned from this card remains after the
 transient chart closes.
+Use stable callbacks and memoized temporary-chart rendering so opening or closing one temporary
+chart does not redraw unrelated pinned cards.
 
 For charts opened from current-result cards, closing/removing the source list also leaves already-
 open separate charts visible until their own Close. A new result-scope key clears transient lists
@@ -121,8 +124,10 @@ items and excludes temporary charts.
 For explicit percentage scans, transitions from a zero previous price are omitted because no
 finite percentage threshold can be compared. They never display `Infinity%` or `NaN%`. The
 automatic 10% list and table retain their existing event inclusion/classification semantics. If an
-automatic event has a zero previous price, its current presentation should be reviewed separately;
-the scan implementation must not change table classification or the automatic event selector.
+automatic event has a zero previous price, display it as a transition from $0 without a percent.
+Never persist a derived infinite percentage; recompute finite percentages from saved old/new values
+when possible. The scan implementation must not change table classification or the automatic
+event selector.
 
 Same-package, same-unit observations on one date continue through `seriesByDate`'s existing
 average before consecutive events are compared. Do not assume one price/NDC/date or infer package
@@ -143,6 +148,15 @@ events from an averaged product line.
   automatic event selection and table classification remain unchanged.
 - Result lifecycle follows a search-generation, applied-criteria and date-window key. Same-date
   package/unit duplicates are averaged by existing `seriesByDate` rules before comparison.
+
+## Peer review
+
+- The independent reviewer completed a second pass and found no plan blockers. Guardrails added
+  from review: finite serialized timestamps/prices, no persisted derived percentages, zero-baseline
+  automatic display without an infinite percent, and memoized temporary-card rendering.
+- The chart-card implementer reviewed feasibility and called out sibling-card placement, same-date
+  averaging and per-card close/focus behavior; those points are covered above.
+- No feature implementation is included or authorized by this plan review.
 
 ## Tests and checks
 
