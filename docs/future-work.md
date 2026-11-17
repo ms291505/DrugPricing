@@ -17,6 +17,36 @@ Labeler, dosage form and route fields are out of scope.
 
 Size: medium. One PR, or two (database + server, then client).
 
+### Block searches for generic terms like "tablet" (2026-11-16)
+
+A text search must name a drug. "tablet" passes the 5-character minimum but isn't a drug: as a
+NADAC description it matches about 19,000 packages, which is a huge response, and in a pinned
+price-change list it is about 4 MB, most of the browser's storage. "metformin tablet" is a real
+search. Found while sizing pinned lists for [price-change scans](plans/price-change-scans.md).
+
+- **Rule:** a term is searchable only if at least one of its words is not a generic word. Generic
+  words are dosage forms ("tablet", "capsule", "injection", "solution"), routes ("oral",
+  "topical"), release and salt words ("extended", "release", "hcl"), units and strengths ("mg",
+  "ml", "10"). So "tablet", "oral tablet" and "tablet 10 mg" are blocked, and "metformin tablet"
+  is allowed.
+- **Both ends enforce it**, like the minimum lengths:
+  - The client doesn't search. The field shows why ("Add a drug name: "tablet" describes a
+    form, not a drug"), and Search stays disabled. See `library/searchCriteria.ts`,
+    `nadacSearch.ts` and `fdaNadacHandoff.ts`, which check the minimums today.
+  - The server returns 400. See `NadacService.ValidateNdcDescription` and
+    `FdaProductService.ValidateNameSearch`, and their callers in `Endpoints/`.
+- **Scope:** NADAC description and the FDA brand and generic name fields. NDC search is not
+  affected.
+- **Open: where the word list lives.** Either it is duplicated in both ends, as the length
+  minimums are, with a test on each side, or it is built from the FDA dosage-form and route names
+  that `/api/app-init` already returns and the client ignores (see Cleanups) and served to the
+  client from there. The second keeps the two in step but makes client validation wait on
+  app-init.
+- Check the default searches (`server/Data/DefaultSearches.json`), the Help search examples and
+  `reporting/TEST_DRUGS.md` against the rule.
+
+Size: small to medium. One PR (server, client, Help).
+
 ## Cleanups
 
 ### Each a small PR of its own
