@@ -4,23 +4,23 @@ rounded to a tenth of a percent at the cutoff. A package with just one observati
 insufficient history. Product activity comes from its packages, never from their average.
 
 A significant change is a move of at least 10% between consecutive package observations.
-The **Price changes** collapsible card below the results groups these events by date, pricing unit
-and direction. The Compare controls are directly below the results table and appear before this
-conditional card.
+The **Notable price changes** collapsible card groups these events by date, pricing unit and
+direction. It sits with live Compare and event charts in the responsive card grid below the
+results table. The Compare controls are directly below the table and appear before the cards.
 **Package details** lists each package's price before and after, and its change in percent
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
 
 Each package row has a **Chart this change** line-chart button. It opens that package's own
-unpinned chart card below the Price changes card, over the search's dates. A solid line marks the
+unpinned chart card below the Notable price changes card, over the search's dates. A solid line marks the
 change, and the readout rests on its date until you point at another. Collapsing Price changes
-leaves these charts open, and several packages can have charts open at once. **Pin** keeps a copy,
+leaves these half-width charts open, and several packages can have charts open at once. **Pin** keeps a copy,
 and **Close** or the same button again closes the chart. Close returns focus to the package button,
-or to the Price changes heading when that button is hidden. New prices close all event charts. To
+or to the Notable price changes heading when that button is hidden. New prices close all event charts. To
 see every result together, use **Compare price histories**.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
-same date share one label; their per-package changes are in the search's Price changes section or at Package level, and a
+same date share one label; their per-package changes are in the search's Notable price changes card or at Package level, and a
 package chart's **View data** has its exact prices.
 A product marker means one or more packages changed, not that its average made that change.
 Older product pins without package identities cannot show those package markers. A pinned

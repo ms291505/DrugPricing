@@ -42,8 +42,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
   `flagPriceChanges`. Live Compare controls appear directly below the results table. The conditional
-  `PriceChangesSection` follows as a collapsible `ExplorerGridItem` system card, derived from the
-  current search and never stored. It groups by date, pricing unit and direction, and shows five groups
+  `PriceChangesSection` follows in the shared responsive grid as a half-width collapsible
+  `ExplorerGridItem` system card, titled Notable price changes, derived from the current search and
+  never stored. Its open per-package event charts use the same half-width grid items as live Compare
+  charts and pinned cards. It groups by date, pricing unit and direction, and shows five groups
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
   closes stays so while the page is mounted. Each package row has a single-series Chart this
@@ -51,7 +53,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   changes card over the page's shown dates; each package keeps its own open state (not persisted),
   so several can be open. Collapsing Price changes leaves these cards open; new prices discard
   them all. Opening moves focus to the chart's heading; Close returns it to the package button or,
-  if that button is hidden by a collapsed section, the Price changes heading. `eventDate` marks the
+  if that button is hidden by a collapsed section, the Notable price changes heading. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
   instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
   no event list and no way to zoom itself: neither the readout nor the plot lists events, and
@@ -135,7 +137,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   most products price every package the same per unit (liquids' bottle sizes are the exception).
 - **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
   package event has old/new dots and a dashed old price; one pill per date gives agreed prices
-  or a change count. Exact package values and gap spans are in the Price changes section under the results
+  or a change count. Exact package values and gap spans are in the Notable price changes card under the results
   table (package charts' View data has exact prices); the readout shows only prices.
   Product markers come only from actual package events, never jumps in their average.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;

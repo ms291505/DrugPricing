@@ -10,14 +10,15 @@ type Props = {
   notice?: ReactNode,
   /** The results table. */
   table: ReactNode,
+  /** Half-width event cards (Notable price changes and any open package event charts). */
   priceChanges?: ReactNode,
   /** Compare controls and live charts directly under the table. */
   children?: ReactNode,
 };
 
 /**
- * The frame of both search pages' results: a heading and toolbar, the table, then the auto
- * comparisons and event list. Pinned items sit below it, outside.
+ * The frame of both search pages' results: a heading, table, and shared responsive grid of live
+ * comparisons and event cards. Pinned items sit below it, outside.
  */
 export default function ResultsSection({ searchLabel, toolbar, notice, table, priceChanges, children }: Props) {
   const headingId = useId();
@@ -35,8 +36,10 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
       <Paper sx={{
         display: "flex", flexDirection: "column", p: { xs: 0, sm: 1 }, width: "100%", minWidth: 0, boxSizing: "border-box",
       }}>{table}</Paper>
-      <Grid container spacing={1}>{children}</Grid>
-      {priceChanges}
+      <Grid container spacing={2} alignItems="flex-start" sx={{ minWidth: 0 }}>
+        {children}
+        {priceChanges}
+      </Grid>
     </Box>
   );
 }
