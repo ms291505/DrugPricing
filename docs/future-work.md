@@ -37,15 +37,24 @@ search. Found while sizing pinned lists for [price-change scans](plans/price-cha
     `FdaProductService.ValidateNameSearch`, and their callers in `Endpoints/`.
 - **Scope:** NADAC description and the FDA brand and generic name fields. NDC search is not
   affected.
-- **Open: where the word list lives.** Either it is duplicated in both ends, as the length
-  minimums are, with a test on each side, or it is built from the FDA dosage-form and route names
-  that `/api/app-init` already returns and the client ignores (see Cleanups) and served to the
-  client from there. The second keeps the two in step but makes client validation wait on
-  app-init.
+- **The server owns every search rule and serves it in `/api/app-init`.**
+  - It builds the generic words from the FDA dosage-form and route names (137 dosage forms,
+    phrases like "TABLET, FILM COATED", split into words), plus a short fixed list of unit,
+    strength, release and salt words. Those names are already in app-init, unused by the client.
+  - Move the length minimums there too: NADAC description, NDC, and FDA name, today's
+    `MIN_*_LENGTH` in `NadacService`, `FdaProductService` and the client's
+    `library/constants.ts`. The client deletes its copies, and the AGENTS.md convention
+    "Minimum search lengths are duplicated" goes away.
+  - Add a `searchRules` object to the app-init response. The client checks a term with the same
+    rule as the server (split into words, ignore case and punctuation), with a test on each
+    side for the same examples.
+  - When app-init fails or hasn't loaded yet, the client skips its own checks and sends the
+    search. The server's 400 must then carry the same readable message, shown by
+    `QueryErrorToast`, so no rule needs a client fallback copy.
 - Check the default searches (`server/Data/DefaultSearches.json`), the Help search examples and
   `reporting/TEST_DRUGS.md` against the rule.
 
-Size: small to medium. One PR (server, client, Help).
+Size: medium. One PR (server, client, Help, AGENTS.md).
 
 ## Cleanups
 
@@ -61,9 +70,9 @@ Size: small to medium. One PR (server, client, Help).
   each change. If profiling shows it costs, debounce in `library/persist.ts` (about 500ms) and
   flush on `pagehide` and when the page is hidden, keeping the several-windows guard and the
   failed-write toast working. Left out of the pinned-chart performance PR.
-- **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
-  (autocomplete in the FDA search form) or drop them from the response. The client uses only the
-  date range.
+- **`/api/app-init` returns route and dosage-form names the client never uses.** The generic-term
+  blocking item (Decided) replaces them with `searchRules`, built from those names. Until then the
+  client uses only the date range.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
   unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
