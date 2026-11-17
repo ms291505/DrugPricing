@@ -2,7 +2,7 @@
 
 Status: ready for user review; implementation is paused until the user explicitly asks to proceed.
 Do not implement the scan threshold, event-list persistence, or card lifecycle before that go-ahead.
-The independent Compare-button label/icon change is parked at `/private/tmp/price-change-auto-buttons.patch`.
+The independent Compare-button label/icon change is parked at [price-change-auto-buttons.patch](price-change-auto-buttons.patch).
 
 ## Goal
 
