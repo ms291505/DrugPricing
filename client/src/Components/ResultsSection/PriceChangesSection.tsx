@@ -1,5 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
+import { Box, Button, Grid, Typography } from "@mui/material";
 import { derivePriceEvents, groupPriceEvents, priceEventGroupLabel, type PriceEvent, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
 import type { ChartOrigin } from "../../library/explorerItems";
@@ -11,6 +11,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
 import PinButton from "../ExplorerGrid/PinButton";
 import { visuallyHidden } from "@mui/utils";
+import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
   prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
@@ -18,7 +19,7 @@ type Props = {
   dateWindow: DateWindow,
 };
 
-/** Price changes and its unpinned, event-derived package charts. */
+/** Notable price changes and its unpinned, event-derived package charts. */
 export default function PriceChangesSection(props: Props) {
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(props.prices, "package")), [props.prices]);
   // The user's own open/close of a group's package details, kept while the page is mounted.
@@ -45,8 +46,6 @@ type OpenEventChart = {
 type OpenChartState = { prices: ChartPrice[], charts: ReadonlyMap<string, OpenEventChart> };
 
 function PriceChanges({ prices, history, origin, colors, dateWindow, groups, detailsChoice, onDetailsToggle }: ListProps) {
-  // The section's own width: a workspace pane can be narrow in a wide window.
-  const [sectionRef, widthTier] = useWidthTier<HTMLElement>();
   const sectionHeadingRef = useRef<HTMLHeadingElement>(null);
   // Whether focus is in an event chart: new prices remove it and may leave focus on `body`.
   const focusInChart = useRef(false);
@@ -94,20 +93,41 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
     }
     focusInChart.current = false;
   }, [prices]);
-  // Package details start open from `md` up and closed below; a group the user toggled keeps that.
+  return <>
+    {groups.length > 0 ? <NotablePriceChangesCard groups={groups} detailsChoice={detailsChoice}
+      openChartIds={chartIds} headingRef={sectionHeadingRef} onDetailsToggle={onDetailsToggle}
+      onToggleChart={toggleChart} onRegisterButton={registerButton} />
+      : <Typography ref={emptyHeadingRef} component="h3" tabIndex={-1} sx={visuallyHidden}>Notable price changes</Typography>}
+    {currentCharts.map(chart => <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={{ alignSelf: "flex-start", minWidth: 0 }}>
+      <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
+        onClose={closeChart} onFocusInChart={setFocusInChart} />
+    </Grid>)}
+  </>;
+}
+
+function NotablePriceChangesCard({ groups, detailsChoice, openChartIds, headingRef, onDetailsToggle, onToggleChart, onRegisterButton }: {
+  groups: PriceEventGroup[],
+  detailsChoice: ReadonlyMap<string, boolean>,
+  openChartIds: ReadonlyMap<string, string>,
+  headingRef: Ref<HTMLHeadingElement>,
+  onDetailsToggle: (key: string, open: boolean) => void,
+  onToggleChart: (group: PriceEventGroup, event: PriceEvent, chartId: string) => void,
+  onRegisterButton: (key: string, button: HTMLButtonElement | null) => void,
+}) {
+  // The section's own width: a workspace pane can be narrow in a wide window.
+  const [sectionRef, widthTier] = useWidthTier<HTMLDivElement>();
+  // Package details start open from `md` up; a group the user toggled keeps its own choice.
   const defaultOpen = widthTier === "wide";
   const compact = widthTier === "narrow";
-  return <Box ref={sectionRef} sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
-    {groups.length > 0 ? <ExplorerGridItem title="Price changes" subtitle="Package changes of 10% or more in these dates and filters."
-      headingLevel={3} headingRef={sectionHeadingRef}>
+  return <Grid ref={sectionRef} size={HALF_WIDTH_GRID_SIZE} sx={{ alignSelf: "flex-start", minWidth: 0 }}>
+    <ExplorerGridItem title="Notable price changes" subtitle="Package changes of 10% or more in these dates and filters."
+      headingLevel={3} headingRef={headingRef}>
       <PriceEventsList groups={groups}
-        renderGroup={group => <PriceChangeRow group={group} openChartIds={chartIds} compact={compact}
+        renderGroup={group => <PriceChangeRow group={group} openChartIds={openChartIds} compact={compact}
           detailsOpen={detailsChoice.get(group.key) ?? defaultOpen} onDetailsToggle={onDetailsToggle}
-          onToggleChart={toggleChart} onRegisterButton={registerButton} />}/>
-    </ExplorerGridItem> : <Typography ref={emptyHeadingRef} component="h3" tabIndex={-1} sx={visuallyHidden}>Price changes</Typography>}
-    {currentCharts.map(chart => <EventChangeChart key={chart.key} chart={chart} origin={origin} colors={colors}
-      dateWindow={dateWindow} onClose={closeChart} onFocusInChart={setFocusInChart} />)}
-  </Box>;
+          onToggleChart={onToggleChart} onRegisterButton={onRegisterButton} />} />
+    </ExplorerGridItem>
+  </Grid>;
 }
 
 type RowProps = {
