@@ -1,4 +1,4 @@
-import { memo, useCallback, useId, useLayoutEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { memo, use, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 import { Box, Button, Grid, IconButton, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { visuallyHidden } from "@mui/utils";
@@ -16,6 +16,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
+import { ResultsHeadingContext } from "./resultsHeading";
 
 type Props = {
   prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
@@ -26,6 +27,7 @@ type Props = {
 type OpenChart = { key: string, cardId: string, group: PriceEventGroup, event: PriceEvent, history: ChartPrice[] };
 
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
+const captionSx = { display: "block", color: "text.secondary", typography: "caption" } as const;
 
 /** Notable price changes and the package charts opened from it; nothing when the prices have no notable change. */
 export default function PriceChangesSection(props: Props) {
@@ -48,6 +50,7 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
   // The card's own width: a workspace pane can be narrow in a wide window.
   const [cardRef, widthTier] = useWidthTier<HTMLDivElement>();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const resultsHeadingRef = use(ResultsHeadingContext);
   const [showAllGroups, setShowAllGroups] = useState(false);
   const listId = useId();
 
@@ -58,7 +61,6 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
     setChartsPrices(prices);
     setCharts(new Map());
   }
-  const chartCount = useRef(0);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const registerButton = useCallback((key: string, button: HTMLButtonElement | null) => {
     if (button) buttons.current.set(key, button);
@@ -66,12 +68,14 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
   }, []);
   const toggleChart = useCallback((group: PriceEventGroup, event: PriceEvent) => {
     const key = eventKey(group, event);
-    const cardId = `${listId}-chart-${chartCount.current++}`;
-    const packageHistory = history().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit);
     setCharts(prev => {
       const next = new Map(prev);
       if (next.has(key)) next.delete(key);
-      else next.set(key, { key, cardId, group, event, history: packageHistory });
+      else next.set(key, {
+        // Event keys hold no whitespace (dates, prices, NDCs and a unit code), so they fit in an id.
+        key, cardId: `${listId}-${key}`, group, event,
+        history: history().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
+      });
       return next;
     });
   }, [history, listId]);
@@ -82,18 +86,16 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
   }), []);
   // Focus that was in a removed chart (Close, or new prices) goes to the chart's button if it's
   // still shown, else this card's heading, else the results heading.
-  const onRemovedWithFocus = useCallback((key: string, results: HTMLElement | null) => {
+  const onRemovedWithFocus = useCallback((key: string) => {
     const button = buttons.current.get(key);
     if (button?.isConnected && button.checkVisibility()) return button.focus();
-    const labelledBy = results?.getAttribute("aria-labelledby");
-    const heading = [headingRef.current, labelledBy ? document.getElementById(labelledBy) : null]
+    const heading = [headingRef.current, resultsHeadingRef?.current]
       .find(element => element?.isConnected && element.checkVisibility());
     heading?.focus({ preventScroll: true });
-  }, []);
+  }, [resultsHeadingRef]);
 
   const defaultOpen = widthTier === "wide";
   const compact = widthTier === "narrow";
-  const chartIds = new Map([...charts.values()].map(chart => [chart.key, chart.cardId]));
   return <>
     <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
       <ExplorerGridItem title="Notable price changes" subtitle="Package changes of 10% or more in these dates and filters."
@@ -101,7 +103,7 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {(showAllGroups ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group =>
-              <PriceEventGroupRow key={group.key} group={group} chartIds={chartIds} compact={compact}
+              <PriceEventGroupRow key={group.key} group={group} charts={charts} compact={compact}
                 detailsOpen={detailsChoice.get(group.key) ?? defaultOpen} onDetailsToggle={onDetailsToggle}
                 onToggleChart={toggleChart} onRegisterButton={registerButton} />)}
           </Box>
@@ -124,10 +126,9 @@ function PriceChanges({ prices, history, origin, colors, dateWindow, groups, det
  * package (NDC, old and new price, the change). The label gives the date, unit and direction, so
  * rows repeat none of them.
  */
-function PriceEventGroupRow({ group, chartIds, compact, detailsOpen, onDetailsToggle, onToggleChart, onRegisterButton }: {
+function PriceEventGroupRow({ group, charts, compact, detailsOpen, onDetailsToggle, onToggleChart, onRegisterButton }: {
   group: PriceEventGroup,
-  /** Open charts' card ids, by event key. */
-  chartIds: ReadonlyMap<string, string>,
+  charts: ReadonlyMap<string, OpenChart>,
   /** Narrow: the amount folds under the percent. */
   compact: boolean,
   detailsOpen: boolean,
@@ -142,7 +143,6 @@ function PriceEventGroupRow({ group, chartIds, compact, detailsOpen, onDetailsTo
   const events = showAll || !capped ? group.events : group.events.slice(0, PRICE_CHANGE_PACKAGE_LIMIT);
   const glyph = group.direction === "drop" ? "▼" : "▲";
   const glyphColor = group.direction === "drop" ? "chart.drop" : "chart.rise";
-  const caption = { display: "block", color: "text.secondary", typography: "caption" } as const;
   return <Box sx={{ width: "100%", borderBottom: 1, borderColor: "divider", py: 1, display: "flex", flexDirection: "column", gap: 0.5, minWidth: 0 }}>
     <Typography variant="subtitle2" component="p">{label}</Typography>
     <Box component="details" open={detailsOpen}
@@ -174,7 +174,7 @@ function PriceEventGroupRow({ group, chartIds, compact, detailsOpen, onDetailsTo
           <TableBody>
             {events.map(event => {
               const key = eventKey(group, event);
-              const chartId = chartIds.get(key);
+              const chartId = charts.get(key)?.cardId;
               const { percent, amount } = signedChange(event.change);
               const note = previousObservationNote(event, group);
               return <TableRow key={key}>
@@ -188,12 +188,12 @@ function PriceEventGroupRow({ group, chartIds, compact, detailsOpen, onDetailsTo
                       <ShowChartIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  {note && <Box component="span" sx={caption}>{note}</Box>}
+                  {note && <Box component="span" sx={captionSx}>{note}</Box>}
                 </TableCell>
                 <TableCell align="right" sx={{ color: "text.secondary" }}>{formatPrice(event.change.oldPrice)}</TableCell>
                 <TableCell align="right">{formatPrice(event.change.newPrice)}</TableCell>
                 <TableCell align="right"><Box component="span" aria-hidden sx={{ color: glyphColor, mr: 0.5, fontSize: "0.75em" }}>{glyph}</Box>
-                  {percent}{compact && <Box component="span" sx={caption}>{amount}</Box>}
+                  {percent}{compact && <Box component="span" sx={captionSx}>{amount}</Box>}
                 </TableCell>
                 {!compact && <TableCell align="right" sx={{ color: "text.secondary" }}>{amount}</TableCell>}
               </TableRow>;
@@ -217,25 +217,26 @@ function eventKey(group: PriceEventGroup, event: PriceEvent) {
 const EventChangeChart = memo(function EventChangeChart({ chart, origin, colors, dateWindow, onClose, onRemovedWithFocus }: {
   chart: OpenChart, origin: ChartOrigin, colors: Map<string, string>, dateWindow: DateWindow,
   onClose: (key: string) => void,
-  /** Called after the chart was removed with focus inside it, with the results section it was in. */
-  onRemovedWithFocus: (key: string, results: HTMLElement | null) => void,
+  /** Called after the chart was removed with focus inside it. */
+  onRemovedWithFocus: (key: string) => void,
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const title = `Price change · ${formatDate(chart.group.date)} · ${chart.event.packageNdc} · per ${pricingUnitLabel(chart.group.pricingUnit)}`;
-  // A new chart takes focus. A layout cleanup runs while the chart is still in the document, so
-  // it can tell whether focus is about to be lost with it; once the commit is done, the chart is
-  // gone unless the cleanup was only StrictMode's rehearsal.
+  // A new chart takes focus.
+  useEffect(() => {
+    if (!headingRef.current?.checkVisibility()) return;
+    headingRef.current.focus({ preventScroll: true });
+    headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
+  }, []);
+  // A layout cleanup runs while the chart is still in the document, so it can tell whether focus
+  // is about to be lost with it. Once the commit is done the chart is gone, unless the cleanup
+  // was only StrictMode's rehearsal or a dependency change.
   useLayoutEffect(() => {
     const box = boxRef.current;
-    if (headingRef.current?.checkVisibility()) {
-      headingRef.current.focus({ preventScroll: true });
-      headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
-    }
     return () => {
       if (!box?.contains(document.activeElement)) return;
-      const results = box.closest("section");
-      queueMicrotask(() => { if (!box.isConnected) onRemovedWithFocus(chart.key, results); });
+      queueMicrotask(() => { if (!box.isConnected) onRemovedWithFocus(chart.key); });
     };
   }, [chart.key, onRemovedWithFocus]);
   return <Box ref={boxRef} id={chart.cardId} sx={{ minWidth: 0 }}>
