@@ -1,6 +1,6 @@
 import { useId, useRef, type ReactNode } from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import { ResultsHeadingContext } from "./resultsHeading";
+import { ResultsHeadingContext } from "../../Context/resultsHeading";
 
 type Props = {
   /** What was searched, for the heading "Results: <search>" (`fdaResultsLabel`, `nadacResultsLabel`). */

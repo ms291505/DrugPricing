@@ -146,7 +146,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   `tabTypeRegistry.ts` imports every page, so `library/tabType.ts` (types, default titles)
   imports no components. The workspace contexts and hooks are in `Context/workspaceContexts.ts`
   (null defaults that throw outside the provider), and `WorkspaceContext.tsx` exports only the
-  provider.
+  provider. Every context lives in `Context/`, even one with a single provider and reader
+  (`resultsHeading.ts`), so others can find and reuse it.
 - **A tab switch must not re-render hidden tabs.** The context is split into narrow hooks:
   `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every switch),
   `useMobileDrawer` (every tab tap on a phone), and `useWorkspaceActions` (stable). Code inside a

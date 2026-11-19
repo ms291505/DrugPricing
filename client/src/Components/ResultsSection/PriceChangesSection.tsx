@@ -16,7 +16,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import LineViz from "../Charts/LineViz";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
-import { ResultsHeadingContext } from "./resultsHeading";
+import { ResultsHeadingContext } from "../../Context/resultsHeading";
 
 type Props = {
   prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
