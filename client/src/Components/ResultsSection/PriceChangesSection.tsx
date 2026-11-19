@@ -183,7 +183,7 @@ function PriceEventGroupRow({ group, charts, compact, detailsOpen, onDetailsTogg
                   <Tooltip title={chartId ? "Close this chart" : "Chart this change"}>
                     <IconButton ref={button => onRegisterButton(key, button)} size="small"
                       aria-label={`${chartId ? "Close" : "Chart"} price change for ${event.packageNdc}`}
-                      aria-expanded={!!chartId} aria-controls={chartId} onClick={() => onToggleChart(group, event)}
+                      aria-expanded={!!chartId} aria-controls={chartId} onClick={click => { click.currentTarget.focus(); onToggleChart(group, event); }}
                       sx={{ ml: 0.5, color: chartId ? "primary.main" : "text.secondary", ...(compact ? { minWidth: 44, minHeight: 44 } : {}) }}>
                       <ShowChartIcon fontSize="small" />
                     </IconButton>
@@ -243,7 +243,7 @@ const EventChangeChart = memo(function EventChangeChart({ chart, origin, colors,
     <ExplorerGridItem title={title} headingLevel={3} headingRef={headingRef}
       actions={<><PinButton title={title} chartType="line" prices={chart.history} history={() => chart.history}
         origin={origin} colors={colors} dateWindow={dateWindow} eventDate={chart.group.date} />
-        <Button size="small" onClick={() => onClose(chart.key)}>Close</Button></>}>
+        <Button size="small" onClick={event => { event.currentTarget.focus(); onClose(chart.key); }}>Close</Button></>}>
       <LineViz nadacPrices={chart.history} title={title} colors={colors} dateWindow={dateWindow} seriesKind="package"
         eventDate={chart.group.date} />
     </ExplorerGridItem>

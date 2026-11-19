@@ -68,7 +68,8 @@ dotnet ef migrations add <Name>
 `src/App.tsx` (router, theme, React Query) · `src/api/` (calls; `types.ts` maps wire types to
 domain types, including date strings to `Date`) · `src/library/` (domain types and pure logic,
 unit tested) · `src/hooks/` · `src/Context/` (global and per-tab state; per-tab provider stacks
-in `TabProviders.tsx`) · `src/theme.ts` (every color; see Theme below) ·
+in `TabProviders.tsx`; every context lives here, even one with a single provider and reader such
+as `resultsHeading.ts`, so others can find and reuse it) · `src/theme.ts` (every color; see Theme below) ·
 `src/library/constants.ts`.
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
@@ -127,7 +128,8 @@ direction, each with its packages' old and new prices. Each package row has a Ch
 line-chart button that opens that package alone in its own unpinned ExplorerGridItem below the
 Notable price changes card, over the shown dates, with the change marked and the readout resting on it.
 The package chart stays open when Notable price changes is collapsed; Close returns focus to its button,
-or to the Notable price changes heading when that button is hidden. New prices discard open charts. A
+or to the Notable price changes heading when that button is hidden. New prices discard open charts; focus in a discarded chart goes to its
+button if shown, else the Notable price changes heading, else the results heading. A
 chart card has no event list and no Around this
 change. Live Compare cards start hidden and are never stored. New product
 pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
@@ -146,8 +148,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   `tabTypeRegistry.ts` imports every page, so `library/tabType.ts` (types, default titles)
   imports no components. The workspace contexts and hooks are in `Context/workspaceContexts.ts`
   (null defaults that throw outside the provider), and `WorkspaceContext.tsx` exports only the
-  provider. Every context lives in `Context/`, even one with a single provider and reader
-  (`resultsHeading.ts`), so others can find and reuse it.
+  provider.
 - **A tab switch must not re-render hidden tabs.** The context is split into narrow hooks:
   `useWorkspaceTabs`/`useWorkspaceTab(id)`, `useWorkspacePanes` (changes on every switch),
   `useMobileDrawer` (every tab tap on a phone), and `useWorkspaceActions` (stable). Code inside a
