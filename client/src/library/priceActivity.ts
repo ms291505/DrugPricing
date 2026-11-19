@@ -2,6 +2,7 @@ import { formatDate } from "./dates";
 import { fittedPriceAxis, formatPrice } from "./chartScale";
 import { flagPriceChanges, type PackagePrices } from "./flagNadacPriceChange";
 import { pricingUnitLabel, seriesByDate, splitByPricingUnit } from "./prices";
+import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import type { ChartPrice, NadacPriceChange } from "./types";
 import type { SeriesKind } from "./explorerItems";
 
@@ -27,8 +28,11 @@ export type PriceEventGroup = {
   events: PriceEvent[],
 };
 
-/** Compare packages, never product averages. Legacy product pins lack package identity. */
-export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind): PriceEvent[] {
+/**
+ * Package changes of at least `thresholdPercent`. Compare packages, never product averages.
+ * Legacy product pins lack package identity.
+ */
+export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind, thresholdPercent = 10): PriceEvent[] {
   const packages = new Map<string, { seriesNdc: string, packageNdc: string, prices: ChartPrice[] }>();
   for (const price of prices) {
     if (kind === "product" && !price.packageNdc) continue;
@@ -41,7 +45,7 @@ export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind): Price
     }
     pkg.prices.push({ ...price, ndc: packageNdc });
   }
-  return [...packages.values()].flatMap(pkg => flagPriceChanges([pkg]).map(({ priceChange }) => ({
+  return [...packages.values()].flatMap(pkg => flagPriceChanges([pkg], thresholdPercent).map(({ priceChange }) => ({
     seriesNdc: pkg.seriesNdc, packageNdc: pkg.packageNdc,
     pricingUnit: pkg.prices[0].pricingUnit, change: priceChange,
   })));
@@ -67,11 +71,16 @@ export function eventDates(change: NadacPriceChange): string {
     : `on ${formatDate(change.endDate.getTime())}`;
 }
 
+/** A change from $0, which has no percent: it is always a rise and meets every threshold. */
+const fromZero = (change: NadacPriceChange) => change.oldPrice === 0;
+
 export function priceEventGroupLabel(group: PriceEventGroup): string {
   const count = new Set(group.events.map(e => e.packageNdc)).size;
-  const percentages = group.events.map(e => Math.abs(e.change.percentage) * 100);
+  // Changes from $0 have no percent, so they stay out of the range.
+  const percentages = group.events.filter(e => !fromZero(e.change)).map(e => Math.abs(e.change.percentage) * 100);
   const min = Math.min(...percentages), max = Math.max(...percentages);
-  const percentText = Math.round(min) === Math.round(max) ? `about ${Math.round(max)}%` : `${min.toFixed(1)}–${max.toFixed(1)}%`;
+  const percentText = !percentages.length ? "from $0"
+    : Math.round(min) === Math.round(max) ? `about ${Math.round(max)}%` : `${min.toFixed(1)}–${max.toFixed(1)}%`;
   const start = Math.min(...group.events.map(e => e.change.startDate.getTime()));
   const dates = group.date - start > WEEK
     ? `between ${formatDate(start)} and ${formatDate(group.date)}` : `on ${formatDate(group.date)}`;
@@ -79,12 +88,14 @@ export function priceEventGroupLabel(group: PriceEventGroup): string {
 }
 
 export function eventLabel(change: NadacPriceChange): string {
+  if (fromZero(change)) return `Rose from $0 to ${formatPrice(change.newPrice)} ${eventDates(change)}`;
   const delta = Math.abs(change.newPrice - change.oldPrice);
   return `${change.percentage < 0 ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${eventDates(change)}`;
 }
 
 /** A package's change as signed figures for a group's package listing: "−43%", "−$4.17". */
 export function signedChange(change: NadacPriceChange): { percent: string, amount: string } {
+  if (fromZero(change)) return { percent: "from $0", amount: "+" + formatPrice(change.newPrice) };
   const sign = change.percentage < 0 ? "−" : "+";
   return { percent: sign + percent(change.percentage), amount: sign + formatPrice(Math.abs(change.newPrice - change.oldPrice)) };
 }
@@ -98,6 +109,16 @@ export function previousObservationNote(event: PriceEvent, group: PriceEventGrou
   if (event.change.endDate.getTime() - start <= WEEK) return null;
   if (group.events.every(e => e.change.startDate.getTime() === start)) return null;
   return `Previous price ${formatDate(start)}`;
+}
+
+export const SCAN_THRESHOLD_ERROR = `Enter a percent of ${PRICE_CHANGE_SCAN_MIN_PERCENT} or more, with at most one decimal.`;
+
+/** A scan's percent as typed: at least the minimum, at most one decimal place, no upper cap. */
+export function parseScanThreshold(text: string): { percent: number } | { error: string } {
+  const trimmed = text.trim();
+  if (!/^\d+(\.\d)?$/.test(trimmed)) return { error: SCAN_THRESHOLD_ERROR };
+  const percent = Number(trimmed);
+  return percent >= PRICE_CHANGE_SCAN_MIN_PERCENT ? { percent } : { error: SCAN_THRESHOLD_ERROR };
 }
 
 export type PriceActivity = {

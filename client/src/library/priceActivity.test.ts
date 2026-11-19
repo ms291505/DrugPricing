@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, previousObservationNote, productActivity, signedChange } from "./priceActivity";
+import { activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
@@ -119,5 +119,32 @@ describe("activity sparkline", () => {
     const prices = series([10, 5]); prices[1].asOfDate = new Date("2026-03-04");
     const [group] = groupPriceEvents(derivePriceEvents(prices, "package"));
     expect(priceEventGroupLabel(group)).toContain("between Jan 7, 2026 and Mar 4, 2026");
+  });
+});
+
+describe("scan thresholds", () => {
+  it("passes the threshold through to the events", () => {
+    expect(derivePriceEvents(series([10, 10.6]), "package")).toEqual([]);
+    expect(derivePriceEvents(series([10, 10.6]), "package", 5)).toHaveLength(1);
+    expect(derivePriceEvents(series([1, 0.9]), "package", 10)).toHaveLength(1);
+  });
+  it("labels a change from $0 without a percent", () => {
+    const events = derivePriceEvents(series([0, 1]), "package", 500);
+    expect(events).toHaveLength(1);
+    const [group] = groupPriceEvents(events);
+    expect(group.direction).toBe("rise");
+    const labels = [eventLabel(events[0].change), priceEventGroupLabel(group), ...Object.values(signedChange(events[0].change))];
+    expect(labels).toEqual(["Rose from $0 to $1.00 on Jan 14, 2026", "1 package rose from $0 on Jan 14, 2026 · per each", "from $0", "+$1.00"]);
+    for (const label of labels) expect(label).not.toMatch(/Infinity|NaN|%/);
+  });
+  it("leaves changes from $0 out of a group's percent range", () => {
+    const [group] = groupPriceEvents(derivePriceEvents([...series([0, 1]), ...series([10, 12], "B")], "package"));
+    expect(group.events).toHaveLength(2);
+    expect(priceEventGroupLabel(group)).toBe("2 packages rose about 20% on Jan 14, 2026 · per each");
+  });
+  it("accepts a percent of at least 5 with at most one decimal", () => {
+    expect(["5", "7.5", "150", " 10 "].map(parseScanThreshold)).toEqual([{ percent: 5 }, { percent: 7.5 }, { percent: 150 }, { percent: 10 }]);
+    for (const text of ["", "abc", "0", "-5", "4.9", "7.55", "Infinity", "1e2", "7."])
+      expect(parseScanThreshold(text)).toEqual({ error: "Enter a percent of 5 or more, with at most one decimal." });
   });
 });

@@ -6,7 +6,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, live Compare charts and price events) are derived from the
+- *System* items (the results table, live comparison charts and price events) are derived from the
   current search on every render and never stored.
 - *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
   (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
@@ -41,10 +41,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
-  `flagPriceChanges`. Live Compare controls appear directly below the results table. The conditional
+  `flagPriceChanges`. The live comparison controls (Chart latest prices, Chart price histories) appear directly below the results table. The conditional
   `PriceChangesSection` follows in the shared responsive grid as a half-width collapsible
   `ExplorerGridItem` system card, titled Notable price changes, derived from the current search and
-  never stored. Its open per-package event charts use the same half-width grid items as live Compare
+  never stored. Its open per-package event charts use the same half-width grid items as live comparison
   charts and pinned cards. It groups by date, pricing unit and direction, and shows five groups
   before Show all. Each group's Package details is a small table (NDC, was, now, change), open
   by default from the section's own `md` width up (`useWidthTier`); a group the user opens or
@@ -101,7 +101,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   chart with its unit. Unit charts share one date axis.
 - New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
   one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
-- Live Compare charts start hidden; the two Compare toggles show/hide them, retaining their
+- Live comparison charts start hidden; the Chart latest prices and Chart price histories toggles show/hide them, retaining their
   choice across searches while mounted, never in storage. They are gated on total **series**
   count, not price rows (`shouldAutoChart`), before splitting into one card per pricing unit.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over

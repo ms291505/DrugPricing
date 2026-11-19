@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button, Grid, Stack, Typography } from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 import BarViz from "../Charts/BarViz";
 import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
@@ -38,11 +40,11 @@ export default function AutoCharts({ prices, history, origin, colors, dateWindow
     <Grid size={12}>
       <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center" }}>
         <Button size="small" variant={showLatest ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showLatest}
-          onClick={() => setShowLatest(value => !value)}>Compare latest prices</Button>
+          startIcon={<BarChartIcon />} onClick={() => setShowLatest(value => !value)}>Chart latest prices</Button>
         <Button size="small" variant={showHistory ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showHistory}
-          onClick={() => setShowHistory(value => !value)}>Compare price histories</Button>
+          startIcon={<ShowChartIcon />} onClick={() => setShowHistory(value => !value)}>Chart price histories</Button>
         {!canCompare && <Typography variant="body2" color="text.secondary">
-          Compare up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
+          Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
         </Typography>}
       </Stack>
     </Grid>

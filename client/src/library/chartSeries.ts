@@ -6,7 +6,7 @@ export function countSeries(nadacPrices: ChartPrice[]): number {
   return new Set(nadacPrices.map(price => price.ndc)).size;
 }
 
-/** Whether a result can show live Compare charts: at least one series, and not too many to read. */
+/** Whether a result can show live comparison charts: at least one series, and not too many to read. */
 export function shouldAutoChart(nadacPrices: ChartPrice[]): boolean {
   const seriesCount = countSeries(nadacPrices);
   return seriesCount > 0 && seriesCount <= MAX_AUTO_CHART_SERIES;

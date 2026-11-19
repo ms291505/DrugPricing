@@ -21,8 +21,12 @@ export const CONSTANT = {
 
 export const SMALL_SPACING = 1;
 
-/** Live Compare charts are offered only when they would show this many series (NDCs) or fewer. */
+/** Live comparison charts are offered only when they would show this many series (NDCs) or fewer. */
 export const MAX_AUTO_CHART_SERIES = 8;
+/** The lowest percent a price change scan accepts: lower lists cover most of a result. */
+export const PRICE_CHANGE_SCAN_MIN_PERCENT = 5;
+/** The scan field's starting percent, the same as the automatic Notable price changes card. */
+export const PRICE_CHANGE_SCAN_DEFAULT_PERCENT = 10;
 /** Grid size of a half-width chart card on both search pages: full width below `md`. */
 export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };
 

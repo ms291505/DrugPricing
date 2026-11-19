@@ -120,9 +120,9 @@ source identifier.
 
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates,
 using a rounded 5% range cutoff and 10% significant steps. Products use their packages' states,
-not an averaged line; only package rows have sparklines. Live Compare controls sit directly below
+not an averaged line; only package rows have sparklines. The live comparison controls (Chart latest prices, Chart price histories) sit directly below
 the results table. The conditional Notable price changes card and open package event charts share
-the responsive half-width grid with live Compare charts. Notable price changes is a collapsible,
+the responsive half-width grid with live comparison charts. Notable price changes is a collapsible,
 derived ExplorerGridItem system card, never stored; its event list groups by date, unit and
 direction, each with its packages' old and new prices. Each package row has a Chart this change
 line-chart button that opens that package alone in its own unpinned ExplorerGridItem below the
@@ -131,7 +131,7 @@ The package chart stays open when Notable price changes is collapsed; Close retu
 or to the Notable price changes heading when that button is hidden. New prices discard open charts; focus in a discarded chart goes to its
 button if shown, else the Notable price changes heading, else the results heading. A
 chart card has no event list and no Around this
-change. Live Compare cards start hidden and are never stored. New product
+change. Live comparison cards start hidden and are never stored. New product
 pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
 
 ### Workspace
