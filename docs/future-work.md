@@ -55,6 +55,12 @@ Size: medium. One PR, or two (database + server, then client).
   `> 0.05` compares $/each with $/mL (`ResultTables/priceColumns.tsx`). Sorting already groups by
   unit (`compareUnitPrices`). Make the filters unit-aware (a custom filter operator that also
   picks the unit), or set `filterable: false` on the three price columns.
+- **Restyle the focus outline on headings that take focus from code.** Card headings
+  (`ExplorerGridItem`) and the results heading (`ResultsSection`) are out of the tab order but
+  take focus when a package event chart opens or closes, so keyboard and screen-reader users land
+  in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
+  doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
+  corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.
 - **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 

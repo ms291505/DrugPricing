@@ -28,7 +28,7 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
         display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 1, px: { xs: 1, md: 0 },
       }}>
         <Typography component="h2" variant="h6" id={headingId} tabIndex={-1} sx={{
-          mr: "auto", minWidth: 0, overflowWrap: "anywhere", "&:focus": { outline: "none" },
+          mr: "auto", minWidth: 0, overflowWrap: "anywhere", "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
         }}>
           Results: {searchLabel}
         </Typography>
