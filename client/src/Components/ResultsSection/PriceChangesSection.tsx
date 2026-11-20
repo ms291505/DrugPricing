@@ -20,7 +20,7 @@ import PriceChangeListBody from "./PriceChangeListBody";
 
 type Props = {
   /** The page's package prices as shown. A new array (new search, dates or filters) closes every scan and chart. */
-  prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
+  prices: ChartPrice[], loadedPrices: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
   /** The dates the page shows: the window of a change's chart. */
   dateWindow: DateWindow,
   /** From `usePriceChangeScans`. */
@@ -46,7 +46,7 @@ const byPosition = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOC
  * nothing when there is no card and no chart.
  */
 export default function PriceChangesSection({
-  prices, history, origin, colors, dateWindow, autoClosed, onCloseAuto, scans, onCloseScan,
+  prices, loadedPrices, origin, colors, dateWindow, autoClosed, onCloseAuto, scans, onCloseScan,
 }: Props) {
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
@@ -97,11 +97,11 @@ export default function PriceChangesSection({
         // One id per change, whichever list opened it. Event keys hold no whitespace.
         key, cardId: `${sectionId}-${key}`, openerId: listId, eventDate: group.date,
         title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
-        prices: history().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
+        prices: loadedPrices().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
       });
       return next;
     });
-  }, [history, sectionId]);
+  }, [loadedPrices, sectionId]);
   const closeChart = useCallback((key: string) => setCharts(prev => {
     const next = new Map(prev);
     next.delete(key);

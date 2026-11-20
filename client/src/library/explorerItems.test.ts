@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canDrillDownToPackages, chartDataBounds, createChartItem, createChartItems, createPriceChangeListItem, fitsPinLimit,
   formatItemSource, isScaleMatched, matchedPriceRange, packageLevelView, priceChangeListGroups, samePriceRanges,
-  withLoadedHistory, type ChartItem, type ChartOrigin, type ExplorerItem,
+  withLoadedDates, type ChartItem, type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { chartTitle, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
@@ -78,19 +78,19 @@ describe("createChartItem provenance", () => {
   });
 });
 
-describe("withLoadedHistory", () => {
+describe("withLoadedDates", () => {
   const shown = (prices: ChartPrice[]) => prices.filter(price => price.asOfDate.getTime() >= day("2025-03-01"));
 
   it("takes every loaded date of the chart's series, and no other series", () => {
-    const history = [...packageA1, ...productB, ...series("B", 5, "mL")];
-    expect(withLoadedHistory(shown(productB), history)).toEqual(productB);
-    expect(withLoadedHistory(shown([...packageA1, ...productB]), history)).toEqual([...packageA1, ...productB]);
+    const loaded = [...packageA1, ...productB, ...series("B", 5, "mL")];
+    expect(withLoadedDates(shown(productB), loaded)).toEqual(productB);
+    expect(withLoadedDates(shown([...packageA1, ...productB]), loaded)).toEqual([...packageA1, ...productB]);
   });
 
   it("makes a chart of a narrowed search unfiltered, as one made after a fetch would be", () => {
     const narrowed = make(shown(productB), { start: day("2025-03-01"), end: null });
     expect(narrowed.source.filtered).toBe(true);
-    const item = make(withLoadedHistory(shown(productB), result), { start: day("2025-03-01"), end: null });
+    const item = make(withLoadedDates(shown(productB), result), { start: day("2025-03-01"), end: null });
     expect(item.source.filtered).toBe(false);
     expect(item.series[0].points).toHaveLength(DATES.length);
   });

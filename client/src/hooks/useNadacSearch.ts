@@ -27,9 +27,9 @@ export type NadacResultView = {
   hidden: HiddenCounts,
   /**
    * The refined result over every loaded date, computed when called: what a new chart takes its
-   * series' history from (`withLoadedHistory`).
+   * series' loaded dates from (`withLoadedDates`).
    */
-  history: () => NadacPrice[],
+  loadedPrices: () => NadacPrice[],
 };
 
 /** The tab's loaded NADAC result: everything `loaded` asked for, before it's clipped or refined. */
@@ -60,7 +60,7 @@ export function useRefinedNadacSearch(): NadacResultView {
       dateWindow: snapToAsOfDates(dates, prices),
       options: nadacFilterOptions(prices, criteria, dates),
       hidden: nadacHiddenCounts(prices, refined, criteria, dates),
-      history: () => refineNadac(prices, criteria, FULL_WINDOW),
+      loadedPrices: () => refineNadac(prices, criteria, FULL_WINDOW),
     };
   }, [prices, criteria, dates]);
 }

@@ -21,8 +21,8 @@ import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
 type Props = {
   /** The page's result as shown, at the series level the charts draw. */
   prices: ChartPrice[],
-  /** The view's `history` at the same level, for pins. */
-  history: () => ChartPrice[],
+  /** The view's `loadedPrices` at the same level, for pins. */
+  loadedPrices: () => ChartPrice[],
   origin: ChartOrigin,
   colors: Map<string, string>,
   /** The dates shown (the view's `dateWindow`). */
@@ -40,7 +40,7 @@ type ScanProps = {
  * Opt-in live comparisons. Toggle choices survive searches while mounted, but are never saved.
  * The total series cap applies before splitting into one card per pricing unit.
  */
-export default function AutoCharts({ prices, history, origin, colors, dateWindow, onScan, scanMessage }: Props & ScanProps) {
+export default function AutoCharts({ prices, loadedPrices, origin, colors, dateWindow, onScan, scanMessage }: Props & ScanProps) {
   const [showLatest, setShowLatest] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
@@ -62,7 +62,7 @@ export default function AutoCharts({ prices, history, origin, colors, dateWindow
       </Grid>
       {canCompare && groups.map(group => (
         <UnitAutoCharts key={group.pricingUnit}
-          prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+          prices={group.nadacPrices} loadedPrices={loadedPrices} origin={origin} colors={colors} dateWindow={dateWindow}
           unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
           showLatest={showLatest} showHistory={showHistory}
         />
@@ -131,7 +131,7 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
   );
 }
 
-function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffix, showLatest, showHistory }: Props & { unitSuffix: string, showLatest: boolean, showHistory: boolean }) {
+function UnitAutoCharts({ prices, loadedPrices, origin, colors, dateWindow, unitSuffix, showLatest, showHistory }: Props & { unitSuffix: string, showLatest: boolean, showHistory: boolean }) {
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
   const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
@@ -145,7 +145,7 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
           title={barTitle}
           subtitle={subtitle}
           actions={<PinButton
-            title={barTitle} chartType="bar" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
+            title={barTitle} chartType="bar" prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
             colors={colors} barValue={barValue}
           />}
         >
@@ -164,7 +164,7 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
           title={lineTitle}
           subtitle={subtitle}
           actions={<PinButton
-            title={lineTitle} chartType="line" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
+            title={lineTitle} chartType="line" prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
             colors={colors}
           />}
         >

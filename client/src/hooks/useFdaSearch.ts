@@ -51,9 +51,9 @@ export type FdaResultView = {
   hidden: HiddenCounts,
   /**
    * The refined result over every loaded date at a level, computed when called: what a new chart
-   * takes its series' history from (`withLoadedHistory`).
+   * takes its series' loaded dates from (`withLoadedDates`).
    */
-  history: (level: FdaResultDetailLevel) => NadacPrice[],
+  loadedPrices: (level: FdaResultDetailLevel) => NadacPrice[],
 };
 
 /**
@@ -75,7 +75,7 @@ export function useRefinedFdaSearch(): FdaResultView {
       products: refined.products,
       dateWindow: fdaShownDates(result, dates),
       options: fdaFilterOptions(result, criteria, dates),
-      history: (level: FdaResultDetailLevel) =>
+      loadedPrices: (level: FdaResultDetailLevel) =>
         fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW).products, level),
     };
   }, [data, criteria, dates]);

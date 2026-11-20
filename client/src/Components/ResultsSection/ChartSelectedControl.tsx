@@ -4,7 +4,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import SsidChartIcon from "@mui/icons-material/SsidChart";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
-import { createChartItems, withLoadedHistory, type ChartOrigin, type ChartType } from "../../library/explorerItems";
+import { createChartItems, withLoadedDates, type ChartOrigin, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
 import type { DateWindow } from "../../library/dates";
 import type { ChartPrice } from "../../library/types";
@@ -12,8 +12,8 @@ import type { ChartPrice } from "../../library/types";
 type Props = {
   /** The page's result as shown, at the table's level: a row's id is its prices' `ndc`. */
   prices: ChartPrice[],
-  /** The view's `history` at the table's level: the chart keeps every loaded date of its series. */
-  history: () => ChartPrice[],
+  /** The view's `loadedPrices` at the table's level: the chart keeps every loaded date of its series. */
+  loadedPrices: () => ChartPrice[],
   selection: GridRowSelectionModel,
   origin: ChartOrigin,
   /** The dates the new chart starts with: the search's. */
@@ -22,7 +22,7 @@ type Props = {
 };
 
 /** Charts the table's selected rows as a new pinned line or bar chart, which then stays as it is. */
-export default function ChartSelectedControl({ prices, history, selection, origin, dateWindow, colors }: Props) {
+export default function ChartSelectedControl({ prices, loadedPrices, selection, origin, dateWindow, colors }: Props) {
   const { addItems } = usePinActions();
   const count = selection.ids.size;
 
@@ -32,7 +32,7 @@ export default function ChartSelectedControl({ prices, history, selection, origi
     if (chartPrices.length === 0) return;
     const items = createChartItems({
       chartType,
-      prices: withLoadedHistory(chartPrices, history()),
+      prices: withLoadedDates(chartPrices, loadedPrices()),
       defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartPrices)),
       origin,
       dateWindow,
