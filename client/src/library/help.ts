@@ -16,7 +16,7 @@ const TOPICS = [
   { id: "filters-and-hidden-results", title: "Filters and hidden results", group: "Using the app", keywords: "missing empty otc sample include", related: ["searching", "dates", "troubleshooting"] },
   { id: "the-results-table", title: "The results table", group: "Using the app", keywords: "latest price mixed units product package", related: ["what-the-prices-mean", "ndcs-products-and-packages", "charts"] },
   { id: "charts", title: "Charts", group: "Using the app", keywords: "line bar shaded band range readout legend csv", related: ["the-results-table", "pinning-and-comparing", "keyboard-and-screen-readers"] },
-  { id: "price-changes", title: "Price changes", group: "Using the app", keywords: "flag drop rise", related: ["five-ways-a-price-can-mislead", "dates", "charts"] },
+  { id: "price-changes", title: "Price changes", group: "Using the app", keywords: "flag drop rise scan threshold", related: ["five-ways-a-price-can-mislead", "dates", "charts"] },
   { id: "pinning-and-comparing", title: "Pinning and comparing", group: "Using the app", keywords: "pin snapshot match scale", related: ["charts", "tabs-and-your-saved-workspace"] },
   { id: "tabs-and-your-saved-workspace", title: "Tabs and your saved workspace", group: "Using the app", keywords: "storage browser clear", related: ["pinning-and-comparing", "troubleshooting"] },
   { id: "settings", title: "Settings", group: "Using the app", keywords: "theme dark light", related: ["charts"] },

@@ -4,6 +4,7 @@ import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch
 import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
+import usePriceChangeScans from "../../hooks/usePriceChangeScans";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { clearNadacRefine, hiddenResultsHint, nadacResultsLabel, showAllNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
@@ -33,6 +34,7 @@ export default memo(function NadacResults({ view }: Props) {
   // Live comparisons show the whole refined result, so it is also the visible set.
   const colors = useSeriesColors(origin.resultPrices, prices);
   const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
+  const scans = usePriceChangeScans(prices);
 
   if (loaded === null) return null;
 
@@ -53,10 +55,12 @@ export default memo(function NadacResults({ view }: Props) {
             : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
         />
         : null}
-      priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow} />}
+      priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+        autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
       table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
     >
-      <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow} />
+      <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+        onScan={scans.runScan} scanMessage={scans.emptyMessage} onScanInputChange={scans.clearEmptyMessage} />
     </ResultsSection>
   </>);
 });

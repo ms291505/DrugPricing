@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  canDrillDownToPackages, chartDataBounds, createChartItem, createChartItems, formatItemSource, isScaleMatched, matchedPriceRange, packageLevelView, samePriceRanges, withLoadedHistory,
-  type ChartOrigin, type ExplorerItem,
+  canDrillDownToPackages, chartDataBounds, createChartItem, createChartItems, createPriceChangeListItem, fitsPinLimit,
+  formatItemSource, isScaleMatched, matchedPriceRange, packageLevelView, priceChangeListGroups, samePriceRanges,
+  withLoadedHistory, type ChartItem, type ChartOrigin, type ExplorerItem,
 } from "./explorerItems";
 import { chartTitle, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
+import { derivePriceEvents, groupPriceEvents } from "./priceActivity";
+import { PRICE_CHANGE_LIST_PIN_LIMIT } from "./constants";
 import type { ChartPrice } from "./types";
 
 const DATES = ["2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01"];
@@ -94,7 +97,7 @@ describe("withLoadedHistory", () => {
 });
 
 describe("matchedPriceRange", () => {
-  const matched = (item: ExplorerItem): ExplorerItem => ({ ...item, matchScale: true });
+  const matched = (item: ChartItem): ChartItem => ({ ...item, matchScale: true });
   const lineA = matched(make(packageA1));
   const lineB = matched(make(productB, { start: day("2025-03-01"), end: null }));
   const mL = matched(make(series("C", 300, "milliliter")));
@@ -222,3 +225,60 @@ describe("pinned product package drilldown", () => {
     expect(packageLevelView(partial)).toBeNull();
   });
 });
+
+describe("price change lists", () => {
+  // Package prices over four weeks: A drops 20% then rises 25% (two groups); B only rises 10% in
+  // grams; C never changes; D drops 6%.
+  const week = (i: number) => new Date(Date.parse("2026-01-07") + i * 7 * 86400000);
+  const pkg = (ndc: string, values: number[], pricingUnit = "each"): ChartPrice[] =>
+    values.map((nadacPerUnit, i) => ({ ndc, ndcDescription: `Drug ${ndc}`, pricingUnit, nadacPerUnit, asOfDate: week(i) }));
+  const prices = [...pkg("A", [10, 8, 8, 10]), ...pkg("B", [10, 10, 11, 11], "gram"), ...pkg("C", [5, 5, 5, 5]), ...pkg("D", [10, 9.4, 9.4, 9.4])];
+  const listOrigin: ChartOrigin = { searchSource: "nadac", searchLabel: "metformin", seriesKind: "ndc", resultPrices: prices };
+  const dateWindow = { start: week(0).getTime(), end: week(3).getTime() };
+  const make = (thresholdPercent: number, shown = prices) => {
+    const groups = groupPriceEvents(derivePriceEvents(shown, "package", thresholdPercent));
+    const item = createPriceChangeListItem({ prices: shown, groups, thresholdPercent, defaultTitle: "List", origin: listOrigin, dateWindow });
+    return { groups, item };
+  };
+
+  it("stores one history per listed package and unit, even when a package is in two groups", () => {
+    const { groups, item } = make(10);
+    expect(groups.filter(group => group.events.some(event => event.packageNdc === "A"))).toHaveLength(2);
+    expect(item.histories.map(history => [history.ndc, history.unit, history.points.length])).toEqual([["A", "each", 4], ["B", "gram", 4]]);
+    expect(item.source).toEqual({ searchSource: "nadac", searchLabel: "metformin", seriesKind: "ndc", seriesCount: 2, resultSeriesCount: 4, filtered: false });
+  });
+
+  it("derives the same groups from its stored histories as the live list it came from", () => {
+    for (const threshold of [5, 10, 25]) {
+      const { groups, item } = make(threshold);
+      expect(priceChangeListGroups(item)).toEqual(groups);
+    }
+  });
+
+  it("is filtered only when the page dropped some of a listed package's shown prices", () => {
+    expect(make(10).item.source.filtered).toBe(false);
+    expect(make(10, prices.filter(price => !(price.ndc === "A" && price.asOfDate.getTime() === week(1).getTime()))).item.source.filtered).toBe(true);
+    // Dropping a package it doesn't list isn't a filter on the list.
+    expect(make(10, prices.filter(price => price.ndc !== "C")).item.source.filtered).toBe(false);
+  });
+
+  it("is ignored by Match scale", () => {
+    const { item } = make(10);
+    expect(isScaleMatched(item)).toBe(false);
+    expect(matchedPriceRange([item]).size).toBe(0);
+  });
+
+  it("fits the pin limit unless its JSON is too long", () => {
+    const { item } = make(10);
+    expect(fitsPinLimit(item)).toBe(true);
+    const label = "x".repeat(PRICE_CHANGE_LIST_PIN_LIMIT);
+    expect(fitsPinLimit({ ...item, histories: [{ ...item.histories[0], label }] })).toBe(false);
+  });
+
+  it("keeps a pinned item's source for a chart made from it, recounting only its series", () => {
+    const source = { ...make(10).item.source, filtered: true };
+    const chart = createChartItem({ chartType: "line", prices: pkg("A", [10, 8]), defaultTitle: "A", origin: { ...listOrigin, resultPrices: [] }, dateWindow, source });
+    expect(chart.source).toEqual({ ...source, seriesCount: 1 });
+  });
+});
+

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_COLUMN_OVERRIDES, columnVisibilityModel, columnOverridesFromModel, RESULT_SELECTION_FIELD } from "./settings";
 import { FULL_WINDOW } from "./dates";
+import type { ChartItem, ExplorerItem } from "./explorerItems";
 import { DEFAULT_FDA_DETAIL_LEVEL } from "./types";
 import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
@@ -38,6 +39,11 @@ function loaded<T>(state: T | null): T {
   expect(state).not.toBeNull();
   return state as T;
 }
+
+const asChart = (item: ExplorerItem): ChartItem => {
+  if (item.kind !== "chart") throw new Error(`Expected a chart, got ${item.kind}`);
+  return item;
+};
 
 /** Writes a tab's raw payload, for data the app itself would never save. */
 const saveRaw = (tabId: string, data: unknown) =>
@@ -102,7 +108,7 @@ describe("loading saved tab state", () => {
     saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [oldItem] });
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
-    expect(state.pinnedItems[0].matchScale).toBeUndefined();
+    expect(asChart(state.pinnedItems[0]).matchScale).toBeUndefined();
   });
 
   it("round-trips partial package identities without discarding the pin", () => {
@@ -112,7 +118,7 @@ describe("loading saved tab state", () => {
     } as Parameters<Persist["saveTabState"]>[1]["pinnedItems"][number];
     persist.saveTabState("partial", { type: "fda", criteria: createFdaCriteria(), detailLevel: "package", pinnedItems: [partialPin] });
     const restored = loaded(persist.loadFdaTabState("partial")).pinnedItems[0];
-    expect(restored.series[0].packageNdcs).toEqual(["PKG1", null]);
+    expect(asChart(restored).series[0].packageNdcs).toEqual(["PKG1", null]);
   });
 
   it("restores explicit search sources and drops only an invalid source field", () => {
@@ -130,6 +136,43 @@ describe("loading saved tab state", () => {
     expect(items[1].source.searchSource).toBeUndefined();
     expect(items[1].source.searchLabel).toBe("humira");
     expect(items[2].source.searchSource).toBeUndefined();
+  });
+
+  describe("pinned price change lists", () => {
+    const list = {
+      kind: "price-change-list", id: "list", defaultTitle: "Metformin: price changes of 7.5% or more", createdAt: 1,
+      layout: { width: "half" }, collapsed: false, thresholdPercent: 7.5, dateWindow: { start: 1, end: 3 },
+      histories: [{ ndc: "A", label: "Drug A", unit: "each", points: [[1, 10], [2, 8]], color: "#123456" }],
+      source: { searchSource: "nadac", searchLabel: "metformin", seriesKind: "ndc", seriesCount: 1, resultSeriesCount: 4, filtered: false },
+    };
+
+    it("round-trips a list", () => {
+      const state = { type: "nadac", criteria: nadacCriteria, pinnedItems: [list] } as Parameters<Persist["saveTabState"]>[1];
+      persist.saveTabState("lists", state);
+      expect(loaded(persist.loadNadacTabState("lists")).pinnedItems).toEqual([list]);
+    });
+
+    it("drops an invalid list and keeps the pins beside it", () => {
+      const bad = [
+        { ...list, id: "low", thresholdPercent: 4 },
+        { ...list, id: "decimals", thresholdPercent: 7.55 },
+        { ...list, id: "empty", histories: [] },
+        { ...list, id: "point", histories: [{ ...list.histories[0], points: [[1, "8"]] }] },
+        { ...list, id: "dates", dateWindow: undefined },
+      ];
+      saveRaw("bad-lists", { type: "nadac", criteria: nadacCriteria, pinnedItems: [...bad, oldItem, list] });
+      expect(loaded(persist.loadNadacTabState("bad-lists")).pinnedItems.map(item => item.id)).toEqual(["i1", "list"]);
+    });
+
+    it("loads a list without a search source with it unknown, and drops an invalid one", () => {
+      const { searchSource: _, ...noSource } = list.source;
+      saveRaw("list-source", { type: "nadac", criteria: nadacCriteria, pinnedItems: [
+        { ...list, id: "missing", source: noSource },
+        { ...list, id: "invalid", source: { ...list.source, searchSource: "legacy" } },
+      ] });
+      const items = loaded(persist.loadNadacTabState("list-source")).pinnedItems;
+      expect(items.map(item => [item.id, item.source.searchSource])).toEqual([["missing", undefined], ["invalid", undefined]]);
+    });
   });
 
   it("defaults a missing or invalid detail level to packages and keeps a saved one", () => {

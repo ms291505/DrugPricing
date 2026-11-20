@@ -65,16 +65,22 @@ export function useRefinedFdaSearch(): FdaResultView {
   const { data } = useFdaSearch();
   const { criteria, requested, fdaResultDetailLevel } = useFdaSearchContext();
   const dates = requested?.dates ?? FULL_WINDOW;
-  return useMemo(() => {
+  // Everything but the hidden counts is the same at both detail levels. Keeping it, `products`
+  // included, across a level switch keeps what reads its identity (price change scans and charts).
+  const view = useMemo(() => {
     const result = data ?? { products: EMPTY_PRODUCTS };
     const refined = refineFda(result, criteria, dates);
     return {
+      result, refined,
       products: refined.products,
       dateWindow: fdaShownDates(result, dates),
       options: fdaFilterOptions(result, criteria, dates),
-      hidden: fdaHiddenCounts(result, refined, criteria, dates, fdaResultDetailLevel),
       history: (level: FdaResultDetailLevel) =>
         fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW).products, level),
     };
-  }, [data, criteria, dates, fdaResultDetailLevel]);
+  }, [data, criteria, dates]);
+  return useMemo(() => {
+    const { result, refined, ...shown } = view;
+    return { ...shown, hidden: fdaHiddenCounts(result, refined, criteria, dates, fdaResultDetailLevel) };
+  }, [view, criteria, dates, fdaResultDetailLevel]);
 }

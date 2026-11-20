@@ -32,6 +32,11 @@ export const NOTABLE_PRICE_CHANGE_PERCENT = 10;
 export const PRICE_CHANGE_SCAN_MIN_PERCENT = 5;
 /** The scan field's starting percent. */
 export const PRICE_CHANGE_SCAN_DEFAULT_PERCENT = NOTABLE_PRICE_CHANGE_PERCENT;
+/**
+ * The most characters (`JSON.stringify`) a pinned price change list may take. Lists are stored in
+ * `localStorage` with the tab; a bigger one isn't pinned, never truncated.
+ */
+export const PRICE_CHANGE_LIST_PIN_LIMIT = 500_000;
 /** Grid size of a half-width chart card on both search pages: full width below `md`. */
 export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };
 
