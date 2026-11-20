@@ -11,11 +11,25 @@ they fit. When something is done, delete it here. The code and its PR are the re
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
 Description, FDA Brand name and FDA Generic name fields, including likely corrections of
 misspellings ("eliqus" → ELIQUIS) under "Did you mean". Picking one fills the field; Search
-still runs the search. Built on pg_trgm: a materialized view of FDA names (refreshed by both ETL
-paths) and the existing trigram index on `DrugPackages`, served by two `suggest` endpoints.
-Labeler, dosage form and route fields are out of scope.
+still runs the search, and suggestions follow the page's Include boxes (OTC, results without
+prices). Built on pg_trgm: one materialized view of NADAC descriptions and FDA brand and
+generic names (refreshed by both ETL paths), served by one `suggestions` endpoint. Labeler,
+dosage form and route fields are out of scope.
 
 Size: medium. One PR, or two (database + server, then client).
+
+Left out of the plan, to revisit once it ships:
+
+- **The 5-character search minimum blocks short names.** 17 priced brand names (YAZ, SOMA,
+  AZOR, ONFI, ELLA…) and the generic urea can't be searched on their own, so suggestions leave
+  them out. `LikePattern` now stops `_____` matching everything, which was the minimum's first
+  reason; the other is result size, which 5 characters doesn't bound well either ("phate").
+  Decide whether a picked suggestion, or 3 characters, may search. Both servers and
+  `library/constants.ts` hold the minimum.
+- **Suggest the drug word** ("ELIQUIS") rather than a full strength description, if
+  suggestions that narrow to one strength turn out to confuse users.
+- **Narrow one FDA field's suggestions by the other's draft**, if Brand + Generic searches
+  built from independent suggestions often land on nothing.
 
 ### Block searches for generic terms like "tablet" (2026-11-16)
 
@@ -121,6 +135,15 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
   doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
   corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.
+- **NADAC description search misses an NDC's current name.** `update_drug_package` inserts
+  with `ON CONFLICT ("Ndc") DO NOTHING`, so `DrugPackages` keeps the first description an NDC
+  was loaded with, while results show the latest. On dev (2026-11-16), 234 NDCs differ, and 37
+  latest names (22 Rx) aren't contained in any stored name: "AJOVY 225 MG/1.5 ML AUTOINJECTOR
+  (3 PACK)" is stored as "AJOVY 225 MG/1.5 ML AUTOINJECT", so typing the name the table shows
+  finds nothing. Either update the stored description to the latest, or search every
+  description an NDC has had. Either way it changes what typed searches find. Autocomplete's
+  view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
+  follows the fix with no change of its own. Small.
 - **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
   and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
 
