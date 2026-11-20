@@ -1,4 +1,4 @@
-# Price-change scans and pinned event lists
+# Price change scans and pinned event lists
 
 Status: implemented (2026-11-20): steps 1–2 in #58, steps 3–7 in #59. The plan predates #57, so
 where it names code, those PRs follow the code instead; their descriptions list each departure.

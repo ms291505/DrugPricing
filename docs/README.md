@@ -16,7 +16,7 @@ Start with the [project README](../README.md) for setup and architecture, and
 - [Search filters](plans/search-filters.md): design and implementation record for the shared
   search criteria and filtering experience.
 - [Autocomplete](plans/autocomplete.md): planned search suggestions and spelling corrections.
-- [Price-change scans](plans/price-change-scans.md): implementation record for percent scans of
+- [Price change scans](plans/price-change-scans.md): implementation record for percent scans of
   package price changes, closable and pinnable event lists.
 - [Observability](plans/observability.md): proposed self-hosted monitoring.
 

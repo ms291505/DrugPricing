@@ -1,9 +1,7 @@
 # Browser usability cleanup
 
-Status: steps 1–2 done in #57. #59 (price change scans) has since reworked the price changes
-components, so step 3's line numbers are stale. `eventKey` now has a single copy, private to
-`Components/ResultsSection/PriceChangeListBody.tsx`; moving it to `library/priceActivity.ts`
-with a test is still to do.
+Status: steps 1–2 done in #57. #59 (price change scans) has since changed code that steps 3 and
+5 name; both steps below are corrected for it, but their line numbers are stale.
 
 ## Context
 
@@ -79,20 +77,22 @@ Files: same as step 1.
 ### 3. One source of truth for price events
 
 Files: `library/priceActivity.ts`, `library/flagNadacPriceChange.ts`,
-`Components/ResultsSection/PriceChangesSection.tsx`, `PriceEventsList.tsx`.
+`Components/ResultsSection/PriceChangeListBody.tsx`.
 
-- Move `eventKey` (copied verbatim at `PriceChangesSection.tsx:155` and `PriceEventsList.tsx:144`)
-  into `library/priceActivity.ts` and test it. If the two copies drift, chart buttons stop
-  matching their charts.
+- Move `eventKey` (one copy since #59, private to `PriceChangeListBody.tsx`) into
+  `library/priceActivity.ts` and test it. Every list's chart buttons, in the results and under
+  Pinned, find their charts by it.
 - Write the "between X and Y / on X" wording once; `eventDates` and `priceEventGroupLabel`
   both build it today. Stop exporting `eventDates` (used only inside the file).
 - Split by unit once. `derivePriceEvents` groups by NDC, package and unit, then rewrites each
   price's `ndc` just to pass `flagPriceChanges`'s mixed-NDC check. `flagPriceChanges` then splits
   by unit again and checks for mixed NDCs, as does `flagPackagePriceChanges` inside it. Give the
   event code a function that takes one package's single-unit series and skips the checks.
-- **Bug:** a first price of $0 makes `packageActivity`'s `net` and `range` `Infinity`, so a label
-  can read "Infinity%" (`priceActivity.ts:118, 128`). Treat it as insufficient history (or skip
-  percent) and add a test. Unlikely with NADAC data, but cheap to close.
+- **Bug:** a first price of $0 makes `packageActivity`'s `range` and `net` `Infinity`, so a label
+  can read "Infinity%" (`priceActivity.ts:141, 151`). AGENTS.md now says a change from $0 never
+  reads as a percent: use #58's `fromZero` helper (`priceActivity.ts:75`) so Price Activity and
+  the event labels treat $0 the same way, and add a test. Unlikely with NADAC data, but cheap to
+  close.
 
 ### 4. Simplify change marking in line charts
 
@@ -122,16 +122,17 @@ Files: `Components/ExplorerGrid/PinButton.tsx`, `PinnedItemCard.tsx`,
   filters by unit), so it only ever makes one chart. Keep the toast in `ChartSelectedControl`,
   where it can show, and put its text in one place if anything else needs it.
 - In `PinnedItemCard`, drop the `seriesKind === "product"` check that `canDrillDownToPackages`
-  already makes, and the `item.kind === "chart"` checks (every `ExplorerItem` is a chart). In
-  `explorerItems.ts`, drop `packageLevelView`'s `if (!packageNdc) return;`, which
-  `canDrillDownToPackages` already rules out.
+  already makes. Keep its `item.kind === "chart"` checks: since #59 an `ExplorerItem` can also be
+  a `PriceChangeListItem`. In `explorerItems.ts`, drop `packageLevelView`'s
+  `if (!packageNdc) return;`, which `canDrillDownToPackages` already rules out.
 - Make the product/package switch discoverable. Today it is a click on the summary chip
   ("Products · 2 of 7 · from …"), which looks like a label, and the card now shows two chips
   side by side. Use an explicit toggle or button. This is a small UX decision for the author.
 - Use one type for `"fda" | "nadac"`: `ChartSearchSource` (`explorerItems.ts:20`) and
   `SearchSource` (`persist.ts`) are the same thing.
-- Rewrite `validItems`' source cleanup (`persist.ts:156-166`: copy, delete `searchSource`,
-  re-add if valid, two casts) as one expression.
+- Rewrite `validItems`' source cleanup (`persist.ts:170`: copy, delete `searchSource`, re-add
+  if valid, a cast per kind) as one expression. Since #59 it serves charts and price change lists,
+  and the rewrite must keep both.
 - `saveSearchPins` re-reads both legacy keys on every pin change. Clear them once after the
   first successful shared save instead (for example, remember in module state that they are gone).
 - Remove `PinnedItemsProvider`'s `addItem` if `Collection.tsx` can use `addItems([item])`.
