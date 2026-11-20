@@ -27,10 +27,10 @@ describe("copySearchToWorkspace", () => {
     expect(copy.pinnedItems[0].dateWindow).toEqual({ start: 0, end: 200 });
     dates.start = 20;
     expect(copy.criteria.dates).toEqual({ kind: "window", dateWindow: { start: 10, end: 50 } });
-    copy.pinnedItems[0].series[0].points[0][1] = 999;
-    expect(state.pinnedItems[0].series[0].points[0][1]).toBe(5);
+    (copy.pinnedItems[0] as ChartItem).series[0].points[0][1] = 999;
+    expect((state.pinnedItems[0] as ChartItem).series[0].points[0][1]).toBe(5);
     expect(copy.criteria).not.toBe(state.criteria);
     expect(copy.pinnedItems).not.toBe(state.pinnedItems);
-    expect(copy.pinnedItems[0].series[0].packageNdcs).toEqual(["package-A"]);
+    expect((copy.pinnedItems[0] as ChartItem).series[0].packageNdcs).toEqual(["package-A"]);
   });
 });

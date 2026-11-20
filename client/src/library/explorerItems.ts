@@ -1,16 +1,18 @@
 import { pricingUnitLabel, splitByPricingUnit } from "./prices";
 import type { ChartPrice } from "./types";
 import { quoted } from "./searchCriteria";
-import { inWindow, type DateBounds, type DateWindow } from "./dates";
+import { clipToWindow, inWindow, type DateBounds, type DateWindow } from "./dates";
+import { derivePriceEvents, groupPriceEvents, type PriceEventGroup } from "./priceActivity";
+import { PRICE_CHANGE_LIST_PIN_LIMIT } from "./constants";
 
 /**
  * Explorer items are the cards in a search tab's Pinned section. *System* items (the results
- * table, auto charts) are derived from the current search on every render and never stored.
- * *User* items are pinned snapshots: they stay as they are across new searches and filter
- * changes until the user acts on them.
+ * table, auto charts, price change lists) are derived from the current search on every render
+ * and never stored. *User* items are pinned snapshots: they stay as they are across new searches
+ * and filter changes until the user acts on them.
  *
- * Only charts exist today. Other kinds (notes, stat cards, snapshot tables, price-event lists)
- * join the `ExplorerItem` union with their own `kind`.
+ * Two kinds exist: charts (`ChartItem`) and price change lists (`PriceChangeListItem`). Other
+ * kinds (notes, stat cards, snapshot tables) join the `ExplorerItem` union with their own `kind`.
  */
 
 export type ExplorerItemWidth = "half" | "full";
@@ -120,7 +122,22 @@ export type ChartItem = ExplorerItemBase & {
   eventDate?: number,
 };
 
-export type ExplorerItem = ChartItem;
+/**
+ * A pinned list of package price changes (Notable price changes, or a scan). It stores the package
+ * histories, not the events: the events are derived again from them and the threshold when drawn,
+ * as a pinned line chart derives its change markers.
+ */
+export type PriceChangeListItem = ExplorerItemBase & {
+  kind: "price-change-list",
+  /** The list's percent, e.g. 10 (Notable price changes) or 7.5. At least 5, one decimal at most. */
+  thresholdPercent: number,
+  /** The shown dates when pinned. Fixed: lists have no Change dates. */
+  dateWindow: DateWindow,
+  /** One entry per package and unit with a change; `points` are the shown prices only. */
+  histories: ChartSeriesSnapshot[],
+};
+
+export type ExplorerItem = ChartItem | PriceChangeListItem;
 
 export const itemTitle = (item: ExplorerItem) => item.title ?? item.defaultTitle;
 
@@ -218,6 +235,7 @@ export function packageLevelView(item: ChartItem): ChartItem | null {
 }
 
 const countNdcs = (series: ChartSeriesSnapshot[]) => new Set(series.map(s => s.ndc)).size;
+const countPriceNdcs = (prices: ChartPrice[]) => new Set(prices.map(p => p.ndc)).size;
 
 type NewChartItem = {
   chartType: ChartType,
@@ -230,16 +248,23 @@ type NewChartItem = {
   /** The page's series colors, kept with the snapshot. */
   colors?: Map<string, string>,
   barValue?: BarValue,
+  /**
+   * The provenance to keep, for a chart made from a pinned item rather than a search (a pinned
+   * list's Chart this change): only its `seriesCount` is recomputed, and `origin` isn't compared.
+   */
+  source?: ExplorerItemSource,
 };
 
+/** Whether page filters dropped some of the result's points from the given series. */
+function droppedPoints(series: ChartSeriesSnapshot[], resultPrices: ChartPrice[]): boolean {
+  const resultPointCounts = new Map(toChartSeries(resultPrices).map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
+  return series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
+}
+
 export function createChartItem({
-  chartType, prices, defaultTitle, origin, dateWindow, changeSpan, eventDate, colors, barValue,
+  chartType, prices, defaultTitle, origin, dateWindow, changeSpan, eventDate, colors, barValue, source,
 }: NewChartItem): ChartItem {
   const series = toChartSeries(prices, colors);
-  const resultSeries = toChartSeries(origin.resultPrices);
-  const resultPointCounts = new Map(resultSeries.map(s => [seriesKey(s.ndc, s.unit), s.points.length]));
-  // Snapshots keep every date, so missing points come from page filters, never the window.
-  const filtered = series.some(s => (resultPointCounts.get(seriesKey(s.ndc, s.unit)) ?? 0) > s.points.length);
 
   return {
     kind: "chart",
@@ -254,15 +279,66 @@ export function createChartItem({
     ...(changeSpan && { changeSpan }),
     ...(chartType === "line" && eventDate !== undefined && { eventDate }),
     ...(chartType === "bar" && barValue && { barValue }),
-    source: {
+    source: source ? { ...source, seriesCount: countNdcs(series) } : {
       ...(origin.searchSource && { searchSource: origin.searchSource }),
       searchLabel: origin.searchLabel,
       seriesKind: origin.seriesKind,
       seriesCount: countNdcs(series),
-      resultSeriesCount: countNdcs(resultSeries),
-      filtered,
+      resultSeriesCount: countPriceNdcs(origin.resultPrices),
+      // Snapshots keep every date, so missing points come from page filters, never the window.
+      filtered: droppedPoints(series, origin.resultPrices),
     },
   };
+}
+
+type NewPriceChangeList = {
+  /** The shown package prices the groups were derived from. */
+  prices: ChartPrice[],
+  groups: PriceEventGroup[],
+  thresholdPercent: number,
+  defaultTitle: string,
+  origin: ChartOrigin,
+  /** The dates shown. */
+  dateWindow: DateWindow,
+  colors?: Map<string, string>,
+};
+
+/** A pinned copy of a price change list: the shown histories of the packages it lists. */
+export function createPriceChangeListItem({
+  prices, groups, thresholdPercent, defaultTitle, origin, dateWindow, colors,
+}: NewPriceChangeList): PriceChangeListItem {
+  const listed = new Set(groups.flatMap(group => group.events.map(event => seriesKey(event.seriesNdc, group.pricingUnit))));
+  const histories = toChartSeries(prices.filter(price => listed.has(seriesKey(price.ndc, price.pricingUnit))), colors);
+  return {
+    kind: "price-change-list",
+    id: crypto.randomUUID(),
+    defaultTitle,
+    createdAt: Date.now(),
+    layout: { width: "half" },
+    collapsed: false,
+    thresholdPercent,
+    dateWindow,
+    histories,
+    source: {
+      ...(origin.searchSource && { searchSource: origin.searchSource }),
+      searchLabel: origin.searchLabel,
+      seriesKind: origin.seriesKind,
+      seriesCount: countNdcs(histories),
+      resultSeriesCount: countPriceNdcs(origin.resultPrices),
+      // Histories hold only the shown dates, so compare them with the result over the same dates.
+      filtered: droppedPoints(histories, clipToWindow(origin.resultPrices, dateWindow)),
+    },
+  };
+}
+
+/** A pinned list's groups, derived again from its stored histories and threshold. */
+export function priceChangeListGroups(item: Pick<PriceChangeListItem, "histories" | "thresholdPercent">): PriceEventGroup[] {
+  return groupPriceEvents(derivePriceEvents(fromChartSeries(item.histories), "package", item.thresholdPercent));
+}
+
+/** Whether a list is small enough to pin (`PRICE_CHANGE_LIST_PIN_LIMIT`); a bigger one is never truncated. */
+export function fitsPinLimit(item: PriceChangeListItem): boolean {
+  return JSON.stringify(item).length <= PRICE_CHANGE_LIST_PIN_LIMIT;
 }
 
 /** New cards contain one pricing unit; legacy mixed-unit snapshots still render with UnitSplit. */
@@ -300,7 +376,7 @@ export function chartDataBounds(item: ChartItem): DateBounds | null {
 }
 
 /** Whether the item shares its price axis with the other matched charts ("Match scale"). Line charts only. */
-export function isScaleMatched(item: ExplorerItem): boolean {
+export function isScaleMatched(item: ExplorerItem): item is ChartItem {
   return item.kind === "chart" && item.chartType === "line" && item.matchScale === true;
 }
 

@@ -5,6 +5,7 @@ import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
 import useSeriesColors from "../../hooks/useSeriesColors";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
+import usePriceChangeScans from "../../hooks/usePriceChangeScans";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
 import { clearFdaRefine, fdaResultsLabel, fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
@@ -48,6 +49,8 @@ export default memo(function FdaResults({ view }: Props) {
   const packageColors = useSeriesColors(packageOrigin.resultPrices, packageNadacPrices);
   const levelHistory = useCallback(() => history(fdaResultDetailLevel), [history, fdaResultDetailLevel]);
   const packageHistory = useCallback(() => history("package"), [history]);
+  // Scans list packages at every detail level, like Notable price changes.
+  const scans = usePriceChangeScans(packageNadacPrices);
 
   if (loaded === null) return null;
 
@@ -79,12 +82,14 @@ export default memo(function FdaResults({ view }: Props) {
         />
         : null}</>}
       priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
-        origin={packageOrigin} colors={packageColors} dateWindow={dateWindow} />}
+        origin={packageOrigin} colors={packageColors} dateWindow={dateWindow}
+        autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
       table={fdaResultDetailLevel === "product"
         ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
         : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
     >
-      <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow} />
+      <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow}
+        onScan={scans.runScan} scanMessage={scans.emptyMessage} onScanInputChange={scans.clearEmptyMessage} />
     </ResultsSection>
   </>);
 });

@@ -1,7 +1,10 @@
 import toast from "react-hot-toast";
 import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
-import type { BarValue, ChartChangeSpan, ChartItem, ChartSearchSource, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
+import type {
+  BarValue, ChartChangeSpan, ChartItem, ChartSearchSource, ChartSeriesSnapshot, ExplorerItem, PriceChangeListItem, SeriesKind,
+} from "./explorerItems";
+import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
@@ -133,15 +136,19 @@ const isBarValue = oneOf<BarValue>(["latest", "average"]);
 /** Charts pinned before chart windows existed have no `dateWindow`; they show every date. */
 type StoredExplorerItem = Omit<ChartItem, "dateWindow"> & { dateWindow?: DateWindow };
 
-const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
-  isObject(x) && x.kind === "chart" && isString(x.id) && isString(x.defaultTitle)
+/** The fields every pinned item has, whatever its kind. */
+const hasStoredItemBase = (x: Record<string, unknown>) =>
+  isString(x.id) && isString(x.defaultTitle)
   && (x.title === undefined || isString(x.title)) && typeof x.createdAt === "number"
   && isObject(x.layout) && (x.layout.width === "half" || x.layout.width === "full")
-  && typeof x.collapsed === "boolean" && (x.chartType === "line" || x.chartType === "bar")
-  && Array.isArray(x.series) && x.series.every(isSeriesSnapshot)
+  && typeof x.collapsed === "boolean"
   && isObject(x.source) && isString(x.source.searchLabel) && isSeriesKind(x.source.seriesKind)
   && typeof x.source.seriesCount === "number" && typeof x.source.resultSeriesCount === "number"
-  && typeof x.source.filtered === "boolean"
+  && typeof x.source.filtered === "boolean";
+
+const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
+  isObject(x) && x.kind === "chart" && hasStoredItemBase(x) && (x.chartType === "line" || x.chartType === "bar")
+  && Array.isArray(x.series) && x.series.every(isSeriesSnapshot)
   && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
   && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
   && (x.barValue === undefined || isBarValue(x.barValue))
@@ -149,20 +156,31 @@ const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
   && (x.showPriceChanges === undefined || typeof x.showPriceChanges === "boolean")
   && (x.eventDate === undefined || Number.isFinite(x.eventDate));
 
+/** A scan's percent as the scan field accepts it: at least the minimum, one decimal at most. */
+const isThresholdPercent = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x)
+  && x >= PRICE_CHANGE_SCAN_MIN_PERCENT && Number(x.toFixed(1)) === x;
+
+/** Lists always stored their dates and at least one package's history; one without either is invalid. */
+const isStoredPriceChangeList = (x: unknown): x is PriceChangeListItem =>
+  isObject(x) && x.kind === "price-change-list" && hasStoredItemBase(x)
+  && isThresholdPercent(x.thresholdPercent) && isDateWindow(x.dateWindow)
+  && Array.isArray(x.histories) && x.histories.length > 0 && x.histories.every(isSeriesSnapshot);
+
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
-  ? x.filter(isStoredExplorerItem).map(item => {
+  ? x.filter((item): item is StoredExplorerItem | PriceChangeListItem =>
+    isStoredExplorerItem(item) || isStoredPriceChangeList(item)).map((item): ExplorerItem => {
     // This field was added after pins existed. Drop only an invalid value; keep the pin and every
     // other field, and leave a missing value unknown rather than inferring it from other state.
     const source = { ...(item.source as unknown as Record<string, unknown>) };
     const searchSource = source.searchSource;
     delete source.searchSource;
     if (isChartSearchSource(searchSource)) source.searchSource = searchSource;
-    return {
+    return item.kind === "chart" ? {
       ...item,
       source: source as ChartItem["source"],
       dateWindow: item.dateWindow ?? FULL_WINDOW,
-    };
+    } : { ...item, source: source as PriceChangeListItem["source"] };
   })
   : [];
 

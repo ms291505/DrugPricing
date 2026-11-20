@@ -1,5 +1,6 @@
 import { SERIES_KIND_LABELS, type ChartType, type SeriesKind } from "./explorerItems";
-import { clipToWindow, dateBounds, formatWindow, type DateWindow } from "./dates";
+import { clipToWindow, dateBounds, formatDate, formatWindow, type DateWindow } from "./dates";
+import { pricingUnitLabel } from "./prices";
 import type { ChartPrice } from "./types";
 
 /*
@@ -7,7 +8,7 @@ import type { ChartPrice } from "./types";
  * search, how many, what kind), the legend says what differs.
  */
 
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** "2 products", "1 NDC" */
 export function seriesCountLabel(count: number, seriesKind: SeriesKind): string {
@@ -38,3 +39,18 @@ export function chartSubtitle(seriesCount: number, seriesKind: SeriesKind, dateW
   const dates = formatWindow(dateWindow, dateBounds(clipToWindow(prices, dateWindow)) ?? dateBounds(prices));
   return [seriesCountLabel(seriesCount, seriesKind), dates].filter(Boolean).join(" · ");
 }
+
+/** "Price changes of 25% or more": a scan card's title. */
+export const priceChangeListTitle = (thresholdPercent: number) => `Price changes of ${thresholdPercent}% or more`;
+
+/** "Package changes of 25% or more in these dates and filters.": every list card's subtitle. */
+export const priceChangeListSubtitle = (thresholdPercent: number) =>
+  `Package changes of ${thresholdPercent}% or more in these dates and filters.`;
+
+/** "Metformin: price changes of 25% or more": a pinned list's title. */
+export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
+  `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
+
+/** "Price change · Oct 21, 2026 · 3089321 · per each": a package's Chart this change card. */
+export const eventChartTitle = (date: number, packageNdc: string, pricingUnit: string) =>
+  `Price change · ${formatDate(date)} · ${packageNdc} · per ${pricingUnitLabel(pricingUnit)}`;

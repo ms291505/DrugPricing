@@ -119,20 +119,29 @@ page/tab switch; the table does not. Hidden pages measure nothing until shown. N
 source identifier.
 
 Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates, using
-a rounded 5% range cutoff and 10% significant steps. Products use their packages' states, not an
+a rounded 5% range cutoff and 10% significant steps (`NOTABLE_PRICE_CHANGE_PERCENT`). Every
+threshold compares in tenths of a percent (`meetsThreshold`), and a change from $0 meets every
+threshold and reads "from $0", never as a percent. Products use their packages' states, not an
 averaged line; only package rows have sparklines. The live comparison controls (Chart latest prices,
-Chart price histories) sit directly below the results table. The conditional Notable price changes
-card and open package event charts share the responsive half-width grid with live comparison charts.
-Notable price changes is a collapsible, derived ExplorerGridItem system card, never stored; its
-event list groups by date, unit and direction, each with its packages' old and new prices. Each
-package row has a Chart this change line-chart button that opens that package alone in its own
-unpinned ExplorerGridItem below the Notable price changes card, over the shown dates, with the
-change marked and the readout resting on it. The package chart stays open when Notable price changes
-is collapsed; Close returns focus to its button, or to the Notable price changes heading when that
-button is hidden. New prices discard open charts; focus in a discarded chart goes to its button if
-shown, else the Notable price changes heading, else the results heading. A chart card has no event
-list and no Around this change. Live comparison cards start hidden and are never stored. New product
-pins retain package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
+Chart price histories) and the scan control (a percent, at least 5 with one decimal, and Scan price
+changes) sit directly below the results table. Price change list cards share the responsive
+half-width grid with live comparison charts: Notable price changes (10%, when it has changes) and
+one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
+scanned. A scan with no matches makes no card and says so in the control row's `role="status"` line.
+Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
+pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
+`client/CHARTS.md`). Each package row has a Chart this change line-chart button that opens that
+package alone in its own unpinned ExplorerGridItem after the list cards, over the shown dates, with
+the change marked and the readout resting on it. There is one chart per change: every list that
+shows the change marks it open. A chart stays until its own Close or new prices, even when its list
+closes. New prices (a search, or new dates or filters, but not the FDA detail level) remove every
+scan and chart and reopen Notable price changes. Focus from a closed or discarded chart goes to the
+button that opened it, else another list's button for that change, else the first list card's
+heading, else the results heading. A list's Close sends focus to the next card's heading, else the
+previous card's, else the results heading; a scan card that new prices remove with focus in it sends
+focus to Notable price changes, else the results heading. A chart card has no event list and no
+Around this change. Live comparison cards start hidden and are never stored. New product pins retain
+package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
 
 ### Workspace
 
@@ -207,7 +216,8 @@ depend on write availability read it. The action checks storage's read-only flag
 - **Price axes may exaggerate a change at most `MAX_AXIS_EXAGGERATION` times** (`fittedPriceAxis`);
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items
-  (derived from the search) are never stored. A change to one redraws only its card: read the
+  (derived from the search) are never stored; a pinned copy of a price change list is a snapshot
+  of its packages' shown prices, not the card. A change to one redraws only its card: read the
   narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
   [client/CHARTS.md](client/CHARTS.md).
 - **Search criteria** (`library/searchCriteria.ts`, plan in `docs/plans/search-filters.md`): one

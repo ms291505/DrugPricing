@@ -6,8 +6,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, live comparison charts and price events) are derived from the
-  current search on every render and never stored.
+- *System* items (the results table, live comparison charts and price change lists) are derived
+  from the current search on every render and never stored.
 - *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
   (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
   (`StandaloneSearchProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
@@ -25,8 +25,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - **Hover doesn't re-render a chart.** `useChartReadout` keeps the pointer's active point in refs
   and copies it to state only while the arrow keys drive it (for the screen-reader readout).
   `LineViz` and `UnitSplit` memoize what they derive from their prices.
-- An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
-  today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
+- An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind`: `"chart"` and
+  `"price-change-list"`. Narrow on `kind` wherever an item's data is read. A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
   `points: [ms, price][]`), plain JSON so it persists. `fromChartSeries` turns it back into
   `ChartPrice[]`.
 - **Chart dates are a view setting, not a filter.** A chart item keeps *every* date of its series
@@ -41,25 +41,46 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
-  `flagPriceChanges`. The live comparison controls (Chart latest prices, Chart price histories)
-  appear directly below the results table. The conditional `PriceChangesSection` follows in the
-  shared responsive grid as a half-width collapsible `ExplorerGridItem` system card, titled Notable
-  price changes, derived from the current search and never stored. Its open per-package event charts
-  use the same half-width grid items as live comparison charts and pinned cards. It groups by date,
-  pricing unit and direction, and shows five groups before Show all. Each group's Package details is
-  a small table (NDC, was, now, change), open by default from the section's own `md` width up
-  (`useWidthTier`); a group the user opens or closes stays so while the page is mounted. Each
-  package row has a single-series Chart this change line-chart button. It toggles that package's
-  unpinned `ExplorerGridItem` below the Price changes card over the page's shown dates; each package
-  keeps its own open state (not persisted), so several can be open. Collapsing Price changes leaves
-  these cards open; new prices discard them all. Opening moves focus to the chart's heading; Close
-  returns it to the package button or, if that button is hidden by a collapsed section, the Notable
-  price changes heading. `eventDate` marks the change with a solid line (the lock's is thin and
-  dashed), and the readout rests on that date instead of the latest. A pin keeps `eventDate`; pins
-  without it draw as before. A chart card has no event list and no way to zoom itself: neither the
-  readout nor the plot lists events, and there is no Around this change. Legacy pins that stored a
-  zoomed `dateWindow` (made by the old Around this change) still load and draw that window; the
-  pinned card's Dates control is the only thing that changes a pin's `dateWindow` now.
+  `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
+  tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
+  is shown only through `eventLabel` and `signedChange`, as "from $0". The live comparison controls
+  (Chart latest prices, Chart price histories) and the scan control appear directly below the
+  results table. `PriceChangesSection` follows in the shared responsive grid: Notable price changes,
+  then one card per scan with matches (`usePriceChangeScans`, called once per page with the
+  section's `prices`), then the open change charts, all half width. The section is always mounted
+  and holds the open charts, the chart buttons and list headings for focus, and the Package details
+  choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
+  group key, since lists at different percents share group keys). Each list card measures its own
+  width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
+  groups by date, pricing unit and direction, and shows five groups before Show all. Each group's
+  Package details is a small table (NDC, was, now, change), open by default from the card's own `md`
+  width up; a group the user opens or closes stays so while the page is mounted. Each package row
+  has a single-series Chart this change line-chart button. It toggles that change's unpinned
+  `EventChangeChart` over the page's shown dates. Charts are keyed by event key with one
+  section-level id, so the same change charted from two lists is one chart and both buttons show it
+  open. Several can be open; collapsing or closing a list leaves them open; new prices discard them,
+  every scan card, and a closed Notable price changes. Opening moves focus to the chart's heading;
+  AGENTS.md (Price Activity) has where focus goes when a chart or card closes. `eventDate` marks the
+  change with a solid line (the lock's is thin and dashed), and the readout rests on that date
+  instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
+  no event list and no way to zoom itself: neither the readout nor the plot lists events, and there
+  is no Around this change. Legacy pins that stored a zoomed `dateWindow` (made by the old Around
+  this change) still load and draw that window; the pinned card's Dates control is the only thing
+  that changes a pin's `dateWindow` now.
+- **A pinned price change list stores histories, not events.** `createPriceChangeListItem` keeps the
+  shown prices (already clipped to the shown dates) of the packages and units the list names, as
+  `histories: ChartSeriesSnapshot[]`, plus `thresholdPercent` and the shown `dateWindow`.
+  `priceChangeListGroups` derives the events again when drawn, as pinned line charts derive their
+  markers, so there are no event references to validate. Its `source.filtered` compares the
+  histories with the result over the same dates. A list whose JSON is over
+  `PRICE_CHANGE_LIST_PIN_LIMIT` (500,000 characters) is not pinned (`fitsPinLimit`); it is never
+  truncated. A pinned list's dates are fixed: its menu has only Move up, Move down, Half/Full width
+  and Remove, and its dates chip isn't clickable. Its Chart this change opens a temporary chart in a
+  second grid below the pinned items, held by `PinnedSection` (never stored), over the list's dates
+  only; it stays when the list is collapsed or removed, and a pin of it keeps the list's provenance
+  (`createChartItem`'s `source`). Only list cards receive the open charts, so opening one doesn't
+  redraw pinned chart cards. Focus from a closed temporary chart goes to the button that opened it,
+  else its list's heading, else the Pinned heading.
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
   average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
