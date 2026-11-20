@@ -30,6 +30,10 @@ export type NadacPriceChange = {
   /** The last price before the change and the first after it. */
   oldPrice: number,
   newPrice: number,
+  /**
+   * A fraction (−0.1 is a 10% drop); `Infinity` for a change from $0. Show it only through
+   * `eventLabel` / `signedChange` (`library/priceActivity.ts`), which never print `Infinity`.
+   */
   percentage: number,
 }
 

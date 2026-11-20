@@ -13,7 +13,7 @@ type Props = {
   table: ReactNode,
   /** Half-width event cards (Notable price changes and any open package event charts). */
   priceChanges?: ReactNode,
-  /** Compare controls and live charts directly under the table. */
+  /** Live comparison controls and charts directly under the table. */
   children?: ReactNode,
 };
 

@@ -5,8 +5,9 @@ insufficient history. Product activity comes from its packages, never from their
 
 A significant change is a move of at least 10% between consecutive package observations.
 The **Notable price changes** collapsible card groups these events by date, pricing unit and
-direction. It sits with live Compare and event charts in the responsive card grid below the
-results table. The Compare controls are directly below the table and appear before the cards.
+direction. It sits with live comparison and event charts in the responsive card grid below the
+results table. The **Chart latest prices** and **Chart price histories** controls are directly
+below the table and appear before the cards.
 **Package details** lists each package's price before and after, and its change in percent
 and dollars per unit; it starts open on wide screens. When observations are more than a week
 apart, the group names both dates; the change may have happened anywhere in that span.
@@ -17,7 +18,7 @@ change, and the readout rests on its date until you point at another. Collapsing
 leaves these half-width charts open, and several packages can have charts open at once. **Pin** keeps a copy,
 and **Close** or the same button again closes the chart. Close returns focus to the package button,
 or to the Notable price changes heading when that button is hidden. New prices close all event charts. To
-see every result together, use **Compare price histories**.
+see every result together, use **Chart price histories**.
 
 Line charts mark significant changes in the dates they show. Several series changing on the
 same date share one label; their per-package changes are in the search's Notable price changes card or at Package level, and a
