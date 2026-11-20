@@ -1,5 +1,5 @@
-import { useId, useMemo, useState, type FormEvent } from "react";
-import { Box, Button, FormHelperText, Grid, Stack, TextField, Typography } from "@mui/material";
+import { useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { Button, Grid, Popover, Stack, TextField, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
@@ -34,15 +34,13 @@ type ScanProps = {
   onScan: (thresholdPercent: number) => void,
   /** Why the last scan found nothing, or null. */
   scanMessage: string | null,
-  /** The percent was edited: the last scan's message no longer applies. */
-  onScanInputChange: () => void,
 };
 
 /**
  * Opt-in live comparisons. Toggle choices survive searches while mounted, but are never saved.
  * The total series cap applies before splitting into one card per pricing unit.
  */
-export default function AutoCharts({ prices, history, origin, colors, dateWindow, onScan, scanMessage, onScanInputChange }: Props & ScanProps) {
+export default function AutoCharts({ prices, history, origin, colors, dateWindow, onScan, scanMessage }: Props & ScanProps) {
   const [showLatest, setShowLatest] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
@@ -58,7 +56,7 @@ export default function AutoCharts({ prices, history, origin, colors, dateWindow
         {!canCompare && <Typography variant="body2" color="text.secondary">
           Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
         </Typography>}
-        <ScanControl onScan={onScan} scanMessage={scanMessage} onScanInputChange={onScanInputChange} />
+        <ScanControl onScan={onScan} scanMessage={scanMessage} />
       </Stack>
     </Grid>
     {canCompare && groups.map(group => <UnitAutoCharts key={group.pricingUnit}
@@ -69,34 +67,58 @@ export default function AutoCharts({ prices, history, origin, colors, dateWindow
   </>;
 }
 
-/**
- * A percent and Scan price changes, which adds a card of package changes of at least that percent.
- * A form, so Enter scans. Stays enabled when the comparisons are not: it lists, it doesn't chart.
- */
-function ScanControl({ onScan, scanMessage, onScanInputChange }: ScanProps) {
-  const [text, setText] = useState(String(PRICE_CHANGE_SCAN_DEFAULT_PERCENT));
+const SCAN_PRESETS = [PRICE_CHANGE_SCAN_MIN_PERCENT, PRICE_CHANGE_SCAN_DEFAULT_PERCENT, 20];
+
+function ScanControl({ onScan, scanMessage }: ScanProps) {
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+  const [lastPercent, setLastPercent] = useState(PRICE_CHANGE_SCAN_DEFAULT_PERCENT);
+  const [text, setText] = useState(String(lastPercent));
   const [error, setError] = useState<string | null>(null);
-  const errorId = useId();
+  const dialogId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const updateText = (value: string) => {
+    setText(value);
+    setError(null);
+  };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const parsed = parseScanThreshold(text);
     if ("error" in parsed) return setError(parsed.error);
-    setError(null);
+    setLastPercent(parsed.percent);
+    setAnchor(null);
     onScan(parsed.percent);
   };
+
   return <>
-    {/* `noValidate`: the field explains its own rule rather than the browser's step message. */}
-    <Box component="form" noValidate onSubmit={submit} sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1 }}>
-      <TextField size="small" label="Change %" type="number" value={text} error={error !== null} sx={{ width: "7rem" }}
-        onChange={event => { setText(event.target.value); setError(null); onScanInputChange(); }}
-        slotProps={{ htmlInput: {
-          min: PRICE_CHANGE_SCAN_MIN_PERCENT, step: 0.1, inputMode: "decimal",
-          "aria-invalid": error !== null, "aria-describedby": error ? errorId : undefined,
-        } }} />
-      <Button type="submit" size="small" variant="outlined" startIcon={<TroubleshootIcon />}>Scan price changes</Button>
-      {/* Under the whole control: the 7rem field is too narrow to hold the rule. */}
-      {error && <FormHelperText id={errorId} error sx={{ flexBasis: "100%", mx: 0 }}>{error}</FormHelperText>}
-    </Box>
+    <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
+      aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
+      onClick={event => { event.currentTarget.focus(); updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
+      Scan price changes
+    </Button>
+    {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}
+      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      slotProps={{
+        paper: { id: dialogId, role: "dialog", "aria-modal": true, "aria-label": "Scan price changes", sx: { p: 2, width: 280 } },
+        transition: { onEntered: () => inputRef.current?.focus() },
+      }}>
+      <Stack component="form" noValidate onSubmit={submit} spacing={1.5}>
+        <TextField inputRef={inputRef} size="small" label="Minimum change (%)" type="number" value={text}
+          error={error !== null} helperText={error}
+          onChange={event => updateText(event.target.value)}
+          slotProps={{ htmlInput: { min: PRICE_CHANGE_SCAN_MIN_PERCENT, step: 0.1, inputMode: "decimal" } }} />
+        <Stack direction="row" spacing={1} role="group" aria-label="Recommended thresholds">
+          {SCAN_PRESETS.map(percent => {
+            const selected = text !== "" && Number(text) === percent;
+            return <Button key={percent} type="button" size="small" variant={selected ? "contained" : "outlined"}
+              aria-pressed={selected} onClick={() => { updateText(String(percent)); inputRef.current?.focus(); }}>
+              {percent}%
+            </Button>;
+          })}
+        </Stack>
+        <Button type="submit" size="small" variant="contained" sx={{ alignSelf: "flex-end" }}>Scan</Button>
+      </Stack>
+    </Popover>}
     <Typography role="status" variant="body2" color="text.secondary">{scanMessage}</Typography>
   </>;
 }

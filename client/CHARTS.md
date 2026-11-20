@@ -55,7 +55,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   groups by date, pricing unit and direction, and shows five groups before Show all. Each group's
   Package details is a small table (NDC, was, now, change), open by default at every card width.
   A group the user opens or closes stays so while the page is mounted. Each package row
-  has a single-series Chart this change line-chart button. It toggles that change's unpinned
+  has an outlined chart icon button that uses the primary color while open. It toggles that change's unpinned
   `EventChangeChart` over the page's shown dates. Charts are keyed by event key with one
   section-level id, so the same change charted from two lists is one chart and both buttons show it
   open. Several can be open; collapsing or closing a list leaves them open; new prices discard them,
@@ -75,7 +75,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   histories with the result over the same dates. A list whose JSON is over
   `PRICE_CHANGE_LIST_PIN_LIMIT` (500,000 characters) is not pinned (`fitsPinLimit`); it is never
   truncated. A pinned list's dates are fixed: its menu has only Move up, Move down, Half/Full width
-  and Remove, and its dates chip isn't clickable. Its Chart this change opens a temporary chart in a
+  and Remove, and its dates chip isn't clickable. Its Chart button opens a temporary chart in a
   second grid below the pinned items, held by `PinnedSection` (never stored), over the list's dates
   only; it stays when the list is collapsed or removed, and a pin of it keeps the list's provenance
   (`createChartItem`'s `source`). Only list cards receive the open charts, so opening one doesn't

@@ -89,7 +89,7 @@ export default memo(function FdaResults({ view }: Props) {
         : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
     >
       <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow}
-        onScan={scans.runScan} scanMessage={scans.emptyMessage} onScanInputChange={scans.clearEmptyMessage} />
+        onScan={scans.runScan} scanMessage={scans.emptyMessage} />
     </ResultsSection>
   </>);
 });

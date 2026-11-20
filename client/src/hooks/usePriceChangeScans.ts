@@ -14,9 +14,8 @@ export type PriceChangeScans = {
   /** Scans the prices at a percent: adds a card, or sets `emptyMessage` when nothing changed that much. */
   runScan: (thresholdPercent: number) => void,
   closeScan: (id: string) => void,
-  /** Why the last scan made no card; null once the user scans again, edits the percent or new prices arrive. */
+  /** Why the last scan made no card; null once the user scans again or new prices arrive. */
   emptyMessage: string | null,
-  clearEmptyMessage: () => void,
 };
 
 /**
@@ -47,7 +46,6 @@ export default function usePriceChangeScans(prices: ChartPrice[]): PriceChangeSc
   }, [prices]);
   const closeScan = useCallback((id: string) => setScans(prev => prev.filter(scan => scan.id !== id)), []);
   const closeAuto = useCallback(() => setAutoClosed(true), []);
-  const clearEmptyMessage = useCallback(() => setEmptyMessage(null), []);
 
-  return { autoClosed, closeAuto, scans, runScan, closeScan, emptyMessage, clearEmptyMessage };
+  return { autoClosed, closeAuto, scans, runScan, closeScan, emptyMessage };
 }

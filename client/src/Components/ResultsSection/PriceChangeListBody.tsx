@@ -29,7 +29,7 @@ export type PriceChangeListBodyProps = {
 
 /**
  * A price change list: groups by date, unit and direction, five before Show all, each with its
- * Package details and each package's Chart this change button. Shared by the result cards and
+ * Package details and each package's Chart button. Shared by the result cards and
  * pinned lists, whose owners keep the open charts.
  */
 export default function PriceChangeListBody({
@@ -111,16 +111,25 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
               const note = previousObservationNote(event, group);
               return <TableRow key={key}>
                 <TableCell component="th" scope="row">
-                  {event.packageNdc}
-                  <Tooltip title={chartId ? "Close this chart" : "Chart this change"}>
-                    <IconButton ref={button => onRegisterButton(key, button)} size="small"
-                      aria-label={`${chartId ? "Close" : "Chart"} price change for ${event.packageNdc}`}
-                      aria-expanded={!!chartId} aria-controls={chartId}
-                      onClick={click => { click.currentTarget.focus(); onToggleChart(key, group, event); }}
-                      sx={{ ml: 0.5, color: chartId ? "primary.main" : "text.secondary", ...(compact ? { minWidth: 44, minHeight: 44 } : {}) }}>
-                      <ShowChartIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Box sx={{ display: "flex", flexDirection: compact ? "column" : "row",
+                    alignItems: compact ? "flex-start" : "center", gap: 1 }}>
+                    {event.packageNdc}
+                    <Tooltip title={chartId ? "Hide chart" : "Chart this change"} describeChild>
+                      <IconButton ref={button => onRegisterButton(key, button)} size="small"
+                        aria-label={`${chartId ? "Hide chart" : "Chart price change"} for ${event.packageNdc}`}
+                        aria-expanded={!!chartId} aria-controls={chartId}
+                        onClick={click => { click.currentTarget.focus(); onToggleChart(key, group, event); }}
+                        sx={{
+                          border: 1, borderRadius: 1,
+                          borderColor: chartId ? "primary.main" : "divider",
+                          color: chartId ? "primary.main" : "text.secondary",
+                          "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", color: "primary.main" },
+                          ...(compact && { minWidth: 44, minHeight: 44 }),
+                        }}>
+                        <ShowChartIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                   {note && <Box component="span" sx={captionSx}>{note}</Box>}
                 </TableCell>
                 <TableCell align="right" sx={{ color: "text.secondary" }}>{formatPrice(event.change.oldPrice)}</TableCell>

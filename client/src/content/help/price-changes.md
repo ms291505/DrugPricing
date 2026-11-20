@@ -11,12 +11,13 @@ The **Notable price changes** card groups these events by date, pricing unit and
 sits with live comparison and event charts in the responsive card grid below the results table.
 The **Chart latest prices** and **Chart price histories** controls are directly below the table
 and appear before the cards. **Package details** lists each package's price before and after, and
-its change in percent and dollars per unit; it starts open on wide screens. When observations are
+its change in percent and dollars per unit; it starts open. When observations are
 more than a week apart, the group names both dates; the change may have happened anywhere in that
 span.
 
-To look for smaller or larger changes, enter a percent beside **Scan price changes** and press it
-(or Enter). Each scan adds its own card, such as "Price changes of 25% or more", covering the
+To look for smaller or larger changes, open **Scan price changes**. Choose 5%, 10%, or 20%,
+or enter your own minimum change. Press **Scan** or Enter from the field to run it.
+Each scan adds its own card, such as "Price changes of 25% or more", covering the
 search's dates and filters. The percent must be at least 5, with at most one decimal; lower
 percents would list most of a result. Above 100% only rises can match. A scan that finds nothing
 adds no card and says so beside the button. Scan cards last until you close them or the prices
@@ -25,12 +26,12 @@ change: a new search, or new dates or filters, removes them.
 Every price change card has **Pin** and **Close**. Closing Notable price changes hides it until the
 prices change. **Pin** keeps a copy of the list in the Pinned section (see Pinning and comparing).
 
-Each package row has a **Chart this change** line-chart button. It opens that package's own
+Each package row has a line-chart button. It opens that package's own
 unpinned chart card after the price change cards, over the search's dates. A solid line marks the
 change, and the readout rests on its date until you point at another. Several packages can have
 charts open at once, and a change listed by two cards has one chart, which both buttons show as
 open. Collapsing or closing a card leaves its charts open. **Pin** keeps a copy, and **Close** or
-the same button again closes the chart. Close returns focus to the package button, or to a price
+**Hide chart** closes the chart. Close returns focus to the package button, or to a price
 change card's heading when that button is hidden. New prices close all event charts. To see every
 result together, use **Chart price histories**.
 

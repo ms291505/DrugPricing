@@ -123,14 +123,15 @@ a rounded 5% range cutoff and 10% significant steps (`NOTABLE_PRICE_CHANGE_PERCE
 threshold compares in tenths of a percent (`meetsThreshold`), and a change from $0 meets every
 threshold and reads "from $0", never as a percent. Products use their packages' states, not an
 averaged line; only package rows have sparklines. The live comparison controls (Chart latest prices,
-Chart price histories) and the scan control (a percent, at least 5 with one decimal, and Scan price
-changes) sit directly below the results table. Price change list cards share the responsive
+Chart price histories) and the Scan price changes button sit directly below the results table.
+The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
+with up to one decimal place. Price change list cards share the responsive
 half-width grid with live comparison charts: Notable price changes (10%, when it has changes) and
 one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
 scanned. A scan with no matches makes no card and says so in the control row's `role="status"` line.
 Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
 pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
-`client/CHARTS.md`). Each package row has a Chart this change line-chart button that opens that
+`client/CHARTS.md`). Each package row has a chart icon button that opens that
 package alone in its own unpinned ExplorerGridItem after the list cards, over the shown dates, with
 the change marked and the readout resting on it. There is one chart per change: every list that
 shows the change marks it open. A chart stays until its own Close or new prices, even when its list

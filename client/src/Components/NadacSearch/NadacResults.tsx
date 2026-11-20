@@ -60,7 +60,7 @@ export default memo(function NadacResults({ view }: Props) {
       table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
     >
       <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-        onScan={scans.runScan} scanMessage={scans.emptyMessage} onScanInputChange={scans.clearEmptyMessage} />
+        onScan={scans.runScan} scanMessage={scans.emptyMessage} />
     </ResultsSection>
   </>);
 });
