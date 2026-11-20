@@ -12,6 +12,12 @@ import type { WidthTier } from "../../hooks/useWidthTier";
 
 const captionSx = { display: "block", color: "text.secondary", typography: "caption" } as const;
 
+/**
+ * Below this list width the Chart button goes under its NDC. A narrow row (no Amount column,
+ * 44px button) needs about 330px, so this stacks on phones but not in a narrow card with room.
+ */
+const STACK_BUTTON_BELOW_PX = 360;
+
 export type PriceChangeListBodyProps = {
   groups: PriceEventGroup[],
   /** The card's own width tier determines whether amounts fold under percentages. */
@@ -67,7 +73,7 @@ export default function PriceChangeListBody({
 function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, openCharts, onToggleChart, onRegisterButton }:
   Pick<PriceChangeListBodyProps, "openCharts" | "onToggleChart" | "onRegisterButton"> & {
     group: PriceEventGroup,
-    /** Narrow: the amount folds under the percent. */
+    /** Narrow: the amount folds under the percent, and the Chart button is touch-sized. */
     compact: boolean,
     detailsOpen: boolean,
     onDetailsToggle: (open: boolean) => void,
@@ -90,7 +96,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
         }}
         sx={{ fontSize: "0.875rem", color: "text.secondary", maxWidth: "100%", "& > summary": { cursor: "pointer", width: "fit-content" } }}>
         <summary>Package details</summary>
-        <Box sx={{ maxWidth: "100%", overflowX: "auto", mt: 0.5 }}>
+        <Box sx={{ maxWidth: "100%", overflowX: "auto", mt: 0.5, containerType: "inline-size" }}>
           <Table id={tableId} size="small" sx={{
             width: "100%",
             "& th, & td": { px: 1, py: 0.5, borderColor: "divider", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", verticalAlign: "top" },
@@ -117,8 +123,8 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
                 return (
                   <TableRow key={key}>
                     <TableCell component="th" scope="row">
-                      <Box sx={{ display: "flex", flexDirection: compact ? "column" : "row",
-                        alignItems: compact ? "flex-start" : "center", gap: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1,
+                        [`@container (width < ${STACK_BUTTON_BELOW_PX}px)`]: { flexDirection: "column", alignItems: "flex-start" } }}>
                         {event.packageNdc}
                         <Tooltip title={chartId ? "Hide chart" : "Chart this change"} describeChild>
                           <IconButton ref={button => onRegisterButton(key, button)} size="small"
