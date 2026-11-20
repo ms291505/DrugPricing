@@ -39,7 +39,9 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
       {notice}
       <Paper sx={{
         display: "flex", flexDirection: "column", p: { xs: 0, sm: 1 }, width: "100%", minWidth: 0, boxSizing: "border-box",
-      }}>{table}</Paper>
+      }}>
+        {table}
+      </Paper>
       <ResultsHeadingContext value={headingRef}>
         <Grid container spacing={2} alignItems="flex-start" sx={{ minWidth: 0 }}>
           {children}
