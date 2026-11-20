@@ -24,7 +24,7 @@ type TemporaryChart = EventChart & {
   origin: ChartOrigin,
 };
 
-const isShown = (element: HTMLElement | null | undefined): element is HTMLElement =>
+const isShown = <T extends HTMLElement>(element: T | null | undefined): element is T =>
   !!element?.isConnected && element.checkVisibility();
 
 /**
@@ -89,9 +89,7 @@ export default memo(function PinnedSection() {
   const onChartRemovedWithFocus = useCallback((chart: EventChart) => {
     const button = buttons.current.get(chart.key)?.get(chart.openerId);
     if (isShown(button)) return button.focus();
-    const card = [...gridRef.current?.querySelectorAll<HTMLElement>("[data-pinned-item]") ?? []]
-      .find(element => element.dataset.pinnedItem === chart.openerId);
-    const heading = card?.querySelector<HTMLHeadingElement>("h3");
+    const heading = gridRef.current?.querySelector<HTMLHeadingElement>(`[data-pinned-item="${CSS.escape(chart.openerId)}"] h3`);
     (isShown(heading) ? heading : headingRef.current)?.focus({ preventScroll: true });
   }, []);
 

@@ -40,11 +40,12 @@ function loaded<T>(state: T | null): T {
   return state as T;
 }
 
-/** Writes a tab's raw payload, for data the app itself would never save. */
 const asChart = (item: ExplorerItem): ChartItem => {
   if (item.kind !== "chart") throw new Error(`Expected a chart, got ${item.kind}`);
   return item;
 };
+
+/** Writes a tab's raw payload, for data the app itself would never save. */
 const saveRaw = (tabId: string, data: unknown) =>
   localStorage.setItem(persist.tabKey(tabId), JSON.stringify({ version: persist.VERSION, data }));
 

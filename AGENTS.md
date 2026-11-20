@@ -136,12 +136,13 @@ the change marked and the readout resting on it. There is one chart per change: 
 shows the change marks it open. A chart stays until its own Close or new prices, even when its list
 closes. New prices (a search, or new dates or filters, but not the FDA detail level) remove every
 scan and chart and reopen Notable price changes. Focus from a closed or discarded chart goes to the
-button that opened it, else another list's button for that change, else the first list card's
-heading, else the results heading. A list's Close sends focus to the next card's heading, else the
-previous card's, else the results heading; a scan card that new prices remove with focus in it sends
-focus to Notable price changes, else the results heading. A chart card has no event list and no
-Around this change. Live comparison cards start hidden and are never stored. New product pins retain
-package identity per point; see `client/CHARTS.md` for callout and legacy-pin rules.
+button that opened it, else another list's button for that change, else the first card left (a list
+card, else a chart), else the results heading. A list's Close sends focus to the next card's heading
+(a list or a chart), else the previous card's, else the results heading; a scan card that new prices
+remove with focus in it sends focus to Notable price changes, else the results heading. A chart card
+has no event list and no Around this change. Live comparison cards start hidden and are never
+stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
+legacy-pin rules.
 
 ### Workspace
 

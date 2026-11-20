@@ -35,7 +35,7 @@ const AUTO_LIST = "auto";
 
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
-const isShown = (element: HTMLElement | null | undefined): element is HTMLElement =>
+const isShown = <T extends HTMLElement>(element: T | null | undefined): element is T =>
   !!element?.isConnected && element.checkVisibility();
 /** In page order, the first first. */
 const byPosition = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
@@ -79,7 +79,14 @@ export default function PriceChangesSection({
     if (heading) headings.current.set(listId, heading);
     else headings.current.delete(listId);
   }, []);
-  const shownHeadings = useCallback(() => [...headings.current.values()].filter(isShown).sort(byPosition), []);
+  // The open charts as of the last commit, so the stable callbacks below can read them.
+  const chartsRef = useRef(charts);
+  useLayoutEffect(() => { chartsRef.current = charts; });
+  /** Every shown card's heading, lists and charts, in page order. */
+  const shownHeadings = useCallback(() => [
+    ...headings.current.values(),
+    ...[...chartsRef.current.values()].map(chart => document.getElementById(chart.cardId)?.querySelector("h3")),
+  ].filter(isShown).sort(byPosition), []);
   const focusResultsHeading = useCallback(() => resultsHeadingRef?.current?.focus({ preventScroll: true }), [resultsHeadingRef]);
 
   const toggleChart = useCallback((listId: string, key: string, group: PriceEventGroup, event: PriceEvent) => {
@@ -101,7 +108,8 @@ export default function PriceChangesSection({
     return next;
   }), []);
   // Focus that was in a removed chart (Close, or new prices) goes to the button that opened it,
-  // else another list's button for the same change, else the first list card, else the results.
+  // else another list's button for the same change, else the first card left (a list, else a
+  // chart), else the results heading.
   const onChartRemovedWithFocus = useCallback((chart: EventChart) => {
     const lists = buttons.current.get(chart.key);
     const button = [lists?.get(chart.openerId), ...(lists?.values() ?? [])].find(isShown);
@@ -111,8 +119,8 @@ export default function PriceChangesSection({
     else focusResultsHeading();
   }, [shownHeadings, focusResultsHeading]);
 
-  // A card's Close moves focus to the next card's heading, else the previous one's, else the
-  // results heading, before the card goes.
+  // A list's Close moves focus to the next card's heading (a list or a chart), else the previous
+  // one's, else the results heading, before the card goes.
   const closeList = useCallback((listId: string) => {
     const shown = shownHeadings();
     const index = shown.indexOf(headings.current.get(listId)!);
