@@ -1,13 +1,13 @@
-The data come from two public sources:
+The app uses two public data sources.
 
 - [National Average Drug Acquisition Cost (NADAC) — CMS](https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing)
 - [National Drug Code Directory — FDA](https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory)
 
 CMS’s pharmacy pricing page links to survey information and data field definitions.
 
-DrugPricing is a personal learning project and is not affiliated with or endorsed by CMS or the FDA. NADAC is a survey-based estimate of what retail community pharmacies pay to acquire a drug. It is not what a patient pays, a retail price, or a reimbursement rate. The data may be incomplete or out of date, and nothing here is medical, financial, or pricing advice.
+DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll pay at the pharmacy, and it isn’t a retail price or a reimbursement rate. The data may be incomplete or out of date. DrugPricing does not provide medical, financial or pricing advice.
 
-NADAC participation is voluntary. Its estimates reflect submitted retail community pharmacy
-invoices, rather than every pharmacy’s costs. Discounts and rebates not shown at the drug
-line item level on an invoice are excluded. See the
+Retail community pharmacies submit invoices voluntarily, so the estimates reflect the invoices
+submitted rather than every pharmacy’s costs. CMS excludes discounts and rebates that don’t
+appear at the drug line-item level on an invoice. See the
 [CMS NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf).

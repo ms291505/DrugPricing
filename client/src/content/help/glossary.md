@@ -9,7 +9,7 @@
 - **NDC:** National Drug Code. Identifies labeler, product and package.
 - **OTC:** over the counter; sold without a prescription.
 - **Package:** one container of a product, such as a bottle of 60.
-- **Pricing unit:** what a price is per: EA (each), ML (millilitre) or GM (gram).
+- **Pricing unit:** what a price is per: EA (each), ML (milliliter) or GM (gram).
 - **Product:** one drug at one strength in one form from one labeler.
 - **Proprietary name:** the brand name. **Non-proprietary name:** the generic name.
 - **Route:** how a drug is taken: oral, topical, subcutaneous and so on.

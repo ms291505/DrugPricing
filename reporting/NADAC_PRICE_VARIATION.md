@@ -11,7 +11,7 @@ answers, and every number below comes from running them (commands are in
 
 ## Conclusion
 
-The results tables will label each package's price activity from the prices in the dates shown:
+The results tables label each package’s price activity using the prices within the selected dates.
 
 - **Stable** when its **range**, (highest price - lowest price) / lowest price, is under **5%**;
   otherwise **Changed**.

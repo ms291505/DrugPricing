@@ -5,18 +5,15 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
 - A **warning triangle** beside a latest price means the row stopped being priced before the end
   of your dates; tap or focus it to see when it was last priced. The **Latest Price Date**
   column is hidden by default and can be shown from **Columns**.
-- On an FDA product row, the price is the average of the product's packages. Most products
-  price every package the same, so the average is simply the price.
-- **Mixed units** means the product's packages are priced in different units (for example a
-  packet per each and a tub of powder per gram), so there is no single price to show. Switch to
-  **Package** to see each one.
-- Sorting a price column groups by unit first, so per-tablet and per-millilitre prices aren't
-  ranked against each other.
-- Tick rows and choose **Chart selected** to chart just those. A row with no prices can't be
-  ticked.
+- An FDA product row averages the prices of the product’s packages for each date.
+- **Mixed units** means the product’s packages use different pricing units. Choose **Packages**
+  from **Show** above the FDA table to see their individual prices.
+- Sorting a price column groups prices by unit before ranking the values within each group.
+- Select the checkboxes on priced rows, then choose **Line** or **Bar** above the table to
+  create a pinned chart for those rows.
 
 Choose **Columns** beside the pagination below the table to show or hide fields, including
-Min and Max Price, Generic Name and Labeler. **Reset columns**, available on wider tables,
+**Min Price**, **Max Price**, **Generic Name** and **Labeler** where available. **Reset columns**, available on wider tables,
 restores the default selection. Your choices are saved separately for NADAC, FDA products
 and FDA packages, and apply to search pages and workspace tabs in every window.
 

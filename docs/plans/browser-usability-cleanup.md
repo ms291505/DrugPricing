@@ -1,80 +1,15 @@
 # Browser usability cleanup
 
-Status: steps 1–2 done in #57. #59 (price change scans) has since changed code that steps 3 and
-5 name; both steps below are corrected for it, but their line numbers are stale.
+The November 19, 2026 review identified readability problems and a few bugs in the browser
+usability changes. PR #57 completed the component and focus cleanup for open price change
+charts. This plan tracks the remaining work. File paths in this plan are under
+`client/src/` unless stated otherwise.
 
-## Context
+Each section can land in its own PR against `dev`. Start with price events and line-chart
+markers. Keep the current behavior except for the bug fixes and the package-switch design
+decision described below.
 
-The merges into `browser-usability` (#32 through #56: about 3,300 lines of code across 108
-files, docs aside) were written and reviewed by agents without the author watching. A review on
-2026-11-19 looked for readability problems, unneeded complexity and new bugs. `tsc`, ESLint and
-all 322 Vitest tests passed. Most findings are complexity the agents added; a few are small bugs.
-
-Line numbers are at `origin/browser-usability` commit `24d9a30` ("Place explorer cards in
-responsive grid (#56)"), and will drift as the steps land. Paths are under `client/src/` unless
-stated otherwise.
-
-Ruled out during the review: `AutosizeColumns` passes hidden columns to MUI's autosize, but MUI
-filters hidden columns itself.
-
-## Goals
-
-- Fewer layers, props and mechanisms for the same behavior, with no change a user would notice
-  except the bug fixes listed here.
-- One home for each piece of logic (event keys, date wording, unit splitting, source types).
-- No dead code: branches that can't run, refs nobody reads, unused exports.
-
-Out of scope: new features, restyling, and items already in `docs/future-work.md`.
-
-## Steps
-
-Each step is one PR against `browser-usability` (or `dev`, once it has merged), and ends with
-`npm run lint`, `npm run build` and `npm test` passing. Steps 1–4 come first because the price
-changes code is where most of the added complexity sits; the later steps are independent and can
-go in any order.
-
-### 1. Flatten the price changes components
-
-Files: `Components/ResultsSection/PriceChangesSection.tsx`, `PriceEventsList.tsx`.
-
-The path today is `PriceChangesSection` → `PriceChanges` → `NotablePriceChangesCard` →
-`PriceEventsList` (render prop) → `PriceChangeRow` → `PriceEventDetails` → `PackageTable` →
-`PackageEventRow`. The open-charts map, the toggle callback and the button-registration callback
-pass through about five of those.
-
-- Merge `PriceChangesSection` into `PriceChanges`: it exists only to hold one piece of state.
-- Drop `PriceEventsList`'s `renderGroup` render prop. It has one caller, left over from when the
-  list also showed inside charts (removed in #46); render the row directly.
-- Aim for two or three components: the card (with its state) and a group row that renders its
-  package table. Pass chart state through context or keep it at the card if the layer count
-  drops enough.
-- Remove the `Fragment` around a single `TableRow` (`PriceEventsList.tsx:125`).
-- Done when the behavior described in `AGENTS.md` (Price Activity paragraph) still holds and
-  the files are clearly shorter.
-
-### 2. Simplify open-chart state and focus
-
-Files: same as step 1.
-
-- Replace `OpenChartState` (state that stores the `prices` it was made for, so it can be thrown
-  away when prices change, with the toggle re-checking the same comparison) with state that is
-  cleared when the search's prices change, in one place.
-- Remove the `currentCharts` filter (`PriceChangesSection.tsx:83-84`). It checks
-  `chart.prices === prices` and that each chart is still in `groups`, both already guaranteed.
-- Replace the `focusInChart` ref, its onFocus/onBlur tracking and the effect on `[prices]` with
-  one focus decision made where charts are discarded.
-- Remove `PackageEventRow`'s `buttonRef` (`PriceEventsList.tsx:114-118`): it is set and never read.
-- Remove the `useId().replaceAll(":", "")` workaround, a leftover of React 18's id format, if
-  nothing still needs it.
-- `PriceChangeRow`'s `memo` never takes effect because `chartIds` is a new `Map` every render
-  (`PriceChangesSection.tsx:85`). Either memoize `chartIds` so the memo works, or drop the memo.
-  Prefer dropping it unless a profile shows the rows are slow.
-- **Bug:** with no notable changes, the page still renders a visually hidden, empty
-  `<h3>Notable price changes</h3>` (`:159`) as a focus target, so screen-reader users get a
-  heading with nothing under it. Send focus elsewhere (the results heading or the Compare
-  controls) and stop rendering it.
-
-### 3. One source of truth for price events
+## Price event logic
 
 Files: `library/priceActivity.ts`, `library/flagNadacPriceChange.ts`,
 `Components/ResultsSection/PriceChangeListBody.tsx`.
@@ -88,33 +23,30 @@ Files: `library/priceActivity.ts`, `library/flagNadacPriceChange.ts`,
   price's `ndc` just to pass `flagPriceChanges`'s mixed-NDC check. `flagPriceChanges` then splits
   by unit again and checks for mixed NDCs, as does `flagPackagePriceChanges` inside it. Give the
   event code a function that takes one package's single-unit series and skips the checks.
-- **Bug:** a first price of $0 makes `packageActivity`'s `range` and `net` `Infinity`, so a label
-  can read "Infinity%" (`priceActivity.ts:141, 151`). AGENTS.md now says a change from $0 never
-  reads as a percent: use #58's `fromZero` helper (`priceActivity.ts:75`) so Price Activity and
-  the event labels treat $0 the same way, and add a test. Unlikely with NADAC data, but cheap to
-  close.
+- **Check zero-price labels.** `packageActivity` derives significant events before it formats the
+  net change. A rise from zero already takes the significant-event path and displays “from $0.”
+  Cover that behavior when simplifying the event code and remove unreachable zero-price handling.
 
-### 4. Simplify change marking in line charts
+## Line-chart change markers
 
 Files: `Components/Charts/LineViz.tsx`, `library/lineChanges.ts`.
 
-- Compute price events once: `LineViz.tsx:133-134` derives them directly and again inside
+- Compute price events once: `LineViz` derives them directly and again inside
   `lineChangeCallouts`. Pass the derived events in. Compute them only when something uses them
   (callouts on, or the screen-reader announcement).
 - Decide whether the legacy `changeSpan` callout, the new callouts and the `eventDate`
   `ReferenceLine` can share one path. At least document which path draws what for which chart.
 - Replace `changeCallout`'s three-state `label` (`undefined` default text, `null` none, string
   custom) with two explicit options, and replace the `cloneElement` re-keying
-  (`LineViz.tsx:251-262`) with a key-prefix parameter.
-- Make `lineChanges.ts` readable: split the dense expressions (lines 613–620) into named steps,
+  in `LineViz` with a key-prefix parameter.
+- Make `lineChanges.ts` readable: split the dense expressions into named steps,
   make `samePrices` a boolean, compute `packages` only where it's used, and import `WEEK` from
   `priceActivity.ts` instead of repeating `7 * 86400000`.
-- Note only, no action needed: `placeLeft` changed from 0.6 to 0.5.
 
-### 5. Pinned charts and pinning
+## Pinned charts and pinning
 
 Files: `Components/ExplorerGrid/PinButton.tsx`, `PinnedItemCard.tsx`,
-`Components/Charts/ChartSelectedControl.tsx`, `library/explorerItems.ts`, `library/persist.ts`,
+`Components/ResultsSection/ChartSelectedControl.tsx`, `library/explorerItems.ts`, `library/persist.ts`,
 `Context/PinnedItemsProvider.tsx`, `Components/Charts/ChartItemBody.tsx`.
 
 - Remove `PinButton`'s per-unit branch and its "Added N charts, one per pricing unit" toast.
@@ -128,9 +60,9 @@ Files: `Components/ExplorerGrid/PinButton.tsx`, `PinnedItemCard.tsx`,
 - Make the product/package switch discoverable. Today it is a click on the summary chip
   ("Products · 2 of 7 · from …"), which looks like a label, and the card now shows two chips
   side by side. Use an explicit toggle or button. This is a small UX decision for the author.
-- Use one type for `"fda" | "nadac"`: `ChartSearchSource` (`explorerItems.ts:20`) and
+- Use one type for `"fda" | "nadac"`. `ChartSearchSource` (`explorerItems.ts`) and
   `SearchSource` (`persist.ts`) are the same thing.
-- Rewrite `validItems`' source cleanup (`persist.ts:170`: copy, delete `searchSource`, re-add
+- Rewrite `validItems`' source cleanup (`persist.ts`: copy, delete `searchSource`, re-add
   if valid, a cast per kind) as one expression. Since #59 it serves charts and price change lists,
   and the rewrite must keep both.
 - `saveSearchPins` re-reads both legacy keys on every pin change. Clear them once after the
@@ -140,11 +72,11 @@ Files: `Components/ExplorerGrid/PinButton.tsx`, `PinnedItemCard.tsx`,
   readout dock about 24px too short, so the card shifts (`ChartItemBody.tsx`). Fix the reserved
   height or move it to `docs/future-work.md`.
 
-### 6. Standalone search, navigation and the workspace
+## Standalone Search and Workspace
 
 Files: `Components/NadacSearch/NadacSearchPanel.tsx`, `App.tsx`,
 `Components/Search/StandaloneSearch.tsx`, `Components/Search/AddSearchToWorkspace.tsx`,
-`Context/WorkspaceContext.tsx`, `library/paneVisibility.ts`.
+`Context/WorkspaceContext.tsx`.
 
 - Track the FDA-to-NADAC handoff once in `NadacSearchPanel`: today it is a `received` state set
   during render and an `appliedOffer` ref in an effect. Move the comment "A restored tab shows
@@ -160,16 +92,15 @@ Files: `Components/NadacSearch/NadacSearchPanel.tsx`, `App.tsx`,
   `AGENTS.md` asks for, but drop the extra layer: `addSearchTab` checks again, and
   `WorkspaceContext` keeps a `readOnly` state that copies the persist module's flag. Merge the
   near-duplicate `ready` and `started` props.
-- Remove the trailing blank line in `paneVisibility.ts`.
 - Browser support: `checkVisibility()` needs Safari 17.4 or later. Confirm that's acceptable or
   add a fallback.
 
-### 7. Result tables
+## Result tables
 
 Files: `Components/ResultTables/ResultTable.tsx`, `priceColumns.tsx`, `AutosizeColumns.tsx`,
 the three table files, `library/resultRows.ts`, `library/chartReadout.ts`.
 
-- Shorten the summary line (`ResultTable.tsx:66`), which always lists zero counts ("N packages:
+- Shorten the summary line (`ResultTable`), which always lists zero counts ("N packages:
   0 with significant changes, 0 other changed, 5 stable, 0 insufficient history · dates"). Show
   only non-zero categories.
 - Have `createPriceColumns` return either the separate columns (`latest`, `latestDate`, `range`)
@@ -186,29 +117,27 @@ the three table files, `library/resultRows.ts`, `library/chartReadout.ts`.
   stale until app-init refetches (`currentAsOfDate`, `library/prices.ts`). Leave as is or add to
   `docs/future-work.md`.
 
-### 8. Small nits
+## Small cleanups
 
-- `AutoCharts.tsx`: stray spacing in the imports.
 - `library/settings.ts`: the default `columnOverrides` is a shared mutable
   `DEFAULT_COLUMN_OVERRIDES` object. Freeze it or build a fresh one per read.
 - `PinnedChartDates.tsx`: an extra blank line left after a removal.
 - `UnitSplit.tsx`: `gap: 2, }` formatting.
 
-### 9. Trim the agent docs
+## Agent documentation
 
 `AGENTS.md` grew by about 85 lines on this branch and `client/CHARTS.md` by about 86. Much of
 it is detailed UI behavior ("Keep Latest Price second or third", where focus goes when a chart
 closes) that every agent reads on every task. Do this last, after the steps above have removed
 some of the behavior it describes:
 
-- Keep rules that prevent real bugs, plus a short map of where things live.
-- Move UI detail into comments beside the code, or into `docs/plans/browser-usability.md`.
-- Update the Price Activity and Standalone Search paragraphs to match steps 1–6.
+- Keep rules that prevent bugs and a short map of where things live.
+- Move UI details into documentation or comments beside the code.
+- Update the Price Activity and Standalone Search guidance when the relevant code changes.
 
 ## Verification
 
-For each step: `npm run lint`, `npm run build` and `npm test` in `client/`, new tests for the
-bug fixes in steps 3 and 7, and a browser check of the screens the step touches (NADAC and FDA
-search, Notable price changes, pinned charts, Add search to workspace) on desktop and phone
-widths. Step 2 also needs a keyboard and screen-reader pass of opening and closing package
-event charts.
+Run `npm run lint`, `npm run build` and `npm test` in `client/` for each PR. Cover zero-price
+labels and strength formatting. Check the affected screens on desktop and phone,
+including both search sources for shared behavior. Use the keyboard to check focus when
+opening and closing charts if a change touches that flow.

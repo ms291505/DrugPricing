@@ -8,9 +8,8 @@ import {
 } from "./types";
 
 /*
- * One criteria object per search type holds every field of its search panel (plan:
- * docs/plans/search-filters.md). Each field is in one of two groups, and the group alone decides
- * whether changing it fetches:
+ * One criteria object per search type holds every field of its search panel. Each field is in
+ * one of two groups, and the group alone decides whether changing it fetches:
  *
  * - Load fields (the text terms and Dates) go to the server.
  * - Refine fields narrow what loaded, in the client.

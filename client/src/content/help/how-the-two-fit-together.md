@@ -1,6 +1,8 @@
-The app matches FDA packages to NADAC prices by NDC. The match is incomplete in both directions:
+The app matches FDA packages to NADAC prices by package NDC. Each source can have entries that
+are missing from the other.
 
-- **Prices without a current FDA match:** NADAC search can find price history even when the package does not appear in the app’s current FDA directory.
-- **FDA entries without prices:** a directory listing does not guarantee a NADAC price. FDA search hides results without prices unless you include **Results without prices**.
+- Use NADAC search to find price histories for packages missing from the app’s current FDA directory.
+- In FDA search, select **Results without prices** under **Include** to see directory listings
+  without NADAC prices in the selected dates.
 
-If one search comes up empty, try the other. Also check the dates and [filters](/help/filters-and-hidden-results).
+Check the dates and filters if you’re missing a result. See [Filters and hidden results](/help/filters-and-hidden-results).

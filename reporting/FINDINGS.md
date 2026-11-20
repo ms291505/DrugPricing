@@ -5,8 +5,8 @@ Dev database as of the 2026-10-07 NADAC file (weekly files from 2022-01-05). Que
 unit (`EA` each, `ML`, `GM`). **Search** is what to type into the NADAC search (description
 contains, 5+ characters) to reproduce a finding in the app.
 
-How much packages vary in price over a window, the band behind the planned "Price activity"
-label, and a gap check of the dev data: [NADAC_PRICE_VARIATION.md](NADAC_PRICE_VARIATION.md).
+The variation analysis explains the **Price Activity** cutoff and checks for gaps in the
+development data. [NADAC price variation](NADAC_PRICE_VARIATION.md)
 
 ## How to read NADAC (lessons that shaped every query)
 
@@ -15,15 +15,15 @@ label, and a gap check of the dev data: [NADAC_PRICE_VARIATION.md](NADAC_PRICE_V
   so it dates the latest rate, not the last change.
 - **Generics are priced per description, not per NDC.** All 20 dapagliflozin 10 mg NDCs from 11
   labelers carry one price. Topicals and liquids are the exception: packages of one description
-  can be priced by package size (see [Package spread](#package-spread-within-one-fda-product)).
+  can be priced by package size. [Package spread](#5-package-spread-within-one-fda-product-sqlproduct_package_price_spreadsql)
 - **Never average a brand across descriptions.** New strengths and package types move the
   average without any price change. The Austedo average "doubled" in two years while each
   tablet rose about 5% (XR 30-48 mg strengths launched at $316-500/tablet), and the Zepbound
   average "fell 36%" in 2026 when the multi-dose KwikPen arrived. This applies to the app too:
   a product-level chart averages its packages.
-- **A pricing unit is not a dose.** Zepbound's 2.4 mL multi-dose KwikPen is $282/mL against
-  $526/mL for the single-dose pen, but per 10 mg dose it is $169 vs $263. Comparing per mL
-  overstates the gap; comparing per pen understates it.
+- **Convert to the same quantity before comparing presentations.** In this snapshot, Zepbound’s
+  2.4 mL multi-dose KwikPen costs $282/mL and the single-dose pen costs $526/mL. At the listed
+  concentrations, that works out to $169 and $263 per 10 mg dose, respectively.
 - **2024 generic NADACs swing on their own.** CMS grew its pharmacy survey from about 2,500 to
   4,000 pharmacies in April 2024 ([NCPA](https://ncpa.org/newsroom/qam/2024/06/05/whats-going-nadac),
   [46brooklyn](https://www.46brooklyn.com/news/may-2024-drug-pricing-report-nadac-is-cool-again-and-so-is-46brooklyn-obviously)).
@@ -250,9 +250,8 @@ charts split into one chart per unit. Package level shows each package's own pri
 | `clearlax` | `46122-014` | $1.22 packet | $0.02-0.03 | Store brand of the same powder |
 | `triple antibiotic` | `0904-8805`, `45802-143` | $0.13 packet | $0.09-0.12 | |
 
-Per each and per gram can't be compared directly (see "A pricing unit is not a dose" above):
-$0.83 per cholestyramine packet against $0.09/g is the same price if a packet holds about 9 g of
-powder, so neither unit is the cheap one without knowing the fill.
+Use the package quantity to compare prices reported in different units. A cholestyramine packet
+priced at $0.83 costs about as much as powder priced at $0.09/g if the packet holds about 9 g.
 
 ## Data quality note
 

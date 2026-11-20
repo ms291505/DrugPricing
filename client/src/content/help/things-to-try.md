@@ -6,4 +6,5 @@ Try these searches to explore the app. Results depend on the loaded data, dates 
 | `semaglutide` | FDA, Generic name | Inspect products and their packages |
 | `nicotine` | NADAC, Description | Compare results with OTC drugs included |
 
-Select priced rows and choose **Chart selected**. Pin a chart, then change the search to see how pinned snapshots stay independent.
+Select priced rows and choose **Line** or **Bar** to add a chart to **Pinned**. Run another
+search to compare the new results with the pinned chart.

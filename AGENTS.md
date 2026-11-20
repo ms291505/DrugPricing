@@ -3,7 +3,7 @@
 Orientation for coding and review agents; the single source of project guidance (`CLAUDE.md`
 only points here). Chart and card design rules are in [client/CHARTS.md](client/CHARTS.md).
 
-Project documentation is indexed in [docs/README.md](docs/README.md). Keep implementation
+The [documentation index](docs/README.md) includes the [writing style guide](docs/README.md#writing-style). Keep implementation
 plans in `docs/plans/`, review observations in `docs/reviews/`, and draft user-facing copy in
 `docs/content/`. The backlog is `docs/future-work.md`; code-specific guidance stays beside its code.
 
@@ -222,7 +222,7 @@ depend on write availability read it. The action checks storage's read-only flag
   of its packages' shown prices, not the card. A change to one redraws only its card: read the
   narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
   [client/CHARTS.md](client/CHARTS.md).
-- **Search criteria** (`library/searchCriteria.ts`, plan in `docs/plans/search-filters.md`): one
+- **Search criteria** (`library/searchCriteria.ts`): one
   object per search type, edited in one panel per page (`SearchPanel`). The pages pass it their
   fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
   picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
@@ -345,8 +345,11 @@ prints the `[timing] <stage>: <s>s (ok|failed)` lines in the cron log. Models ar
   that disagree on dosage form, product type or ingredients are logged as a warning and merged
   anyway (~11 as of the 2026-09 file): FDA data rot, not a code fault.
 - Each NADAC file is cumulative year to date (~1.2M rows by late year): keep
-  `NADAC_FILTER_BEFORE_INSERT` on. Files have appeared as early as ~6:17 AM Wednesday; a
-  scheduled job should start early and retry every 30 minutes.
+  `NADAC_FILTER_BEFORE_INSERT` on. An unattended `--nadac` run before noon Eastern on
+  Wednesday selects the previous week’s file (`most_recent_wednesday`). From noon it asks for
+  that Wednesday’s file, and if CMS hasn’t published it yet, `fetch_nadac` exits with
+  `NADAC_NOT_200` and nothing retries: schedule at or after noon and retry until it loads. See
+  [Deployment](README.md#deployment).
 
 ## Deployment and branching
 

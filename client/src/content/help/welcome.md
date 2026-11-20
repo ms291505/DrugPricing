@@ -1,6 +1,6 @@
-DrugPricing shows US drug acquisition prices over time. Search for a drug, inspect its price history, and pin charts to compare.
+Explore weekly US drug acquisition prices. Search for a drug, chart its price history, and pin charts to compare them.
 
-- **NADAC search** looks through the prices themselves. Type part of a description or an NDC.
-- **FDA search** looks through drug reference data by brand or generic name and shows matching NADAC prices.
+- **FDA search** finds products and packages by brand or generic name and shows matching NADAC prices.
+- **NADAC search** finds package price histories by description or NDC, including packages absent from the FDA directory.
 
-Start with [What the prices mean](/help/what-the-prices-mean): these numbers are not what a patient pays.
+These are pharmacy acquisition costs, not what a patient pays. See [What the prices mean](/help/what-the-prices-mean).

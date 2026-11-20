@@ -8,9 +8,9 @@ import { useGlobalModalActions } from "../Context/globalModalContexts";
 import type { HelpTopicId } from "../library/help";
 
 const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Icon: SvgIconComponent }[] = [
-  { title: "Products and packages", text: "A product is one drug at one strength and form. Its packages are the bottle and box sizes it comes in. FDA search can show either; NADAC search lists individual package NDCs.", link: "More about products and packages", topic: "ndcs-products-and-packages", Icon: Inventory2Outlined },
-  { title: "Prices are per unit", text: "Per tablet, millilitre or gram, never per package, and they are what a pharmacy pays its supplier, not what a patient pays.", link: "What the prices mean", topic: "what-the-prices-mean", Icon: ScaleOutlined },
-  { title: "Pin a chart to keep it", text: "Charts on a search page follow the search. Pin one and it keeps its data and dates, available in both FDA and NADAC search. Each Workspace tab keeps its own pins.", link: "Pinning and comparing", topic: "pinning-and-comparing", Icon: PushPinOutlined },
+  { title: "Products and packages", text: "A product identifies a drug at one strength and in one form from one labeler. Packages identify the sizes and containers it comes in. FDA search shows either level. NADAC search lists package codes.", link: "More about products and packages", topic: "ndcs-products-and-packages", Icon: Inventory2Outlined },
+  { title: "Prices are per unit", text: "A price estimates the pharmacy’s acquisition cost per unit, such as a tablet, milliliter or gram. Your prescription bill depends on other factors.", link: "What the prices mean", topic: "what-the-prices-mean", Icon: ScaleOutlined },
+  { title: "Pin a chart to keep it", text: "Pin a chart to keep its data and dates when you search again. The FDA and NADAC pages under Search share pins. Each Workspace tab keeps its own.", link: "Pinning and comparing", topic: "pinning-and-comparing", Icon: PushPinOutlined },
 ];
 
 /** The page at `/welcome`, where the bare address goes until a search source is visited. */
@@ -20,10 +20,9 @@ export default function Welcome() {
     {/* Hero: what the app is, then the two ways in, right under the sentence that explains them. */}
     <Paper component="section" aria-labelledby="welcome-heading" sx={{ px: { xs: 2, sm: 4 }, py: { xs: 4, md: 6 } }}>
       <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
-        <Typography variant="overline" sx={{ color: "primary.main", lineHeight: 1 }}>Welcome to</Typography>
         <Typography id="welcome-heading" variant="h3" component="h1" sx={{ fontWeight: 500, fontSize: { xs: "2.5rem", sm: "3rem" } }}>DrugPricing</Typography>
         <Typography variant="h6" component="p" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: "36em" }}>
-          Explore US drug acquisition prices, week by week. Search for a drug, chart its price history, and pin charts side by side to compare.
+          Explore weekly US drug acquisition prices. Search for a drug, chart its price history, and pin charts to compare them.
         </Typography>
         {/* A grid of equal columns, so side by side both buttons take the wider label's width. */}
         <Box sx={{ display: "grid", gridAutoFlow: { xs: "row", sm: "column" }, gridAutoColumns: "1fr", gap: 2, pt: 2, width: { xs: "100%", sm: "auto" } }}>
@@ -48,7 +47,7 @@ export default function Welcome() {
     <Box component="section">
       <Divider sx={{ mb: 2 }} />
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        Prices come from NADAC (National Average Drug Acquisition Cost), a CMS benchmark based on invoices voluntarily submitted by retail community pharmacies. It estimates acquisition costs; it does not capture every pharmacy’s actual cost or every drug package.
+        The Centers for Medicare &amp; Medicaid Services publishes the National Average Drug Acquisition Cost (NADAC) weekly. The benchmark is based on purchase invoices that retail community pharmacies submit voluntarily.
       </Typography>
       <Stack direction="row" spacing={3} useFlexGap flexWrap="wrap" sx={{ mt: 1.5, typography: "body2" }}>
         <Link component="button" onClick={() => openHelp("nadac")} sx={{ typography: "body2" }}>What is NADAC?</Link>

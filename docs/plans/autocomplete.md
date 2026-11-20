@@ -64,8 +64,9 @@ What changed from the previous draft, and why:
   brand names and 81 generics. NADAC's server applies the dates, so those NADAC names return
   an empty table that `hiddenResultsHint` can't explain (`nadacHiddenCounts` totals 0): one
   suggestion in seven. The view therefore carries NADAC's last as-of dates and the suggestions
-  follow the search's start date. FDA loads every price and hides the rest, so its
-  hidden-results hint explains the empty default view. FDA stays "ever priced".
+  follow the search’s start date. FDA loads matching directory entries even when they have no
+  price in the selected dates, so its hidden-results message can explain an empty default view.
+  FDA suggestions use whether the listing has ever had a price.
 - 4 Rx brand names are priced only through sample packages, which FDA hides by default
   ("Sample packages" box). The flags ignore that box. Picking one of those 4 lands on the
   hidden-results hint. Few enough to accept.
@@ -228,12 +229,11 @@ Panels:
 
 - AGENTS.md: the suggestions endpoint in the API list; the view and that both ETL paths
   refresh it; `MIN_SUGGEST_LENGTH` in the duplicated-minimums convention.
-- docs/future-work.md: the "app-init names … autocomplete in the FDA search form" cleanup stays
-  (dosage form/route are out of scope). Keep the entries this review added: the search minimum
-  hides 17 priced brand names; suggest the drug word ("ELIQUIS") rather than a full strength
-  description if suggestions that narrow to one strength confuse users; narrow one FDA field's
-  suggestions by the other's draft if combined searches often land on nothing; `DrugPackages`
-  keeps each NDC's first description, so neither search nor suggestions find its current one.
+- Update the published [Searching article](../../client/src/content/help/searching.md) with
+  the suggestion and spelling-correction behavior.
+- Reconcile the search minimums with the generic-term blocking item. Preserve the open
+  questions about short names, suggestions spanning strengths and combined FDA fields, and the
+  cleanup for historical NADAC descriptions. [Future work](../future-work.md)
 
 ## PRs
 
