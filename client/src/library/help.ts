@@ -21,7 +21,7 @@ const TOPICS = [
   { id: "tabs-and-your-saved-workspace", title: "Tabs and your saved workspace", group: "Using the app", keywords: "storage browser clear", related: ["pinning-and-comparing", "troubleshooting"] },
   { id: "settings", title: "Settings", group: "Using the app", keywords: "theme dark light", related: ["charts"] },
   { id: "keyboard-and-screen-readers", title: "Keyboard and screen readers", group: "Using the app", keywords: "accessibility", related: ["charts"] },
-  { id: "five-ways-a-price-can-mislead", title: "Five ways a price can mislead", group: "Reading prices carefully", related: ["things-to-try", "what-the-prices-mean"] },
+  { id: "five-ways-a-price-can-mislead", title: "What to check before comparing prices", group: "Reading prices carefully", related: ["things-to-try", "what-the-prices-mean"] },
   { id: "things-to-try", title: "Things to try", group: "Reading prices carefully", keywords: "examples", related: ["five-ways-a-price-can-mislead", "which-search-to-use"] },
   { id: "glossary", title: "Glossary", group: "Reference", keywords: "terms definitions", related: ["ndcs-products-and-packages", "what-the-prices-mean"] },
   { id: "troubleshooting", title: "Troubleshooting", group: "Reference", keywords: "problem no results slow reload", related: ["searching", "filters-and-hidden-results", "how-the-two-fit-together"] },

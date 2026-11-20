@@ -30,7 +30,7 @@ If there's only time for six, run these:
 
 ## Include OTC
 
-As of search-filters step 2, both pages hide OTC by default.
+Both searches hide over-the-counter drugs by default.
 
 | Search | NADAC | FDA | What to check |
 | --- | --- | --- | --- |
@@ -75,7 +75,7 @@ A description search rarely mixes classes, because brand descriptions use the br
 | `prevalite` | EA + GM | One product, both units current |
 | `colestipol`, `bacitracin` | EA + GM | One unit stopped being priced: the row shows two price dates |
 | `diclofenac`, `albuterol`, `budesonide`, `minoxidil` | EA + ML + GM | Three units in one NADAC result |
-| `zepbound`, `asmanex` | ML; EA + GM | A pricing unit is not a dose (see FINDINGS.md) |
+| `zepbound`, `asmanex` | ML; EA + GM | Compare units alongside strength and package quantity. [Pricing findings](FINDINGS.md) |
 
 ## FDA load and refine fields
 

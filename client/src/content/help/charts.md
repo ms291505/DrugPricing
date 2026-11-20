@@ -1,7 +1,7 @@
-The **Chart latest prices** and **Chart price histories** controls sit directly below the
-results table. Use one to show a live overview. These
-cards follow the search and filters until you hide them. They start hidden after a reload.
-Select rows and use **Line** or **Bar** to pin a snapshot directly, or pin a live overview.
+Below the results table, choose **Chart latest prices** or **Chart price histories** to show a
+live comparison. The cards follow the search and filters and support up to eight series.
+To chart specific results, select rows and choose **Line** or **Bar** above the table. This
+creates a snapshot in **Pinned**. Use **Pin** on a live comparison to keep a snapshot of it.
 
 **Line charts** show price over time. The line moves in steps between the weekly observations. A gap at the start or end means the drug had no price in those weeks.
 
@@ -12,26 +12,20 @@ average, and a shaded band shows their lowest to highest price that week.
 the **Average** over the chart's dates. Each row also shows the low-to-high range over those
 dates.
 
-**The readout** is the box above the plot. Move the pointer over the chart, or touch it, and
-the readout shows the values at that date. Click or tap to **lock** a date so you can scroll the
-readout; click again, press Esc, or use **Unlock** to release it.
+**The readout** above the plot shows the date or bar under your pointer. Click or tap to lock
+that point so you can scroll the readout. Click again, press Esc, or choose **Unlock** to release it.
 
 **The legend** hides and shows lines. Colors stay with their drug when you filter.
 
-Charts never put two units on one axis. A new chart containing drugs priced per tablet and per millilitre
-creates two separate cards, each labelled with its unit. Older mixed-unit pins still draw
-separate unit charts inside their card.
+If selected drugs use different pricing units, such as per tablet and per milliliter, the app
+creates a card for each unit. Older mixed-unit pins draw separate charts inside one card.
 
-The price axis doesn't start at $0 on line charts, so small changes are visible, but it is
-limited so a small change can't be made to look dramatic.
+The line chart can fit its price axis to the data to show small changes. The app limits how
+tightly the axis fits to keep changes in proportion.
 
 **View data** under any chart shows its numbers as a table, and **Download CSV** saves them.
 
-Live comparisons support up to eight series. With more results, select rows and use **Line**
-or **Bar** to chart a smaller group.
-
-Line charts mark significant package price changes. The exact values for each package are in
-the **Notable price changes** card below the results table, or at Package level. A package chart's
-**View data** has its exact prices. A product marker
-comes from a package event, never from a jump in the average when a package joins or leaves.
-Pinned line charts have a **Show price changes** menu option; see the Price changes help topic for the thresholds and activity labels.
+Line charts mark significant package price changes. A marker on a product chart means one or
+more packages changed price. Find the package prices before and after in **Notable price changes**
+or in the package chart’s **View data** table. The menu on a pinned line chart has a **Show price
+changes** option. [Price changes](/help/price-changes)

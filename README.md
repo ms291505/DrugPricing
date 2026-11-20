@@ -1,9 +1,9 @@
 # DrugPricing
 
-A full-stack web app for storing, serving, and charting US drug pricing data. Search the
-NADAC weekly pricing series by drug description or NDC, or explore the FDA NDC directory and chart
-the prices for the products and packages you find. The app began as a way to learn new
-skills end to end, from database to deployment.
+A full-stack web app for exploring weekly US drug acquisition prices. Search NADAC by drug
+description or National Drug Code (NDC), or find products and packages in the FDA directory
+by brand or generic name and chart their matching NADAC prices. The app began as a way to
+learn new skills end to end, from database to deployment.
 
 **Live demo:** <https://drugpricing.mikesteiner.info>
 
@@ -14,8 +14,10 @@ skills end to end, from database to deployment.
   then charts the NADAC prices for what matched.
 - Draws line charts of price over time and bar charts comparing series by latest or
   average price.
-- Flags price changes and charts them in context.
-- Lets you pin charts into a tabbed, multi-pane workspace that is saved in your browser.
+- Flags notable package price changes and lets you scan at a threshold you choose.
+- Saves pinned charts and price change lists in your browser. The standalone searches share
+  pins, and each Workspace tab has its own. Copy a search and its pins to a new tab from the
+  search panel.
 - Offers a data table and CSV download under every chart.
 - Supports keyboard navigation and a screen-reader readout of the active point.
 
@@ -33,7 +35,7 @@ Data flows one way: the ETL downloads and loads NADAC and FDA data into Postgres
 reads it (with in-memory caching), and the client queries the API.
 
 See [`AGENTS.md`](AGENTS.md) for the full map of the code, conventions, and known rough edges,
-and the [documentation index](docs/README.md) for plans, review notes, draft help content and
+and the [documentation index](docs/README.md) for plans, review notes, published Help and
 [future work](docs/future-work.md).
 
 ## Data sources
@@ -46,14 +48,14 @@ and the [documentation index](docs/README.md) for plans, review notes, draft hel
 
 ### Disclaimer
 
-DrugPricing is a personal learning project. It is not affiliated with or endorsed by CMS or
-the FDA. NADAC is a survey-based estimate of what retail community pharmacies pay to acquire a
-drug. It is not what a patient pays, a retail price, or itself a reimbursement rate. The data may be incomplete
-or out of date, and nothing here is medical, financial, or pricing advice.
+DrugPricing is an independent learning project. CMS and the FDA do not endorse it. NADAC estimates
+what retail community pharmacies pay to acquire drugs. Patient prices, retail prices and reimbursement
+rates are separate figures. The data may be incomplete or out of date. DrugPricing does not provide
+medical, financial or pricing advice.
 
 ## Getting started
 
-You need Docker, the .NET 10 SDK, Node.js 20.19 or later (or 22.12+), and Python 3.13. To add
+You need Docker, the .NET 10 SDK, Node.js 20.19+ in the 20.x series or 22.12+, and Python 3.13. To add
 migrations you also need the EF Core tool: `dotnet tool install --global dotnet-ef`.
 
 ### 1. Database
@@ -141,11 +143,10 @@ Pi). It syncs the ETL, builds and publishes the client, publishes the server, an
 the `drugpricing` service. Production reads its database settings from the standard `PG*`
 environment variables (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`).
 
-The ETL can also run without prompts: `python drug_pricing_etl.py <mode> --fda --nadac`
-(either flag, or both). With flags, `--nadac` loads the most recent Wednesday's file instead
-of `NADAC_FILE_DATES`, which makes it suitable for cron. NADAC files have been available as
-early as about 6:17 AM Eastern on Wednesdays, so a scheduled job should start early and retry
-every 30 minutes.
+To run the ETL without prompts, use `python drug_pricing_etl.py <mode> --fda --nadac` with
+either or both flags. `--nadac` selects the most recent Wednesday’s file without reading
+`NADAC_FILE_DATES`. Before noon Eastern on Wednesdays, it selects the previous week’s file.
+Schedule a run at noon Eastern or later to pick up that Wednesday’s file.
 
 ## Attributions
 

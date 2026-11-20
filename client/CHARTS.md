@@ -193,8 +193,9 @@ re-renders only the readout, not the chart.
 
 - **What it shows:** the hovered point; else the locked one; else, on a line chart, the
   chart's `eventDate` ("· this change") or the latest date ("· latest"), and on a bar chart a hint.
-  It holds only the date and unit, Unlock when locked, and the series rows: no price-change
-  events (those are the on-plot callouts and the list below the plot). It reserves its height (`lineReadoutHeight`,
+  It holds the date and unit, Unlock when locked, and the series rows. Line chart callouts mark
+  changes on the plot. The price change lists below the results table show package details.
+  The dock reserves its height (`lineReadoutHeight`,
   `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
   under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).

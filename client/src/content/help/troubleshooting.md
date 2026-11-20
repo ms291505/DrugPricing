@@ -1,15 +1,15 @@
-- **No results.** Check the spelling (there is no correction), try fewer letters, and look for
-  a "hidden" count beside the checkboxes. Then try the other search.
-- **Search is greyed out.** You need 5 characters, or the results on screen already match what
-  you typed.
-- **A drug I know exists has no prices.** It may not be sold through retail pharmacies, or
-  NADAC doesn't survey it. Tick **Results without prices** on FDA search to confirm it is in
-  the directory.
-- **The price looks far too low or too high.** Check the unit. Per tablet, per millilitre and
-  per gram are very different numbers.
-- **The page says to reload, and nothing saves.** The app is open in another window that
-  changed your workspace. Reload this one.
-- **My tabs are gone.** The workspace is stored in this browser only. Another browser, a
-  private window, or cleared site data starts empty.
-- **The site is slow on a big search.** Common drugs return thousands of prices. Shorten the
-  dates or be more specific.
+- **No results.** Check the spelling and dates, or try a shorter term of at least five
+  characters. Check the counts under **Include** for hidden results. You can also try the other
+  search source.
+- **Search is disabled.** Check the minimum length. If the current results already match the
+  terms, edit the terms to run another search.
+- **A package has no prices.** NADAC covers certain drugs sold through retail community
+  pharmacies. In FDA search, select **Results without prices** to see listings with no price
+  in the selected dates.
+- **The price looks unusual.** Check whether it is per tablet, milliliter, gram or another
+  unit, and check the selected dates.
+- **The app asks you to reload.** Another window saved changes. Reload this window before
+  making more changes.
+- **Tabs are missing.** Open the browser and profile where you saved them. Clearing this
+  site’s data removes your workspace.
+- **A search is slow.** Try a shorter date range or more specific search terms.

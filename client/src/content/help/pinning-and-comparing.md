@@ -1,33 +1,27 @@
-**Pin** copies a chart or a price change list into the Pinned section at the bottom of the page.
-A pinned item is a snapshot: new searches, filters and dates don't change it. That lets you search for one drug,
-pin it, search for another, and compare.
+**Pin** copies a chart or price change list into **Pinned** at the bottom of the page. The copy
+keeps its data and dates when you change the search. Pin one drug’s chart, then search for
+another to compare them.
 
 The standalone **FDA search** and **NADAC search** share their Pinned collection, so you can
 compare charts from both sources. Each **Workspace tab** has its own separate pins.
 
-On a pinned chart you can:
+On a pinned chart you can do the following.
 
-- change its **dates** from the dates chip, without affecting anything else;
-- turn on **Match scale** from its menu, so the matched charts in the same unit share one price
-  axis. Leave it off for drugs at very different prices, or the cheap one becomes a flat line;
-- see the **search source** badge under the title. Its tooltip explains that FDA search uses FDA
-  reference data to find and group products, while all plotted prices come from NADAC. Older pins
-  without saved source information say **Search source unknown**;
-- see the **Products** or **Packages** provenance chip for the search terms and how many results
-  the chart shows, plus "filtered" if filters were on. On eligible product charts, this chip also
-  switches between product averages and stored package price lines;
-- use the dates chip to see or change the pinned chart's date window. **Match scale** only shares
-  axes between charts with the same pricing unit.
+- Select the dates chip to change the chart’s own date window.
+- Turn on **Match scale** in the menu on each line chart you want to compare on the same
+  price axis. The charts must use the same pricing unit.
+- Check the search source badge under the title to see which search found the data. All
+  charted prices come from NADAC. Older pins without a saved source show **Search source unknown**.
+- Check the summary chip for the search terms and number of results shown. It says “filtered”
+  when the chart shows a subset of the loaded series.
 
 For a pinned **product** chart with saved package identities, select its **Products** chip to see
 the stored package price lines. Select the **Packages** chip to return to product averages. This
 switch changes only the chart view; it keeps the same dates and snapshot. Older product pins may
 not have package identities and can't be switched.
 
-A pinned **price change list** keeps the prices of the packages it lists over the dates it showed,
-and works out its changes from them again, so it reads the same after new searches and reloads. Its
-menu can move it, make it half or full width, or remove it; its dates are fixed. Its **Chart this
-change** buttons open charts below the pinned items, covering only the list's dates. Those charts
-aren't saved, stay open when you collapse or remove the list, and can be pinned themselves. A list
-with too many packages to store can't be pinned: narrow the dates or filters, or scan at a higher
-percent.
+A pinned **price change list** keeps the listed packages’ prices and the dates it showed. Use
+its menu to move it, change its width or remove it. **Chart this change** opens a temporary
+chart below **Pinned** using the list’s dates. It stays open if you collapse or remove the list.
+Use **Pin** on that chart to save it. If a list has too many packages to pin, narrow the dates
+or filters or scan at a higher percentage.

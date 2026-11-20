@@ -1,8 +1,7 @@
 # Future work
 
-Work that hasn't been done yet: directions the author has decided on, cleanups worth making,
-feature ideas that should shape today's structure, and the author's own notes. Items say roughly how big they are and where
-they fit. When something is done, delete it here. The code and its PR are the record.
+This backlog records agreed work, cleanup opportunities and ideas. Remove an entry when
+it ships. The code and pull request preserve the implementation history.
 
 ## Decided
 
@@ -39,8 +38,7 @@ A text search must name a drug. "tablet" passes the 5-character minimum but isn'
 NADAC description it matches about 19,000 packages (18,830 in the dev database), which is a huge
 response, and its price change list (about 4,000,000 characters) is far over
 `PRICE_CHANGE_LIST_PIN_LIMIT`, so pinning it is refused with "Too many packages to pin".
-"metformin tablet" is a real search. Found while sizing pinned lists for
-[price change scans](plans/price-change-scans.md).
+"metformin tablet" is a real search. This came up while sizing pinned price change lists.
 
 - **Rule:** a term is searchable only if at least one of its words is not a generic word. Generic
   words are dosage forms ("tablet", "capsule", "injection", "solution"), routes ("oral",
@@ -108,9 +106,6 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   each change. If profiling shows it costs, debounce in `library/persist.ts` (about 500ms) and
   flush on `pagehide` and when the page is hidden, keeping the several-windows guard and the
   failed-write toast working. Left out of the pinned-chart performance PR.
-- **`/api/app-init` returns route and dosage-form names the client never uses.** The generic-term
-  blocking item (Decided) replaces them with `searchRules`, built from those names. Until then the
-  client uses only the date range.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
   unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
@@ -147,8 +142,7 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   description an NDC has had. Either way it changes what typed searches find. Autocomplete's
   view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
   follows the fix with no change of its own. Small.
-- **Lint for unused exports** (`knip` or `ts-prune`). PR #18 removed four unused exports by hand
-  and still left a dead copy of `splitByPricingUnit` behind; TypeScript doesn't flag either.
+- **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
 
 ## Ideas
 
@@ -237,7 +231,7 @@ workspace tab (see **Linkable search results**). Two consequences for current st
 
 ### Linkable search results
 
-Links that open a workspace tab with a search already run, for people to look at or start a tab
+Links that open a Workspace tab with a search already run, for people to look at or start a tab
 from: a blog post with example searches, or entries in a "popular searches" / "recent movers"
 list. Something like `/workspace?new=fda&name=eliquis` or
 `?new=nadac&ndc=3089321&from=2025-10-07`. If it gets built:
@@ -252,34 +246,39 @@ list. Something like `/workspace?new=fda&name=eliquis` or
   creating two.
 - Following the same link twice could focus the existing tab instead of adding a duplicate.
 
-## Author's notes
+### Search results on phones
 
-The author's own notes from using the app and thinking ahead. They aren't decisions: ask the
-author before planning work from them.
+Consider a row details drawer to show the fields for a single result without horizontal
+scrolling. Consider an activity filter if sorting by **Price Activity** proves insufficient.
 
-### Notes from user testing (2026-10-17)
+### Chart readout cues
 
-On this date I used the web app and took notes on improvements I'd like to see as a user.
-What was decided from them is under **Decided**, in "Usability round from the user-testing
-notes".
+Test whether clearer lock instructions, a visible locked state, and an overflow cue help
+people use the docked readout.
 
-- Date inputs for the page filters: This probably needs to be a custom filter that is toggled on an off with a button, rather than something that's directly applied to the data when values are entered. The button probably should toggle to active when a date is selected, so users don't have to click it to toggle it on. Users wouldn't enter a date if they didn't want to start using it. Then it becomes something that can be switched between along with the default time windows provided. Toggling it on and off wouldn't clear the entered dates. Currently using one of the default options after entering dates clears the user inputs.
-- The tooltip for the line charts can get very long, extending beyond the chart. This causes strange scroll issues for the page. Is there a way for the tooltip to have a max height and be scrollable itself?
-- Page tools is just strange... Adding a chart should probably come from the table not page tools. It's hard to understand what page tools and filters are supposed to be... The intent is to filter the results table, really... Not the whole page. Same issue for both search types.
-- We need pricing data in the results tables: Average price, latest price, min price and max price. The NADAC table has this already, except for latest price. Look, overall I think average price over time is not super useful, but it should be available in case a user wants it for some reason.
-- Tooltips for all the charts should only appear on a click. I think this will really clean things up a bit. Right now they're too floaty and almost get in the way of things. It might improve performance too.
-- The app really struggles when the user starts to pin charts and is really getting to work trying to compare things. Did the performance improvement for tab switching mess this up? I didn't do enough testing before to determine if this impacted it.
-- I think a really good use case for this app is users exploring the price differences and changes for Wegovy, Ozempic, Mounjaro, Zepbound, and Rybelsus. This shows some interesting pain points for users:
-  - When something is mixed units, it should probably just be different explorer items (aka completely different charts) instead of a split chart as one item. A toast can explain why multiple charts were added. This makes it easier to compare the per each version of Wegovy to Rybelsus.
+### Interactive Help example
+
+Consider a small, fixed example built with the same results table as Search. Use it to
+show sorting, column controls, and how to chart selected rows. It should work without the API.
+
+### Optional Average Price column
+
+The October user-testing notes called for an optional Average Price column. The results
+tables currently offer Latest Price, Min Price and Max Price. Average is available on bar charts.
+Revisit the column if people need to compare period averages in the table.
+
+## Author’s notes
+
+These ideas are for discussion with the author before planning work.
 
 ### Workspace redo (2026-11-01)
 
-The Workspace has gone in a direction that probably isn't the best place to be. A shouldn't be a search. A tab should be a collection of results and charts
+The Workspace has gone in a direction that probably isn't the best place to be. A tab shouldn't be a search. A tab should be a collection of results and charts
 created by a user and stored for comparison. A search is really a tool. People can use the app and simply perform a search and look around a bit, that would be the
 fda search and nadac search routes. The workspace is for when people want to collect results for notes and comparison. They add results using a search. This is
 where the Collection idea was going before development on that stopped.
 
-When a new tab is created, users should be asked how they want to add data: which search they want to use. One they pick it probably opens a modal with the search in it.
+When a new tab is created, users should be asked how they want to add data: which search they want to use. Once they pick it, it probably opens a modal with the search in it.
 Users can then add results tables and charts to their collection (aka tab).
 
 Auto charts are now essentially recommended additions to the collection in this context.
@@ -292,7 +291,7 @@ context needs to be rethought, so probably no need to stick to this mailbox desi
 The Collections proof of concept (`Components/Collection/`, a registered tab type the tab creator
 doesn't offer) stays in the code until then. It is an early step toward this.
 
-## Font
+## Typography cleanup
 
 `theme.ts` names "DM Sans" first in `fontFamily`, but no font is loaded anywhere (no link,
 `@font-face` or `@fontsource`), so the app renders in the system font. Either load DM Sans or drop

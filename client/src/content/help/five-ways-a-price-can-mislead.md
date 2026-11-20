@@ -1,7 +1,7 @@
-1. **An average can move when no individual price did.** A product’s average can change when packages join or leave the observations. Check package-level prices.
-2. **A unit is not a dose.** Prices per tablet, millilitre and gram answer different questions. Strength and package size matter too.
-3. **A survey is not a receipt.** NADAC is an estimate. A pharmacy’s own acquisition cost may differ.
-4. **A flag is arithmetic, not an explanation.** A large recorded change does not establish why it happened. Check the underlying observations and source data.
-5. **Acquisition cost is not the patient’s price.** Insurance, reimbursement and patient programs answer different pricing questions.
+1. **Check the packages behind an average.** An FDA product’s average can change when different packages have prices in different weeks. Switch to **Packages** to see whether an individual package’s price changed.
+2. **Check the pricing unit, strength and package size.** NADAC reports prices per tablet, milliliter, gram or other listed unit. Two tablets can have different strengths, and two bottles can contain different amounts. Check those details before comparing prices.
+3. **Allow for differences between pharmacies.** NADAC estimates acquisition costs from invoices submitted by participating retail community pharmacies. The amount an individual pharmacy paid may differ from the estimate.
+4. **Look for evidence of what caused a change.** A price marker compares two recorded values. Check the package’s history and the source data to investigate the change.
+5. **Use NADAC for acquisition costs.** A patient’s prescription cost depends on the pharmacy’s price, insurance coverage and any discounts.
 
-See [What the prices mean](/help/what-the-prices-mean) and [The results table](/help/the-results-table).
+[What the prices mean](/help/what-the-prices-mean) · [The results table](/help/the-results-table)

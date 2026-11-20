@@ -1,7 +1,9 @@
-The app displays the data it has loaded, which can lag behind the source publications. CMS updates NADAC data weekly.
+CMS publishes NADAC weekly. The app shows the files it has loaded so far.
 
-The search date controls show the available price range. **All** selects the full available history; a new search normally starts with the latest 12 months of loaded data.
+The search date controls show the selected period. Choose **All** to use the full available history.
+Search defaults to the last 12 months of loaded data.
 
-A price’s date in this app is its file’s as-of date. It is an observation for that week, not a guarantee of a price on every day until the next observation.
+A price’s date is the as-of date of its NADAC file. It identifies the week of the observation.
 
-FDA search uses the loaded directory’s active products and packages. A missing entry can reflect the directory or the app’s last load, rather than a missing historical price. Try NADAC search for price history.
+FDA search uses the active entries from the directory loaded into the app. Try NADAC search
+for historical prices when a package is missing from the FDA results.

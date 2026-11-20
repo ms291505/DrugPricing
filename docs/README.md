@@ -1,51 +1,45 @@
 # Documentation
 
-Start with the [project README](../README.md) for setup and architecture, and
-[AGENTS.md](../AGENTS.md) for development conventions and known rough edges.
+Start with the [project README](../README.md) for setup, architecture and deployment. See
+[AGENTS.md](../AGENTS.md) for development conventions and [Charts and explorer cards](../client/CHARTS.md)
+for chart and card design rules.
 
-## Plans and backlog
+## User-facing copy
 
-- [Future work](future-work.md): backlog, established directions and links to detailed plans.
-- [Browser usability](plans/browser-usability.md): implementation record for the app bar and
-  one Search area, results columns, price activity, chart creation and the workspace bridge
-  (stages 1–4).
-- [Browser usability cleanup](plans/browser-usability-cleanup.md): ordered simplifications and
-  bug fixes from the 2026-11-19 review of the `browser-usability` merges.
-- [Topic-based Help](plans/help.md): modal-first help, shared topic pages, content migration
-  and implementation record.
-- [Search filters](plans/search-filters.md): design and implementation record for the shared
-  search criteria and filtering experience.
-- [Autocomplete](plans/autocomplete.md): planned search suggestions and spelling corrections.
-- [Price change scans](plans/price-change-scans.md): implementation record for percent scans of
-  package price changes, closable and pinnable event lists.
-- [Observability](plans/observability.md): proposed self-hosted monitoring.
+- [Welcome](../client/src/Components/Welcome.tsx)
+- [About](../client/src/Components/About/About.tsx)
+- [Help articles](../client/src/content/help/) and [topic catalog](../client/src/library/help.ts)
 
-## Reviews and content
+## Writing style
 
-- [Browser review — November 13, 2026](reviews/2026-11-13-browser-review.md): annotation
-  observations, confirmed decisions, recommendations and open questions.
-- [Welcome page content](content/welcome.md): draft copy for the home page the usability plan
-  adds.
-- [Help content](content/help.md): draft in-app reference copy, source notes and pre-publication
-  checks. Describes current behavior; reconcile affected pages with the usability plan as
-  changes ship. It is not published help or an approved implementation plan.
+- Use direct, plain language throughout headings, labels and body copy. Avoid slogans,
+  wordplay and “X is not Y” constructions. State the fact or tell the reader what to check.
+  For example, “Check the pricing unit, strength and package size before comparing prices.”
+- Use sentence case for headings and labels. When referring to an existing control, match
+  its spelling and capitalization in the app.
+- Keep Help topic IDs stable so existing links continue to work.
 
-## Documentation beside the code and data
+## Future work
 
-- [Chart and card guidance](../client/CHARTS.md)
-- [Pricing analysis findings](../reporting/FINDINGS.md)
-- [NADAC price variation and dev data gap check](../reporting/NADAC_PRICE_VARIATION.md): basis
-  of the Price Activity Stable/Changed band
-- [Search examples and test drugs](../reporting/TEST_DRUGS.md)
-- [Analysis SQL](../reporting/sql/)
+- [Backlog](future-work.md) for decisions, cleanups and ideas.
+- [Search autocomplete](plans/autocomplete.md) for name suggestions and spelling corrections.
+- [Browser usability cleanup](plans/browser-usability-cleanup.md) for the remaining
+  refactoring and bug fixes from the November 19 review.
+- [Observability](plans/observability.md) for proposed self-hosted monitoring.
 
-## Organization
+## Reviews and analysis
 
-Use `plans/` for intended behavior, decisions and implementation steps; `reviews/` for dated
-observations and discussion records; and `content/` for draft user-facing copy. Keep decisions
-distinct from recommendations. Link between related documents instead of copying their detail
-into the backlog. Paths in inline code are repository-relative unless stated otherwise;
-Markdown links are relative to the document containing them.
+- [November 13 browser review](reviews/2026-11-13-browser-review.md) records the discussion that
+  led to the Search and Workspace changes.
+- [NADAC pricing findings](../reporting/FINDINGS.md) document price events and comparisons.
+- [NADAC price variation](../reporting/NADAC_PRICE_VARIATION.md) records the analysis behind
+  the Price Activity cutoff and checks for gaps in the development data.
+- [Test drugs](../reporting/TEST_DRUGS.md) lists searches for browser testing.
+- [Analysis SQL](../reporting/sql/) contains the reporting queries.
 
-Keep `README.md`, `AGENTS.md` and `CLAUDE.md` at the repository root. Keep specialized guidance
-beside the code or analysis it governs.
+## Where to put new documentation
+
+Use `plans/` for active implementation plans, `reviews/` for dated review records, and
+`content/` for draft user-facing copy. Keep decisions distinct from recommendations. When
+work ships, remove the completed plan and update any links. Git history preserves earlier
+plans and drafts. Keep specialized documentation beside the code or analysis it covers.
