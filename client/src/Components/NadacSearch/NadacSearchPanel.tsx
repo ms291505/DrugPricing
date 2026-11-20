@@ -30,7 +30,7 @@ type Props = {
  * The NADAC search panel. Description and NDC are a draft that Search applies; every other field,
  * Dates included, writes the applied criteria at once. Search is disabled while the draft is the
  * search on screen, so it lights up when there is something to run. The tab is named after its
- * first search.
+ * search until the user names it (`useRenameAfterSearch`).
  */
 export default function NadacSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
   const { criteria, setCriteria, search, clearSearch, waiting } = useNadacSearchContext();
@@ -68,15 +68,18 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
   const terms = { ndcDescription: ndcDescription.trim(), ndc: searchNdc };
   const changed = terms.ndcDescription !== criteria.ndcDescription || terms.ndc !== criteria.ndc;
 
+  // The title the search on screen gave the tab, which the next search or a clear may replace.
+  const appliedTitle = nadacTabTitle(criteria.ndcDescription, criteria.ndc);
+
   const handleSearch = () => {
     // The search on screen failed: applying the same terms changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(nadacTabTitle(ndcDescription, searchNdc));
+    renameAfterSearch(nadacTabTitle(ndcDescription, searchNdc), appliedTitle);
     search(terms);
   };
 
   const handleClearSearch = () => {
-    restoreTitleAfterClear(nadacTabTitle(criteria.ndcDescription, criteria.ndc));
+    restoreTitleAfterClear(appliedTitle);
     setDraft({ ndcDescription: "", ndc: "" });
     clearSearch();
   };

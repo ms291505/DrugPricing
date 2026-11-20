@@ -101,6 +101,9 @@ export default function SearchPanel({
   const moreId = useId();
   const includeId = useId();
   const firstTermRef = useRef<HTMLInputElement>(null);
+  // Clear search remounts Dates: its own state (Custom picked, typed dates waiting to apply)
+  // would otherwise outlive the reset, since nothing else changes the dates from outside.
+  const [clearCount, setClearCount] = useState(0);
 
   const [ref, tier] = useWidthTier<HTMLFormElement>();
   const desktop = (forcedLayout ?? (tier === "wide" ? "desktop" : "compact")) === "desktop";
@@ -154,6 +157,7 @@ export default function SearchPanel({
           disabled={!canClearSearch}
           onClick={() => {
             onClearSearch();
+            setClearCount(count => count + 1);
             // The button disables itself, so focus goes where the next search starts.
             firstTermRef.current?.focus();
           }}
@@ -171,7 +175,7 @@ export default function SearchPanel({
           display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 1.5,
           ml: theme => `calc(-${theme.spacing(GROUP_PADDING)} - 1px)`,
         }}>
-          <Box sx={groupSx}><DatesField value={dates} onChange={onDatesChange} /></Box>
+          <Box sx={groupSx}><DatesField key={clearCount} value={dates} onChange={onDatesChange} /></Box>
           <FormControl component="fieldset" sx={groupSx}>
             <FormLabel component="legend" id={includeId} sx={{ typography: "subtitle2", color: "text.primary" }}>Include</FormLabel>
             {/* The top margin puts the boxes level with the Dates presets beside them. */}

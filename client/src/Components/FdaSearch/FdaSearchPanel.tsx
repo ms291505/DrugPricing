@@ -31,8 +31,8 @@ type Props = {
 /**
  * The FDA search panel. Brand and generic names are drafts that Search applies; every other field, Dates
  * included, writes the applied criteria at once. Search is disabled while the draft is the search
- * on screen, so it lights up when there is something to run. The tab is named after its first
- * search.
+ * on screen, so it lights up when there is something to run. The tab is named after its search
+ * until the user names it (`useRenameAfterSearch`).
  */
 export default function FdaSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
   const { criteria, setCriteria, search, clearSearch, waiting } = useFdaSearchContext();
@@ -47,16 +47,19 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const terms = { proprietaryName: proprietaryName.trim(), nonProprietaryName: nonProprietaryName.trim() };
   const changed = terms.proprietaryName !== criteria.proprietaryName || terms.nonProprietaryName !== criteria.nonProprietaryName;
 
+  // The title the search on screen gave the tab, which the next search or a clear may replace.
+  const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "";
+  const appliedTitle = applied ? fdaTabTitle(criteria) : null;
+
   const handleSearch = () => {
     // The search on screen failed: applying the same name changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(fdaTabTitle(terms));
+    renameAfterSearch(fdaTabTitle(terms), appliedTitle);
     search(terms);
   };
 
-  const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "";
   const handleClearSearch = () => {
-    restoreTitleAfterClear(applied ? fdaTabTitle(criteria) : null);
+    restoreTitleAfterClear(appliedTitle);
     setProprietaryName("");
     setNonProprietaryName("");
     clearSearch();

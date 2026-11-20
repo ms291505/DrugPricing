@@ -17,11 +17,19 @@ export type WorkspaceTab = {
 }
 
 /**
- * A search tab's title after Clear search: its type's default again while it still has the title
- * its search gave it (`searchTitle`), else unchanged, so a name the user chose stays.
+ * Whether a search tab's title follows its search: it is still its type's default, or the title
+ * the search on screen gave it (`searchTitle`; null without one). A name the user chose doesn't.
+ */
+export function titleFollowsSearch(tab: WorkspaceTab, searchTitle: string | null): boolean {
+  return tab.title === defaultTitleFor(tab.type) || (searchTitle !== null && tab.title === searchTitle);
+}
+
+/**
+ * A search tab's title after Clear search: its type's default again while it follows the search
+ * (`titleFollowsSearch`), else unchanged.
  */
 export function titleAfterClear(tab: WorkspaceTab, searchTitle: string | null): string {
-  return searchTitle !== null && tab.title === searchTitle ? defaultTitleFor(tab.type) : tab.title;
+  return titleFollowsSearch(tab, searchTitle) ? defaultTitleFor(tab.type) : tab.title;
 }
 
 export function validateTabTitle(newTitle: string, oldTitle?: string) {

@@ -173,9 +173,10 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - Hidden panes use `content-visibility: hidden` (else `display: none`), all in one grid cell, so
   showing a tab reuses its layout and its charts see no resize. Split layouts would need their
   own grid.
-- A search tab is renamed after its first search while it has its default title (NADAC:
-  `nadacTabTitle` in `library/nadacSearch.ts`; FDA: `fdaTabTitle`), and Clear search gives it
-  back its default title if it still has that one (`titleAfterClear`). Reading the tab list
+- A search tab is renamed after each search while its title follows its search: the default, or
+  the title the previous search gave it (`titleFollowsSearch`; NADAC: `nadacTabTitle` in
+  `library/nadacSearch.ts`; FDA: `fdaTabTitle`). Clear search gives such a tab back its default
+  title (`titleAfterClear`); a name the user chose is never replaced. Reading the tab list
   re-renders a page on every tab change, so only the search panels read it
   (`useRenameAfterSearch`, `useRestoreTitleAfterClear`), and `NadacResults` and `FdaResults` are
   `memo`'d.

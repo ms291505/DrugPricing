@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { defaultTitleFor, titleAfterClear } from "./tabType";
+import { defaultTitleFor, titleAfterClear, titleFollowsSearch } from "./tabType";
+
+describe("titleFollowsSearch", () => {
+  it("follows while the title is the default or the on-screen search's", () => {
+    expect(titleFollowsSearch({ id: "a", type: "fda", title: defaultTitleFor("fda") }, null)).toBe(true);
+    expect(titleFollowsSearch({ id: "a", type: "fda", title: "ELIQUIS" }, "ELIQUIS")).toBe(true);
+  });
+
+  it("stops once the user names the tab", () => {
+    expect(titleFollowsSearch({ id: "a", type: "fda", title: "Blood thinners" }, "ELIQUIS")).toBe(false);
+  });
+});
 
 describe("titleAfterClear", () => {
   it("restores the default title the search replaced", () => {
