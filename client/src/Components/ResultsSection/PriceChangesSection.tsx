@@ -4,14 +4,14 @@ import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
 import { derivePriceEvents, groupPriceEvents, type PriceEvent, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
-import { createPriceChangeListItem, fitsPinLimit, type ChartOrigin } from "../../library/explorerItems";
+import { createPriceChangeListItem, fitsPinLimit, type ChartOrigin, type ChartSource } from "../../library/explorerItems";
 import type { DateWindow } from "../../library/dates";
 import {
   eventChartTitle, pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTitle,
 } from "../../library/chartTitles";
 import { HALF_WIDTH_GRID_SIZE, NOTABLE_PRICE_CHANGE_PERCENT } from "../../library/constants";
 import useWidthTier from "../../hooks/useWidthTier";
-import type { PriceChangeScan } from "../../hooks/usePriceChangeScans";
+import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { ResultsHeadingContext } from "../../Context/resultsHeading";
@@ -19,15 +19,13 @@ import EventChangeChart, { type EventChart } from "./EventChangeChart";
 import PriceChangeListBody from "./PriceChangeListBody";
 
 type Props = {
-  /** The page's package prices as shown. A new array (new search, dates or filters) closes every scan and chart. */
-  prices: ChartPrice[], loadedPrices: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
-  /** The dates the page shows: the window of a change's chart. */
-  dateWindow: DateWindow,
-  /** From `usePriceChangeScans`. */
-  autoClosed: boolean,
-  onCloseAuto: () => void,
-  scans: PriceChangeScan[],
-  onCloseScan: (id: string) => void,
+  /**
+   * The page's packages. New `prices` (new search, dates or filters) close every scan and chart;
+   * `dateWindow` is the window of a change's chart.
+   */
+  source: ChartSource,
+  /** The page's scans (`usePriceChangeScans`), over the same packages. */
+  scans: PriceChangeScans,
 };
 
 /** Notable price changes' list id; scans use theirs. */
@@ -45,9 +43,9 @@ const byPosition = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOC
  * Always mounted, so the open charts and the focus bookkeeping outlive any one card; renders
  * nothing when there is no card and no chart.
  */
-export default function PriceChangesSection({
-  prices, loadedPrices, origin, colors, dateWindow, autoClosed, onCloseAuto, scans, onCloseScan,
-}: Props) {
+export default function PriceChangesSection({ source, scans: scanState }: Props) {
+  const { prices, loadedPrices, origin, colors, dateWindow } = source;
+  const { autoClosed, closeAuto: onCloseAuto, scans, closeScan: onCloseScan } = scanState;
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
   // loading state has no groups, which unmounts the card).

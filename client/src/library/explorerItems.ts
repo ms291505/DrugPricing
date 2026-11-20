@@ -56,6 +56,22 @@ export type ChartOrigin = {
   resultPrices: ChartPrice[],
 };
 
+/**
+ * What a results page's charts draw from, at one series level (`useNadacChartSource`,
+ * `useFdaChartSource`). An FDA page has two: the table's detail level and packages.
+ */
+export type ChartSource = {
+  /** The page's result as shown, at this level. */
+  prices: ChartPrice[],
+  /** The same over every loaded date, computed when called: a new chart's series (`withLoadedDates`). */
+  loadedPrices: () => ChartPrice[],
+  origin: ChartOrigin,
+  /** The page's series colors at this level (`useSeriesColors`). */
+  colors: Map<string, string>,
+  /** The dates the page shows. */
+  dateWindow: DateWindow,
+};
+
 type ExplorerItemBase = {
   id: string,
   /** Title generated when the item was created. */

@@ -77,7 +77,10 @@ Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearc
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
 both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
 supporting UI. Each search page is its panel (`*SearchPanel`), its results (`*Results`, in a
-`ResultsSection`) and `PinnedSection`. `Collection/` is a proof of concept: a registered tab type
+`ResultsSection`) and `PinnedSection`. A results page's charts read a `ChartSource` (its shown
+prices, loaded prices, origin, colors and dates at one series level; `useNadacChartSource`,
+`useFdaChartSource`). NADAC has one; FDA has two, its detail level and packages, and price
+change lists always take the package one. `Collection/` is a proof of concept: a registered tab type
 the tab creator doesn't offer (see "Workspace redo" in docs/future-work.md).
 
 ### Result tables

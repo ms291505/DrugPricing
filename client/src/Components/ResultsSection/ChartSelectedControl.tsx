@@ -4,25 +4,18 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import SsidChartIcon from "@mui/icons-material/SsidChart";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
-import { createChartItems, withLoadedDates, type ChartOrigin, type ChartType } from "../../library/explorerItems";
+import { createChartItems, withLoadedDates, type ChartSource, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
-import type { DateWindow } from "../../library/dates";
-import type { ChartPrice } from "../../library/types";
 
 type Props = {
-  /** The page's result as shown, at the table's level: a row's id is its prices' `ndc`. */
-  prices: ChartPrice[],
-  /** The view's `loadedPrices` at the table's level: the chart keeps every loaded date of its series. */
-  loadedPrices: () => ChartPrice[],
+  /** At the table's level: a row's id is its prices' `ndc`. A new chart starts at the search's dates. */
+  source: ChartSource,
   selection: GridRowSelectionModel,
-  origin: ChartOrigin,
-  /** The dates the new chart starts with: the search's. */
-  dateWindow: DateWindow,
-  colors: Map<string, string>,
 };
 
 /** Charts the table's selected rows as a new pinned line or bar chart, which then stays as it is. */
-export default function ChartSelectedControl({ prices, loadedPrices, selection, origin, dateWindow, colors }: Props) {
+export default function ChartSelectedControl({ source, selection }: Props) {
+  const { prices, loadedPrices, origin, dateWindow, colors } = source;
   const { addItems } = usePinActions();
   const count = selection.ids.size;
 

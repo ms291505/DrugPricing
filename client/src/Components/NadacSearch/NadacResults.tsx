@@ -1,12 +1,11 @@
 import { memo, useMemo } from "react";
 import { NadacResultTable } from "../ResultTables";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch";
-import useNadacChartOrigin from "../../hooks/useNadacChartOrigin";
-import useSeriesColors from "../../hooks/useSeriesColors";
+import useNadacChartSource from "../../hooks/useNadacChartSource";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
-import { clearNadacRefine, hiddenResultsHint, nadacResultsLabel, showAllNadac } from "../../library/searchCriteria";
+import { hiddenResultsHint, nadacResultsLabel, revealNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
@@ -29,10 +28,9 @@ export default memo(function NadacResults({ view }: Props) {
   const { isLoading, isSuccess } = useNadacSearch();
   const { criteria, loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
-  const { prices, dateWindow, hidden, loadedPrices } = view;
-  const origin = useNadacChartOrigin();
-  // Live comparisons show the whole refined result, so it is also the visible set.
-  const colors = useSeriesColors(origin.resultPrices, prices);
+  const { prices, dateWindow, hidden } = view;
+  // Every chart and price change list draws packages, so the page has one source.
+  const source = useNadacChartSource(view);
   const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
   const scans = usePriceChangeScans(prices);
 
@@ -45,23 +43,12 @@ export default memo(function NadacResults({ view }: Props) {
       <SearchResultToast resultKey={resultKey} message={foundMessage(packageCount, hidden.total, PACKAGES)} />
       <ResultsSection
         searchLabel={nadacResultsLabel(criteria)}
-        toolbar={<ChartSelectedControl
-          prices={prices} loadedPrices={loadedPrices} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
-        />}
-        notice={hint
-          ? <HiddenResultsNotice
-            hint={hint}
-            noun={PACKAGES}
-            onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
-              : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
-          />
-          : null}
-        priceChanges={<PriceChangesSection prices={prices} loadedPrices={loadedPrices} origin={origin} colors={colors} dateWindow={dateWindow}
-          autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
+        toolbar={<ChartSelectedControl source={source} selection={selectedRows} />}
+        notice={hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
+        priceChanges={<PriceChangesSection source={source} scans={scans} />}
         table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
       >
-        <AutoCharts prices={prices} loadedPrices={loadedPrices} origin={origin} colors={colors} dateWindow={dateWindow}
-          onScan={scans.runScan} scanMessage={scans.emptyMessage} />
+        <AutoCharts source={source} scans={scans} />
       </ResultsSection>
     </>
   );

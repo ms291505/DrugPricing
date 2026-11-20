@@ -142,8 +142,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 `palette.chart.series` has 10 color-blind-safe colors, each at least 3:1 on the card
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
-so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
-page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
+so filters never move it. `useSeriesColors` resolves clashes once per page and series level
+(inside the page's `ChartSource`), so every chart on a page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
 search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 ## Line charts

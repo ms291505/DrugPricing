@@ -13,20 +13,15 @@ import {
 import { parseScanThreshold } from "../../library/priceActivity";
 import { shouldAutoChart } from "../../library/chartSeries";
 import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
-import type { DateWindow } from "../../library/dates";
-import type { BarValue, ChartOrigin } from "../../library/explorerItems";
-import type { ChartPrice } from "../../library/types";
+import type { BarValue, ChartSource } from "../../library/explorerItems";
 import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
+import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 
 type Props = {
-  /** The page's result as shown, at the series level the charts draw. */
-  prices: ChartPrice[],
-  /** The view's `loadedPrices` at the same level, for pins. */
-  loadedPrices: () => ChartPrice[],
-  origin: ChartOrigin,
-  colors: Map<string, string>,
-  /** The dates shown (the view's `dateWindow`). */
-  dateWindow: DateWindow,
+  /** At the series level the charts draw: the table's. */
+  source: ChartSource,
+  /** The page's scans (`usePriceChangeScans`): the Scan price changes control runs them. */
+  scans: PriceChangeScans,
 };
 
 type ScanProps = {
@@ -40,7 +35,8 @@ type ScanProps = {
  * Opt-in live comparisons. Toggle choices survive searches while mounted, but are never saved.
  * The total series cap applies before splitting into one card per pricing unit.
  */
-export default function AutoCharts({ prices, loadedPrices, origin, colors, dateWindow, onScan, scanMessage }: Props & ScanProps) {
+export default function AutoCharts({ source, scans }: Props) {
+  const { prices } = source;
   const [showLatest, setShowLatest] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
@@ -57,12 +53,12 @@ export default function AutoCharts({ prices, loadedPrices, origin, colors, dateW
           {!canCompare && <Typography variant="body2" color="text.secondary">
             Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
           </Typography>}
-          <ScanControl onScan={onScan} scanMessage={scanMessage} />
+          <ScanControl onScan={scans.runScan} scanMessage={scans.emptyMessage} />
         </Stack>
       </Grid>
       {canCompare && groups.map(group => (
         <UnitAutoCharts key={group.pricingUnit}
-          prices={group.nadacPrices} loadedPrices={loadedPrices} origin={origin} colors={colors} dateWindow={dateWindow}
+          source={{ ...source, prices: group.nadacPrices }}
           unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
           showLatest={showLatest} showHistory={showHistory}
         />
@@ -131,7 +127,16 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
   );
 }
 
-function UnitAutoCharts({ prices, loadedPrices, origin, colors, dateWindow, unitSuffix, showLatest, showHistory }: Props & { unitSuffix: string, showLatest: boolean, showHistory: boolean }) {
+type UnitProps = {
+  /** One pricing unit's share of the page's source. */
+  source: ChartSource,
+  unitSuffix: string,
+  showLatest: boolean,
+  showHistory: boolean,
+};
+
+function UnitAutoCharts({ source, unitSuffix, showLatest, showHistory }: UnitProps) {
+  const { prices, loadedPrices, origin, colors, dateWindow } = source;
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
   const barTitle = chartTitle("bar", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;

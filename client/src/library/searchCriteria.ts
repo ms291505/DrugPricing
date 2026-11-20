@@ -492,3 +492,14 @@ export const clearFdaRefine = (criteria: FdaCriteria): FdaCriteria => ({
   nonProprietaryName: criteria.nonProprietaryName,
   dates: criteria.dates,
 });
+
+/** The empty table's fix (`hiddenResultsHint`): tick its Include box, clear the filters, or show everything. */
+export function revealNadac(criteria: NadacCriteria, hint: HiddenResultsHint): NadacCriteria {
+  if (hint.kind === "include") return { ...criteria, [hint.key]: true };
+  return hint.kind === "clear" ? clearNadacRefine(criteria) : showAllNadac(criteria);
+}
+
+export function revealFda(criteria: FdaCriteria, hint: HiddenResultsHint): FdaCriteria {
+  if (hint.kind === "include") return { ...criteria, [hint.key]: true };
+  return hint.kind === "clear" ? clearFdaRefine(criteria) : showAllFda(criteria);
+}
