@@ -1,15 +1,17 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { loadSettings, saveSettings, watchSettings } from "../library/persist";
-import { DEFAULT_SETTINGS, type AppSettings } from "../library/settings";
+import { DEFAULT_SETTINGS, type AppSettings, type ResultTableType, type ColumnVisibilityOverrides } from "../library/settings";
 
 type SettingsContextType = {
   settings: AppSettings;
   updateSettings: (changes: Partial<AppSettings>) => void;
+  updateColumnOverrides: (table: ResultTableType, overrides: ColumnVisibilityOverrides) => void;
 };
 
 export const SettingsContext = createContext<SettingsContextType>({
   settings: DEFAULT_SETTINGS,
   updateSettings: () => { },
+  updateColumnOverrides: () => { },
 });
 
 /**
@@ -27,7 +29,11 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     setSettings(prev => ({ ...prev, ...changes }));
   }, []);
 
-  const value = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
+  const updateColumnOverrides = useCallback((table: ResultTableType, overrides: ColumnVisibilityOverrides) => {
+    setSettings(prev => ({ ...prev, columnOverrides: { ...prev.columnOverrides, [table]: overrides } }));
+  }, []);
+
+  const value = useMemo(() => ({ settings, updateSettings, updateColumnOverrides }), [settings, updateSettings, updateColumnOverrides]);
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };

@@ -1,8 +1,9 @@
+import { derivePriceEvents, eventLabel } from "./priceActivity";
 import { createLineVizData } from "./createLineVizData";
 import { formatPrice } from "./chartScale";
 import { dateBounds, formatDate } from "./dates";
 import { summarizePrices, type PriceSummary } from "./prices";
-import type { BarValue, ChartChangeSpan } from "./explorerItems";
+import type { BarValue, ChartChangeSpan, SeriesKind } from "./explorerItems";
 import type { ChartPrice } from "./types";
 
 /*
@@ -80,12 +81,12 @@ function changeSentence(span: ChartChangeSpan): string {
 }
 
 /**
- * A line chart's summary: the change it calls out (price-change cards), the series count and
+ * A line chart's summary: the change it calls out (legacy change-span pins), the series count and
  * dates, the latest prices, and the largest change, then how to use the keyboard.
  *
  * @param prices - one pricing unit, already clipped to the chart's dates
  */
-export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeSpan): string {
+export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeSpan, seriesKind: SeriesKind = "ndc"): string {
   const summaries = summarizePrices(prices);
   const lastDate = Math.max(...summaries.map(summary => summary.latestDate));
   const sentences: string[] = [];
@@ -101,8 +102,12 @@ export function lineChartSummary(prices: ChartPrice[], changeSpan?: ChartChangeS
     sentences.push(`Highest latest price: ${latestOf(byLatest[0], lastDate)}; lowest: ${latestOf(byLatest[byLatest.length - 1], lastDate)}.`);
   }
 
-  // A price-change card already leads with its change.
-  const change = changeSpan ? null : largestChange(prices);
+  // Legacy change-span pins already lead with their change. Product changes use package events.
+  const change = changeSpan || seriesKind === "product" ? null : largestChange(prices);
+  if (seriesKind === "product") {
+    const events = derivePriceEvents(prices, seriesKind);
+    if (events.length) sentences.push(`${events.length} significant package ${events.length === 1 ? "change" : "changes"}. ${events.slice(0, 3).map(e => `${e.packageNdc}: ${eventLabel(e.change)}.`).join(" ")}`);
+  }
   if (change) {
     const direction = change.ratio < 0 ? "down" : "up";
     sentences.push(`Largest change: ${direction} ${formatPercent(change.ratio)} for ${whichSeries(change.ndcs, summaries.length)} on ${formatDate(change.date)}.`);

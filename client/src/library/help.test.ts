@@ -27,9 +27,10 @@ describe("published help", () => {
     expect(filterHelpTopics("  ")).toEqual(HELP_TOPICS);
     expect(filterHelpTopics("nonexistentword")).toEqual([]);
   });
-  it("lists About in the index and filters it like a topic", () => {
-    expect(filterHelpPageLinks("").map(link => link.to)).toEqual(["/about"]);
+  it("lists Welcome and About in the index and filters it like a topic", () => {
+    expect(filterHelpPageLinks("").map(link => link.to)).toEqual(["/welcome", "/about"]);
     expect(filterHelpPageLinks("ABOUT project").map(link => link.to)).toEqual(["/about"]);
+    expect(filterHelpPageLinks("home").map(link => link.to)).toEqual(["/welcome"]);
     expect(filterHelpPageLinks("charts")).toEqual([]);
   });
   it("handles unknown URL topics without guessing", () => {

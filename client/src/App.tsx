@@ -1,23 +1,28 @@
 import HelpContent from "./Components/Help/HelpContent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import NadacSearch from "./Components/NadacSearch";
 import Container from "@mui/material/Container";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box, CssBaseline } from "@mui/material";
 import { THEMES } from "./theme";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useMatch, useNavigate } from "react-router";
 import About from "./Components/About";
 import DrugPricingBar from "./Components/DrugPricingBar/DrugPricingBar";
-import FdaSearch from "./Components/FdaSearch";
-import { FdaTabProvider, NadacTabProvider } from "./Context/TabProviders";
-import { STANDALONE_TAB_IDS } from "./library/persist";
+import { loadLastSearchSource, saveLastSearchSource, type SearchSource } from "./library/persist";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { PageVisibleContext } from "./Context/pageVisibility";
+import { hiddenPaneSx } from "./library/paneVisibility";
+import PinnedSection from "./Components/ExplorerGrid/PinnedSection";
+import KeptPage from "./Components/KeptPage";
+import { TryNadacContext, type NadacOffer } from "./Context/searchNavigation";
+import StandaloneSearch from "./Components/Search/StandaloneSearch";
+import { StandalonePinsProvider } from "./Context/StandaloneSearchProviders";
 import { WorkspaceContextProvider } from "./Context/WorkspaceContext";
 import { GlobalModalContextProvider } from "./Context/GlobalModalContext";
 import { SettingsProvider, useSettings } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
 import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
-import OnBoarding from "./Components/OnBoarding";
+import Welcome from "./Components/Welcome";
 import GlobalModal from "./Components/GlobalModal";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden
@@ -44,17 +49,25 @@ export default function App() {
   );
 }
 
-/** Standalone Help is read-only: it never mounts workspace storage writers. */
+/** A direct Help visit is read-only. Once entered, the app stays mounted even on Help routes. */
 function AppContent() {
   const { pathname } = useLocation();
-  if (pathname === "/help" || pathname.startsWith("/help/")) return <>
+  const isHelp = pathname === "/help" || pathname.startsWith("/help/");
+  const [enteredApp, setEnteredApp] = useState(!isHelp);
+  if (!isHelp && !enteredApp) setEnteredApp(true);
+  if (!enteredApp) return <>
+    <DrugPricingBar />
     <GlobalModal />
-    <Routes><Route element={<DrugPricingBar />}>
-      <Route path="/help/:topic?" element={<Container maxWidth="sm" sx={{ py: 3 }}><HelpContent standalone /></Container>} />
-      <Route path="/help/*" element={<Navigate to="/help" replace />} />
-    </Route></Routes>
+    <HelpRoutes />
   </>;
   return <WorkspaceContextProvider><AppShell /></WorkspaceContextProvider>;
+}
+
+function HelpRoutes() {
+  return <Routes>
+    <Route path="/help/:topic?" element={<Container maxWidth="sm" sx={{ py: 3 }}><HelpContent standalone /></Container>} />
+    <Route path="/help/*" element={<Navigate to="/help" replace />} />
+  </Routes>;
 }
 
 /** The theme for the Settings color mode. */
@@ -70,31 +83,56 @@ function AppToaster() {
 }
 
 function AppShell() {
-  const location = useLocation();
-  const isWorkspaceActive = location.pathname.startsWith('/workspace');
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  useLayoutEffect(() => {
+    if (pathname === "/welcome" || pathname === "/about" || pathname === "/help" || pathname.startsWith("/help/")) window.scrollTo(0, 0);
+  }, [pathname]);
+  const matchedSource = useMatch("/search/:source")?.params.source;
+  const source: SearchSource | null = matchedSource === "fda" || matchedSource === "nadac" ? matchedSource : null;
+  const [lastSource, setLastSource] = useState(loadLastSearchSource);
+  const [visited, setVisited] = useState<ReadonlySet<SearchSource>>(() => new Set(source ? [source] : []));
+  if (source && !visited.has(source)) setVisited(new Set([...visited, source]));
+  if (source && lastSource !== source) setLastSource(source);
+  useEffect(() => { if (source) saveLastSearchSource(source); }, [source]);
 
-  return (
-    <Container maxWidth="xl" sx={{ pb: 2 }}>
-      <Box style={{ display: isWorkspaceActive ? 'block' : 'none' }}>
-        <DrugPricingBar />
-        <Workspace onScreen={isWorkspaceActive} />
-      </Box>
-      <GlobalModal />
+  // Declarative router navigation changes identity by route; keep the handoff action stable.
+  const navigateRef = useRef(navigate);
+  useLayoutEffect(() => { navigateRef.current = navigate; }, [navigate]);
+  const [offer, setOffer] = useState<NadacOffer | null>(null);
+  const tryNadac = useCallback((description: string) => {
+    setOffer({ description });
+    void navigateRef.current("/search/nadac");
+  }, []);
+  // Element identity is stable across route switches, as in TabInstance.
+  const fda = useMemo(() => <StandaloneSearch source="fda" offer={null} />, []);
+  const nadac = useMemo(() => <StandaloneSearch source="nadac" offer={offer} />, [offer]);
+  const pins = useMemo(() => <PinnedSection />, []);
+  const isWorkspace = useMatch("/workspace") !== null;
+  const workspace = useMemo(() => <Workspace onScreen={isWorkspace} />, [isWorkspace]);
 
-      {!isWorkspaceActive && (
-        <Routes>
-          <Route element={<DrugPricingBar />}>
-            <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
-            <Route path="/nadac-search" element={
-              <NadacTabProvider tabId={STANDALONE_TAB_IDS.nadac}><NadacSearch /></NadacTabProvider>
-            } />
-            <Route path="/fda-search" element=
-              {<FdaTabProvider tabId={STANDALONE_TAB_IDS.fda}><FdaSearch /></FdaTabProvider>} />
-            <Route path="/welcome" element={<Container maxWidth="md"><OnBoarding /></Container>} />
-            <Route path="*" element={<Navigate to="/about" replace />} />
-          </Route>
-        </Routes>
-      )}
-    </Container>
-  );
+  return <Container maxWidth="xl" sx={{ pb: 2 }}>
+    <DrugPricingBar />
+    <GlobalModal />
+    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)" }}>
+      <KeptPage visible={isWorkspace}>{workspace}</KeptPage>
+      {visited.size > 0 && <TryNadacContext value={tryNadac}><StandalonePinsProvider>
+        {visited.has("fda") && <KeptPage visible={source === "fda"}>{fda}</KeptPage>}
+        {visited.has("nadac") && <KeptPage visible={source === "nadac"}>{nadac}</KeptPage>}
+        <Box sx={{ gridArea: "2 / 1", minWidth: 0, ...(source ? { mt: 2 } : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
+          <PageVisibleContext value={source !== null}>{pins}</PageVisibleContext>
+        </Box>
+      </StandalonePinsProvider></TryNadacContext>}
+      {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
+        {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
+          <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
+          <Route path="/welcome" element={<Container maxWidth="md"><Welcome /></Container>} />
+          <Route path="/search" element={<Navigate to={`/search/${lastSource ?? "fda"}`} replace />} />
+          <Route path="/fda-search" element={<Navigate to="/search/fda" replace />} />
+          <Route path="/nadac-search" element={<Navigate to="/search/nadac" replace />} />
+          <Route path="*" element={<Navigate to={lastSource ? `/search/${lastSource}` : "/welcome"} replace />} />
+        </Routes>}
+      </Box>}
+    </Box>
+  </Container>;
 }

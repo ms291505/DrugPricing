@@ -6,10 +6,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, auto charts, price-change charts) are derived from the
-  current search on every render and never stored.
-- *Pinned* items are snapshots held by `PinnedItemsProvider` (one per tab, wired in
-  `TabProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
+- *System* items (the results table, live comparison charts and price change lists) are derived
+  from the current search on every render and never stored.
+- *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
+  (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
+  (`StandaloneSearchProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
   touch them. Don't clear them on search, and don't write system charts into them. The Pinned
   section sits on the page below the results (`PinnedSection`, `memo`'d), whatever the search
   state, so pins show while a search is missing, loading, or failing.
@@ -24,8 +25,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - **Hover doesn't re-render a chart.** `useChartReadout` keeps the pointer's active point in refs
   and copies it to state only while the arrow keys drive it (for the screen-reader readout).
   `LineViz` and `UnitSplit` memoize what they derive from their prices.
-- An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind` (only `"chart"`
-  today). A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
+- An item is an `ExplorerItem` (`library/explorerItems.ts`), a union on `kind`: `"chart"` and
+  `"price-change-list"`. Narrow on `kind` wherever an item's data is read. A chart stores its data as `ChartSeriesSnapshot[]` (`ndc`, `label`, `unit`,
   `points: [ms, price][]`), plain JSON so it persists. `fromChartSeries` turns it back into
   `ChartPrice[]`.
 - **Chart dates are a view setting, not a filter.** A chart item keeps *every* date of its series
@@ -39,11 +40,50 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   over the view's `history`). After a narrowing that didn't fetch, more is loaded than shown;
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
-- Price-change charts (`PriceChangeCards`, on both search pages) are flagged per package over the
-  refined result (`flagPriceChanges`), so only inside the search's dates. Each opens on
-  ±`PRICE_CHANGE_WINDOW_MONTHS` around the change (`changeSpan`, stored on pinned copies too) and
-  toggles to the full history. Past `MAX_AUTO_PRICE_CHANGE_CHARTS` a note gives the count
-  instead of charting them.
+- Significant package events are derived over the refined result by `derivePriceEvents` and
+  `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
+  tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
+  is shown only through `eventLabel` and `signedChange`, as "from $0". The live comparison controls
+  (Chart latest prices, Chart price histories) and the scan control appear directly below the
+  results table. `PriceChangesSection` follows in the shared responsive grid: Notable price changes,
+  then one card per scan with matches (`usePriceChangeScans`, called once per page with the
+  section's `prices`), then the open change charts, all half width. The section is always mounted
+  and holds the open charts, the chart buttons and list headings for focus, and the Package details
+  choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
+  group key, since lists at different percents share group keys). Each list card measures its own
+  width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
+  groups by date, pricing unit and direction, and shows five groups before Show all. Each group's
+  Package details is a small table (NDC, was, now, change), open by default from the card's own `md`
+  width up; a group the user opens or closes stays so while the page is mounted. Each package row
+  has a single-series Chart this change line-chart button. It toggles that change's unpinned
+  `EventChangeChart` over the page's shown dates. Charts are keyed by event key with one
+  section-level id, so the same change charted from two lists is one chart and both buttons show it
+  open. Several can be open; collapsing or closing a list leaves them open; new prices discard them,
+  every scan card, and a closed Notable price changes. Opening moves focus to the chart's heading;
+  AGENTS.md (Price Activity) has where focus goes when a chart or card closes. `eventDate` marks the
+  change with a solid line (the lock's is thin and dashed), and the readout rests on that date
+  instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
+  no event list and no way to zoom itself: neither the readout nor the plot lists events, and there
+  is no Around this change. Legacy pins that stored a zoomed `dateWindow` (made by the old Around
+  this change) still load and draw that window; the pinned card's Dates control is the only thing
+  that changes a pin's `dateWindow` now.
+- **A pinned price change list stores histories, not events.** `createPriceChangeListItem` keeps the
+  shown prices (already clipped to the shown dates) of the packages and units the list names, as
+  `histories: ChartSeriesSnapshot[]`, plus `thresholdPercent` and the shown `dateWindow`.
+  `priceChangeListGroups` derives the events again when drawn, as pinned line charts derive their
+  markers, so there are no event references to validate. Its `source.filtered` compares the
+  histories with the result over the same dates. A list whose JSON is over
+  `PRICE_CHANGE_LIST_PIN_LIMIT` (500,000 characters) is not pinned (`fitsPinLimit`); it is never
+  truncated. A pinned list's dates are fixed: its menu has only Move up, Move down, Half/Full width
+  and Remove, and its dates chip isn't clickable. Its Chart this change opens a temporary chart in a
+  second grid below the pinned items, held by `PinnedSection` (never stored), over the list's dates
+  only; it stays when the list is collapsed or removed, and a pin of it keeps the list's provenance
+  (`createChartItem`'s `source`). Only list cards receive the open charts, so opening one doesn't
+  redraw pinned chart cards. Focus from a closed temporary chart goes to the button that opened it,
+  else its list's heading, else the Pinned heading.
+- Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
+  5% cutoff; significant steps remain 10%. Product state comes from packages, never their
+  average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
 - **"Match scale" is per chart.** A pinned line chart's menu toggles `ChartItem.matchScale`; the
   matched charts in one unit share a fitted axis (`matchedPriceRange`) and show a "Matched scale"
   chip. New pins start unmatched. A tab-wide switch put $0.25 metformin on humira's $0–$8K axis,
@@ -52,9 +92,23 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   whole unfiltered result (`ChartOrigin.resultPrices`), never from filter state, so it stays true
   once stored. `filtered` compares whole series, not windows. What a series is is stored as
   `seriesKind` (`"product" | "package" | "ndc"`); wording comes from one table in
-  `explorerItems.ts`.
+  `explorerItems.ts`. `searchSource` (`"nadac" | "fda"`) is separate and comes from the chart
+  origin, never inferred from the `seriesKind` or search terms. Old pins without it show "Search
+  source unknown"; invalid values are dropped field by field during persistence, retaining the
+  rest of the pin.
+- A product pin's provenance chip switches its transient view to package lines only when every
+  stored point has a known `packageNdc`. `packageLevelView` derives package series from that
+  snapshot, preserving dates and units; the original item and its settings stay intact so the
+  same chip switches back to product averages. Legacy or partial identities disable the switch.
+  Never fill an unknown package identity from a product NDC. In newly created snapshots,
+  `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
+- Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
+  Its tooltip states that every plotted price is NADAC; FDA reference data only finds and groups
+  products. The dates chip is the actual date window, and Match scale shares axes only by pricing
+  unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
-  `h3` inside Pinned), with a collapse toggle wired with `aria-expanded`/`aria-controls`.
+  `h3` inside Pinned and for Price changes or event charts), with a collapse toggle wired with
+  `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
 
@@ -66,9 +120,14 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   average and keeps the packages' min–max as `rangeKey(ndc)`.
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
-- Auto charts are gated on **series** count, not price rows (`shouldAutoChart`).
+- New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
+  one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
+- Live comparison charts start hidden; the Chart latest prices and Chart price histories toggles
+  show/hide them, retaining their choice across searches while mounted, never in storage. They are
+  gated on total **series** count, not price rows (`shouldAutoChart`), before splitting into one
+  card per pricing unit.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
-  time"), the subtitle the count and dates. Price-change cards name the percent, date and package.
+  time"), the subtitle the count and dates. Focused event charts name the event date and unit.
 
 ## Axes and labels
 
@@ -98,10 +157,15 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   spread is dropped on its own $5.5K–$8K axis and on the 7-product $2K–$7K axis. A dropped band
   still shows its range in the readout (from `md` up), View data and the CSV. Bands are rare:
   most products price every package the same per unit (liquids' bottle sizes are the exception).
-- **Price changes** are called out on the line: dots at the old and new price, the old price
-  continued dashed, and a pill with "$9.69 → $5.52" (`ChartChangeSpan.from`/`to`), outlined in
-  `palette.chart.drop` or `chart.rise` (today the success and error colors). The percent stays in the title. Spans pinned before prices
-  were stored get a dashed line labeled with the percent.
+- **Price changes** are derived from the visible series and dates (`lineChangeCallouts`). Each
+  package event has old/new dots and a dashed old price; one pill per date gives agreed prices
+  or a change count. Exact package values and gap spans are in the Notable price changes card under the results
+  table (package charts' View data has exact prices); the readout shows only prices.
+  Product markers come only from actual package events, never jumps in their average.
+  New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
+  old product pins without this identity still draw, but cannot infer package events. A legacy
+  `changeSpan` remains a fallback inside its dates. Pinned line charts save `showPriceChanges`
+  (absent means on); live comparisons always mark events. Bars have no event markers.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown
   series can't be hidden. Hiding never recolors. Hidden series leave the axis fit
@@ -117,6 +181,9 @@ fitted axis (default) or a `bar` from $0 with a gray range track. Rows are drawn
 `shape`. Don't use recharts' `ErrorBar` (stale scale, ranges at half price) or
 `allowDataOverflow` on the value axis (clips the value labels).
 
+A bar card keeps its natural height (`BAR_ROW_HEIGHT` per row plus the plot's margins), so beside a taller
+line card it simply ends sooner; never stretch it to the row.
+
 ## Docked readout (no floating tooltips)
 
 Each unit chart shows its values in a fixed box above the plot (`ReadoutDock`), never in a
@@ -124,11 +191,16 @@ tooltip that floats over the plot or sits under a finger. The box is recharts' `
 rendered there through `portal` (`DOCKED_TOOLTIP` keeps it showing between points), so hovering
 re-renders only the readout, not the chart.
 
-- **What it shows:** the hovered point; else the locked one; else, on a line chart, the latest
-  date ("· latest"), and on a bar chart a hint. It reserves its height (`lineReadoutHeight`,
+- **What it shows:** the hovered point; else the locked one; else, on a line chart, the
+  chart's `eventDate` ("· this change") or the latest date ("· latest"), and on a bar chart a hint.
+  It holds only the date and unit, Unlock when locked, and the series rows: no price-change
+  events (those are the on-plot callouts and the list below the plot). It reserves its height (`lineReadoutHeight`,
   `barReadoutHeight`, counting the dock's frame, gaps and range lines) so the plot doesn't move
   under the pointer; undrawn pinned charts reserve it too (`ChartItemBody`). Past
   `READOUT_MAX_HEIGHT` its rows scroll under a header that stays put (`ReadoutContent`).
+  Every readout line is one ellipsised line (its full text in a `title`),
+  except the bar readout's description, which clamps at two lines and is always reserved at two,
+  so the dock's height never depends on the text or the card's width.
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
   second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
   header has an Unlock button, which gives focus back to the chart. A lock on a point the rows

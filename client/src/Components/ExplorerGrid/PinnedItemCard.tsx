@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useRef, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -9,10 +9,14 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import CheckIcon from "@mui/icons-material/Check";
 import { usePinActions, type PinHighlight } from "../../Context/pinnedItemsContexts";
-import { formatItemSource, isScaleMatched, itemTitle, type ExplorerItem } from "../../library/explorerItems";
+import {
+  canDrillDownToPackages, formatItemSource, fromChartSeries, isScaleMatched, itemTitle, packageLevelView, type ExplorerItem,
+} from "../../library/explorerItems";
+import { dateBounds, formatWindow } from "../../library/dates";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
+import PinnedPriceChangeList, { type PinnedListChartProps } from "./PinnedPriceChangeList";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 
 type Props = {
@@ -23,7 +27,7 @@ type Props = {
   highlight: PinHighlight | null,
   /** Shared price range per pricing unit across the matched line charts ("Match scale"). Matched line charts only. */
   priceRanges?: Map<string, [number, number]>,
-}
+} & Partial<PinnedListChartProps>;
 
 /** When to start centering a new card again if no `scrollend` arrives. */
 const RECENTER_FALLBACK_MS = 1000;
@@ -35,12 +39,23 @@ const SETTLED_PX = 24;
 /** Input that scrolls the page: the user taking over from the centering. */
 const USER_SCROLL_EVENTS = ["wheel", "touchmove", "keydown"] as const;
 
+const sourceBadge = (source: ExplorerItem["source"]) => {
+  switch (source.searchSource) {
+    case "fda": return { label: "FDA Search", detail: "Found and grouped using FDA reference data. Prices are from NADAC." };
+    case "nadac": return { label: "NADAC Search", detail: "Found by NADAC description or NDC. Prices are from NADAC." };
+    default: return { label: "Search source unknown", detail: "This pin predates saved search sources. Prices are from NADAC." };
+  }
+};
+
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** A pinned item's card. Memoized: its props change only when its own item does. */
-export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, priceRanges }: Props) {
+/**
+ * A pinned item's card. Memoized: its props change only when its own item does. A price change
+ * list also gets the Pinned section's open charts (`PinnedListChartProps`), which chart cards never
+ * do, so opening a chart doesn't redraw them.
+ */
+export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, priceRanges, openCharts, onToggleChart, onRegisterButton }: Props) {
   const { updateItem, removeItem, moveItem } = usePinActions();
-  const title = itemTitle(item);
   const isFull = item.layout.width === "full";
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -51,9 +66,9 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   // Chart selected feedback: bring the new card into view and move focus to its heading,
   // so keyboard and screen-reader users land on what they just created.
   useEffect(() => {
-    if (!focusOnAdd) return;
     const card = cardRef.current;
-    card?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    if (!focusOnAdd || !card?.checkVisibility()) return;
+    card.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
     headingRef.current?.focus({ preventScroll: true });
     // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
     // and grow past their placeholders, pushing the card down. Once the scroll stops, center the
@@ -62,7 +77,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let checks = 0;
     const settle = () => {
-      if (!card) return;
+      if (!card.checkVisibility()) return;
       const { top, bottom } = card.getBoundingClientRect();
       const offCenter = Math.abs((top + bottom) / 2 - window.innerHeight / 2);
       if (offCenter > SETTLED_PX) {
@@ -97,6 +112,15 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
 
   // The date picker opens from the dates chip, or from "Change dates" in the menu.
   const [datesAnchor, setDatesAnchor] = useState<HTMLElement | null>(null);
+  const [showPackages, setShowPackages] = useState(false);
+  const packageView = useMemo(
+    () => item.kind === "chart" && showPackages ? packageLevelView(item) : null,
+    [item, showPackages],
+  );
+  const visibleItem = packageView ?? item;
+  const title = itemTitle(visibleItem);
+  const source = sourceBadge(item.source);
+  const canSwitchLevel = item.kind === "chart" && item.source.seriesKind === "product" && canDrillDownToPackages(item);
 
   const isLineChart = item.kind === "chart" && item.chartType === "line";
   const matched = isScaleMatched(item);
@@ -124,21 +148,26 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
           <ListItemIcon><ArrowDownwardIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Move down</ListItemText>
         </MenuItem>
-        <MenuItem onClick={runAndClose(() => setDatesAnchor(menuAnchor))}>
+        {item.kind === "chart" && <MenuItem onClick={runAndClose(() => setDatesAnchor(menuAnchor))}>
           <ListItemIcon><EditCalendarIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Change dates</ListItemText>
-        </MenuItem>
+        </MenuItem>}
         {isLineChart
           ? <MenuItem
             role="menuitemcheckbox"
             aria-checked={matched}
-            onClick={runAndClose(() => updateItem(item.id, prev => ({ ...prev, matchScale: !matched })))}
+            onClick={runAndClose(() => updateItem(item.id, prev => prev.kind === "chart" ? { ...prev, matchScale: !matched } : prev))}
           >
             <ListItemIcon>{matched ? <CheckIcon fontSize="small" /> : null}</ListItemIcon>
             <ListItemText>Match scale</ListItemText>
           </MenuItem>
           : null
         }
+        {isLineChart && <MenuItem role="menuitemcheckbox" aria-checked={item.showPriceChanges !== false}
+          onClick={runAndClose(() => updateItem(item.id, prev => prev.kind === "chart" ? { ...prev, showPriceChanges: prev.showPriceChanges === false } : prev))}>
+          <ListItemIcon>{item.showPriceChanges !== false ? <CheckIcon fontSize="small" /> : null}</ListItemIcon>
+          <ListItemText>Show price changes</ListItemText>
+        </MenuItem>}
         <MenuItem onClick={runAndClose(() => updateItem(item.id, prev => ({
           ...prev, layout: { ...prev.layout, width: isFull ? "half" : "full" },
         })))}>
@@ -154,15 +183,29 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   );
 
   return (
-    <Grid size={isFull ? 12 : HALF_WIDTH_GRID_SIZE} ref={cardRef}>
+    <Grid size={isFull ? 12 : HALF_WIDTH_GRID_SIZE} ref={cardRef} data-pinned-item={item.id}>
       <ExplorerGridItem
         title={title}
         headingLevel={3}
         headingRef={headingRef}
         highlighted={highlighted}
-        fill={item.kind === "chart" && item.chartType === "bar"}
         badges={<>
-          <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          <Tooltip title={source.detail}>
+            <Chip size="small" variant="outlined" label={source.label} />
+          </Tooltip>
+          {canSwitchLevel
+            ? <Tooltip title={showPackages ? "Return to product averages" : "Show the stored package price lines"}>
+              <Chip
+                size="small"
+                variant="outlined"
+                clickable
+                component="button"
+                label={formatItemSource(visibleItem.source)}
+                onClick={() => setShowPackages(value => !value)}
+              />
+            </Tooltip>
+            : <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
+          }
           {item.kind === "chart"
             ? <PinnedChartDates
               item={item}
@@ -171,7 +214,8 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
               onOpen={setDatesAnchor}
               onClose={() => setDatesAnchor(null)}
             />
-            : null
+            // A list's dates are fixed: it lists the changes in the dates it was pinned with.
+            : <Chip size="small" variant="outlined" label={formatWindow(item.dateWindow, dateBounds(fromChartSeries(item.histories)))} />
           }
           {matched
             ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit">
@@ -184,7 +228,11 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
         collapsed={item.collapsed}
         onCollapsedChange={(collapsed: boolean) => updateItem(item.id, prev => ({ ...prev, collapsed }))}
       >
-        {item.kind === "chart" ? <ChartItemBody item={item} priceRanges={priceRanges} /> : null}
+        {visibleItem.kind === "chart"
+          ? <ChartItemBody item={visibleItem} priceRanges={priceRanges} />
+          : openCharts && onToggleChart && onRegisterButton
+            ? <PinnedPriceChangeList item={visibleItem} openCharts={openCharts} onToggleChart={onToggleChart} onRegisterButton={onRegisterButton} />
+            : null}
       </ExplorerGridItem>
     </Grid>
   );

@@ -30,12 +30,20 @@ describe("lineChartSummary", () => {
     expect(lineChartSummary(prices)).toBe(`1 series, Jan 1, 2025 to Feb 1, 2025. Latest price: $0.50 on Feb 1, 2025. ${HINT}`);
   });
 
+  it("pluralizes actual package events in a product summary", () => {
+    const prices = [price("P", "2026-01-07", 10), price("P", "2026-01-14", 5)]
+      .map(p => ({ ...p, packageNdc: "P-1" }));
+    expect(lineChartSummary(prices, undefined, "product")).toContain("1 significant package change.");
+    expect(lineChartSummary([...prices, ...prices.map(p => ({ ...p, packageNdc: "P-2" }))], undefined, "product"))
+      .toContain("2 significant package changes.");
+  });
+
   it("formats dates in UTC", () => {
     // TZ is America/Chicago in tests, where local formatting would say Dec 31.
     expect(lineChartSummary([price("A", "2025-01-01", 1)])).toContain("Jan 1, 2025");
   });
 
-  it("leads a price-change card with the change", () => {
+  it("leads a legacy change-span pin with the change", () => {
     const prices = [price("A", "2026-01-07", 9.69), price("A", "2026-01-14", 5.52)];
     const span = { start: Date.parse("2026-01-07"), end: Date.parse("2026-01-14"), label: "-43.0%", from: 9.69, to: 5.52 };
     expect(lineChartSummary(prices, span)).toBe(

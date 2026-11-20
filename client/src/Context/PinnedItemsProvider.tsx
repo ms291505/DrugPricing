@@ -20,12 +20,17 @@ export const PinnedItemsProvider = ({ children, initial }: ProviderProps) => {
   const [highlight, setHighlight] = useState<PinHighlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const addItem = useCallback((item: ExplorerItem, options?: { focus?: boolean }) => {
-    setPinnedItems(prev => [...prev, item]);
-    setHighlight({ id: item.id, focus: options?.focus ?? false });
+  const addItems = useCallback((items: ExplorerItem[], options?: { focus?: boolean }) => {
+    if (!items.length) return;
+    setPinnedItems(prev => [...prev, ...items]);
+    setHighlight({ id: items[0].id, focus: options?.focus ?? false });
     clearTimeout(highlightTimer.current);
     highlightTimer.current = setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
   }, []);
+
+  const addItem = useCallback((item: ExplorerItem, options?: { focus?: boolean }) => {
+    addItems([item], options);
+  }, [addItems]);
 
   const updateItem = useCallback((id: string, update: (item: ExplorerItem) => ExplorerItem) => {
     setPinnedItems(prev => prev.map(item => item.id === id ? update(item) : item));
@@ -50,8 +55,8 @@ export const PinnedItemsProvider = ({ children, initial }: ProviderProps) => {
     setPinnedItems(prev => prev.map(item => item.collapsed === collapsed ? item : { ...item, collapsed }));
   }, []);
 
-  const actions = useMemo(() => ({ addItem, updateItem, removeItem, moveItem, setAllCollapsed }),
-    [addItem, updateItem, removeItem, moveItem, setAllCollapsed]);
+  const actions = useMemo(() => ({ addItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed }),
+    [addItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed]);
 
   return (
     <PinActionsContext.Provider value={actions}>

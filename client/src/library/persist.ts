@@ -1,14 +1,17 @@
 import toast from "react-hot-toast";
-import { type FdaResultDetailLevel, type LayoutMode } from "./types";
+import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
-import type { BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, SeriesKind } from "./explorerItems";
+import type {
+  BarValue, ChartChangeSpan, ChartItem, ChartSearchSource, ChartSeriesSnapshot, ExplorerItem, PriceChangeListItem, SeriesKind,
+} from "./explorerItems";
+import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
   type BrandGeneric, type FdaCriteria, type NadacCriteria,
 } from "./searchCriteria";
 import { isValidNadacSearch } from "./nadacSearch";
-import { DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
+import { readColumnOverrides, DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
  * Saves the workspace and each search tab's state to localStorage so they survive a reload.
@@ -29,11 +32,13 @@ export const VERSION = 1;
 const APP_PREFIX = "drugpricing.";
 const PREFIX = `${APP_PREFIX}v${VERSION}`;
 const WORKSPACE_KEY = `${PREFIX}.workspace`;
+const SEARCH_PINS_KEY = `${PREFIX}.search-pins`;
+const LAST_SEARCH_SOURCE_KEY = `${PREFIX}.last-search-source`;
 const SETTINGS_KEY = `${PREFIX}.settings`;
 const TAB_KEY_PREFIX = `${PREFIX}.tab.`;
 export const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
 
-/** Tab ids for the standalone /fda-search and /nadac-search pages, which are not workspace tabs. */
+/** Tab ids for the standalone /search/fda and /search/nadac pages, which are not workspace tabs. */
 export const STANDALONE_TAB_IDS = { fda: "page-fda", nadac: "page-nadac" } as const;
 
 /** How every stored value is wrapped. */
@@ -58,18 +63,20 @@ function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
   }
 }
 
-function write<T>(key: string, data: T): void {
-  if (readOnly) return;
+function write<T>(key: string, data: T): boolean {
+  if (readOnly) return false;
   try {
     const value = JSON.stringify({ version: VERSION, data } satisfies Envelope<T>);
     localStorage.setItem(key, value);
     lastWritten.set(key, value);
+    return true;
   } catch (error) {
     console.warn("Could not save to localStorage:", error);
     if (!warnedWriteFailure) {
       warnedWriteFailure = true;
       toast.error("Couldn't save your workspace: browser storage is full or unavailable.");
     }
+    return false;
   }
 }
 
@@ -95,14 +102,20 @@ const isTabType = oneOf<TabType>(["fda", "nadac", "new", "collection"]);
 const isLayoutMode = oneOf<LayoutMode>(["single", "split-2", "split-4"]);
 const isDetailLevel = oneOf<FdaResultDetailLevel>(["product", "package"]);
 const isSeriesKind = oneOf<SeriesKind>(["product", "package", "ndc"]);
+const isChartSearchSource = oneOf<ChartSearchSource>(["fda", "nadac"]);
 
 const isWorkspaceTab = (x: unknown): x is WorkspaceTab =>
   isObject(x) && isString(x.id) && isString(x.title) && isTabType(x.type);
 
+const isPricePoints = (x: unknown): x is Array<[number, number]> => Array.isArray(x)
+  && x.every(p => Array.isArray(p) && p.length === 2 && p.every(v => typeof v === "number" && Number.isFinite(v)));
+
 const isSeriesSnapshot = (x: unknown): x is ChartSeriesSnapshot =>
   isObject(x) && isString(x.ndc) && isString(x.label) && isString(x.unit)
-  && (x.color === undefined || isString(x.color)) && Array.isArray(x.points)
-  && x.points.every(p => Array.isArray(p) && p.length === 2 && typeof p[0] === "number" && typeof p[1] === "number");
+  && (x.color === undefined || isString(x.color)) && isPricePoints(x.points)
+  && (x.packageNdcs === undefined || (Array.isArray(x.packageNdcs)
+    && x.packageNdcs.length === x.points.length
+    && x.packageNdcs.every(ndc => ndc === null || (typeof ndc === "string" && ndc.length > 0))));
 
 const isTimeOrNull = (x: unknown): x is number | null => x === null || typeof x === "number";
 
@@ -123,23 +136,52 @@ const isBarValue = oneOf<BarValue>(["latest", "average"]);
 /** Charts pinned before chart windows existed have no `dateWindow`; they show every date. */
 type StoredExplorerItem = Omit<ChartItem, "dateWindow"> & { dateWindow?: DateWindow };
 
-const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
-  isObject(x) && x.kind === "chart" && isString(x.id) && isString(x.defaultTitle)
+/** The fields every pinned item has, whatever its kind. */
+const hasStoredItemBase = (x: Record<string, unknown>) =>
+  isString(x.id) && isString(x.defaultTitle)
   && (x.title === undefined || isString(x.title)) && typeof x.createdAt === "number"
   && isObject(x.layout) && (x.layout.width === "half" || x.layout.width === "full")
-  && typeof x.collapsed === "boolean" && (x.chartType === "line" || x.chartType === "bar")
-  && Array.isArray(x.series) && x.series.every(isSeriesSnapshot)
+  && typeof x.collapsed === "boolean"
   && isObject(x.source) && isString(x.source.searchLabel) && isSeriesKind(x.source.seriesKind)
   && typeof x.source.seriesCount === "number" && typeof x.source.resultSeriesCount === "number"
-  && typeof x.source.filtered === "boolean"
+  && typeof x.source.filtered === "boolean";
+
+const isStoredExplorerItem = (x: unknown): x is StoredExplorerItem =>
+  isObject(x) && x.kind === "chart" && hasStoredItemBase(x) && (x.chartType === "line" || x.chartType === "bar")
+  && Array.isArray(x.series) && x.series.every(isSeriesSnapshot)
   && (x.dateWindow === undefined || isDateWindow(x.dateWindow))
   && (x.changeSpan === undefined || isChangeSpan(x.changeSpan))
   && (x.barValue === undefined || isBarValue(x.barValue))
-  && (x.matchScale === undefined || typeof x.matchScale === "boolean");
+  && (x.matchScale === undefined || typeof x.matchScale === "boolean")
+  && (x.showPriceChanges === undefined || typeof x.showPriceChanges === "boolean")
+  && (x.eventDate === undefined || Number.isFinite(x.eventDate));
+
+/** A scan's percent as the scan field accepts it: at least the minimum, one decimal at most. */
+const isThresholdPercent = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x)
+  && x >= PRICE_CHANGE_SCAN_MIN_PERCENT && Number(x.toFixed(1)) === x;
+
+/** Lists always stored their dates and at least one package's history; one without either is invalid. */
+const isStoredPriceChangeList = (x: unknown): x is PriceChangeListItem =>
+  isObject(x) && x.kind === "price-change-list" && hasStoredItemBase(x)
+  && isThresholdPercent(x.thresholdPercent) && isDateWindow(x.dateWindow)
+  && Array.isArray(x.histories) && x.histories.length > 0 && x.histories.every(isSeriesSnapshot);
 
 /** Keeps the items that are well formed; one bad item does not cost the user the rest. */
 const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
-  ? x.filter(isStoredExplorerItem).map(item => ({ ...item, dateWindow: item.dateWindow ?? FULL_WINDOW }))
+  ? x.filter((item): item is StoredExplorerItem | PriceChangeListItem =>
+    isStoredExplorerItem(item) || isStoredPriceChangeList(item)).map((item): ExplorerItem => {
+    // This field was added after pins existed. Drop only an invalid value; keep the pin and every
+    // other field, and leave a missing value unknown rather than inferring it from other state.
+    const source = { ...(item.source as unknown as Record<string, unknown>) };
+    const searchSource = source.searchSource;
+    delete source.searchSource;
+    if (isChartSearchSource(searchSource)) source.searchSource = searchSource;
+    return item.kind === "chart" ? {
+      ...item,
+      source: source as ChartItem["source"],
+      dateWindow: item.dateWindow ?? FULL_WINDOW,
+    } : { ...item, source: source as PriceChangeListItem["source"] };
+  })
   : [];
 
 const isBrandGeneric = oneOf<BrandGeneric>(["all", "brand", "generic"]);
@@ -287,14 +329,24 @@ export function watchOtherWindows(onConflict: () => void): () => void {
   const handleStorage = (event: StorageEvent) => {
     if (readOnly || event.storageArea !== localStorage) return;
     if (event.key !== null && !event.key.startsWith(PREFIX + ".")) return;
-    // Settings are safe to share: every window follows them (`watchSettings`).
-    if (event.key === SETTINGS_KEY) return;
+    // Settings and the last navigation source can be shared without endangering tab state.
+    if (event.key === SETTINGS_KEY || event.key === LAST_SEARCH_SOURCE_KEY) return;
     if (event.key !== null && lastWritten.has(event.key) && lastWritten.get(event.key) === event.newValue) return;
     readOnly = true;
     onConflict();
   };
   window.addEventListener("storage", handleStorage);
   return () => window.removeEventListener("storage", handleStorage);
+}
+
+export type SearchSource = "fda" | "nadac";
+
+export function loadLastSearchSource(): SearchSource | null {
+  return read(LAST_SEARCH_SOURCE_KEY, oneOf<SearchSource>(["fda", "nadac"]));
+}
+
+export function saveLastSearchSource(source: SearchSource): void {
+  write(LAST_SEARCH_SOURCE_KEY, source);
 }
 
 // --- Settings ------------------------------------------------------------------------------
@@ -308,6 +360,7 @@ export function loadSettings(): AppSettings {
   return {
     barStyle: raw && isBarStyle(raw.barStyle) ? raw.barStyle : DEFAULT_SETTINGS.barStyle,
     colorMode: raw && isColorMode(raw.colorMode) ? raw.colorMode : DEFAULT_SETTINGS.colorMode,
+    columnOverrides: readColumnOverrides(raw && raw.columnOverrides),
   };
 }
 
@@ -357,6 +410,10 @@ export type PersistedCollectionTab = {
   type: "collection"
 } & PersistedExplorerState;
 
+export type PersistedSearchTab = PersistedFdaTab | PersistedNadacTab;
+
+export const isStorageReadOnly = () => readOnly;
+
 type PersistedTab = PersistedFdaTab | PersistedNadacTab | PersistedCollectionTab;
 
 /*
@@ -381,7 +438,7 @@ export function loadFdaTabState(tabId: string): PersistedFdaTab | null {
   return {
     type: "fda",
     criteria: isObject(raw.criteria) ? readFdaCriteria(raw.criteria) : legacyFdaCriteria(raw),
-    detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : "product",
+    detailLevel: isDetailLevel(raw.detailLevel) ? raw.detailLevel : DEFAULT_FDA_DETAIL_LEVEL,
     ...loadExplorerState(raw),
   };
 }
@@ -405,10 +462,38 @@ export function loadCollectionTabState(tabId: string): PersistedCollectionTab | 
   };
 }
 
-export function saveTabState(tabId: string, state: PersistedTab): void {
-  write(tabKey(tabId), state);
+export function saveTabState(tabId: string, state: PersistedTab): boolean {
+  return write(tabKey(tabId), state);
 }
 
 export function removeTabState(tabId: string): void {
   remove(tabKey(tabId));
+}
+
+/** Standalone searches share pins; workspace tabs continue to own theirs individually. */
+export function loadSearchPins(): PersistedExplorerState {
+  const shared = read(SEARCH_PINS_KEY, isObject);
+  if (shared && Array.isArray(shared.pinnedItems)) return loadExplorerState(shared);
+  const legacy = [loadFdaTabState(STANDALONE_TAB_IDS.fda), loadNadacTabState(STANDALONE_TAB_IDS.nadac)]
+    .flatMap(state => state?.pinnedItems ?? []);
+  return { pinnedItems: [...new Map(legacy.map(item => [item.id, item])).values()] };
+}
+
+export function saveSearchPins(pinnedItems: ExplorerItem[]): void {
+  // Never erase the legacy copies until the shared snapshots have been saved successfully.
+  if (!write(SEARCH_PINS_KEY, { pinnedItems })) return;
+  for (const tabId of Object.values(STANDALONE_TAB_IDS)) {
+    const raw = read(tabKey(tabId), isObject);
+    if (raw && Array.isArray(raw.pinnedItems) && raw.pinnedItems.length > 0) {
+      write(tabKey(tabId), { ...raw, pinnedItems: [] });
+    }
+  }
+}
+
+/** Save criteria without copying the shared pins back into a source's legacy storage slot. */
+export function saveStandaloneSearch(state: Omit<PersistedFdaTab, "pinnedItems"> | Omit<PersistedNadacTab, "pinnedItems">): void {
+  const tabId = STANDALONE_TAB_IDS[state.type];
+  const raw = read(tabKey(tabId), isObject);
+  // Preserve any unmigrated snapshots if the shared save failed (e.g. browser storage is full).
+  write(tabKey(tabId), { ...state, pinnedItems: validItems(raw?.pinnedItems) });
 }

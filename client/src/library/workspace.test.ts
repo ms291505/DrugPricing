@@ -18,6 +18,58 @@ describe("workspaceReducer", () => {
     prev.tabs.forEach((t, i) => expect(next.tabs[i]).toBe(t));
   });
 
+  it("opens an imported search in the first pane without changing other tabs or layout", () => {
+    const prev = { ...workspace(["a", "b"]), layoutMode: "split-2" as const };
+    const next = workspaceReducer(prev, { type: "add", tab: tab("copy"), show: true });
+    expect(next.paneAssignment).toEqual(["copy", "b"]);
+    expect(next.layoutMode).toBe("split-2");
+    prev.tabs.forEach((t, i) => expect(next.tabs[i]).toBe(t));
+  });
+
+  it("replaces the startup blank when opening an imported search", () => {
+    const blank: WorkspaceTab = { id: "blank", type: "new", title: "New Tab" };
+    const prev: WorkspaceState = { tabs: [blank], layoutMode: "single", paneAssignment: [blank.id] };
+    const copy = tab("copy");
+    const next = workspaceReducer(prev, { type: "add", tab: copy, show: true });
+    expect(next.tabs).toEqual([copy]);
+    expect(next.paneAssignment).toEqual([copy.id]);
+  });
+
+  it("reuses only the displaced blank and preserves other tabs and panes", () => {
+    const blank: WorkspaceTab = { id: "blank", type: "new", title: "New Tab" };
+    const otherBlank = { ...blank, id: "other-blank" };
+    const saved = tab("saved");
+    const prev: WorkspaceState = { tabs: [saved, blank, otherBlank], layoutMode: "split-2", paneAssignment: [blank.id, saved.id] };
+    const copy = tab("copy");
+    const next = workspaceReducer(prev, { type: "add", tab: copy, show: true });
+    expect(next.tabs).toEqual([saved, copy, otherBlank]);
+    expect(next.tabs[0]).toBe(saved);
+    expect(next.tabs[2]).toBe(otherBlank);
+    expect(next.paneAssignment).toEqual([copy.id, saved.id]);
+    expect(next.layoutMode).toBe("split-2");
+  });
+
+  it.each([
+    { title: "Named blank", panes: ["blank"] },
+    { title: "New Tab", panes: [null] },
+    { title: "New Tab", panes: ["blank", "blank"] },
+  ])("keeps a blank that isn't untouched and exclusive to the destination: %j", ({ title, panes }) => {
+    const blank: WorkspaceTab = { id: "blank", type: "new", title };
+    const prev: WorkspaceState = { tabs: [blank], layoutMode: "single", paneAssignment: panes };
+    const next = workspaceReducer(prev, { type: "add", tab: tab("copy"), show: true });
+    expect(next.tabs[0]).toBe(blank);
+    expect(next.tabs).toHaveLength(2);
+  });
+
+  it("keeps the blank when adding without opening a tab", () => {
+    const blank: WorkspaceTab = { id: "blank", type: "new", title: "New Tab" };
+    const prev: WorkspaceState = { tabs: [blank], layoutMode: "single", paneAssignment: [blank.id] };
+    const next = workspaceReducer(prev, { type: "add", tab: tab("copy") });
+    expect(next.tabs).toHaveLength(2);
+    expect(next.tabs[0]).toBe(blank);
+    expect(next.paneAssignment).toBe(prev.paneAssignment);
+  });
+
   it("starts over with one tab, alone in a single pane", () => {
     const fresh: WorkspaceTab = { id: "new", type: "new", title: "New Tab" };
     const next = workspaceReducer({ ...workspace(["a", "b"]), layoutMode: "split-2" }, { type: "reset", tab: fresh });

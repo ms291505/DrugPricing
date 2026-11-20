@@ -2,6 +2,9 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
 
 - **Latest Price** is the most recent price in your dates, with its unit. **Min Price** and
   **Max Price** are the lowest and highest in your dates.
+- A **warning triangle** beside a latest price means the row stopped being priced before the end
+  of your dates; tap or focus it to see when it was last priced. The **Latest Price Date**
+  column is hidden by default and can be shown from **Columns**.
 - On an FDA product row, the price is the average of the product's packages. Most products
   price every package the same, so the average is simply the price.
 - **Mixed units** means the product's packages are priced in different units (for example a
@@ -11,3 +14,12 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
   ranked against each other.
 - Tick rows and choose **Chart selected** to chart just those. A row with no prices can't be
   ticked.
+
+Choose **Columns** beside the pagination below the table to show or hide fields, including
+Min and Max Price, Generic Name and Labeler. **Reset columns**, available on wider tables,
+restores the default selection. Your choices are saved separately for NADAC, FDA products
+and FDA packages, and apply to search pages and workspace tabs in every window.
+
+FDA package rows include the product's **Strength**, so packages of different strengths can
+be told apart even when their pack sizes match. NDCs keep their source form: dashed FDA codes
+and the stored numeric code for NADAC.

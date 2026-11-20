@@ -13,8 +13,9 @@ products.
 A generic from another company has its own labeler code and its own product code. The numbers
 carry no meaning beyond being unique, so two NDCs that look alike are not necessarily related.
 
-FDA search can show its results at either level: **Product** (one row per product, prices
-averaged across its packages) or **Package** (one row per package).
+FDA search shows **Packages** (one row per package) by default, or **Products** (one row per
+product, prices averaged across its packages). NADAC search always lists
+package NDCs, with prices per unit rather than per package.
 
 **NDC formats.** The FDA writes NDCs with dashes in three layouts (4-4-2, 5-3-2, 5-4-1). NADAC
 uses 11 digits with no dashes. This app stores NADAC NDCs without leading zeros, so

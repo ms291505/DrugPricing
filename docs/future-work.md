@@ -6,31 +6,6 @@ they fit. When something is done, delete it here. The code and its PR are the re
 
 ## Decided
 
-### Usability round from the user-testing notes (2026-11-01)
-
-Goal: make the core flow usable (search, results table, chart and compare) before adding
-anything new. Decided in an interview about the notes under **Author's notes**, to ship as focused PRs to
-`dev`. Pinned-chart performance, the Results section (built as
-[docs/plans/search-filters.md](plans/search-filters.md)) and the docked chart readout are built. One
-step is left:
-
-**Mixed units become separate cards,** everywhere: auto charts, Pin and Chart selected. Today a
-mixed-unit chart is one card that `UnitSplit` splits, with a "Mixed units" chip.
-
-- **Pin and Chart selected.** `createChartItem` (`library/explorerItems.ts`) gets a sibling
-  that splits the prices with `splitByPricingUnit` and returns one item per unit, each title
-  naming its unit. The pinned-items provider adds them in one state update and highlights and
-  focuses the first. With more than one, a toast says why: "Added 2 charts, one per pricing
-  unit (EA, ML)."
-- **Auto charts.** Both pages draw one bar card and one line card per unit. `shouldAutoChart`
-  stays gated on the total series count. Each card's Pin pins only its unit.
-- **Older pins.** `UnitSplit` stays, so pins saved with mixed units still render split. New
-  items are always one unit, so the chip leaves the new paths. No `VERSION` bump.
-- Tests: titles, colors carried per unit, and `source` per item. Check it with Wegovy and
-  Rybelsus.
-
-Out of scope for now: suggested searches (e.g. "GLP-1 Drugs") in the tab creator.
-
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
@@ -50,11 +25,74 @@ Left out of the plan, to revisit once it ships:
   them out. `LikePattern` now stops `_____` matching everything, which was the minimum's first
   reason; the other is result size, which 5 characters doesn't bound well either ("phate").
   Decide whether a picked suggestion, or 3 characters, may search. Both servers and
-  `library/constants.ts` hold the minimum.
+  `library/constants.ts` hold the minimum. "Block searches for generic terms like "tablet""
+  below moves the minimums into `/api/app-init` and sets the NADAC and FDA name values; decide
+  them together, and whichever lands first updates the other.
 - **Suggest the drug word** ("ELIQUIS") rather than a full strength description, if
   suggestions that narrow to one strength turn out to confuse users.
 - **Narrow one FDA field's suggestions by the other's draft**, if Brand + Generic searches
   built from independent suggestions often land on nothing.
+
+### Block searches for generic terms like "tablet" (2026-11-16)
+
+A text search must name a drug. "tablet" passes the 5-character minimum but isn't a drug: as a
+NADAC description it matches about 19,000 packages (18,830 in the dev database), which is a huge
+response, and its price change list (about 4,000,000 characters) is far over
+`PRICE_CHANGE_LIST_PIN_LIMIT`, so pinning it is refused with "Too many packages to pin".
+"metformin tablet" is a real search. Found while sizing pinned lists for
+[price change scans](plans/price-change-scans.md).
+
+- **Rule:** a term is searchable only if at least one of its words is not a generic word. Generic
+  words are dosage forms ("tablet", "capsule", "injection", "solution"), routes ("oral",
+  "topical"), release words ("extended", "release"), salt suffixes ("hcl", "hydrochloride"),
+  units and strengths ("mg", "ml", "10"). So "tablet", "oral tablet" and "tablet 10 mg" are
+  blocked, and "metformin tablet" is allowed.
+- **Salts that are drugs are not generic.** "sodium" (584 packages), "potassium" (456) and
+  "calcium" (285) are among the most common words in NADAC descriptions, and "sodium chloride",
+  "potassium chloride" and "calcium carbonate" are drugs. Only suffix forms count as salt words;
+  those three searches are allowed examples in the shared tests.
+- **Both ends enforce it**, like the minimum lengths:
+  - The client doesn't search. The field shows why ("Add a drug name: "tablet" describes a
+    form, not a drug"), and Search stays disabled. See `library/searchCriteria.ts`,
+    `nadacSearch.ts` and `fdaNadacHandoff.ts`, which check the minimums today.
+  - The server returns 400 for a blocked term, even when an NDC is also given. Today
+    `NadacPriceEndpoints.GetWithSearch` handles a too-short description differently: it blanks
+    it and returns 400 only when description and NDC are both empty, so `ndcDescription=tablet`
+    with an NDC would silently drop "tablet". See `NadacService.ValidateNdcDescription` and
+    `FdaProductService.ValidateNameSearch`, and their callers in `Endpoints/`.
+- **Scope:** NADAC description and the FDA brand and generic name fields. NDC search is not
+  affected.
+- **The server owns every search rule and serves it in `/api/app-init`.**
+  - It builds the generic words from the FDA dosage-form and route names (137 dosage forms,
+    phrases like "TABLET, FILM COATED", split into words), plus a short fixed list of unit,
+    strength, release and salt-suffix words. Those names are already in app-init, unused by the
+    client.
+  - FDA names miss NADAC's own vocabulary. Check the list against word frequencies in
+    `DrugPackages.NdcDescriptionLower`: the most common 5+-letter words include "tablet"
+    (18,829), "capsule" (4,417), "cream" (903), "patch" (629), "drops" (442), "relief" (388) and
+    "allergy" (327). "relief" and "allergy" are OTC marketing words that name no drug and are not
+    FDA dosage forms or routes. Record each word added to the fixed list, and why, beside the
+    list.
+  - Move the length minimums there too: NADAC description, NDC, and FDA name, today's
+    `MIN_*_LENGTH` in `NadacService`, `FdaProductService` and the client's
+    `library/constants.ts`. The client deletes its copies, and the AGENTS.md convention
+    "Minimum search lengths are duplicated" goes away. The client has no FDA name minimum of its
+    own today (`isValidFdaSearch` reuses `MIN_NDC_DESCRIPTION_LENGTH`), so the FDA name gets its
+    own value. The autocomplete follow-up above, "The 5-character search minimum blocks short
+    names", decides the same values; whichever lands first updates the other.
+  - The server doesn't enforce the NDC minimum today: `NadacService.ValidateNdc` is never called
+    (AGENTS.md, known rough edges). Wire it into `GetWithSearch` in this item, so the served NDC
+    rule is one the server keeps.
+  - Add a `searchRules` object to the app-init response. The client checks a term with the same
+    rule as the server (split into words, ignore case and punctuation), with a test on each
+    side for the same examples.
+  - When app-init fails or hasn't loaded yet, the client skips its own checks and sends the
+    search. The server's 400 must then carry the same readable message, shown by
+    `QueryErrorToast`, so no rule needs a client fallback copy.
+- Check the default searches (`server/Data/DefaultSearches.json`), the Help search examples and
+  `reporting/TEST_DRUGS.md` against the rule.
+
+Size: medium. One PR (server, client, Help, AGENTS.md).
 
 ## Cleanups
 
@@ -70,9 +108,9 @@ Left out of the plan, to revisit once it ships:
   each change. If profiling shows it costs, debounce in `library/persist.ts` (about 500ms) and
   flush on `pagehide` and when the page is hidden, keeping the several-windows guard and the
   failed-write toast working. Left out of the pinned-chart performance PR.
-- **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
-  (autocomplete in the FDA search form) or drop them from the response. The client uses only the
-  date range.
+- **`/api/app-init` returns route and dosage-form names the client never uses.** The generic-term
+  blocking item (Decided) replaces them with `searchRules`, built from those names. Until then the
+  client uses only the date range.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
   unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
@@ -94,6 +132,12 @@ Left out of the plan, to revisit once it ships:
   `> 0.05` compares $/each with $/mL (`ResultTables/priceColumns.tsx`). Sorting already groups by
   unit (`compareUnitPrices`). Make the filters unit-aware (a custom filter operator that also
   picks the unit), or set `filterable: false` on the three price columns.
+- **Restyle the focus outline on headings that take focus from code.** Card headings
+  (`ExplorerGridItem`) and the results heading (`ResultsSection`) are out of the tab order but
+  take focus when a package event chart opens or closes, so keyboard and screen-reader users land
+  in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
+  doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
+  corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.
 - **NADAC description search misses an NDC's current name.** `update_drug_package` inserts
   with `ON CONFLICT ("Ndc") DO NOTHING`, so `DrugPackages` keeps the first description an NDC
   was loaded with, while results show the latest. On dev (2026-11-16), 234 NDCs differ, and 37
@@ -180,11 +224,14 @@ top few and "and N more"; View data still has the full table.
 The author would like to show popular searches or recent price movers, linking each to a
 workspace tab (see **Linkable search results**). Two consequences for current structure:
 
-- **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
-  and NADAC result). A "recent movers" list across all drugs needs it on the server, most likely computed
-  after each NADAC load (ETL or a SQL view) and served by an endpoint. Then client and server
-  must agree on the rule (the 10% threshold, consecutive as-of dates), so give it one written
-  definition before there are two implementations.
+- **Price-change detection is client-only today**, run on each FDA and NADAC result. A "recent
+  movers" list across all drugs needs it on the server, most likely computed after each NADAC
+  load (ETL or a SQL view) and served by an endpoint. Then client and server must agree on the
+  rule, so give it one written definition before there are two implementations. The client's
+  rule is the definition to write down: consecutive as-of dates and `meetsThreshold`, which
+  compares in tenths of a percent (`library/flagNadacPriceChange.ts`); the default
+  `NOTABLE_PRICE_CHANGE_PERCENT` of 10 (`library/constants.ts`); and a change from $0, which
+  meets every threshold and reads "from $0" (`fromZero` in `library/priceActivity.ts`).
 - **"Popular searches" needs search counts,** which nothing records today. That is a server
   addition, and a privacy decision about what gets logged.
 
@@ -244,3 +291,9 @@ context needs to be rethought, so probably no need to stick to this mailbox desi
 
 The Collections proof of concept (`Components/Collection/`, a registered tab type the tab creator
 doesn't offer) stays in the code until then. It is an early step toward this.
+
+## Font
+
+`theme.ts` names "DM Sans" first in `fontFamily`, but no font is loaded anywhere (no link,
+`@font-face` or `@fontsource`), so the app renders in the system font. Either load DM Sans or drop
+the name.

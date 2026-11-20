@@ -30,6 +30,10 @@ export type NadacPriceChange = {
   /** The last price before the change and the first after it. */
   oldPrice: number,
   newPrice: number,
+  /**
+   * A fraction (−0.1 is a 10% drop); `Infinity` for a change from $0. Show it only through
+   * `eventLabel` / `signedChange` (`library/priceActivity.ts`), which never print `Infinity`.
+   */
   percentage: number,
 }
 
@@ -37,7 +41,10 @@ export type NadacPriceChange = {
  * The fields a chart reads from a price. Both live search results (`NadacPrice`) and pinned
  * chart snapshots (see `explorerItems.ts`) provide them.
  */
-export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit">;
+export type ChartPrice = Pick<NadacPrice, "ndc" | "ndcDescription" | "nadacPerUnit" | "asOfDate" | "pricingUnit"> & {
+  /** Original package identity, retained when FDA prices are keyed by product. */
+  packageNdc?: string,
+};
 
 export type FdaPackageDetail = {
   id: number,
@@ -89,6 +96,9 @@ export function isFdaProductOtc(productTypeName: string) {
 }
 
 export type FdaResultDetailLevel = "product" | "package";
+
+/** What a fresh search, a new tab, and stored state with no valid level show. */
+export const DEFAULT_FDA_DETAIL_LEVEL: FdaResultDetailLevel = "package";
 
 export function resultDetailLevelToLabel(level: FdaResultDetailLevel) {
   switch (level) {

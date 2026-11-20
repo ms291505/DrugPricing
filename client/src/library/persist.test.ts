@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_COLUMN_OVERRIDES, columnVisibilityModel, columnOverridesFromModel, RESULT_SELECTION_FIELD } from "./settings";
 import { FULL_WINDOW } from "./dates";
+import type { ChartItem, ExplorerItem } from "./explorerItems";
+import { DEFAULT_FDA_DETAIL_LEVEL } from "./types";
 import { createFdaCriteria, createNadacCriteria } from "./searchCriteria";
 
 type Persist = typeof import("./persist");
@@ -37,6 +40,11 @@ function loaded<T>(state: T | null): T {
   return state as T;
 }
 
+const asChart = (item: ExplorerItem): ChartItem => {
+  if (item.kind !== "chart") throw new Error(`Expected a chart, got ${item.kind}`);
+  return item;
+};
+
 /** Writes a tab's raw payload, for data the app itself would never save. */
 const saveRaw = (tabId: string, data: unknown) =>
   localStorage.setItem(persist.tabKey(tabId), JSON.stringify({ version: persist.VERSION, data }));
@@ -57,6 +65,18 @@ const oldItem = {
 };
 
 describe("loading saved tab state", () => {
+  it("reports a failed initial tab save so callers can avoid opening an empty search", async () => {
+    const toast = (await import("react-hot-toast")).default;
+    const error = vi.spyOn(toast, "error").mockImplementation(() => "toast");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("localStorage", { setItem: () => { throw new Error("Full"); } });
+    expect(persist.saveTabState("copy", { type: "fda", criteria: fdaCriteria,
+      detailLevel: "package", pinnedItems: [] })).toBe(false);
+    expect(error).toHaveBeenCalledOnce();
+    error.mockRestore();
+    warn.mockRestore();
+  });
+
   it("round-trips what saveTabState wrote", () => {
     const state = {
       type: "nadac" as const,
@@ -68,10 +88,16 @@ describe("loading saved tab state", () => {
         {
           ...oldItem, dateWindow: { start: 100, end: null },
           changeSpan: { start: 1, end: 2, label: "-43.0%", direction: "drop" },
-          series: [{ ...oldItem.series[0], color: "#56B4E9" }],
+          series: [{ ...oldItem.series[0], color: "#56B4E9", packageNdcs: ["PKG1"] }],
+          showPriceChanges: false,
           matchScale: true,
         },
+        { ...oldItem, id: "partial-package-identities", dateWindow: FULL_WINDOW, series: [{
+          ...oldItem.series[0], points: [[1, 2], [2, 3]], packageNdcs: ["PKG1", null],
+        }] },
         { ...oldItem, id: "bar", chartType: "bar", dateWindow: FULL_WINDOW, barValue: "average" },
+        // From "Chart this change": the full shown dates, with the change marked.
+        { ...oldItem, id: "event", dateWindow: { start: 0, end: 500 }, eventDate: 300 },
       ],
     } as Parameters<Persist["saveTabState"]>[1];
     persist.saveTabState("t1", state);
@@ -82,7 +108,83 @@ describe("loading saved tab state", () => {
     saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [oldItem] });
     const state = loaded(persist.loadFdaTabState("t1"));
     expect(state.pinnedItems).toEqual([{ ...oldItem, dateWindow: FULL_WINDOW }]);
-    expect(state.pinnedItems[0].matchScale).toBeUndefined();
+    expect(asChart(state.pinnedItems[0]).matchScale).toBeUndefined();
+  });
+
+  it("round-trips partial package identities without discarding the pin", () => {
+    const partialPin = {
+      ...oldItem,
+      series: [{ ...oldItem.series[0], points: [[1, 2], [2, 3]], packageNdcs: ["PKG1", null] }],
+    } as Parameters<Persist["saveTabState"]>[1]["pinnedItems"][number];
+    persist.saveTabState("partial", { type: "fda", criteria: createFdaCriteria(), detailLevel: "package", pinnedItems: [partialPin] });
+    const restored = loaded(persist.loadFdaTabState("partial")).pinnedItems[0];
+    expect(asChart(restored).series[0].packageNdcs).toEqual(["PKG1", null]);
+  });
+
+  it("restores explicit search sources and drops only an invalid source field", () => {
+    saveRaw("search-source", {
+      type: "fda", criteria: createFdaCriteria(), detailLevel: "package",
+      pinnedItems: [
+        { ...oldItem, id: "known", source: { ...oldItem.source, searchSource: "fda" } },
+        { ...oldItem, id: "unknown", source: { ...oldItem.source, searchSource: "legacy-fda" } },
+        { ...oldItem, id: "missing" },
+      ],
+    });
+    const items = loaded(persist.loadFdaTabState("search-source")).pinnedItems;
+    expect(items.map(item => item.id)).toEqual(["known", "unknown", "missing"]);
+    expect(items[0].source.searchSource).toBe("fda");
+    expect(items[1].source.searchSource).toBeUndefined();
+    expect(items[1].source.searchLabel).toBe("humira");
+    expect(items[2].source.searchSource).toBeUndefined();
+  });
+
+  describe("pinned price change lists", () => {
+    const list = {
+      kind: "price-change-list", id: "list", defaultTitle: "Metformin: price changes of 7.5% or more", createdAt: 1,
+      layout: { width: "half" }, collapsed: false, thresholdPercent: 7.5, dateWindow: { start: 1, end: 3 },
+      histories: [{ ndc: "A", label: "Drug A", unit: "each", points: [[1, 10], [2, 8]], color: "#123456" }],
+      source: { searchSource: "nadac", searchLabel: "metformin", seriesKind: "ndc", seriesCount: 1, resultSeriesCount: 4, filtered: false },
+    };
+
+    it("round-trips a list", () => {
+      const state = { type: "nadac", criteria: nadacCriteria, pinnedItems: [list] } as Parameters<Persist["saveTabState"]>[1];
+      persist.saveTabState("lists", state);
+      expect(loaded(persist.loadNadacTabState("lists")).pinnedItems).toEqual([list]);
+    });
+
+    it("drops an invalid list and keeps the pins beside it", () => {
+      const bad = [
+        { ...list, id: "low", thresholdPercent: 4 },
+        { ...list, id: "decimals", thresholdPercent: 7.55 },
+        { ...list, id: "empty", histories: [] },
+        { ...list, id: "point", histories: [{ ...list.histories[0], points: [[1, "8"]] }] },
+        { ...list, id: "dates", dateWindow: undefined },
+      ];
+      saveRaw("bad-lists", { type: "nadac", criteria: nadacCriteria, pinnedItems: [...bad, oldItem, list] });
+      expect(loaded(persist.loadNadacTabState("bad-lists")).pinnedItems.map(item => item.id)).toEqual(["i1", "list"]);
+    });
+
+    it("loads a list without a search source with it unknown, and drops an invalid one", () => {
+      const { searchSource: _, ...noSource } = list.source;
+      saveRaw("list-source", { type: "nadac", criteria: nadacCriteria, pinnedItems: [
+        { ...list, id: "missing", source: noSource },
+        { ...list, id: "invalid", source: { ...list.source, searchSource: "legacy" } },
+      ] });
+      const items = loaded(persist.loadNadacTabState("list-source")).pinnedItems;
+      expect(items.map(item => [item.id, item.source.searchSource])).toEqual([["missing", undefined], ["invalid", undefined]]);
+    });
+  });
+
+  it("defaults a missing or invalid detail level to packages and keeps a saved one", () => {
+    saveRaw("t1", { type: "fda", criteria: createFdaCriteria(), pinnedItems: [] });
+    saveRaw("t2", { type: "fda", criteria: createFdaCriteria(), detailLevel: "bogus", pinnedItems: [] });
+    saveRaw("t3", { type: "fda", criteria: createFdaCriteria(), detailLevel: "product", pinnedItems: [] });
+    persist.saveTabState("t4", { type: "fda", criteria: createFdaCriteria(), detailLevel: "product", pinnedItems: [] });
+    expect(DEFAULT_FDA_DETAIL_LEVEL).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t1")).detailLevel).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t2")).detailLevel).toBe("package");
+    expect(loaded(persist.loadFdaTabState("t3")).detailLevel).toBe("product");
+    expect(loaded(persist.loadFdaTabState("t4")).detailLevel).toBe("product");
   });
 
   it("drops only the malformed items and fields", () => {
@@ -94,6 +196,9 @@ describe("loading saved tab state", () => {
         { ...oldItem, id: "bad-bar-value", chartType: "bar", barValue: "median" },
         { ...oldItem, id: "bad-color", series: [{ ...oldItem.series[0], color: 3 }] },
         { ...oldItem, id: "bad-match", matchScale: "yes" },
+        { ...oldItem, id: "bad-events", showPriceChanges: "yes" },
+        { ...oldItem, id: "bad-event-date", eventDate: "2026-01-14" },
+        { ...oldItem, id: "bad-package-points", series: [{ ...oldItem.series[0], packageNdcs: [] }] },
         { ...oldItem, id: "good" },
       ],
     });
@@ -198,10 +303,10 @@ describe("pruneStoredState", () => {
   });
 });
 
-describe("watchOtherWindows", () => {
-  const storageEvent = (key: string | null, newValue: string | null) =>
-    Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue });
+const storageEvent = (key: string | null, newValue: string | null) =>
+  Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue });
 
+describe("watchOtherWindows", () => {
   const fdaTab = (criteria: typeof fdaCriteria) => ({
     type: "fda" as const, criteria, detailLevel: "product" as const,
     pinnedItems: [],
@@ -233,7 +338,8 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(persist.tabKey("t3"), "written elsewhere"));
     expect(onConflict).toHaveBeenCalledTimes(1);
 
-    persist.saveTabState("t1", fdaTab(fdaCriteria));
+    expect(persist.isStorageReadOnly()).toBe(true);
+    expect(persist.saveTabState("t1", fdaTab(fdaCriteria))).toBe(false);
     persist.removeTabState("t1");
     expect(localStorage.getItem(persist.tabKey("t1"))).toBe(before);
   });
@@ -251,7 +357,7 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(settingsKey, value));
 
     expect(onConflict).not.toHaveBeenCalled();
-    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark" });
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
@@ -259,19 +365,173 @@ describe("watchOtherWindows", () => {
 
 describe("settings", () => {
   it("defaults when nothing or something unreadable is saved", () => {
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie", colorMode: "sepia" } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 
   it("round-trips what saveSettings wrote", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+  });
+
+  it("round-trips independent column choices and follows another window", () => {
+    const columnOverrides = { fdaProduct: { proprietaryName: false }, fdaPackage: {}, nadac: { ndcDescription: false, minPrice: true } };
+    const settings = { barStyle: "dot" as const, colorMode: "light" as const, columnOverrides };
+    const onSettings = vi.fn();
+    const onConflict = vi.fn();
+    persist.watchSettings(onSettings);
+    persist.watchOtherWindows(onConflict);
+    const key = `drugpricing.v${persist.VERSION}.settings`;
+    const value = JSON.stringify({ version: persist.VERSION, data: settings });
+    localStorage.setItem(key, value);
+    window.dispatchEvent(storageEvent(key, value));
+    expect(onSettings).toHaveBeenCalledWith(settings);
+    expect(onConflict).not.toHaveBeenCalled();
+    persist.saveSettings(settings);
+    persist.pruneStoredState([]);
+    expect(persist.loadSettings()).toEqual(settings);
+  });
+
+  it("validates column overrides independently without discarding valid settings", () => {
+    const key = `drugpricing.v${persist.VERSION}.settings`;
+    localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: {
+      colorMode: "light", columnOverrides: { fdaProduct: { latestPrice: false, minPrice: true, maxPrice: 42, routeName: null, [RESULT_SELECTION_FIELD]: false }, fdaPackage: "bad", nadac: [] },
+    } }));
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", columnOverrides: {
+      fdaProduct: { latestPrice: false, minPrice: true }, fdaPackage: {}, nadac: {},
+    } });
+  });
+
+  it("keeps an untouched browser on current column defaults across saves", () => {
+    // Match SettingsProvider's initial load and automatic mount-time save.
+    persist.saveSettings(persist.loadSettings());
+    const before = columnVisibilityModel(["minPrice", "maxPrice"], persist.loadSettings().columnOverrides.nadac);
+    expect(before).toEqual({ minPrice: false, maxPrice: false });
+    // A later release shows Min Price by default and hides Description instead.
+    const after = columnVisibilityModel(["maxPrice", "ndcDescription"], persist.loadSettings().columnOverrides.nadac);
+    expect(after.minPrice).toBeUndefined();
+    expect(after.ndcDescription).toBe(false);
+    expect(persist.loadSettings().columnOverrides).toEqual(DEFAULT_COLUMN_OVERRIDES);
+  });
+
+  it("keeps new optional columns hidden after custom choices were saved", () => {
+    const defaults = ["minPrice", "maxPrice"];
+    const settings = persist.loadSettings();
+    settings.columnOverrides.nadac = columnOverridesFromModel(defaults, { minPrice: true, maxPrice: false, ndcDescription: false });
+    persist.saveSettings(settings);
+    const saved = persist.loadSettings().columnOverrides.nadac;
+    expect(saved).toEqual({ minPrice: true, ndcDescription: false });
+    const model = columnVisibilityModel([...defaults, "newOptionalColumn"], saved);
+    expect(model.newOptionalColumn).toBe(false);
+    expect(model.minPrice).toBe(true);
+    expect(model.ndcDescription).toBe(false);
+    // A new default-visible column remains visible (absent means visible to MUI).
+    expect(model.priceActivity).toBeUndefined();
+    // Reset clears choices, so all columns follow the current defaults again.
+    persist.saveSettings({ ...settings, columnOverrides: { ...settings.columnOverrides, nadac: {} } });
+    expect(columnVisibilityModel(defaults, persist.loadSettings().columnOverrides.nadac))
+      .toEqual({ minPrice: false, maxPrice: false });
   });
 
   it("survives pruning, which only removes tab state and old versions", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light" });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.pruneStoredState([]);
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light" });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+  });
+});
+
+describe("last search source", () => {
+  const key = "drugpricing.v1.last-search-source";
+
+  it("starts without a source and retains either source through pruning", () => {
+    expect(persist.loadLastSearchSource()).toBeNull();
+    for (const source of ["fda", "nadac"] as const) {
+      persist.saveLastSearchSource(source);
+      persist.pruneStoredState([]);
+      expect(persist.loadLastSearchSource()).toBe(source);
+    }
+  });
+
+  it.each([
+    "not JSON",
+    JSON.stringify({ version: 0, data: "fda" }),
+    JSON.stringify({ version: 1, data: "other" }),
+    JSON.stringify({ version: 1, data: {} }),
+  ])("ignores invalid stored sources: %s", raw => {
+    localStorage.setItem(key, raw);
+    expect(persist.loadLastSearchSource()).toBeNull();
+  });
+
+  it("allows another window to remember a source without making workspace writes read-only", () => {
+    const onConflict = vi.fn();
+    persist.watchOtherWindows(onConflict);
+    const value = JSON.stringify({ version: persist.VERSION, data: "nadac" });
+    localStorage.setItem(key, value);
+    window.dispatchEvent(Object.assign(new Event("storage"), { storageArea: localStorage, key, newValue: value }));
+    expect(onConflict).not.toHaveBeenCalled();
+    expect(persist.loadLastSearchSource()).toBe("nadac");
+    persist.saveTabState("t1", { type: "nadac", criteria: nadacCriteria, pinnedItems: [] });
+    expect(persist.loadNadacTabState("t1")).not.toBeNull();
+  });
+});
+
+describe("standalone search pins", () => {
+  const seed = () => {
+    saveRaw(persist.STANDALONE_TAB_IDS.fda, { type: "fda", criteria: fdaCriteria, detailLevel: "package", pinnedItems: [oldItem] });
+    saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [{ ...oldItem, id: "nadac-pin" }] });
+    saveRaw("workspace-fda", { type: "fda", criteria: fdaCriteria, pinnedItems: [{ ...oldItem, id: "workspace-pin" }] });
+  };
+
+  it("merges both legacy sources, preserves criteria, and leaves workspace pins independent", () => {
+    seed();
+    const pins = persist.loadSearchPins().pinnedItems;
+    expect(pins.map(pin => pin.id)).toEqual(["i1", "nadac-pin"]);
+    persist.saveSearchPins(pins);
+    persist.pruneStoredState(["workspace-fda"]);
+    expect(persist.loadSearchPins().pinnedItems).toEqual(pins);
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)).toMatchObject({
+      criteria: fdaCriteria, detailLevel: "package", pinnedItems: [],
+    });
+    expect(persist.loadNadacTabState(persist.STANDALONE_TAB_IDS.nadac)).toMatchObject({ criteria: nadacCriteria, pinnedItems: [] });
+    expect(persist.loadFdaTabState("workspace-fda")?.pinnedItems.map(pin => pin.id)).toEqual(["workspace-pin"]);
+  });
+
+  it("keeps an intentionally empty collection empty and never copies shared pins into source state", () => {
+    seed();
+    persist.saveSearchPins(persist.loadSearchPins().pinnedItems);
+    persist.saveSearchPins([]);
+    persist.saveStandaloneSearch({ type: "fda", criteria: { ...fdaCriteria, proprietaryName: "humira" }, detailLevel: "product" });
+    expect(persist.loadSearchPins().pinnedItems).toEqual([]);
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)?.pinnedItems).toEqual([]);
+  });
+
+  it("validates shared pins individually and deduplicates legacy ids", () => {
+    seed();
+    saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [oldItem] });
+    expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+    localStorage.setItem("drugpricing.v1.search-pins", JSON.stringify({ version: 1, data: { pinnedItems: [null, oldItem, { kind: "chart" }] } }));
+    expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+  });
+
+  it("preserves both legacy collections when saving shared snapshots fails", async () => {
+    seed();
+    const storage = localStorage;
+    const getItem = storage.getItem.bind(storage);
+    const before = Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const toast = (await import("react-hot-toast")).default;
+    const error = vi.spyOn(toast, "error").mockReturnValue("storage-error");
+    vi.stubGlobal("localStorage", { getItem, setItem: (key: string, value: string) => {
+      if (key.endsWith(".search-pins")) throw new Error("quota");
+      storage.setItem(key, value);
+    } });
+    persist.saveSearchPins(persist.loadSearchPins().pinnedItems);
+    expect(Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)))).toEqual(before);
+    persist.saveStandaloneSearch({ type: "fda", criteria: { ...fdaCriteria, proprietaryName: "humira" }, detailLevel: "product" });
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)?.pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
+    expect(error).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+    error.mockRestore();
   });
 });

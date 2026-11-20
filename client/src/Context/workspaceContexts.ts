@@ -1,6 +1,7 @@
 import { createContext, useContext, type Context, type RefObject, type SetStateAction } from "react";
 import type { LayoutMode } from "../library/types";
 import type { TabType, WorkspaceTab } from "../library/tabType";
+import type { PersistedSearchTab } from "../library/persist";
 import type { ExplorerItem } from "../library/explorerItems";
 
 // The workspace is split into several contexts so a component re-renders only for the state it
@@ -24,6 +25,8 @@ export type MobileDrawerState = {
 
 /** Never change identity, so reading them doesn't re-render a component. */
 export type WorkspaceActions = {
+  /** Saves initial state before mounting the new, independent search tab. */
+  addSearchTab: (state: PersistedSearchTab, title: string) => string | null;
   addTab: (type: TabType, title?: string) => string;
   /**
    * Closes the tab and returns the id of the tab that takes over its pane. Closing the only tab
@@ -77,3 +80,7 @@ export const useWorkspacePanes = () => useWorkspaceContext(WorkspacePanesContext
 export const useMobileDrawer = () => useWorkspaceContext(MobileDrawerContext);
 
 export const useWorkspaceActions = () => useWorkspaceContext(WorkspaceActionsContext);
+
+/** Only controls that depend on storage availability read this; tab switches never change it. */
+export const WorkspaceReadOnlyContext = createContext(false);
+export const useWorkspaceReadOnly = () => useContext(WorkspaceReadOnlyContext);

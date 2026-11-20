@@ -1,47 +1,58 @@
+import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
+import { useAsOfReference } from "../../hooks/useAppInit";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import type { FdaProductDetail } from "../../library/types";
-import { fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
+import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
+import { formatStrength, fdaPackageRows, type FdaPackageRow } from "../../library/resultRows";
+import { activityColumn } from "./activityColumn";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
 const PRICE_COLUMNS = createPriceColumns<FdaPackageRow>();
 
 const COLUMNS: GridColDef<FdaPackageRow>[] = [
-  // The full code, so a phone fits it and the latest price without scrolling.
-  {
-    field: "ndcPackageCode",
-    headerName: "Package NDC",
-    width: 125
-  },
-  PRICE_COLUMNS.latest,
   {
     field: "proprietaryName",
     headerName: "Brand Name",
-    width: 150,
   },
-  ...PRICE_COLUMNS.history,
+  {
+    field: "ndcPackageCode",
+    headerName: "Package NDC",
+    cellClassName: "ndc-cell"
+  },
+  PRICE_COLUMNS.latest,
+  PRICE_COLUMNS.latestDate,
+  activityColumn<FdaPackageRow>(),
+  {
+    field: "strengthNumber",
+    headerName: "Strength",
+    valueGetter: (_, row) => formatStrength(row),
+  },
+  {
+    field: "packageDescription",
+    headerName: "Package Description",
+  },
+  ...PRICE_COLUMNS.range,
+  {
+    field: "productTypeName",
+    headerName: "OTC Drug",
+    valueGetter: (_, row) => isFdaProductOtc(row.productTypeName) ? "Yes" : "No",
+  },
   {
     field: "productNdc",
-    headerName: "Product NDC"
+    headerName: "Product NDC",
+    cellClassName: "ndc-cell"
   },
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",
-    width: 150,
     valueGetter: (_, row) => (row.nonProprietaryName.join(", "))
   },
   {
     field: "samplePackage",
     headerName: "Sample",
     valueGetter: (_, row) => (row.samplePackage ? "Yes" : "No"),
-    width: 75
-  },
-  {
-    field: "packageDescription",
-    headerName: "Package Description",
-    width: 250,
   },
   {
     field: "dosageFormName",
@@ -56,9 +67,13 @@ const COLUMNS: GridColDef<FdaPackageRow>[] = [
   {
     field: "labelerName",
     headerName: "Labeler",
-    width: 150
   },
 ];
+
+// The order on a narrow table (a phone): the NDC and Latest Price lead, so the price shows without
+// scrolling (checkbox 44 + NDC 120 + price up to 145 with a stale marker = 309px). Wider tables use
+// COLUMNS' own order.
+const NARROW_ORDER = ["ndcPackageCode", "latestPrice", "proprietaryName", "strengthNumber", "packageDescription", "priceActivity", "latestPriceDate"];
 
 // Package NDC: the `ndc` of package-level prices.
 const getRowId = (row: FdaPackageRow) => row.ndcPackageCode;
@@ -67,17 +82,22 @@ type Props = {
   /** The search's products after the page filter. */
   products: FdaProductDetail[],
   loading: boolean,
+  dateWindow?: DateWindow,
 }
 
 /** The FDA search's results at package level: one row per package. */
-export default function FdaPackageResultTable({ products, loading }: Props) {
+export default function FdaPackageResultTable({ products, loading, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useFdaSearchContext();
-  const rows = useMemo(() => fdaPackageRows(products), [products]);
+  const reference = useAsOfReference(dateWindow);
+  const rows = useMemo(() => fdaPackageRows(products, reference), [products, reference]);
 
   return (
     <ResultTable
+      dateWindow={dateWindow}
+      tableType="fdaPackage"
       rows={rows}
       columns={COLUMNS}
+      narrowOrder={NARROW_ORDER}
       getRowId={getRowId}
       rowNoun="package"
       loading={loading}

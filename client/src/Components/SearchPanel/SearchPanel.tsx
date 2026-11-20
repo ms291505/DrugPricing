@@ -50,6 +50,8 @@ type Props = {
   layout?: SearchPanelLayout,
   /** Shown by the `desktop` layout only. */
   heading?: string,
+  /** Source navigation above the fields, replacing the heading in both layouts. */
+  navigation?: ReactNode,
   description?: string,
   /** The Search button: applies the text terms. */
   onSearch: () => void,
@@ -76,6 +78,8 @@ type Props = {
   /** Some refine field is away from its default, so "Clear filters" has something to do. */
   canClear: boolean,
   onClear: () => void,
+  /** Standalone-only action beside the filter controls. Workspace tabs omit it. */
+  standaloneAction?: ReactNode,
 };
 
 /**
@@ -86,8 +90,8 @@ type Props = {
  * pages can't drift apart. Everything is sized by the panel's own width, not the window's.
  */
 export default function SearchPanel({
-  label, layout: forcedLayout, heading, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
-  moreFilters, moreFilterCount, canClear, onClear,
+  label, layout: forcedLayout, heading, navigation, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
+  moreFilters, moreFilterCount, canClear, onClear, standaloneAction,
 }: Props) {
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -110,7 +114,10 @@ export default function SearchPanel({
       }}
       sx={{ display: "flex", flexDirection: "column", gap: desktop ? 2 : 1.5, p: desktop ? 2 : 1.5, width: "100%" }}
     >
-      {desktop && heading && <Box>
+      {navigation ? <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 3, borderBottom: 1, borderColor: "divider" }}>
+        {navigation}
+        {desktop && description && <Typography variant="body2" color="text.secondary" sx={{ flex: "1 1 300px", py: 0.5 }}>{description}</Typography>}
+      </Box> : desktop && heading && <Box>
         <Typography variant="h6" component="h1">{heading}</Typography>
         {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
       </Box>}
@@ -159,7 +166,7 @@ export default function SearchPanel({
         </Box>
       </Box>
       <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
           <Button
             size="small"
             aria-expanded={moreOpen}
@@ -169,7 +176,10 @@ export default function SearchPanel({
           >
             More filters{!moreOpen && moreFilterCount > 0 ? ` (${moreFilterCount})` : ""}
           </Button>
-          <Button size="small" sx={{ ml: "auto" }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          <Button size="small" sx={{ ml: "auto", order: 1 }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", order: stacked ? 2 : 0, minWidth: 0 }}>
+            {standaloneAction}
+          </Box>}
         </Box>
         <Collapse in={moreOpen} id={moreId}>
           <Box sx={{

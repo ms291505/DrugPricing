@@ -1,8 +1,11 @@
+import type { DateWindow } from "../../library/dates";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useMemo } from "react";
+import { useAsOfReference } from "../../hooks/useAppInit";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { isFdaProductOtc, type FdaProductDetail } from "../../library/types";
-import { fdaProductRows, type FdaProductRow } from "../../library/resultRows";
+import { formatStrength, fdaProductRows, type FdaProductRow } from "../../library/resultRows";
+import { activityColumn } from "./activityColumn";
 import ResultTable from "./ResultTable";
 import { createPriceColumns } from "./priceColumns";
 
@@ -15,25 +18,29 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
   {
     field: "productNdc",
     headerName: "Product NDC",
-    width: 110
+    cellClassName: "ndc-cell"
   },
   PRICE_COLUMNS.latest,
   {
     field: "proprietaryName",
     headerName: "Brand Name",
-    width: 150
+  },
+  {
+    field: "strengthNumber",
+    headerName: "Strength",
+    valueGetter: (_, product) => formatStrength(product)
+  },
+  activityColumn<FdaProductRow>(),
+  {
+    field: "dosageFormName",
+    headerName: "Form",
+    valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
   },
   ...PRICE_COLUMNS.history,
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",
-    width: 150,
     valueGetter: (_, product) => (product.nonProprietaryName.join(", "))
-  },
-  {
-    field: "dosageFormName",
-    headerName: "Form",
-    valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
   },
   {
     field: "routeName",
@@ -41,16 +48,8 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
     valueGetter: (_, product) => (product.routeName.join(", "))
   },
   {
-    field: "strengthNumber",
-    headerName: "Strength",
-    valueGetter: (_, product) => (
-      product.strengthNumber.map((s, i) => (s + " " + product.strengthUnit[i])).join(", ")
-    )
-  },
-  {
     field: "labelerName",
     headerName: "Labeler",
-    width: 150
   },
   {
     field: "productTypeName",
@@ -75,15 +74,19 @@ type Props = {
   /** The search's products after the page filter. */
   products: FdaProductDetail[],
   loading: boolean,
+  dateWindow?: DateWindow,
 }
 
 /** The FDA search's results at product level: one row per product. */
-export default function FdaProductResultTable({ products, loading }: Props) {
+export default function FdaProductResultTable({ products, loading, dateWindow }: Props) {
   const { selectedRows, setSelectedRows } = useFdaSearchContext();
-  const rows = useMemo(() => fdaProductRows(products), [products]);
+  const reference = useAsOfReference(dateWindow);
+  const rows = useMemo(() => fdaProductRows(products, reference), [products, reference]);
 
   return (
     <ResultTable
+      dateWindow={dateWindow}
+      tableType="fdaProduct"
       rows={rows}
       columns={COLUMNS}
       getRowId={getRowId}

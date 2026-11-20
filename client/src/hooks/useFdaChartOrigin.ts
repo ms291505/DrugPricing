@@ -24,5 +24,5 @@ export default function useFdaChartOrigin(level?: FdaResultDetailLevel): ChartOr
 
   const searchLabel = fdaSearchLabel(criteria);
 
-  return { searchLabel, seriesKind: seriesLevel, resultPrices };
+  return { searchSource: "fda", searchLabel, seriesKind: seriesLevel, resultPrices };
 }

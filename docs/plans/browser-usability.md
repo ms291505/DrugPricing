@@ -8,9 +8,12 @@ Stage 1 goes first. Items marked *open detail* are for the implementer to raise,
 alone. The stages are a sequence, not PR boundaries. D1–D8 and R1–R11 refer to the review.
 
 Help is not part of this plan. Topic-based help, its modal and routes, and its content are in
-[help.md](help.md), which another branch is implementing. The two plans touch in three
+[help.md](help.md), whose modal and topic catalog have shipped. The two plans touch in three
 places, each noted where it applies: the bar, Help index and welcome links (Stage 1), the fixed
 results example for help (Stage 2), and the help articles on charts and price changes (Stage 3).
+
+Work for this plan targets the integration branch `browser-usability`. Stage branches open
+PRs against it; merge `browser-usability` into `dev` after the plan is complete.
 
 ## Intended experience
 
@@ -21,7 +24,28 @@ decision; near-term improvements should not depend on completing it.
 
 ## Stage 1 — Rework the app bar and navigation
 
-This goes first. Today the bar (`Components/DrugPricingBar/`) is one row at every width:
+Implemented 2026-11-15 on `codex/browser-usability-stage-1`. The original decisions below
+remain the scope; implementation details settled with the author:
+
+- The last source has its own validated `drugpricing.v1.last-search-source` key, retained by
+  pruning. Another window changing this navigation state does not make workspace writes read-only.
+- A term too short for NADAC fills Description without running. Currently FDA and NADAC use
+  the same five-character minimum, but the handoff checks NADAC's requirement independently.
+- After browser review, source navigation moved inside the panel, replacing “Find a drug.”
+  It uses underlined “FDA search” / “NADAC search” tabs in both layouts. The desktop description
+  sits beside the tabs; compact panels omit it. Workspace tabs have no source navigation.
+- Standalone FDA and NADAC searches share one pinned collection (`drugpricing.v1.search-pins`),
+  as requested during browser review. One section below the active source keeps its chart
+  view state across source switches. Legacy pins from both sources merge by ID, and their
+  old copies are removed only after the shared save succeeds. Workspace tabs remain independent.
+- Welcome uses the three idea lines originally agreed, with a short NADAC explainer covering
+  voluntary invoice submissions and incomplete coverage. The products/packages line explicitly
+  says NADAC lists package NDCs. Help retains its Welcome article and
+  adds a separate Welcome page link next to About this project.
+- A direct Help load still avoids workspace storage providers. Navigating to Help from an
+  already-mounted app keeps its existing providers and search pages alive.
+
+Original baseline (2026-11-13): the bar (`Components/DrugPricingBar/`) is one row at every width:
 NADAC, FDA, Workspace and About links (`NavButton`) and a Settings gear. Help opens only from
 the workspace drawer. The two search pages are torn down when you leave them, and `AppShell`
 (`App.tsx`) renders the bar twice, once for the workspace and once as the routes' layout.
@@ -54,8 +78,8 @@ already holds the workspace's floating buttons, and charts need the height.
   (`PageVisibleContext`), it runs its search only when first shown, and it is hidden with
   `content-visibility: hidden` so its charts see no resize. Reuse those pieces; don't build a
   second mechanism.
-- Persistence is unchanged: each source keeps its `STANDALONE_TAB_IDS` state, and a fresh
-  load restores it as now.
+- Each source keeps its own criteria under `STANDALONE_TAB_IDS`. Standalone pins are shared
+  between the two sources, with existing pins migrated from both (updated during browser review).
 - **The FDA / NADAC selector** is a two-option toggle at the top of the Search page, directly
   above the fields, with both names always visible, in both panel layouts. It is navigation
   between the two addresses, not a search field, and it is not in the bar. Workspace search
@@ -122,6 +146,33 @@ there.
 
 ## Stage 2 — Make results easier to inspect
 
+Implemented 2026-11-15 on `codex/browser-usability-stage-2`. Browser review settled these details:
+
+- Columns and Reset columns sit at the left of the pagination footer. Below the table's `sm`
+  width, only Columns remains, with pagination on the same row; Reset columns is omitted on
+  phones. This replaced the initial toolbar and wrapping footer during review with the author.
+  Follow-up author review gave the actions neutral outlines and a gap, disabled Reset when the
+  current selection matches defaults, accented the selected Products/Packages option, and
+  matched grid rules to the app's divider color.
+- Narrow tables use 44px rows and headers, less footer padding, and no outer table padding on
+  phones. Complete NDCs and Latest Price fit even at 320px viewport width.
+- Price columns size to the rendered contents, including headers, after data, visibility,
+  pagination or sort changes. Latest Price is capped at its existing 125px width, Min/Max at
+  115px. Hidden pages defer measurement until shown; a small observer handles visibility so
+  the table itself does not re-render on a route or workspace tab switch.
+- Per-column visibility overrides are saved per table type in Settings, validated independently,
+  and followed across windows. Review caught that saving complete hidden lists would freeze
+  defaults even for browsers that never customized; only deviations are now stored. Reset
+  restores the app defaults; MUI's mount-time Reset is suppressed because it would restore
+  the saved choices from mount instead.
+- Package rows now carry product strength and OTC status. The planned Price Activity column
+  remains deferred to Stage 3.
+- Validation: 260 tests, lint and build pass after review fixes. Browser checks covered FDA product/package and
+  NADAC defaults, keyboard column selection, reload persistence, changes and reset across
+  windows, desktop footer placement, and 320px/375px phone layouts.
+
+Original scope:
+
 Add a visible, labeled Columns action and Reset columns to both search pages' results, in the
 same place on each (D1). MUI Data Grid's community columns panel does this; the shared
 `ResultTable` has no toolbar today.
@@ -130,23 +181,32 @@ Default columns, in order after the selection checkbox:
 
 | Table | Default columns |
 | --- | --- |
-| FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form, Latest Price Date |
-| FDA packages | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity, Latest Price Date |
-| NADAC | NDC, Latest Price, Description, Price Activity, Latest Price Date |
+| FDA products | Product NDC, Latest Price, Brand Name, Strength, Price Activity, Form |
+| FDA packages, wide | Brand Name, Package NDC, Latest Price, Price Activity, Strength, Package Description |
+| FDA packages, narrow (table below `sm`) | Package NDC, Latest Price, Brand Name, Strength, Package Description, Price Activity |
+| NADAC | NDC, Latest Price, Description, Price Activity |
+
+- **Latest Price Date is hidden by default** (Columns brings it back, directly after Latest
+  Price on the wide FDA package table and last on the narrow one). For almost every row it is
+  the last loaded week; a latest price older than the shown dates' end carries a warning
+  triangle with its date instead (`stale`, `currentAsOfDate` in `library/prices.ts`).
 
 - Price Activity is built in Stage 3 and joins the defaults then.
 - **Strength is new on the package table** (from the package's product) and shown by default:
   without it two strengths in the same pack size differ only by NDC. The product table already
   has it, joining multi-ingredient strengths with commas. NADAC's Description carries it.
-- Generic Name is hidden by default. Everything else stays in the Columns tool: Min and Max
-  Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
+- Generic Name is hidden by default. Everything else stays in the Columns tool: Latest Price
+  Date, Min and Max Price, Generic Name, Labeler, Route, OTC, Sample, Packages, and Product NDC on the package
   table.
-- Latest Price stays second (the phone rule in AGENTS.md).
+- Latest Price stays second (the phone rule in AGENTS.md), except on the wide FDA package table,
+  where it is third; a narrow one keeps the old order so the price still shows on a phone.
 
 Column choices are saved in Settings (`library/settings.ts`), once per table type, so they
-apply on both search pages and in every workspace tab and follow other windows. Save the
-**hidden** columns, not the visible ones, so a column added to the defaults later appears for
-people who already customized.
+apply on both search pages and in every workspace tab and follow other windows. Save only
+per-column deviations from the current defaults (field → visible), and merge those over
+current defaults when rendering. This refines the original hidden-list approach after PR
+review: new default-visible columns appear, new optional columns stay hidden, and changed
+defaults reach browsers that never overrode those fields. Reset clears the overrides.
 
 NDCs (R4): tabular digits, widths sized to the identifier, the whole identifier on one line,
 never truncated. FDA keeps its dashed source form; NADAC keeps its stored form.
@@ -166,8 +226,28 @@ example shows the table users will see.
 
 ## Stage 3 — Make charts intentional while preserving discovery
 
-Prerequisite: land "Mixed units become separate cards" from docs/future-work.md first, as its
-own change. Both rewrite the code that creates charts.
+Implemented on `codex/browser-usability-stage-3`, started 2026-11-15 and completed 2026-11-16.
+The mixed-unit prerequisite is isolated in its own commit (`e89a4f4`). Author discussion settled:
+
+- Events group by date, pricing unit and direction. Exact values stay expandable, with five
+  groups initially and Show all for the rest.
+- Around this change belonged to an explicit event, in the chart's event list below the plot.
+  It was later replaced in the search event list by Chart this change (see Price changes
+  section), and the chart's own list and Around this change were then removed (`chart-no-event-list`). The ambiguous
+  chart-wide Around change preset is removed; no largest/latest event is chosen automatically.
+- Product activity labels count affected packages and name the largest movement. Product
+  sparklines are omitted because one package's line could misrepresent the product.
+- New product pins retain package identity per point. Older product pins still draw, but
+  without those identities cannot infer package events from their averages. Legacy stored
+  change spans remain supported.
+- Package sparklines remain visible on phones when Price Activity is shown, as confirmed
+  by the author during PR review. The Columns control can hide Price Activity independently.
+
+Validation includes boundary/classification, grouping, gap, snapshot and persistence tests;
+Eliquis's six-package event and product/package selection; NADAC parity; a 344-package
+metformin search with the five-group limit and paging to an affected row; mixed-unit
+semaglutide pins with accurate per-unit counts; old pins and saved callout toggles; and phone
+column/event layouts. Client tests, lint and production build pass.
 
 ### How charts are made
 
@@ -193,15 +273,12 @@ week-to-week change of 10% or more per package (`flagPriceChanges`, unchanged), 
 search dates and the current filters, and labeled as such.
 
 - Each entry gives the date, the percent, the old → new price with its unit, and the packages
-  affected. Changes on the same date may be grouped ("6 packages dropped about 43% on Jan 14"),
-  with each package's exact values still reachable. *Open detail:* the grouping rule (same
-  date and direction is the minimum; rounded percentages alone are not enough) and how many
-  entries show before the list is cut.
-- Its action is **"Select affected rows"**: it adds those rows to the selection and sorts the
-  table by Price Activity so they are in view. It creates no chart; the user adjusts the
-  selection and uses Line or Bar. Say how many rows were selected.
-- **At product level** the affected things are packages, which aren't rows. The action there
-  reads **"Show affected packages"**: it switches Detail Level to Package and selects them.
+  affected. Group changes by date, pricing unit and direction ("6 packages dropped about 43%
+  on Jan 14"), with exact values expandable. Show five groups before Show all.
+- Its one action is **"Chart this change"** (replacing "Select affected rows", "Show affected
+  packages" and "Around this change", which the author found confusing): an icon button on the group's summary line (not a text button under the details) toggles that group's own chart, opened beneath its row,
+  of the group's packages over the shown dates, the change marked and the readout resting on it, with Pin
+  and Close. Compare price histories remains the way to see every result together.
 - The search toast keeps "N found" and drops its price-change part (`SearchResultToast`).
 
 ### Change callouts on line charts
@@ -217,15 +294,14 @@ Callouts become general:
   the item, on by default. Live Compare cards always show them and get no menu.
 - **One label per date on a multi-series chart.** Each series keeps its dots and dashed old
   price; the date gets one pill: the prices when the series agree, otherwise a count
-  ("6 changes"), with exact values in the readout.
+  ("6 changes"), with exact values in the Price changes section under the table.
 - **A product line never gets a callout from its own average**, which can jump when a package
   joins or leaves. When one of its packages had a significant change in the dates shown, the
   line gets a marker at that date saying so ("2 of 3 packages changed"), without old → new
-  prices; those are in the readout and at Package level.
+  prices; those are in the Price changes section and at Package level.
 - Line charts only. Bar charts have nothing to mark.
-- A chart made from selected rows opens on the search dates like any other. "Around change"
-  stays a preset in the dates picker. *Open detail:* which change the preset centers on when
-  a chart has several.
+- A chart made from selected rows opens on the search dates like any other. A chart card has
+  no event list and no Around this change; exact event values are in the Price changes section.
 
 ### Price Activity column
 
@@ -267,9 +343,8 @@ only when every package is. Packages with one observation are left out of that r
 product is Insufficient history only when all its packages are. Measured this way, 16% of
 products are Stable over 12 months (77% of brand products, 9% of generic), close to the
 package share because 69% of products have one priced package; it falls to 6% for products
-with 5–9 packages. *Open detail:* the product label's wording when packages differ
-(candidate: "1 of 3 packages dropped 25% on Apr 1") and which line its sparkline draws.
-Mixed-unit rows show "Mixed units" as the price columns do.
+with 5–9 packages. Product labels count affected packages and describe the largest movement;
+product sparklines are omitted, as settled with the author. Mixed-unit rows show "Mixed units" as the price columns do.
 
 **Sparkline:** a step line over the dates shown, small enough to sit beside the label at
 normal row height. It is an attention cue, not the analysis. Each row has its own vertical
@@ -311,7 +386,7 @@ drift, one observation, a gap, a sub-cent price, mixed units, and a product whos
 disagree. Reuse `seriesByDate` and `flagPriceChanges`; don't add a second price math.
 
 Acceptance: Eliquis's related drops are discoverable without six automatic charts, and
-"Select affected rows" then Line gives one chart with them called out; events and states
+"Chart this change" gives one chart with them called out; events and states
 respect search dates and filters; no mixed-unit figures; saved pins are unchanged by later
 searches and old pins still draw; both search pages behave the same.
 
@@ -319,6 +394,30 @@ The help articles on charts and price changes describe the app as shipped
 ([help.md](help.md), "Content preparation"). They need revising when this stage ships.
 
 ## Stage 4 — Carry a search into Workspace
+
+Implemented 2026-11-16 on `codex/browser-usability-stage-4`.
+
+- A neutral outlined Add search to workspace action sits at the end of the standalone page, below the results and pinned charts;
+  workspace search tabs don't show it. It requires a successful current query, including empty
+  results, and is disabled while a new search is loading or has failed.
+- The copy takes applied criteria only, fixes the requested period as Custom dates, preserves
+  refinements and FDA detail level, and deep-copies all shared standalone pins with their own
+  data and date windows. Draft text, row selection, scroll and live Compare visibility stay
+  on the original page.
+- A stable workspace action saves the new tab before dispatching its addition, opens it in
+  the first pane, and preserves other panes and tab identities. If storage fails, no empty
+  tab opens. Each failed add reports its own error even after the general storage warning
+  has already appeared. An untouched blank in the destination pane is replaced by the copy;
+  named blanks, blanks shown in another pane, and existing searches are preserved.
+  Normal restored-tab query behavior suppresses the found toast.
+- A narrow read-only context disables the action after a multi-window conflict; the action
+  also checks storage's current read-only flag. A synchronous guard and click count block
+  double clicks; returning to Search permits another deliberate copy.
+- Validation covers snapshot independence, fixed dates, unchanged tab identities, initial-save
+  failure and read-only writes. Browser checks cover FDA draft exclusion and package/filter
+  copying, double-click protection, NADAC keyboard copying at phone width, reload restoration,
+  shared pins, independent edits and disabling after another window writes.
+
 
 Decided: build it, after Stage 3. The workspace redo has no date, so the bridge is worth
 having even though tabs-as-searches is not the long-term model (D5).
@@ -363,11 +462,7 @@ isolation and multi-window storage behavior.
 
 ## Still open
 
-- The *open details* above: where the last source is stored, a too-short term in the FDA
-  empty state's NADAC offer, event grouping and list length, the "Around change" preset
-  with several changes, product-row label wording and sparkline.
-- After building: whether the sparkline shows on phones (author's choice from the real thing),
-  and whether 5% still reads right on real searches.
+- Whether 5% still reads right on real searches.
 
 ## What the rough mockup showed
 

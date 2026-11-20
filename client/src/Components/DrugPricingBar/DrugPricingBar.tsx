@@ -1,17 +1,22 @@
+import { useContext } from "react";
+import { WorkspaceActionsContext } from "../../Context/workspaceContexts";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { Outlet } from "react-router";
+import { Link } from "react-router";
+import HomeIcon from "@mui/icons-material/Home";
 import NavButton from "./NavButton";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar"
 import Toolbar from "@mui/material/Toolbar"
 import Typography from "@mui/material/Typography"
-import { Divider, IconButton, Tooltip } from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import Portal from "@mui/material/Portal"
 
 export default function DrugPricingBar() {
   const { openModal, openHelp } = useGlobalModalActions();
+  const workspaceActions = useContext(WorkspaceActionsContext);
+  const closeDrawer = () => workspaceActions?.setMobileDrawerIsOpen(false);
   return (
     <>
       {import.meta.env.DEV && (
@@ -33,7 +38,6 @@ export default function DrugPricingBar() {
         // active link.
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          display: { xs: "block", md: "block" },
           bgcolor: "background.paper",
           color: "text.primary",
         }}
@@ -49,32 +53,31 @@ export default function DrugPricingBar() {
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
         }}>
-          <Typography variant="h3" sx={{ display: { xs: "none", md: "block" } }}>DrugPricing</Typography>
-          <Box sx={{ display: "flex", gridColumn: 2, gap: { xs: 0, sm: 1 } }}>
-            <NavButton to="/nadac-search">NADAC</NavButton>
-            <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
-            <NavButton to="/fda-search">FDA</NavButton>
-            <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
-            <NavButton to="/workspace">Workspace</NavButton>
-            <Divider orientation="vertical" flexItem sx={{ borderWidth: 1 }} />
-            <NavButton to="/about">ABOUT</NavButton>
+          <Box>
+            <Typography component={Link} to="/welcome" onClick={closeDrawer} variant="h3" sx={{ display: { xs: "none", md: "block" }, color: "inherit", textDecoration: "none" }}>DrugPricing</Typography>
+            <Tooltip title="Home">
+              <IconButton component={Link} to="/welcome" onClick={closeDrawer} aria-label="Home" color="inherit" sx={{ display: { md: "none" } }}><HomeIcon /></IconButton>
+            </Tooltip>
+          </Box>
+          <Box sx={{ display: "flex", gridColumn: 2, justifyContent: "center", gap: { xs: 0, sm: 1 } }}>
+            <NavButton to="/search" onClick={closeDrawer}>Search</NavButton>
+            <NavButton to="/workspace" onClick={closeDrawer}>Workspace</NavButton>
           </Box>
           <Box sx={{ gridColumn: 3, justifySelf: "end", display: "flex" }}>
             <Tooltip title="Help">
-              <IconButton aria-label="Help" color="inherit" onClick={() => openHelp()}>
+              <IconButton aria-label="Help" color="inherit" onClick={() => { closeDrawer(); openHelp(); }}>
                 <HelpOutlineIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Settings">
-              <IconButton aria-label="Settings" color="inherit" onClick={() => openModal("settings")}>
+              <IconButton aria-label="Settings" color="inherit" onClick={() => { closeDrawer(); openModal("settings"); }}>
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
-      {/* Room for the app bar, which phones don't show. */}
-      <Toolbar sx={{ mb: 1, display: { xs: "flex", md: "flex" } }} />
-      <Outlet />
+      {/* Room for the fixed app bar at every width. */}
+      <Toolbar sx={{ mb: 1 }} />
     </>);
 }

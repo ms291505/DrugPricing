@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Typography, type ToggleButtonGroupProps } from "@mui/material";
 
 type Props<V extends string> = {
   label: string,
@@ -7,12 +7,13 @@ type Props<V extends string> = {
   options: { value: V, label: string }[],
   onChange: (value: V) => void,
   disabled?: boolean,
+  color?: ToggleButtonGroupProps["color"],
   /** The label above the choices, as the search panel's groups have it (default: beside them). */
   stacked?: boolean,
 };
 
 /** A few exclusive choices with a label, e.g. Brand / generic. */
-export default function ChoiceField<V extends string>({ label, value, options, onChange, disabled = false, stacked = false }: Props<V>) {
+export default function ChoiceField<V extends string>({ label, value, options, onChange, disabled = false, stacked = false, color = "standard" }: Props<V>) {
   const labelId = useId();
   return (
     <Box sx={stacked
@@ -21,6 +22,7 @@ export default function ChoiceField<V extends string>({ label, value, options, o
       <Typography variant={stacked ? "subtitle2" : "body2"} id={labelId}>{label}</Typography>
       <ToggleButtonGroup
         size="small"
+        color={color}
         exclusive
         disabled={disabled}
         aria-labelledby={labelId}

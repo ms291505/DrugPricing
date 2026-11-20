@@ -68,7 +68,8 @@ dotnet ef migrations add <Name>
 `src/App.tsx` (router, theme, React Query) · `src/api/` (calls; `types.ts` maps wire types to
 domain types, including date strings to `Date`) · `src/library/` (domain types and pure logic,
 unit tested) · `src/hooks/` · `src/Context/` (global and per-tab state; per-tab provider stacks
-in `TabProviders.tsx`) · `src/theme.ts` (every color; see Theme below) ·
+in `TabProviders.tsx`; every context lives here, even one with a single provider and reader such
+as `resultsHeading.ts`, so others can find and reuse it) · `src/theme.ts` (every color; see Theme below) ·
 `src/library/constants.ts`.
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
@@ -86,8 +87,62 @@ lists its columns, and renders `ResultTable` (paging, and the selection that Cha
 `ResultsSection` gives it its `Paper`. Rows are built in `library/resultRows.ts` (tested): each
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
-sorted by unit first. A row without prices can't be selected. Keep Latest Price second or third:
-on a phone it must show without scrolling.
+sorted by unit first. Each unit's summary is `stale` when its latest price is before
+`currentAsOfDate` (`library/prices.ts`: the shown dates' snapped end, capped at app-init's last
+loaded as-of date, not the rows' own newest date, which it falls back to only when app-init fails); Latest Price shows a warning triangle with
+the date, so Latest Price Date is hidden by default. A row without prices can't be selected. Keep Latest Price second or third:
+on a phone it must show without scrolling. The FDA package table leads with Brand Name on wider
+tables but orders NDC, Latest Price, Brand Name on narrow ones (`narrowOrder`, from the table's own
+width tier), since the checkbox, Brand Name and NDC before the price don't fit a phone.
+
+`ResultFooter` puts Columns and Reset columns beside pagination; below the table's own `sm`
+width it omits Reset and keeps Columns and pagination on one row. Reset is disabled when the
+visible columns match defaults. Column visibility choices
+are saved per table type in Settings (`columnOverrides`), shared by standalone pages and
+workspace tabs and followed by other windows. Save only deviations from `DEFAULT_HIDDEN_COLUMNS`,
+merge them over current defaults, and clear them on Reset: saving the complete default model
+would freeze defaults for browsers that never customized. Validate each table and field independently.
+
+`AutosizeColumns` sizes every visible data column (not the checkbox) to its widest rendered cell
+or header after data, visibility, paging, sorting, filtering and column-array changes. Bounds are
+`minWidth`/`maxWidth` from `COLUMN_BOUNDS` (`library/columnBounds.ts`, by field, with optional
+`medium`/`narrow` overrides for the table's own width tier). `ResultTable` applies them, so no
+column def gives a width, and a test requires every column to have an entry. The rule: autosize
+already floors a column at its header, so `min` is only the content floor and `max` is the widest
+real content or unsorted header (narrow may go lower and ellipsise). A tier flip makes a new
+`columns` array. The grid measures only the rows it has rendered. A column the user dragged
+(`columnResize`, published only by drag moves) keeps its width until the columns change.
+
+`AutosizeColumns` is a separate component so only its small visibility observer re-renders on a
+page/tab switch; the table does not. Hidden pages measure nothing until shown. Narrow tables use
+44px rows and headers. NDC columns use tabular digits and a fixed width that fits the complete
+source identifier.
+
+Price Activity (`library/priceActivity.ts`) classifies package histories over the shown dates, using
+a rounded 5% range cutoff and 10% significant steps (`NOTABLE_PRICE_CHANGE_PERCENT`). Every
+threshold compares in tenths of a percent (`meetsThreshold`), and a change from $0 meets every
+threshold and reads "from $0", never as a percent. Products use their packages' states, not an
+averaged line; only package rows have sparklines. The live comparison controls (Chart latest prices,
+Chart price histories) and the scan control (a percent, at least 5 with one decimal, and Scan price
+changes) sit directly below the results table. Price change list cards share the responsive
+half-width grid with live comparison charts: Notable price changes (10%, when it has changes) and
+one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
+scanned. A scan with no matches makes no card and says so in the control row's `role="status"` line.
+Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
+pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
+`client/CHARTS.md`). Each package row has a Chart this change line-chart button that opens that
+package alone in its own unpinned ExplorerGridItem after the list cards, over the shown dates, with
+the change marked and the readout resting on it. There is one chart per change: every list that
+shows the change marks it open. A chart stays until its own Close or new prices, even when its list
+closes. New prices (a search, or new dates or filters, but not the FDA detail level) remove every
+scan and chart and reopen Notable price changes. Focus from a closed or discarded chart goes to the
+button that opened it, else another list's button for that change, else the first card left (a list
+card, else a chart), else the results heading. A list's Close sends focus to the next card's heading
+(a list or a chart), else the previous card's, else the results heading; a scan card that new prices
+remove with focus in it sends focus to Notable price changes, else the results heading. A chart card
+has no event list and no Around this change. Live comparison cards start hidden and are never
+stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
+legacy-pin rules.
 
 ### Workspace
 
@@ -119,6 +174,35 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   tab change, so only the search panels read it (`useRenameAfterSearch`), and `NadacResults` and
   `FdaResults` are `memo`'d.
 
+### Standalone Search navigation
+
+`/search/fda` and `/search/nadac` mount each source on its first visit, then keep it mounted
+across all routes (`KeptPage`, using the workspace tabs' shared `hiddenPaneSx` and
+`PageVisibleContext`). Memoized page elements preserve state and avoid route-switch renders;
+`KeptPage` restores each page's document scroll. Source tabs live inside the standalone search
+panels; workspace tabs omit them. `/search` returns to the last source (FDA initially), saved
+under `drugpricing.v<VERSION>.last-search-source`, separate from Settings. Bare and unknown
+addresses show Welcome until a source has been visited, then return to that source. Legacy
+`/fda-search` and `/nadac-search` addresses redirect. Empty FDA results offer a one-click
+handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts`;
+only that explicit handoff changes NADAC's draft and runs the copied terms.
+
+Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
+`PinnedItemsProvider` around just the two `/search` sources, with one `PinnedSection` below
+the active source. Their shared snapshots live in
+`drugpricing.v<VERSION>.search-pins`; `loadSearchPins` merges legacy standalone pins, and
+`saveSearchPins` clears the old copies only after a successful shared save. Workspace
+`TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
+the workspace.
+
+Standalone Search's Add search to workspace action sits beside More filters and Clear filters in
+the search panel, once a search has been run; narrow panels give it its own wrapped row. It renders
+inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
+shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
+dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
+`WorkspaceReadOnlyContext` is separate from tabs, panes and stable actions. Only controls that
+depend on write availability read it. The action checks storage's read-only flag again at click.
+
 ### Data rules that apply everywhere
 
 - **Dates:** API dates are calendar days that `new Date("YYYY-MM-DD")` reads as UTC midnight.
@@ -133,7 +217,8 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **Price axes may exaggerate a change at most `MAX_AXIS_EXAGGERATION` times** (`fittedPriceAxis`);
   don't fit tighter.
 - **Pinned items are snapshots**: searches and filters never change them, and system items
-  (derived from the search) are never stored. A change to one redraws only its card: read the
+  (derived from the search) are never stored; a pinned copy of a price change list is a snapshot
+  of its packages' shown prices, not the card. A change to one redraws only its card: read the
   narrow hooks in `Context/pinnedItemsContexts.ts`, never the whole list from a card. Details in
   [client/CHARTS.md](client/CHARTS.md).
 - **Search criteria** (`library/searchCriteria.ts`, plan in `docs/plans/search-filters.md`): one
@@ -167,7 +252,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
   `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone
   page while mounted. Errors (`QueryErrorToast`) come back each time the page is shown. Results
-  ("N products found") and flagged price changes (`SearchResultToast`) show once per Search,
+  ("N products found") (`SearchResultToast`) show once per Search,
   waiting if it arrived while hidden, and never for the search a restored tab re-runs on load
   or for a change of dates, fetched or not (`useNewSearchResult`). App-wide toasts: failed storage writes, another window's changes, Pin.
 
@@ -195,9 +280,12 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
   modal that navigates closes itself.
 - **Help** is a catalog (`library/help.ts`; topic IDs are URLs, never rename one) and one
   Markdown article per topic in `src/content/help/`, shown in the modal and at `/help/:topic`.
-  `/help` renders outside `AppShell`, so a Help tab never mounts workspace storage.
+  A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
+  the existing app and search pages mounted.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
-  never change (`barStyle`, `colorMode`), saved once under `drugpricing.v<VERSION>.settings` and
+  never change (`barStyle`, `colorMode`), plus per-table column visibility overrides
+  (`columnOverrides`) edited from the results footer. They are saved once under
+  `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). The panel opens
   from the gear in the app bar and from Settings in the workspace drawer. New preferences go
   here, not in the search panel.
