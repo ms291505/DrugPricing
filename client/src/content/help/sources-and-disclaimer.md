@@ -5,7 +5,9 @@ The app uses two public data sources.
 
 CMS’s pharmacy pricing page links to survey information and data field definitions.
 
-DrugPricing is an independent learning project. CMS and the FDA do not endorse it. NADAC estimates what retail community pharmacies pay to acquire drugs. Patient prices, retail prices and reimbursement rates are separate figures. The data may be incomplete or out of date. DrugPricing does not provide medical, financial or pricing advice.
+DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll pay at the pharmacy, and it isn’t a retail price or a reimbursement rate. The data may be incomplete or out of date. DrugPricing does not provide medical, financial or pricing advice.
 
-Retail community pharmacies submit invoices voluntarily. CMS counts discounts at the drug
-line-item level on those invoices. [CMS NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf)
+Retail community pharmacies submit invoices voluntarily, so the estimates reflect the invoices
+submitted rather than every pharmacy’s costs. CMS excludes discounts and rebates that don’t
+appear at the drug line-item level on an invoice. See the
+[CMS NADAC methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf).

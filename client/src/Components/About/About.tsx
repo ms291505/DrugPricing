@@ -4,7 +4,10 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router";
 
-/** The dialog supplies its own heading. */
+/**
+ * The About page, shown at `/about` with its heading. `showHeading={false}` is for the `about`
+ * global modal, whose title names it; nothing opens that modal now.
+ */
 export default function About({ showHeading = true }: { showHeading?: boolean }) {
   return (
     <Box>
@@ -27,7 +30,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         </li>
       </ul>
       <p>
-        To match the two sources, I pad each segment of the FDA’s dashed package code to the CMS format. The app drops
+        To match the two sources, I pad each segment of the FDA’s dashed package code to the CMS format, then drop
         leading zeros from the resulting code for the join. Some packages appear in only one source, so I kept both ways
         to search. <Link component={RouterLink} to="/help/how-the-two-fit-together">How the two sources fit together</Link>
       </p>
@@ -62,9 +65,10 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         <li><Link href="https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" target="_blank" rel="noopener noreferrer">FDA National Drug Code Directory</Link></li>
       </ul>
       <p>
-        DrugPricing is an independent learning project. CMS and the FDA do not endorse it. NADAC estimates what retail
-        community pharmacies pay to acquire drugs. Patient prices, retail prices and reimbursement rates are separate
-        figures. The data may be incomplete or out of date. DrugPricing does not provide medical, financial or pricing advice.
+        DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the FDA. NADAC
+        estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll pay at the pharmacy,
+        and it isn’t a retail price or a reimbursement rate. The data may be incomplete or out of date. DrugPricing does
+        not provide medical, financial or pricing advice.
       </p>
 
       <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Icon credits</Typography>

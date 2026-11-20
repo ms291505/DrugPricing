@@ -4,4 +4,4 @@ Survey participation and acquisition costs can both affect the benchmark. A part
 
 The app shows weekly observations from the files it has loaded. A repeated price means the recorded price did not change between those observations.
 
-Read more about the survey’s scope and how CMS calculates the benchmark. [CMS pharmacy pricing](https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing), [CMS methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf)
+For the survey’s scope and how CMS calculates the benchmark, see [CMS pharmacy pricing](https://www.medicaid.gov/medicaid/prescription-drugs/pharmacy-pricing) and the [CMS methodology](https://www.medicaid.gov/sites/default/files/2024-03/nadacmethodology.pdf).

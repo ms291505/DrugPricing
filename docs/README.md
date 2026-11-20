@@ -15,6 +15,9 @@ for chart and card design rules.
 - Use direct, plain language throughout headings, labels and body copy. Avoid slogans,
   wordplay and “X is not Y” constructions. State the fact or tell the reader what to check.
   For example, “Check the pricing unit, strength and package size before comparing prices.”
+- Disclaimers and cautions are the exception: when the likely misreading is the point, say
+  plainly what a figure isn’t. For example, “NADAC doesn’t show what you’ll pay at the
+  pharmacy.” Keep that caution wherever the prices are introduced.
 - Use sentence case for headings and labels. When referring to an existing control, match
   its spelling and capitalization in the app.
 - Keep Help topic IDs stable so existing links continue to work.

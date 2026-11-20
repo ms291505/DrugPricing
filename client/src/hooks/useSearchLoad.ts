@@ -6,8 +6,7 @@ import { useLastAsOfDate } from "./useAppInit";
 const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * A search tab's applied criteria and what they load (plan: docs/plans/search-filters.md). Both search
- * contexts use it.
+ * A search tab's applied criteria and what they load. Both search contexts use it.
  *
  * @param initial - the criteria restored from storage, or a new tab's defaults
  * @param loadRequest - the type's `*LoadRequest`; module-level, so it's stable

@@ -346,7 +346,10 @@ prints the `[timing] <stage>: <s>s (ok|failed)` lines in the cron log. Models ar
   anyway (~11 as of the 2026-09 file): FDA data rot, not a code fault.
 - Each NADAC file is cumulative year to date (~1.2M rows by late year): keep
   `NADAC_FILTER_BEFORE_INSERT` on. An unattended `--nadac` run before noon Eastern on
-  Wednesday selects the previous week’s file. See [Deployment](README.md#deployment).
+  Wednesday selects the previous week’s file (`most_recent_wednesday`). From noon it asks for
+  that Wednesday’s file, and if CMS hasn’t published it yet, `fetch_nadac` exits with
+  `NADAC_NOT_200` and nothing retries: schedule at or after noon and retry until it loads. See
+  [Deployment](README.md#deployment).
 
 ## Deployment and branching
 

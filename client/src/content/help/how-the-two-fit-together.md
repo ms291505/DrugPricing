@@ -5,4 +5,4 @@ are missing from the other.
 - In FDA search, select **Results without prices** under **Include** to see directory listings
   without NADAC prices in the selected dates.
 
-Check the dates and filters if you’re missing a result. [Filters and hidden results](/help/filters-and-hidden-results)
+Check the dates and filters if you’re missing a result. See [Filters and hidden results](/help/filters-and-hidden-results).

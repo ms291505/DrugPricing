@@ -48,14 +48,14 @@ and the [documentation index](docs/README.md) for plans, review notes, published
 
 ### Disclaimer
 
-DrugPricing is an independent learning project. CMS and the FDA do not endorse it. NADAC estimates
-what retail community pharmacies pay to acquire drugs. Patient prices, retail prices and reimbursement
-rates are separate figures. The data may be incomplete or out of date. DrugPricing does not provide
-medical, financial or pricing advice.
+DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the
+FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll
+pay at the pharmacy, and it isn’t a retail price or a reimbursement rate. The data may be incomplete or
+out of date. DrugPricing does not provide medical, financial or pricing advice.
 
 ## Getting started
 
-You need Docker, the .NET 10 SDK, Node.js 20.19+ in the 20.x series or 22.12+, and Python 3.13. To add
+You need Docker, the .NET 10 SDK, Node.js 20.19+ or 22.12+, and Python 3.13. To add
 migrations you also need the EF Core tool: `dotnet tool install --global dotnet-ef`.
 
 ### 1. Database
@@ -145,8 +145,10 @@ environment variables (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`)
 
 To run the ETL without prompts, use `python drug_pricing_etl.py <mode> --fda --nadac` with
 either or both flags. `--nadac` selects the most recent Wednesday’s file without reading
-`NADAC_FILE_DATES`. Before noon Eastern on Wednesdays, it selects the previous week’s file.
-Schedule a run at noon Eastern or later to pick up that Wednesday’s file.
+`NADAC_FILE_DATES`. Before noon Eastern on Wednesdays, it selects the previous week’s file, so a
+run before noon reloads last week’s. From noon on it asks for that Wednesday’s file, but CMS may
+not have published it yet: the run then exits with `NADAC_NOT_200`, and nothing retries it.
+Schedule the job at noon Eastern or later, and retry it until the file is available.
 
 ## Attributions
 

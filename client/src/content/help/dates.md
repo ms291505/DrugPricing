@@ -10,4 +10,4 @@ results show the dates used.
 On FDA search, **Results without prices** includes entries with no price in the selected period.
 Widen the dates to look for older prices.
 
-Pinned charts keep their own dates. [Pinning and comparing](/help/pinning-and-comparing)
+Pinned charts keep their own dates. See [Pinning and comparing](/help/pinning-and-comparing).

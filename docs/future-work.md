@@ -143,6 +143,9 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
   follows the fix with no change of its own. Small.
 - **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
+- **Two global modals are never opened.** Nothing calls `openModal("about")` or
+  `openModal("onboarding")`; About and Welcome render only as pages. Remove both entries from
+  `GlobalModal` and the `showHeading` props, or wire up an opener. Small.
 
 ## Ideas
 
@@ -260,6 +263,21 @@ people use the docked readout.
 
 Consider a small, fixed example built with the same results table as Search. Use it to
 show sorting, column controls, and how to chart selected rows. It should work without the API.
+
+### Help follow-ups
+
+Carried over from the retired Help draft and browser usability plan.
+
+- **Screen-reader readout.** Check the chart readout with VoiceOver (`useChartReadout.tsx` has a
+  polite live region). Until then, Keyboard and screen readers says only that the readout shows
+  the active value, not that it is announced.
+- **FDA directory freshness.** How current it is says when NADAC loads, but not how often the
+  FDA directory reloads, which isn't documented in the repo. Document the schedule, then say it.
+- **Latest loaded week.** Consider showing the latest loaded as-of date (from `app-init`) on How
+  current it is, and confirm the first file date in production.
+- **Things to try.** Check each search against production, and again when the data moves on.
+- **The 5% Price Activity cutoff.** Still open: whether 5% reads right on real searches
+  ([NADAC price variation](../reporting/NADAC_PRICE_VARIATION.md) has the analysis behind it).
 
 ### Optional Average Price column
 

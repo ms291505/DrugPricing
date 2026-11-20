@@ -12,8 +12,9 @@ On a pinned chart you can do the following.
   price axis. The charts must use the same pricing unit.
 - Check the search source badge under the title to see which search found the data. All
   charted prices come from NADAC. Older pins without a saved source show **Search source unknown**.
-- Check the summary chip for the search terms and number of results shown. It says “filtered”
-  when the chart shows a subset of the loaded series.
+- Check the summary chip for the search terms and how many results the chart shows, such as
+  “2 of 7”. It adds “filtered” when the page’s filters had removed some prices from a charted
+  series.
 
 For a pinned **product** chart with saved package identities, select its **Products** chip to see
 the stored package price lines. Select the **Packages** chip to return to product averages. This

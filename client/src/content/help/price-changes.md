@@ -1,11 +1,12 @@
-**Price Activity** summarizes each package over the search’s dates. It measures the range from
-the lowest price to the highest, as a percentage of the lowest price. After rounding to a tenth
-of a percent, a range under 5% is Stable. A range of at least 5% is Changed. Fewer than two
-observations means insufficient history. Product rows summarize their packages’ activity.
+**Price Activity** summarizes each package over the search’s dates. A package has a
+significant change when its price moves at least 10% between consecutive observations. A package
+without one is Stable when its range, from the lowest price to the highest as a percentage of the
+lowest, is under 5%, and Changed when the range is 5% or more. Fewer than two observations means
+insufficient history. Product rows summarize their packages’ activity.
 
-A significant change is a move of at least 10% between consecutive observations for a package.
-The app compares percentages to a tenth of a percent, so a drop from $1.00 to $0.90 counts
-as 10%. A rise from $0 meets every threshold and appears as “from $0.”
+Both cutoffs compare percentages rounded to a tenth of a percent. A drop from $1.00 to $0.90
+counts as 10%, so it’s significant, and so is a rise from $1.00 to $1.10. A rise from $0 meets
+every threshold and appears as “from $0.”
 
 The **Notable price changes** card below the results table groups changes by date, pricing unit
 and direction. **Package details** opens by default and shows each package’s price before and
@@ -20,7 +21,7 @@ a message appears beside the button. Scan cards clear when new terms, dates or f
 change the prices.
 
 Every price change card has **Pin** and **Close**. **Notable price changes** returns when the
-prices change. Use **Pin** to keep a copy in **Pinned**. [Pinning and comparing](/help/pinning-and-comparing)
+prices change. Use **Pin** to keep a copy in **Pinned**. See [Pinning and comparing](/help/pinning-and-comparing).
 
 Choose **Chart this change** beside a package NDC to open its history below the price change
 cards. A solid line marks the change, and the readout starts on that date. Each change shares a
@@ -38,5 +39,5 @@ the starting price. Package rows have sparklines. Each uses its own price scale.
 **Price Activity** to put significant changes first, then other changes, stable prices and
 insufficient history.
 
-A flag marks a difference between observations. The cause requires other evidence.
-[What to check before comparing prices](/help/five-ways-a-price-can-mislead)
+A flag marks a difference between observations. The cause requires other evidence. See
+[What to check before comparing prices](/help/five-ways-a-price-can-mislead).

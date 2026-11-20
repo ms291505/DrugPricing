@@ -2,6 +2,6 @@
 2. **Check the pricing unit, strength and package size.** NADAC reports prices per tablet, milliliter, gram or other listed unit. Two tablets can have different strengths, and two bottles can contain different amounts. Check those details before comparing prices.
 3. **Allow for differences between pharmacies.** NADAC estimates acquisition costs from invoices submitted by participating retail community pharmacies. The amount an individual pharmacy paid may differ from the estimate.
 4. **Look for evidence of what caused a change.** A price marker compares two recorded values. Check the package’s history and the source data to investigate the change.
-5. **Use NADAC for acquisition costs.** A patient’s prescription cost depends on the pharmacy’s price, insurance coverage and any discounts.
+5. **Don’t read an acquisition cost as a patient’s price.** NADAC estimates what the pharmacy paid. A patient’s prescription cost depends on the pharmacy’s price, insurance coverage and any discounts.
 
-[What the prices mean](/help/what-the-prices-mean) · [The results table](/help/the-results-table)
+See [What the prices mean](/help/what-the-prices-mean) and [The results table](/help/the-results-table).

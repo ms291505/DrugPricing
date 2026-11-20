@@ -116,7 +116,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
                     {event.packageNdc}
                     <Tooltip title={chartId ? "Hide chart" : "Chart this change"} describeChild>
                       <IconButton ref={button => onRegisterButton(key, button)} size="small"
-                        aria-label={`${chartId ? "Hide chart" : "Chart price change"} for ${event.packageNdc}`}
+                        aria-label={`${chartId ? "Hide chart" : "Chart this change"} for ${event.packageNdc}`}
                         aria-expanded={!!chartId} aria-controls={chartId}
                         onClick={click => { click.currentTarget.focus(); onToggleChart(key, group, event); }}
                         sx={{

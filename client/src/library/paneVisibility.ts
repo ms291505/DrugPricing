@@ -4,4 +4,3 @@ export const hiddenPaneSx = {
   pointerEvents: "none",
   "@supports not (content-visibility: hidden)": { display: "none" },
 } as const;
-

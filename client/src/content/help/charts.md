@@ -28,4 +28,4 @@ tightly the axis fits to keep changes in proportion.
 Line charts mark significant package price changes. A marker on a product chart means one or
 more packages changed price. Find the package prices before and after in **Notable price changes**
 or in the package chart’s **View data** table. The menu on a pinned line chart has a **Show price
-changes** option. [Price changes](/help/price-changes)
+changes** option. See [Price changes](/help/price-changes).
