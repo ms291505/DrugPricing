@@ -4,8 +4,8 @@ import type { FdaResultDetailLevel } from "../../library/types";
 import { ChoiceField } from "../SearchPanel";
 
 const LEVELS: { value: FdaResultDetailLevel, label: string }[] = [
-  { value: "product", label: "Products" },
   { value: "package", label: "Packages" },
+  { value: "product", label: "Products" },
 ];
 
 /** The FDA results' detail level: a row per product or per package. */

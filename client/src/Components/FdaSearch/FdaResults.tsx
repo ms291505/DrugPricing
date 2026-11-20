@@ -75,13 +75,13 @@ export default memo(function FdaResults({ view }: Props) {
             {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
           </Alert>}
           {hint
-          ? <HiddenResultsNotice
-            hint={hint}
-            noun={noun}
-            onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
-              : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
-          />
-          : null}</>}
+            ? <HiddenResultsNotice
+              hint={hint}
+              noun={noun}
+              onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
+                : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
+            />
+            : null}</>}
         priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
           origin={packageOrigin} colors={packageColors} dateWindow={dateWindow}
           autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
