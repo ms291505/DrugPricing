@@ -64,107 +64,109 @@ export default function TabContextFab() {
     tabRename.start();
   }
 
-  return (<>
-    <Fab
-      ref={returnFocusRef}
-      variant="extended"
-      id={fabId}
-      sx={{
-        position: "fixed",
-        ...edge,
-        left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
-        transform: "translateX(-50%)",
-        height: 40,
-        bgcolor: alpha(theme.palette.inverse.main, tabMenuOpen ? 1 : scrolled ? opacity : 1),
-        color: theme.palette.inverse.contrastText,
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        width: tabContextFabHeight,
-      }}
-      onClick={tabMenuOpen ? handleCloseTabConextMenu : handleClick}
-      disabled={tabRename.active}
-    >
-      {!tabRename.active
-        ? <Box
-          component="span"
-          sx={{
-            display: "block",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {tabTitle}
-        </Box>
-
-        : null
-      }
-    </Fab>
-
-    {!tabRename.active
-      ? null
-      : <TextField
-        value={tabRename.draft}
-        onChange={(e) => {
-          tabRename.setDraft(e.target.value);
-        }}
-        onBlur={tabRename.commit}
-        onKeyDown={tabRename.onKeyDown}
-        variant="standard"
+  return (
+    <>
+      <Fab
+        ref={returnFocusRef}
+        variant="extended"
+        id={fabId}
         sx={{
           position: "fixed",
           ...edge,
           left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
           transform: "translateX(-50%)",
           height: 40,
+          bgcolor: alpha(theme.palette.inverse.main, tabMenuOpen ? 1 : scrolled ? opacity : 1),
+          color: theme.palette.inverse.contrastText,
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
-          width: tabContextFabHeight * .8,
-          borderRadius: "16px 16px 16px 16px",
-          zIndex: theme.zIndex.fab + 1,
-        }}
-        inputRef={tabRename.inputRef}
-      />
-    }
-
-    <Menu
-      id={tabMenuId}
-      anchorEl={tabMenuAnchorEl}
-      open={tabMenuOpen}
-      onClose={handleCloseTabConextMenu}
-      slotProps={{
-        list: {
-          'aria-labelledby': fabId,
-        },
-      }}
-      anchorOrigin={{
-        vertical: "center",
-        horizontal: "center"
-      }}
-      // The menu grows away from the screen edge the FAB sits on, tucked behind the FAB.
-      transformOrigin={{
-        vertical: isMobile ? "bottom" : "top",
-        horizontal: "center"
-      }}
-      sx={{
-        '& .MuiPaper-root': {
-
           width: tabContextFabHeight,
-          bgcolor: theme.palette.primary.dark,
-          ...(isMobile ? { pb: 2 } : { pt: 2 }),
-          borderRadius: isMobile ? "16px 16px 4px 4px" : "4px 4px 16px 16px",
+        }}
+        onClick={tabMenuOpen ? handleCloseTabConextMenu : handleClick}
+        disabled={tabRename.active}
+      >
+        {!tabRename.active
+          ? <Box
+            component="span"
+            sx={{
+              display: "block",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {tabTitle}
+          </Box>
 
-        },
-        zIndex: theme.zIndex.fab - 1,
-      }}
-    >
-      <MenuList >
-        <MenuItem onClick={handleClickRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
-        <MenuItem onClick={handleMinimizeTab} sx={{ justifyContent: "center" }}>Minimize Tab</MenuItem>
-        <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
-        <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>New Tab</MenuItem>
-      </MenuList>
-    </Menu>
+          : null
+        }
+      </Fab>
 
-  </>)
+      {!tabRename.active
+        ? null
+        : <TextField
+          value={tabRename.draft}
+          onChange={(e) => {
+            tabRename.setDraft(e.target.value);
+          }}
+          onBlur={tabRename.commit}
+          onKeyDown={tabRename.onKeyDown}
+          variant="standard"
+          sx={{
+            position: "fixed",
+            ...edge,
+            left: { xs: "50%", md: `calc(50% + ${drawerWidth / 2}px)` },
+            transform: "translateX(-50%)",
+            height: 40,
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            width: tabContextFabHeight * .8,
+            borderRadius: "16px 16px 16px 16px",
+            zIndex: theme.zIndex.fab + 1,
+          }}
+          inputRef={tabRename.inputRef}
+        />
+      }
+
+      <Menu
+        id={tabMenuId}
+        anchorEl={tabMenuAnchorEl}
+        open={tabMenuOpen}
+        onClose={handleCloseTabConextMenu}
+        slotProps={{
+          list: {
+            'aria-labelledby': fabId,
+          },
+        }}
+        anchorOrigin={{
+          vertical: "center",
+          horizontal: "center"
+        }}
+        // The menu grows away from the screen edge the FAB sits on, tucked behind the FAB.
+        transformOrigin={{
+          vertical: isMobile ? "bottom" : "top",
+          horizontal: "center"
+        }}
+        sx={{
+          '& .MuiPaper-root': {
+
+            width: tabContextFabHeight,
+            bgcolor: theme.palette.primary.dark,
+            ...(isMobile ? { pb: 2 } : { pt: 2 }),
+            borderRadius: isMobile ? "16px 16px 4px 4px" : "4px 4px 16px 16px",
+
+          },
+          zIndex: theme.zIndex.fab - 1,
+        }}
+      >
+        <MenuList >
+          <MenuItem onClick={handleClickRename} sx={{ justifyContent: "center" }}>Rename</MenuItem>
+          <MenuItem onClick={handleMinimizeTab} sx={{ justifyContent: "center" }}>Minimize Tab</MenuItem>
+          <MenuItem onClick={handleCloseTab} sx={{ justifyContent: "center" }}>Close Tab</MenuItem>
+          <MenuItem onClick={handleCloseTabConextMenu} sx={{ justifyContent: "center" }}>New Tab</MenuItem>
+        </MenuList>
+      </Menu>
+
+    </>
+  )
 }

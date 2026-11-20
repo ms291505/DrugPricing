@@ -134,6 +134,9 @@ const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonPr
 /** Shared wording for chart provenance and a new tab's title. */
 export const fdaSearchLabel = (terms: FdaTerms) => fdaNames(terms).join(" / ") || "search";
 
+/** The title a search gives its tab (`useRenameAfterSearch`) and a workspace copy of it. */
+export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCase();
+
 /** Text in quotes, to mark it as what the user typed and not the app's wording. */
 export const quoted = (text: string) => `\u201c${text}\u201d`;
 
@@ -492,3 +495,14 @@ export const clearFdaRefine = (criteria: FdaCriteria): FdaCriteria => ({
   nonProprietaryName: criteria.nonProprietaryName,
   dates: criteria.dates,
 });
+
+/** The empty table's fix (`hiddenResultsHint`): tick its Include box, clear the filters, or show everything. */
+export function revealNadac(criteria: NadacCriteria, hint: HiddenResultsHint): NadacCriteria {
+  if (hint.kind === "include") return { ...criteria, [hint.key]: true };
+  return hint.kind === "clear" ? clearNadacRefine(criteria) : showAllNadac(criteria);
+}
+
+export function revealFda(criteria: FdaCriteria, hint: HiddenResultsHint): FdaCriteria {
+  if (hint.kind === "include") return { ...criteria, [hint.key]: true };
+  return hint.kind === "clear" ? clearFdaRefine(criteria) : showAllFda(criteria);
+}

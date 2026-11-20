@@ -62,34 +62,36 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
   const toggle = (ndc: string, group: string[]) => update(current => toggleSeries(current, ndc, group));
   const showAll = (group: string[]) => update(current => showGroup(current, group));
 
-  return (<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-    <UnitSplit
-      nadacPrices={nadacPrices}
-      dateWindow={dateWindow}
-      renderChart={(unitPrices, pricingUnit) => (
-        <UnitLineChart
-          nadacPrices={unitPrices}
-          pricingUnit={pricingUnit}
-          title={title}
-          colors={colors}
-          hidden={hidden}
-          onToggle={toggle}
-          onShowAll={showAll}
-          xDomain={xDomain}
-          changeSpan={changeSpan}
-          seriesKind={seriesKind}
-          showPriceChanges={showPriceChanges}
-          eventDate={eventDate}
-          priceRange={priceRanges?.get(pricingUnit)}
-        />
-      )}
-    />
-    {bounds
-      ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
-        <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
-      </ChartData>
-      : null}
-  </Box>);
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <UnitSplit
+        nadacPrices={nadacPrices}
+        dateWindow={dateWindow}
+        renderChart={(unitPrices, pricingUnit) => (
+          <UnitLineChart
+            nadacPrices={unitPrices}
+            pricingUnit={pricingUnit}
+            title={title}
+            colors={colors}
+            hidden={hidden}
+            onToggle={toggle}
+            onShowAll={showAll}
+            xDomain={xDomain}
+            changeSpan={changeSpan}
+            seriesKind={seriesKind}
+            showPriceChanges={showPriceChanges}
+            eventDate={eventDate}
+            priceRange={priceRanges?.get(pricingUnit)}
+          />
+        )}
+      />
+      {bounds
+        ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
+          <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
+        </ChartData>
+        : null}
+    </Box>
+  );
 }
 
 const NONE_HIDDEN: ReadonlySet<string> = new Set();
@@ -178,147 +180,151 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
     : changeSpan?.direction === "drop" ? chartTheme.drop
       : chartTheme.textSecondary;
 
-  return (<>
-    <ReadoutDock portalRef={setDock} minHeight={lineReadoutHeight(shownNdcs.length, isMobile, rangeCount)} />
-    <Box
-      ref={focusBox}
-      {...readout.focusProps}
-      onKeyDown={event => {
-        readout.focusProps.onKeyDown();
-        lock.onKeyDown(event);
-      }}
-    >
-      <ComposedChart
-        data={vizData}
-        onClick={state => lock.toggle(rowAtIndex(vizData, state.activeTooltipIndex)?.asOfDate)}
-        margin={chartTheme.margin}
-        style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
-        responsive
-        // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
-        aria-label={`${title}, USD per ${unit}`}
-        aria-describedby={descriptionId}
+  return (
+    <>
+      <ReadoutDock portalRef={setDock} minHeight={lineReadoutHeight(shownNdcs.length, isMobile, rangeCount)} />
+      <Box
+        ref={focusBox}
+        {...readout.focusProps}
+        onKeyDown={event => {
+          readout.focusProps.onKeyDown();
+          lock.onKeyDown(event);
+        }}
       >
-        <XAxis
-          dataKey="asOfDate"
-          scale="time"
-          type="number"
-          domain={xDomain}
-          ticks={xTicks.ticks}
-          tickFormatter={xTicks.format}
-          tick={chartTheme.tick}
-          axisLine={chartTheme.axisLine}
-          tickLine={chartTheme.axisLine}
-        />
-        <YAxis
-          width="auto"
-          domain={yAxis.domain}
-          ticks={yAxis.ticks}
-          tickFormatter={priceTickFormatter(yAxis.ticks)}
-          tick={chartTheme.tick}
-          axisLine={chartTheme.axisLine}
-          tickLine={chartTheme.axisLine}
-        />
-        <Tooltip
-          {...DOCKED_TOOLTIP}
-          portal={dock}
-          // Locked: the pointer no longer moves the readout.
-          active={lock.locked !== null ? false : undefined}
-          content={({ active, payload }) => {
-            const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
-            const date = hovered?.asOfDate ?? lock.locked ?? restDate;
-            const row = hovered ?? vizData.find(r => r.asOfDate === date);
-            if (date === undefined || !row) return null;
-            return (
-              <LineReadout
-                date={date}
-                unit={unit}
-                rows={tooltipRows(row, shownNdcs)}
-                status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
-                restLabel={eventShown ? "this change" : "latest"}
-                onUnlock={unlockAndFocus}
-                colorFor={colorFor}
-                descriptionFor={isMobile ? undefined : descriptionFor}
-              />
-            );
-          }}
-        />
-        {/* The chart's change: solid and wider, under the lock's thin dashed line, and kept while locked elsewhere. */}
-        {eventShown
-          ? <ReferenceLine x={eventDate} stroke={chartTheme.textSecondary} strokeWidth={2} />
-          : null}
-        {lock.locked !== null
-          ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
-          : null}
-        {showPriceChanges && legacySpanVisible && !callouts.some(c => c.date === changeSpan.end)
-          ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
-        {callouts.flatMap(callout => {
-          const color = callout.events.every(e => e.change.percentage < 0) ? chartTheme.drop
-            : callout.events.every(e => e.change.percentage > 0) ? chartTheme.rise : chartTheme.textSecondary;
-          const refs = callout.spans.flatMap((span, i) => changeCallout(span,
-            span.direction === "drop" ? chartTheme.drop : chartTheme.rise, xDomain, chartTheme,
-            i === 0 ? callout.label : null).map(ref => cloneElement(ref, { key: `${callout.date}:${i}:${ref.key}` })));
-          const markers = callout.markers.map(marker => <ReferenceDot key={`${callout.date}:${marker.ndc}`}
-            x={callout.date} y={marker.price} r={5} fill={color} stroke={chartTheme.paper} />);
-          const first = callout.markers[0];
-          return [...refs, ...markers, ...(first ? [cloneElement(changePill(callout.label, callout.date,
-            first.price, color, xDomain, chartTheme), { key: `${callout.date}:product-label` })] : [])];
-        })}
-        {bandNdcs.map((ndc) => (
-          <Area
-            key={rangeKey(ndc)}
-            dataKey={rangeKey(ndc)}
-            type="stepAfter"
-            stroke="none"
-            fill={colorFor(ndc)}
-            fillOpacity={BAND_OPACITY * opacityOf(ndc)}
-            activeDot={false}
-            legendType="none"
-            tooltipType="none"
-            connectNulls={false}
-            isAnimationActive={false}
+        <ComposedChart
+          data={vizData}
+          onClick={state => lock.toggle(rowAtIndex(vizData, state.activeTooltipIndex)?.asOfDate)}
+          margin={chartTheme.margin}
+          style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
+          responsive
+          // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
+          aria-label={`${title}, USD per ${unit}`}
+          aria-describedby={descriptionId}
+        >
+          <XAxis
+            dataKey="asOfDate"
+            scale="time"
+            type="number"
+            domain={xDomain}
+            ticks={xTicks.ticks}
+            tickFormatter={xTicks.format}
+            tick={chartTheme.tick}
+            axisLine={chartTheme.axisLine}
+            tickLine={chartTheme.axisLine}
           />
-        ))}
-        {shownNdcs.map((ndc) => (
-          <Line
-            key={ndc}
-            dataKey={ndc}
-            stroke={colorFor(ndc)}
-            strokeOpacity={opacityOf(ndc)}
-            strokeWidth={2}
-            // NADAC prices hold until the next weekly file: steps, not curves between weeks.
-            type="stepAfter"
-            dot={false}
-            connectNulls={false}
-            name={ndc}
-            // Off: recharts morphs old lines into new ones and draws made-up prices.
-            isAnimationActive={false}
+          <YAxis
+            width="auto"
+            domain={yAxis.domain}
+            ticks={yAxis.ticks}
+            tickFormatter={priceTickFormatter(yAxis.ticks)}
+            tick={chartTheme.tick}
+            axisLine={chartTheme.axisLine}
+            tickLine={chartTheme.axisLine}
           />
-        ))}
-        {readout.reporter}
-      </ComposedChart>
-    </Box>
-    {readout.liveRegion}
-    {/* One series is named by the card's title; a legend would only repeat it. */}
-    {ndcs.length > 1
-      ? <SeriesLegend
-        series={ndcs.map(ndc => ({
-          ndc,
-          color: colorFor(ndc),
-          description: descriptionFor(ndc),
-          shown: !hidden.has(ndc),
-          canHide: canHide(hidden, ndc, ndcs),
-        }))}
-        onToggle={ndc => onToggle(ndc, ndcs)}
-        onShowAll={() => onShowAll(ndcs)}
-        onHighlight={setHighlighted}
-      />
-      : null}
-    <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, showPriceChanges && legacySpanVisible ? changeSpan : undefined, seriesKind)}</Box>
-    {/* Said once here rather than in every tooltip row. */}
-    {bandCaption
-      ? <Typography variant="caption" color="text.secondary">{bandCaption}<HelpButton topic="charts" /></Typography>
-      : null}
-  </>);
+          <Tooltip
+            {...DOCKED_TOOLTIP}
+            portal={dock}
+            // Locked: the pointer no longer moves the readout.
+            active={lock.locked !== null ? false : undefined}
+            content={({ active, payload }) => {
+              const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
+              const date = hovered?.asOfDate ?? lock.locked ?? restDate;
+              const row = hovered ?? vizData.find(r => r.asOfDate === date);
+              if (date === undefined || !row) return null;
+              return (
+                <LineReadout
+                  date={date}
+                  unit={unit}
+                  rows={tooltipRows(row, shownNdcs)}
+                  status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
+                  restLabel={eventShown ? "this change" : "latest"}
+                  onUnlock={unlockAndFocus}
+                  colorFor={colorFor}
+                  descriptionFor={isMobile ? undefined : descriptionFor}
+                />
+              );
+            }}
+          />
+          {/* The chart's change: solid and wider, under the lock's thin dashed line, and kept while locked elsewhere. */}
+          {eventShown
+            ? <ReferenceLine x={eventDate} stroke={chartTheme.textSecondary} strokeWidth={2} />
+            : null}
+          {lock.locked !== null
+            ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
+            : null}
+          {showPriceChanges && legacySpanVisible && !callouts.some(c => c.date === changeSpan.end)
+            ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
+          {callouts.flatMap(callout => {
+            const color = callout.events.every(e => e.change.percentage < 0) ? chartTheme.drop
+              : callout.events.every(e => e.change.percentage > 0) ? chartTheme.rise : chartTheme.textSecondary;
+            const refs = callout.spans.flatMap((span, i) => changeCallout(span,
+              span.direction === "drop" ? chartTheme.drop : chartTheme.rise, xDomain, chartTheme,
+              i === 0 ? callout.label : null).map(ref => cloneElement(ref, { key: `${callout.date}:${i}:${ref.key}` })));
+            const markers = callout.markers.map(marker => (
+              <ReferenceDot key={`${callout.date}:${marker.ndc}`}
+                x={callout.date} y={marker.price} r={5} fill={color} stroke={chartTheme.paper} />
+            ));
+            const first = callout.markers[0];
+            return [...refs, ...markers, ...(first ? [cloneElement(changePill(callout.label, callout.date,
+              first.price, color, xDomain, chartTheme), { key: `${callout.date}:product-label` })] : [])];
+          })}
+          {bandNdcs.map((ndc) => (
+            <Area
+              key={rangeKey(ndc)}
+              dataKey={rangeKey(ndc)}
+              type="stepAfter"
+              stroke="none"
+              fill={colorFor(ndc)}
+              fillOpacity={BAND_OPACITY * opacityOf(ndc)}
+              activeDot={false}
+              legendType="none"
+              tooltipType="none"
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          ))}
+          {shownNdcs.map((ndc) => (
+            <Line
+              key={ndc}
+              dataKey={ndc}
+              stroke={colorFor(ndc)}
+              strokeOpacity={opacityOf(ndc)}
+              strokeWidth={2}
+              // NADAC prices hold until the next weekly file: steps, not curves between weeks.
+              type="stepAfter"
+              dot={false}
+              connectNulls={false}
+              name={ndc}
+              // Off: recharts morphs old lines into new ones and draws made-up prices.
+              isAnimationActive={false}
+            />
+          ))}
+          {readout.reporter}
+        </ComposedChart>
+      </Box>
+      {readout.liveRegion}
+      {/* One series is named by the card's title; a legend would only repeat it. */}
+      {ndcs.length > 1
+        ? <SeriesLegend
+          series={ndcs.map(ndc => ({
+            ndc,
+            color: colorFor(ndc),
+            description: descriptionFor(ndc),
+            shown: !hidden.has(ndc),
+            canHide: canHide(hidden, ndc, ndcs),
+          }))}
+          onToggle={ndc => onToggle(ndc, ndcs)}
+          onShowAll={() => onShowAll(ndcs)}
+          onHighlight={setHighlighted}
+        />
+        : null}
+      <Box id={descriptionId} sx={visuallyHidden}>{lineChartSummary(nadacPrices, showPriceChanges && legacySpanVisible ? changeSpan : undefined, seriesKind)}</Box>
+      {/* Said once here rather than in every tooltip row. */}
+      {bandCaption
+        ? <Typography variant="caption" color="text.secondary">{bandCaption}<HelpButton topic="charts" /></Typography>
+        : null}
+    </>
+  );
 }
 
 type LineReadoutProps = {

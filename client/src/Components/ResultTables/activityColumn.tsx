@@ -7,12 +7,14 @@ import type { PricedRow } from "../../library/resultRows";
 function ActivityCell({ activity }: { activity: PriceActivity }) {
   const { points, label } = activity;
   const path = activitySparklinePath(points);
-  return <Tooltip title={label}><Box sx={{ display: "flex", alignItems: "center", gap: 1, height: "100%", minWidth: 0 }}>
-    {path && <Box component="svg" viewBox="0 0 56 24" width={56} height={24} aria-hidden="true" sx={{ color: "text.secondary", flexShrink: 0 }}>
-      <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} />
-    </Box>}
-    <Typography variant="body2" noWrap>{label}</Typography>
-  </Box></Tooltip>;
+  return (
+    <Tooltip title={label}><Box sx={{ display: "flex", alignItems: "center", gap: 1, height: "100%", minWidth: 0 }}>
+      {path && <Box component="svg" viewBox="0 0 56 24" width={56} height={24} aria-hidden="true" sx={{ color: "text.secondary", flexShrink: 0 }}>
+        <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} />
+      </Box>}
+      <Typography variant="body2" noWrap>{label}</Typography>
+    </Box></Tooltip>
+  );
 }
 
 export function activityColumn<R extends PricedRow>(): GridColDef<R, PriceActivity, string> {

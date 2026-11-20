@@ -1,5 +1,5 @@
-Each Workspace tab holds a search and its pinned items. A tab takes its name from its first
-search unless you’ve already renamed it.
+Each Workspace tab holds a search and its pinned items. A tab takes its name from its search,
+and **Clear search** gives it back its default name. Once you rename a tab, it keeps your name.
 
 The app saves your workspace in this browser on this device. Searches still contact the server.
 Clearing this site’s browser data deletes the saved workspace.

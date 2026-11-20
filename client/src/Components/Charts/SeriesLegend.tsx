@@ -24,66 +24,68 @@ type Props = {
  */
 export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight }: Props) {
   const listRef = useRef<HTMLUListElement>(null);
-  return (<Box>
-    <Box
-      ref={listRef}
-      component="ul"
-      aria-label="Series"
-      // About three rows, then it scrolls rather than growing the card.
-      sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, m: 0, p: 0.25, listStyle: "none", maxHeight: 96, overflowY: "auto" }}
-    >
-      {series.map(({ ndc, color, description, shown, canHide }) => {
-        const locked = shown && !canHide;
-        return (
-          <li key={ndc}>
-            <Tooltip describeChild title={locked ? `${description} · The only series shown can't be hidden` : description}>
-              <ButtonBase
-                aria-pressed={shown}
-                aria-disabled={locked || undefined}
-                onClick={() => { if (!locked) onToggle(ndc); }}
-                // Mouse and keyboard only: a tap would leave the highlight on until the next tap elsewhere.
-                onPointerEnter={(event) => { if (event.pointerType === "mouse") onHighlight(ndc); }}
-                onPointerLeave={() => onHighlight(null)}
-                onFocusVisible={() => onHighlight(ndc)}
-                onBlur={() => onHighlight(null)}
-                sx={{
-                  gap: 0.75, px: 0.75, py: 0.25, borderRadius: 1,
-                  "&:hover": { bgcolor: "action.hover" },
-                  "&.Mui-focusVisible": { outline: 2, outlineColor: "primary.main", outlineOffset: 1 },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 10, height: 10, borderRadius: "50%", flexShrink: 0, border: 2, borderColor: color,
-                    bgcolor: shown ? color : "transparent",
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  color={shown ? "text.primary" : "text.secondary"}
-                  sx={{ textDecoration: shown ? "none" : "line-through" }}
-                >
-                  {ndc}
-                </Typography>
-              </ButtonBase>
-            </Tooltip>
-          </li>
-        );
-      })}
-    </Box>
-    {/* Outside the scroll box, so a long legend can't hide it. */}
-    {series.some(({ shown }) => !shown)
-      ? <Button
-        size="small"
-        onClick={(event) => {
-          onShowAll();
-          // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
-          if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
-        }}
-        sx={{ py: 0, minWidth: 0, textTransform: "none" }}
+  return (
+    <Box>
+      <Box
+        ref={listRef}
+        component="ul"
+        aria-label="Series"
+        // About three rows, then it scrolls rather than growing the card.
+        sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, m: 0, p: 0.25, listStyle: "none", maxHeight: 96, overflowY: "auto" }}
       >
-        Show all
-      </Button>
-      : null}
-  </Box>);
+        {series.map(({ ndc, color, description, shown, canHide }) => {
+          const locked = shown && !canHide;
+          return (
+            <li key={ndc}>
+              <Tooltip describeChild title={locked ? `${description} · The only series shown can't be hidden` : description}>
+                <ButtonBase
+                  aria-pressed={shown}
+                  aria-disabled={locked || undefined}
+                  onClick={() => { if (!locked) onToggle(ndc); }}
+                  // Mouse and keyboard only: a tap would leave the highlight on until the next tap elsewhere.
+                  onPointerEnter={(event) => { if (event.pointerType === "mouse") onHighlight(ndc); }}
+                  onPointerLeave={() => onHighlight(null)}
+                  onFocusVisible={() => onHighlight(ndc)}
+                  onBlur={() => onHighlight(null)}
+                  sx={{
+                    gap: 0.75, px: 0.75, py: 0.25, borderRadius: 1,
+                    "&:hover": { bgcolor: "action.hover" },
+                    "&.Mui-focusVisible": { outline: 2, outlineColor: "primary.main", outlineOffset: 1 },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 10, height: 10, borderRadius: "50%", flexShrink: 0, border: 2, borderColor: color,
+                      bgcolor: shown ? color : "transparent",
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    color={shown ? "text.primary" : "text.secondary"}
+                    sx={{ textDecoration: shown ? "none" : "line-through" }}
+                  >
+                    {ndc}
+                  </Typography>
+                </ButtonBase>
+              </Tooltip>
+            </li>
+          );
+        })}
+      </Box>
+      {/* Outside the scroll box, so a long legend can't hide it. */}
+      {series.some(({ shown }) => !shown)
+        ? <Button
+          size="small"
+          onClick={(event) => {
+            onShowAll();
+            // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
+            if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
+          }}
+          sx={{ py: 0, minWidth: 0, textTransform: "none" }}
+        >
+          Show all
+        </Button>
+        : null}
+    </Box>
+  );
 }

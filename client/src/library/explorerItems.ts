@@ -56,6 +56,22 @@ export type ChartOrigin = {
   resultPrices: ChartPrice[],
 };
 
+/**
+ * What a results page's charts draw from, at one series level (`useNadacChartSource`,
+ * `useFdaChartSource`). An FDA page has two: the table's detail level and packages.
+ */
+export type ChartSource = {
+  /** The page's result as shown, at this level. */
+  prices: ChartPrice[],
+  /** The same over every loaded date, computed when called: a new chart's series (`withLoadedDates`). */
+  loadedPrices: () => ChartPrice[],
+  origin: ChartOrigin,
+  /** The page's series colors at this level (`useSeriesColors`). */
+  colors: Map<string, string>,
+  /** The dates the page shows. */
+  dateWindow: DateWindow,
+};
+
 type ExplorerItemBase = {
   id: string,
   /** Title generated when the item was created. */
@@ -144,15 +160,15 @@ export const itemTitle = (item: ExplorerItem) => item.title ?? item.defaultTitle
 const seriesKey = (ndc: string, unit: string) => ndc + "|" + unit;
 
 /**
- * A new chart's prices with every loaded date of its series: the prices in `history` (the page's
+ * A new chart's prices with every loaded date of its series: the prices in `loadedPrices` (the page's
  * refined result over all loaded dates) whose series (NDC and unit) `prices` draws. The page
  * shows only the search's dates, but after a narrowing that didn't fetch more is loaded; a chart
  * item keeps every date of its series, so its dates chip can widen to them, and `filtered`
  * compares whole series rather than reading the narrower dates as a filter.
  */
-export function withLoadedHistory<T extends ChartPrice>(prices: T[], history: T[]): T[] {
+export function withLoadedDates<T extends ChartPrice>(prices: T[], loadedPrices: T[]): T[] {
   const keys = new Set(prices.map(price => seriesKey(price.ndc, price.pricingUnit)));
-  return history.filter(price => keys.has(seriesKey(price.ndc, price.pricingUnit)));
+  return loadedPrices.filter(price => keys.has(seriesKey(price.ndc, price.pricingUnit)));
 }
 
 /** Builds a chart snapshot from prices. Series are keyed by NDC and pricing unit. */

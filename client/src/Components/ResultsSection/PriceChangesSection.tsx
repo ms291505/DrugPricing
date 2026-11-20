@@ -4,14 +4,14 @@ import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
 import { derivePriceEvents, groupPriceEvents, type PriceEvent, type PriceEventGroup } from "../../library/priceActivity";
 import type { ChartPrice } from "../../library/types";
-import { createPriceChangeListItem, fitsPinLimit, type ChartOrigin } from "../../library/explorerItems";
+import { createPriceChangeListItem, fitsPinLimit, type ChartOrigin, type ChartSource } from "../../library/explorerItems";
 import type { DateWindow } from "../../library/dates";
 import {
   eventChartTitle, pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTitle,
 } from "../../library/chartTitles";
 import { HALF_WIDTH_GRID_SIZE, NOTABLE_PRICE_CHANGE_PERCENT } from "../../library/constants";
 import useWidthTier from "../../hooks/useWidthTier";
-import type { PriceChangeScan } from "../../hooks/usePriceChangeScans";
+import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { ResultsHeadingContext } from "../../Context/resultsHeading";
@@ -19,15 +19,13 @@ import EventChangeChart, { type EventChart } from "./EventChangeChart";
 import PriceChangeListBody from "./PriceChangeListBody";
 
 type Props = {
-  /** The page's package prices as shown. A new array (new search, dates or filters) closes every scan and chart. */
-  prices: ChartPrice[], history: () => ChartPrice[], origin: ChartOrigin, colors: Map<string, string>,
-  /** The dates the page shows: the window of a change's chart. */
-  dateWindow: DateWindow,
-  /** From `usePriceChangeScans`. */
-  autoClosed: boolean,
-  onCloseAuto: () => void,
-  scans: PriceChangeScan[],
-  onCloseScan: (id: string) => void,
+  /**
+   * The page's packages. New `prices` (new search, dates or filters) close every scan and chart;
+   * `dateWindow` is the window of a change's chart.
+   */
+  source: ChartSource,
+  /** The page's scans (`usePriceChangeScans`), over the same packages. */
+  scans: PriceChangeScans,
 };
 
 /** Notable price changes' list id; scans use theirs. */
@@ -45,9 +43,9 @@ const byPosition = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOC
  * Always mounted, so the open charts and the focus bookkeeping outlive any one card; renders
  * nothing when there is no card and no chart.
  */
-export default function PriceChangesSection({
-  prices, history, origin, colors, dateWindow, autoClosed, onCloseAuto, scans, onCloseScan,
-}: Props) {
+export default function PriceChangesSection({ source, scans: scanState }: Props) {
+  const { prices, loadedPrices, origin, colors, dateWindow } = source;
+  const { autoClosed, closeAuto: onCloseAuto, scans, closeScan: onCloseScan } = scanState;
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
   // loading state has no groups, which unmounts the card).
@@ -97,11 +95,11 @@ export default function PriceChangesSection({
         // One id per change, whichever list opened it. Event keys hold no whitespace.
         key, cardId: `${sectionId}-${key}`, openerId: listId, eventDate: group.date,
         title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
-        prices: history().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
+        prices: loadedPrices().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
       });
       return next;
     });
-  }, [history, sectionId]);
+  }, [loadedPrices, sectionId]);
   const closeChart = useCallback((key: string) => setCharts(prev => {
     const next = new Map(prev);
     next.delete(key);
@@ -145,16 +143,22 @@ export default function PriceChangesSection({
     onToggleChart: toggleChart, onRegisterButton: registerButton, onRegisterHeading: registerHeading,
     onClose: closeList, onRemovedWithFocus: onListRemovedWithFocus,
   };
-  return <>
-    {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
-      thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" focusOnMount={false} {...listProps} />}
-    {scans.map(scan => <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
-      thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />)}
-    {[...charts.values()].map(chart => <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
-      <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
-        onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
-    </Grid>)}
-  </>;
+  return (
+    <>
+      {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
+        thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" focusOnMount={false} {...listProps} />}
+      {scans.map(scan => (
+        <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
+          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />
+      ))}
+      {[...charts.values()].map(chart => (
+        <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
+          <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
+            onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
+        </Grid>
+      ))}
+    </>
+  );
 }
 
 /** One list's result card: Notable price changes or a scan. It can be pinned and closed. */
@@ -217,19 +221,21 @@ function PriceChangeListCard({
     toast.success(`Pinned "${defaultTitle}"`);
   };
 
-  return <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
-    <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
-      actions={<>
-        <Tooltip title="Pin a copy to this tab">
-          <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
-        </Tooltip>
-        <Button size="small" aria-label={`Close ${title}`}
-          onClick={event => { event.currentTarget.focus(); onClose(listId); }}>Close</Button>
-      </>}>
-      <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
-        onDetailsToggle={onDetailsToggle} openCharts={charts}
-        onToggleChart={(key, group, event) => onToggleChart(listId, key, group, event)}
-        onRegisterButton={(key, button) => onRegisterButton(listId, key, button)} />
-    </ExplorerGridItem>
-  </Grid>;
+  return (
+    <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
+      <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
+        actions={<>
+          <Tooltip title="Pin a copy to this tab">
+            <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
+          </Tooltip>
+          <Button size="small" aria-label={`Close ${title}`}
+            onClick={event => { event.currentTarget.focus(); onClose(listId); }}>Close</Button>
+        </>}>
+        <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
+          onDetailsToggle={onDetailsToggle} openCharts={charts}
+          onToggleChart={(key, group, event) => onToggleChart(listId, key, group, event)}
+          onRegisterButton={(key, button) => onRegisterButton(listId, key, button)} />
+      </ExplorerGridItem>
+    </Grid>
+  );
 }

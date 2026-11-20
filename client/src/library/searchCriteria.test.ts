@@ -6,7 +6,7 @@ import {
   exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
   fdaResultsLabel, fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
-  resolveSearchDates, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
+  resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
@@ -389,6 +389,17 @@ describe("filter state", () => {
     expect(clearNadacRefine({ ...nadac, includeOtc: true, brandGeneric: "brand", excludedNdcDescriptions: ["X"] })).toEqual(nadac);
     const fda = { ...createFdaCriteria(), proprietaryName: "eliquis" };
     expect(clearFdaRefine({ ...fda, includeResultsWithoutPrices: true, excludedDosageForms: ["TABLET"] })).toEqual(fda);
+  });
+
+  it("applies each hidden-results hint", () => {
+    const nadac = { ...createNadacCriteria(), ndcDescription: "eliquis", brandGeneric: "brand" as const, excludedUnits: ["ML"] };
+    expect(revealNadac(nadac, { kind: "include", key: "includeOtc", count: 2 })).toEqual({ ...nadac, includeOtc: true });
+    expect(revealNadac(nadac, { kind: "clear", count: 2 })).toEqual({ ...createNadacCriteria(), ndcDescription: "eliquis" });
+    expect(revealNadac(nadac, { kind: "all", count: 2 })).toEqual(showAllNadac(nadac));
+    const fda = { ...createFdaCriteria(), proprietaryName: "eliquis", excludedRoutes: ["ORAL"] };
+    expect(revealFda(fda, { kind: "include", key: "includeSamplePackages", count: 1 })).toEqual({ ...fda, includeSamplePackages: true });
+    expect(revealFda(fda, { kind: "clear", count: 1 })).toEqual({ ...createFdaCriteria(), proprietaryName: "eliquis" });
+    expect(revealFda(fda, { kind: "all", count: 1 })).toEqual(showAllFda(fda));
   });
 });
 

@@ -47,69 +47,77 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   }, [id, standalone]);
 
   // Standalone, a topic is a real link that navigates by itself; in the modal it opens in place.
-  const topicLink = (id: HelpTopicId, title: string) => <TopicLink key={id} id={id} title={title} standalone={standalone}
-    onClick={() => standalone ? recordIndexPosition(id) : openTopic(id)} />;
+  const topicLink = (id: HelpTopicId, title: string) => (
+    <TopicLink key={id} id={id} title={title} standalone={standalone}
+      onClick={() => standalone ? recordIndexPosition(id) : openTopic(id)} />
+  );
 
   const topics = filterHelpTopics(query);
   const pageLinks = filterHelpPageLinks(query);
-  return <Box ref={root} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
-      {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
-      {id && <Button onClick={() => openTopic()}>All topics</Button>}
-      {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open in new tab</Link>}
-    </Box>
-    <Typography ref={heading} tabIndex={-1} component={standalone ? "h1" : "h2"} variant="h5" sx={{ mb: 2 }}>
-      {topic?.title ?? (id ? "Topic not found" : "Help topics")}
-    </Typography>
-    {id && !topic ? <Typography>Choose All topics to find the help you need.</Typography> : topic ? <>
-      <Box sx={{ "& p, & li": { lineHeight: 1.7 }, "& li + li": { mt: 1 }, "& code": { fontSize: "0.9em" } }}>
-        <Markdown remarkPlugins={[remarkGfm]} skipHtml components={{
-          a: ({ href, children }) => {
-            const target = href?.startsWith("/help/") ? findHelpTopic(href.slice(6)) : undefined;
-            return target
-              ? <Link href={href} onClick={event => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); openTopic(target.id); } }}>{children}</Link>
-              : <Link href={href} target="_blank" rel="noopener noreferrer">{children}</Link>;
-          },
-          h2: ({ children }) => <Typography component="h3" variant="h6" sx={{ mt: 3 }}>{children}</Typography>,
-          table: ({ children }) => <Box role="region" aria-label="Help reference table" tabIndex={0} sx={{ overflowX: "auto", my: 2 }}><Box component="table" sx={{ borderCollapse: "collapse", width: "100%", minWidth: 440, overflowWrap: "normal", "& th, & td": { borderBottom: 1, borderColor: "divider", p: 1, textAlign: "left", verticalAlign: "top" } }}>{children}</Box></Box>,
-        }}>{articles[`../../content/help/${topic.id}.md`]}</Markdown>
+  return (
+    <Box ref={root} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
+        {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
+        {id && <Button onClick={() => openTopic()}>All topics</Button>}
+        {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open in new tab</Link>}
       </Box>
-      <Typography component={standalone ? "h2" : "h3"} variant="subtitle2" sx={{ mt: 3 }}>Related topics</Typography>
-      <List component="nav" aria-label="Related topics" dense>
-        {topic.related.flatMap(relatedId => findHelpTopic(relatedId) ?? []).map(other => topicLink(other.id, other.title))}
-      </List>
-    </> : <>
-      <TextField fullWidth size="small" label="Find a topic" value={query} onChange={event => setQuery(event.target.value)} />
-      {topics.length === 0 && pageLinks.length === 0 && <Typography role="status" sx={{ mt: 2 }}>No topics found. Try another word or clear the filter.</Typography>}
-      {HELP_GROUPS.map(group => {
-        const matches = topics.filter(item => item.group === group);
-        const links = pageLinks.filter(link => link.group === group);
-        return matches.length || links.length ? <Box key={group} sx={{ mt: 3 }}>
-          <Typography component={standalone ? "h2" : "h3"} variant="subtitle1">{group}</Typography>
-          <List component="nav" aria-label={group} dense>
-            {matches.map(item => topicLink(item.id, item.title))}
-            {/* Leaves Help for another page of the app, so the modal closes behind it. */}
-            {links.map(link => <ListItemButton key={link.to} component={RouterLink} to={link.to} onClick={standalone ? undefined : closeModal}>
-              <ListItemText primary={link.title} />
-            </ListItemButton>)}
-          </List>
-        </Box> : null;
-      })}
-    </>}
-  </Box>;
+      <Typography ref={heading} tabIndex={-1} component={standalone ? "h1" : "h2"} variant="h5" sx={{ mb: 2 }}>
+        {topic?.title ?? (id ? "Topic not found" : "Help topics")}
+      </Typography>
+      {id && !topic ? <Typography>Choose All topics to find the help you need.</Typography> : topic ? <>
+        <Box sx={{ "& p, & li": { lineHeight: 1.7 }, "& li + li": { mt: 1 }, "& code": { fontSize: "0.9em" } }}>
+          <Markdown remarkPlugins={[remarkGfm]} skipHtml components={{
+            a: ({ href, children }) => {
+              const target = href?.startsWith("/help/") ? findHelpTopic(href.slice(6)) : undefined;
+              return target
+                ? <Link href={href} onClick={event => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); openTopic(target.id); } }}>{children}</Link>
+                : <Link href={href} target="_blank" rel="noopener noreferrer">{children}</Link>;
+            },
+            h2: ({ children }) => <Typography component="h3" variant="h6" sx={{ mt: 3 }}>{children}</Typography>,
+            table: ({ children }) => <Box role="region" aria-label="Help reference table" tabIndex={0} sx={{ overflowX: "auto", my: 2 }}><Box component="table" sx={{ borderCollapse: "collapse", width: "100%", minWidth: 440, overflowWrap: "normal", "& th, & td": { borderBottom: 1, borderColor: "divider", p: 1, textAlign: "left", verticalAlign: "top" } }}>{children}</Box></Box>,
+          }}>{articles[`../../content/help/${topic.id}.md`]}</Markdown>
+        </Box>
+        <Typography component={standalone ? "h2" : "h3"} variant="subtitle2" sx={{ mt: 3 }}>Related topics</Typography>
+        <List component="nav" aria-label="Related topics" dense>
+          {topic.related.flatMap(relatedId => findHelpTopic(relatedId) ?? []).map(other => topicLink(other.id, other.title))}
+        </List>
+      </> : <>
+        <TextField fullWidth size="small" label="Find a topic" value={query} onChange={event => setQuery(event.target.value)} />
+        {topics.length === 0 && pageLinks.length === 0 && <Typography role="status" sx={{ mt: 2 }}>No topics found. Try another word or clear the filter.</Typography>}
+        {HELP_GROUPS.map(group => {
+          const matches = topics.filter(item => item.group === group);
+          const links = pageLinks.filter(link => link.group === group);
+          return matches.length || links.length ? <Box key={group} sx={{ mt: 3 }}>
+            <Typography component={standalone ? "h2" : "h3"} variant="subtitle1">{group}</Typography>
+            <List component="nav" aria-label={group} dense>
+              {matches.map(item => topicLink(item.id, item.title))}
+              {/* Leaves Help for another page of the app, so the modal closes behind it. */}
+              {links.map(link => (
+                <ListItemButton key={link.to} component={RouterLink} to={link.to} onClick={standalone ? undefined : closeModal}>
+                  <ListItemText primary={link.title} />
+                </ListItemButton>
+              ))}
+            </List>
+          </Box> : null;
+        })}
+      </>}
+    </Box>
+  );
 }
 
 /** A topic in the index or under Related topics. */
 function TopicLink({ id, title, standalone, onClick }: { id: HelpTopicId, title: string, standalone: boolean, onClick: () => void }) {
-  return <ListItemButton data-help-topic={id} component={standalone ? RouterLink : "button"} to={standalone ? `/help/${id}` : undefined}
-    onClick={onClick} sx={{
-      width: "100%",
-      textAlign: "left",
-      color: "primary.main",
-      "& .MuiListItemText-primary": { textDecoration: "underline", textUnderlineOffset: "0.15em" },
-      "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" },
-      "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
-    }}>
-    <ListItemText primary={title} />
-  </ListItemButton>;
+  return (
+    <ListItemButton data-help-topic={id} component={standalone ? RouterLink : "button"} to={standalone ? `/help/${id}` : undefined}
+      onClick={onClick} sx={{
+        width: "100%",
+        textAlign: "left",
+        color: "primary.main",
+        "& .MuiListItemText-primary": { textDecoration: "underline", textUnderlineOffset: "0.15em" },
+        "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" },
+        "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+      }}>
+      <ListItemText primary={title} />
+    </ListItemButton>
+  );
 }

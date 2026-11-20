@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { Box, Button, CircularProgress, Collapse, FormControl, FormGroup, FormLabel, Paper, TextField, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import useWidthTier from "../../hooks/useWidthTier";
@@ -62,6 +62,10 @@ type Props = {
   canSearch: boolean,
   /** A search is loading or waiting: the button shows a spinner. */
   busy: boolean,
+  /** Clear search, beside Search: empties the terms and resets every field, so nothing loads. */
+  onClearSearch: () => void,
+  /** A search has been applied or a term holds text, so Clear search has something to do. */
+  canClearSearch: boolean,
   /** The text terms, on the first row with the Search button. */
   terms: TermField[],
   /** The search's dates, which apply at once. */
@@ -89,13 +93,17 @@ type Props = {
  * pages can't drift apart. Everything is sized by the panel's own width, not the window's.
  */
 export default function SearchPanel({
-  label, layout: forcedLayout, heading, navigation, description, onSearch, canSearch, busy, terms, dates, onDatesChange, includes, refine,
+  label, layout: forcedLayout, heading, navigation, description, onSearch, canSearch, busy, onClearSearch, canClearSearch, terms, dates, onDatesChange, includes, refine,
   moreFilters, moreFilterCount, canClear, onClear, standaloneAction,
 }: Props) {
   // Not saved: a restored tab starts with it closed, and the count says what it holds.
   const [moreOpen, setMoreOpen] = useState(false);
   const moreId = useId();
   const includeId = useId();
+  const firstTermRef = useRef<HTMLInputElement>(null);
+  // Clear search remounts Dates: its own state (Custom picked, typed dates waiting to apply)
+  // would otherwise outlive the reset, since nothing else changes the dates from outside.
+  const [clearCount, setClearCount] = useState(0);
 
   const [ref, tier] = useWidthTier<HTMLFormElement>();
   const desktop = (forcedLayout ?? (tier === "wide" ? "desktop" : "compact")) === "desktop";
@@ -121,9 +129,10 @@ export default function SearchPanel({
         {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
       </Box>}
       <Box sx={{ display: "flex", flexDirection: stacked ? "column" : "row", gap: 1, alignItems: stacked ? "stretch" : "center" }}>
-        {terms.map(term => (
+        {terms.map((term, index) => (
           <TextField
             key={term.id}
+            inputRef={index === 0 ? firstTermRef : undefined}
             size={desktop ? "medium" : "small"}
             id={term.id}
             name={term.id}
@@ -143,6 +152,19 @@ export default function SearchPanel({
         >
           {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
         </Button>
+        <Button
+          type="button"
+          disabled={!canClearSearch}
+          onClick={() => {
+            onClearSearch();
+            setClearCount(count => count + 1);
+            // The button disables itself, so focus goes where the next search starts.
+            firstTermRef.current?.focus();
+          }}
+          sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          Clear search
+        </Button>
       </Box>
       {/* One row while it fits; a group that doesn't fit wraps under the others, so a phone stacks
           them. A rule divides the groups of a row: the first group's falls outside and is clipped.
@@ -153,7 +175,7 @@ export default function SearchPanel({
           display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 1.5,
           ml: theme => `calc(-${theme.spacing(GROUP_PADDING)} - 1px)`,
         }}>
-          <Box sx={groupSx}><DatesField value={dates} onChange={onDatesChange} /></Box>
+          <Box sx={groupSx}><DatesField key={clearCount} value={dates} onChange={onDatesChange} /></Box>
           <FormControl component="fieldset" sx={groupSx}>
             <FormLabel component="legend" id={includeId} sx={{ typography: "subtitle2", color: "text.primary" }}>Include</FormLabel>
             {/* The top margin puts the boxes level with the Dates presets beside them. */}
@@ -175,8 +197,8 @@ export default function SearchPanel({
           >
             More filters{!moreOpen && moreFilterCount > 0 ? ` (${moreFilterCount})` : ""}
           </Button>
-          <Button size="small" sx={{ ml: "auto", order: 1 }} disabled={!canClear} onClick={onClear}>Clear filters</Button>
-          {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", order: stacked ? 2 : 0, minWidth: 0 }}>
+          <Button size="small" disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", ml: "auto", minWidth: 0 }}>
             {standaloneAction}
           </Box>}
         </Box>

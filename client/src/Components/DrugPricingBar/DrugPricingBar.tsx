@@ -79,5 +79,6 @@ export default function DrugPricingBar() {
       </AppBar>
       {/* Room for the fixed app bar at every width. */}
       <Toolbar sx={{ mb: 1 }} />
-    </>);
+    </>
+  );
 }

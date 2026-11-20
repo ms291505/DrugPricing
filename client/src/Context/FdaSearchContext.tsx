@@ -13,6 +13,8 @@ export type FdaSearchContextType = {
   setCriteria: Dispatch<SetStateAction<FdaCriteria>>;
   /** The Search button: applies the form's text terms. */
   search: (fields: FdaTerms) => void;
+  /** Clear search: every field back to a new tab's, so nothing loads. Pins and the tab stay. */
+  clearSearch: () => void;
   /** What the criteria ask for; its dates clip the result. See `useSearchLoad`. */
   requested: FdaLoad | null;
   /** What the query fetches: `requested`, or a wider load that holds it. */
@@ -39,6 +41,7 @@ export const FdaSearchContext = createContext<FdaSearchContextType>({
   criteria: createFdaCriteria(),
   setCriteria: () => { },
   search: () => { },
+  clearSearch: () => { },
   requested: null,
   loaded: null,
   lastSearch: null,
@@ -58,7 +61,7 @@ type ProviderProps = {
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
+  const { criteria, setCriteria, search, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
     initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? DEFAULT_FDA_DETAIL_LEVEL);
 
@@ -72,11 +75,17 @@ export const FdaSearchContextProvider = ({ children, initial, searchEnabled = tr
     setSelectedRows({ type: "include", ids: new Set() });
   }, [fdaResultDetailLevel]);
 
+  const clearSearch = useCallback(() => {
+    clear(createFdaCriteria());
+    setSelectedRows({ type: "include", ids: new Set() });
+  }, [clear]);
+
   return (
     <FdaSearchContext.Provider value={{
       criteria,
       setCriteria,
       search,
+      clearSearch,
       requested,
       loaded,
       lastSearch,

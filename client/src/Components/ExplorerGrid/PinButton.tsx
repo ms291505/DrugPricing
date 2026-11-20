@@ -3,7 +3,7 @@ import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import {
-  createChartItems, withLoadedHistory, type ChartChangeSpan, type ChartOrigin, type ChartType, type ExplorerItemSource,
+  createChartItems, withLoadedDates, type ChartChangeSpan, type ChartOrigin, type ChartType, type ExplorerItemSource,
 } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
 import type { DateWindow } from "../../library/dates";
@@ -14,8 +14,8 @@ type Props = {
   chartType: ChartType,
   /** What the chart draws: the page's result as shown. */
   prices: ChartPrice[],
-  /** The view's `history` at this chart's level: the pin keeps every loaded date of its series. */
-  history: () => ChartPrice[],
+  /** The view's `loadedPrices` at this chart's level: the pin keeps every loaded date of its series. */
+  loadedPrices: () => ChartPrice[],
   origin: ChartOrigin,
   dateWindow: DateWindow,
   changeSpan?: ChartChangeSpan,
@@ -32,12 +32,12 @@ type Props = {
  * Pins a system (auto) chart: copies it into the tab's Pinned section as a frozen snapshot,
  * which then survives new searches and filter changes.
  */
-export default function PinButton({ title, chartType, prices, history, origin, dateWindow, changeSpan, eventDate, colors, barValue, source }: Props) {
+export default function PinButton({ title, chartType, prices, loadedPrices, origin, dateWindow, changeSpan, eventDate, colors, barValue, source }: Props) {
   const { addItems } = usePinActions();
 
   const handlePin = () => {
     const items = createChartItems({
-      chartType, prices: withLoadedHistory(prices, history()), defaultTitle: title, origin, dateWindow, changeSpan, eventDate,
+      chartType, prices: withLoadedDates(prices, loadedPrices()), defaultTitle: title, origin, dateWindow, changeSpan, eventDate,
       colors, barValue, source,
     });
     addItems(items);

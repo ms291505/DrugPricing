@@ -13,7 +13,9 @@ export default memo(function KeptPage({ visible, children }: { visible: boolean,
     window.addEventListener("scroll", remember);
     return () => window.removeEventListener("scroll", remember);
   }, [visible]);
-  return <Box sx={{ gridArea: "1 / 1", minWidth: 0, alignSelf: "start", ...(visible ? {} : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
-    <PageVisibleContext value={visible}>{children}</PageVisibleContext>
-  </Box>;
+  return (
+    <Box sx={{ gridArea: "1 / 1", minWidth: 0, alignSelf: "start", ...(visible ? {} : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
+      <PageVisibleContext value={visible}>{children}</PageVisibleContext>
+    </Box>
+  );
 });

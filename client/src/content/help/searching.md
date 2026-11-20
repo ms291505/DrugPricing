@@ -8,3 +8,5 @@
   search `humira` and `adalimumab`.
 - **Search** becomes available when you edit the terms or can retry after an error. Dates and
   filters apply automatically.
+- **Clear search** empties the search fields and puts the dates and filters back to their
+  defaults, so you can start over. Pinned items stay.

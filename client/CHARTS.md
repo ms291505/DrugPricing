@@ -36,8 +36,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - There is no page-level chart dates control: the search panel's **Dates** decide which prices
   load, and so the window of everything on the page. Auto charts show the result's dates (the
   view's `dateWindow`: the search's, snapped to as-of dates); Chart selected and Pin start new
-  items at them, as fixed dates, with every loaded date of their series (`withLoadedHistory`
-  over the view's `history`). After a narrowing that didn't fetch, more is loaded than shown;
+  items at them, as fixed dates, with every loaded date of their series (`withLoadedDates`
+  over the view's `loadedPrices`). After a narrowing that didn't fetch, more is loaded than shown;
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
   of the search panels (`DatesField`, with a Custom preset).
 - Significant package events are derived over the refined result by `derivePriceEvents` and
@@ -142,8 +142,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 `palette.chart.series` has 10 color-blind-safe colors, each at least 3:1 on the card
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
-so filters never move it. `useSeriesColors` resolves clashes once per page, so every chart on a
-page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
+so filters never move it. `useSeriesColors` resolves clashes once per page and series level
+(inside the page's `ChartSource`), so every chart on a page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
 search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 ## Line charts

@@ -77,7 +77,10 @@ Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearc
 `Charts/` (`LineViz`, `BarViz`, `UnitSplit`, legend, View data), `ExplorerGrid/` (the card system
 both pages share), `ResultTables/` (the NADAC, FDA product and FDA package results tables), plus
 supporting UI. Each search page is its panel (`*SearchPanel`), its results (`*Results`, in a
-`ResultsSection`) and `PinnedSection`. `Collection/` is a proof of concept: a registered tab type
+`ResultsSection`) and `PinnedSection`. A results page's charts read a `ChartSource` (its shown
+prices, loaded prices, origin, colors and dates at one series level; `useNadacChartSource`,
+`useFdaChartSource`). NADAC has one; FDA has two, its detail level and packages, and price
+change lists always take the package one. `Collection/` is a proof of concept: a registered tab type
 the tab creator doesn't offer (see "Workspace redo" in docs/future-work.md).
 
 ### Result tables
@@ -170,10 +173,13 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 - Hidden panes use `content-visibility: hidden` (else `display: none`), all in one grid cell, so
   showing a tab reuses its layout and its charts see no resize. Split layouts would need their
   own grid.
-- A search tab is renamed after its first search while it has its default title (NADAC:
-  `nadacTabTitle` in `library/nadacSearch.ts`). Reading the tab list re-renders a page on every
-  tab change, so only the search panels read it (`useRenameAfterSearch`), and `NadacResults` and
-  `FdaResults` are `memo`'d.
+- A search tab is renamed after each search while its title follows its search: the default, or
+  the title the previous search gave it (`titleFollowsSearch`; NADAC: `nadacTabTitle` in
+  `library/nadacSearch.ts`; FDA: `fdaTabTitle`). Clear search gives such a tab back its default
+  title (`titleAfterClear`); a name the user chose is never replaced. Reading the tab list
+  re-renders a page on every tab change, so only the search panels read it
+  (`useRenameAfterSearch`, `useRestoreTitleAfterClear`), and `NadacResults` and `FdaResults` are
+  `memo`'d.
 
 ### Standalone Search navigation
 
@@ -196,8 +202,9 @@ the active source. Their shared snapshots live in
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action sits beside More filters and Clear filters in
-the search panel, once a search has been run; narrow panels give it its own wrapped row. It renders
+Standalone Search's Add search to workspace action is a borderless button at the right of the
+More filters and Clear filters row, once a search has been run; narrow panels give it its own
+wrapped row. It renders
 inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
 shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
 dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
@@ -234,7 +241,9 @@ depend on write availability read it. The action checks storage's read-only flag
   which:** only the text terms wait for Search, and every other field, Dates included, applies
   at once (typed dates after a short pause).
   Search is disabled while the terms are the search on screen (unless it failed), so it lighting
-  up is the hint to press it. `nextLoad` keeps what's loaded when only the dates narrowed.
+  up is the hint to press it. **Clear search**, beside it, puts every field back to a new tab's
+  (`clearSearch`, `useSearchLoad`'s `clear`), so nothing loads; pins, the tab and FDA's detail
+  level stay. `nextLoad` keeps what's loaded when only the dates narrowed.
   Each page calls its view hook once (`useRefinedNadacSearch`/`useRefinedFdaSearch`) and passes
   the result down: the refined rows (`refineNadac`/`refineFda`), the dates shown, the
   from-results lists' options and the hidden counts. Chart provenance and colors read the loaded
@@ -259,6 +268,10 @@ depend on write availability read it. The action checks storage's read-only flag
 
 ### UI conventions
 
+- **Multi-line JSX goes in parentheses, starting on its own line** (`return (`, `=> (`, `= (`),
+  with the closing `)` under the line that opened it. ESLint enforces it
+  (`@stylistic/jsx-wrap-multilines`), but `--fix` adds the parentheses without reindenting, so
+  indent the block yourself.
 - **Theme:** `src/theme.ts` is the only place a color is written. It names each one once in
   `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
   `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use

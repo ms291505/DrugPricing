@@ -1,22 +1,19 @@
-import { memo, useCallback, useContext, useMemo } from "react";
-import { Alert, Button, Box } from "@mui/material";
+import { memo } from "react";
+import { Box } from "@mui/material";
 import { FdaPackageResultTable, FdaProductResultTable } from "../ResultTables";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
-import useFdaChartOrigin from "../../hooks/useFdaChartOrigin";
-import useSeriesColors from "../../hooks/useSeriesColors";
+import useFdaChartSource from "../../hooks/useFdaChartSource";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { fdaProductsToNadacPrices } from "../../library/fdaDataToNadacPrices";
-import { clearFdaRefine, fdaResultsLabel, fdaRowCount, hiddenResultsHint, showAllFda } from "../../library/searchCriteria";
+import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, revealFda } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
 import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
-import { TryNadacContext } from "../../Context/searchNavigation";
-import { fdaHasPricesInWindow, nadacHandoffTerm } from "../../library/fdaNadacHandoff";
 import DetailLevelSelect from "./DetailLevelSelect";
+import NadacHandoffNotice from "./NadacHandoffNotice";
 
 const ROW_NOUNS: Record<FdaResultDetailLevel, Noun> = {
   product: ["product", "products"],
@@ -33,24 +30,15 @@ type Props = {
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
 export default memo(function FdaResults({ view }: Props) {
-  const onTryNadac = useContext(TryNadacContext);
   const { isLoading, isSuccess, data } = useFdaSearch();
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
-  const { products, dateWindow, hidden, history } = view;
-  const origin = useFdaChartOrigin();
-  const packageOrigin = useFdaChartOrigin("package");
-  // Derived once per result, filter, and level change, not on every render (e.g. each selection).
-  const nadacPrices = useMemo(
-    () => fdaProductsToNadacPrices(products, fdaResultDetailLevel),
-    [products, fdaResultDetailLevel]);
-  const packageNadacPrices = useMemo(() => fdaProductsToNadacPrices(products, "package"), [products]);
-  const colors = useSeriesColors(origin.resultPrices, nadacPrices);
-  const packageColors = useSeriesColors(packageOrigin.resultPrices, packageNadacPrices);
-  const levelHistory = useCallback(() => history(fdaResultDetailLevel), [history, fdaResultDetailLevel]);
-  const packageHistory = useCallback(() => history("package"), [history]);
-  // Scans list packages at every detail level, like Notable price changes.
-  const scans = usePriceChangeScans(packageNadacPrices);
+  const { products, dateWindow, hidden } = view;
+  // The table, Chart selected and live comparisons draw at the detail level; price change lists
+  // and their scans list packages at every level.
+  const levelSource = useFdaChartSource(view, fdaResultDetailLevel);
+  const packageSource = useFdaChartSource(view, "package");
+  const scans = usePriceChangeScans(packageSource.prices);
 
   if (loaded === null) return null;
 
@@ -58,38 +46,30 @@ export default memo(function FdaResults({ view }: Props) {
   const rowCount = fdaRowCount({ products }, fdaResultDetailLevel);
   const hint = isSuccess && rowCount === 0 ? hiddenResultsHint(hidden) : null;
 
-  return (<>
-    <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
-    <ResultsSection
-      searchLabel={fdaResultsLabel(criteria)}
-      toolbar={<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-        <DetailLevelSelect />
-        <ChartSelectedControl
-          prices={nadacPrices} history={levelHistory} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
-        />
-      </Box>}
-      notice={<>
-        {isSuccess && onTryNadac && data && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
-          action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
-          {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
-        </Alert>}
-        {hint
-        ? <HiddenResultsNotice
-          hint={hint}
-          noun={noun}
-          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
-            : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
-        />
-        : null}</>}
-      priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
-        origin={packageOrigin} colors={packageColors} dateWindow={dateWindow}
-        autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
-      table={fdaResultDetailLevel === "product"
-        ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
-        : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
-    >
-      <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow}
-        onScan={scans.runScan} scanMessage={scans.emptyMessage} />
-    </ResultsSection>
-  </>);
+  return (
+    <>
+      <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
+      <ResultsSection
+        searchLabel={fdaResultsLabel(criteria)}
+        toolbar={
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+            <DetailLevelSelect />
+            <ChartSelectedControl source={levelSource} selection={selectedRows} />
+          </Box>
+        }
+        notice={
+          <>
+            <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
+            {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
+          </>
+        }
+        priceChanges={<PriceChangesSection source={packageSource} scans={scans} />}
+        table={fdaResultDetailLevel === "product"
+          ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
+          : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
+      >
+        <AutoCharts source={levelSource} scans={scans} />
+      </ResultsSection>
+    </>
+  );
 });

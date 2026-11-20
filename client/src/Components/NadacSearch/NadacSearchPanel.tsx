@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { NadacOfferContext } from "../../Context/searchNavigation";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch.ts";
-import useRenameAfterSearch from "../../hooks/useRenameAfterSearch.ts";
+import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch.ts";
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
 import {
@@ -30,12 +30,13 @@ type Props = {
  * The NADAC search panel. Description and NDC are a draft that Search applies; every other field,
  * Dates included, writes the applied criteria at once. Search is disabled while the draft is the
  * search on screen, so it lights up when there is something to run. The tab is named after its
- * first search.
+ * search until the user names it (`useRenameAfterSearch`).
  */
 export default function NadacSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
-  const { criteria, setCriteria, search, waiting } = useNadacSearchContext();
+  const { criteria, setCriteria, search, clearSearch, waiting } = useNadacSearchContext();
   const { isLoading, isError, refetch } = useNadacSearch();
   const renameAfterSearch = useRenameAfterSearch();
+  const restoreTitleAfterClear = useRestoreTitleAfterClear();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const offer = useContext(NadacOfferContext);
@@ -67,11 +68,20 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
   const terms = { ndcDescription: ndcDescription.trim(), ndc: searchNdc };
   const changed = terms.ndcDescription !== criteria.ndcDescription || terms.ndc !== criteria.ndc;
 
+  // The title the search on screen gave the tab, which the next search or a clear may replace.
+  const appliedTitle = nadacTabTitle(criteria.ndcDescription, criteria.ndc);
+
   const handleSearch = () => {
     // The search on screen failed: applying the same terms changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(nadacTabTitle(ndcDescription, searchNdc));
+    renameAfterSearch(nadacTabTitle(ndcDescription, searchNdc), appliedTitle);
     search(terms);
+  };
+
+  const handleClearSearch = () => {
+    restoreTitleAfterClear(appliedTitle);
+    setDraft({ ndcDescription: "", ndc: "" });
+    clearSearch();
   };
 
   // Keep dashes: they say which segment of a 4-4-2, 5-3-2, or 5-4-1 code is short.
@@ -88,6 +98,8 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
       onSearch={handleSearch}
       canSearch={isValidNadacSearch(ndcDescription, searchNdc) && (changed || isError)}
       busy={isLoading || waiting}
+      onClearSearch={handleClearSearch}
+      canClearSearch={criteria.ndcDescription !== "" || criteria.ndc !== "" || ndcDescription !== "" || ndc !== ""}
       terms={[
         { id: "ndcDescription", label: "Description", value: ndcDescription, onChange: setNdcDescription, flex: 2 },
         { id: "ndc", label: "NDC", value: ndc, onChange: handleNdcChange },

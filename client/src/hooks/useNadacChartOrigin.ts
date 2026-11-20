@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNadacSearchContext } from "../Context/NadacSearchContext";
 import type { ChartOrigin } from "../library/explorerItems";
 import { nadacSearchLabel } from "../library/searchCriteria";
@@ -13,6 +14,10 @@ const EMPTY: never[] = [];
 export default function useNadacChartOrigin(): ChartOrigin {
   const { criteria } = useNadacSearchContext();
   const { data } = useNadacSearch();
+  const searchLabel = nadacSearchLabel(criteria);
+  const resultPrices = data?.prices ?? EMPTY;
 
-  return { searchSource: "nadac", searchLabel: nadacSearchLabel(criteria), seriesKind: "ndc", resultPrices: data?.prices ?? EMPTY };
+  return useMemo(
+    () => ({ searchSource: "nadac", searchLabel, seriesKind: "ndc", resultPrices }),
+    [searchLabel, resultPrices]);
 }
