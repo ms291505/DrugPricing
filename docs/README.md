@@ -6,9 +6,9 @@ Start with the [project README](../README.md) for setup and architecture, and
 ## Plans and backlog
 
 - [Future work](future-work.md): backlog, established directions and links to detailed plans.
-- [Browser usability](plans/browser-usability.md): decided plan, not yet built, for the app
-  bar and one Search area, results columns, price activity, chart creation and the workspace
-  bridge.
+- [Browser usability](plans/browser-usability.md): implementation record for the app bar and
+  one Search area, results columns, price activity, chart creation and the workspace bridge
+  (stages 1–4).
 - [Browser usability cleanup](plans/browser-usability-cleanup.md): ordered simplifications and
   bug fixes from the 2026-11-19 review of the `browser-usability` merges.
 - [Topic-based Help](plans/help.md): modal-first help, shared topic pages, content migration

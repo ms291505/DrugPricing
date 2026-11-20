@@ -25,7 +25,9 @@ Left out of the plan, to revisit once it ships:
   them out. `LikePattern` now stops `_____` matching everything, which was the minimum's first
   reason; the other is result size, which 5 characters doesn't bound well either ("phate").
   Decide whether a picked suggestion, or 3 characters, may search. Both servers and
-  `library/constants.ts` hold the minimum.
+  `library/constants.ts` hold the minimum. "Block searches for generic terms like "tablet""
+  below moves the minimums into `/api/app-init` and sets the NADAC and FDA name values; decide
+  them together, and whichever lands first updates the other.
 - **Suggest the drug word** ("ELIQUIS") rather than a full strength description, if
   suggestions that narrow to one strength turn out to confuse users.
 - **Narrow one FDA field's suggestions by the other's draft**, if Brand + Generic searches
@@ -76,7 +78,8 @@ response, and its price change list (about 4,000,000 characters) is far over
     `library/constants.ts`. The client deletes its copies, and the AGENTS.md convention
     "Minimum search lengths are duplicated" goes away. The client has no FDA name minimum of its
     own today (`isValidFdaSearch` reuses `MIN_NDC_DESCRIPTION_LENGTH`), so the FDA name gets its
-    own value.
+    own value. The autocomplete follow-up above, "The 5-character search minimum blocks short
+    names", decides the same values; whichever lands first updates the other.
   - The server doesn't enforce the NDC minimum today: `NadacService.ValidateNdc` is never called
     (AGENTS.md, known rough edges). Wire it into `GetWithSearch` in this item, so the served NDC
     rule is one the server keeps.
@@ -221,11 +224,14 @@ top few and "and N more"; View data still has the full table.
 The author would like to show popular searches or recent price movers, linking each to a
 workspace tab (see **Linkable search results**). Two consequences for current structure:
 
-- **Price-change detection is client-only today** (`flagNadacPriceChange.ts`, run on each FDA
-  and NADAC result). A "recent movers" list across all drugs needs it on the server, most likely computed
-  after each NADAC load (ETL or a SQL view) and served by an endpoint. Then client and server
-  must agree on the rule (the 10% threshold, consecutive as-of dates), so give it one written
-  definition before there are two implementations.
+- **Price-change detection is client-only today**, run on each FDA and NADAC result. A "recent
+  movers" list across all drugs needs it on the server, most likely computed after each NADAC
+  load (ETL or a SQL view) and served by an endpoint. Then client and server must agree on the
+  rule, so give it one written definition before there are two implementations. The client's
+  rule is the definition to write down: consecutive as-of dates and `meetsThreshold`, which
+  compares in tenths of a percent (`library/flagNadacPriceChange.ts`); the default
+  `NOTABLE_PRICE_CHANGE_PERCENT` of 10 (`library/constants.ts`); and a change from $0, which
+  meets every threshold and reads "from $0" (`fromZero` in `library/priceActivity.ts`).
 - **"Popular searches" needs search counts,** which nothing records today. That is a server
   addition, and a privacy decision about what gets logged.
 
