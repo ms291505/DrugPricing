@@ -17,6 +17,66 @@ Labeler, dosage form and route fields are out of scope.
 
 Size: medium. One PR, or two (database + server, then client).
 
+### Block searches for generic terms like "tablet" (2026-11-16)
+
+A text search must name a drug. "tablet" passes the 5-character minimum but isn't a drug: as a
+NADAC description it matches about 19,000 packages (18,830 in the dev database), which is a huge
+response, and its price change list (about 4,000,000 characters) is far over
+`PRICE_CHANGE_LIST_PIN_LIMIT`, so pinning it is refused with "Too many packages to pin".
+"metformin tablet" is a real search. Found while sizing pinned lists for
+[price change scans](plans/price-change-scans.md).
+
+- **Rule:** a term is searchable only if at least one of its words is not a generic word. Generic
+  words are dosage forms ("tablet", "capsule", "injection", "solution"), routes ("oral",
+  "topical"), release words ("extended", "release"), salt suffixes ("hcl", "hydrochloride"),
+  units and strengths ("mg", "ml", "10"). So "tablet", "oral tablet" and "tablet 10 mg" are
+  blocked, and "metformin tablet" is allowed.
+- **Salts that are drugs are not generic.** "sodium" (584 packages), "potassium" (456) and
+  "calcium" (285) are among the most common words in NADAC descriptions, and "sodium chloride",
+  "potassium chloride" and "calcium carbonate" are drugs. Only suffix forms count as salt words;
+  those three searches are allowed examples in the shared tests.
+- **Both ends enforce it**, like the minimum lengths:
+  - The client doesn't search. The field shows why ("Add a drug name: "tablet" describes a
+    form, not a drug"), and Search stays disabled. See `library/searchCriteria.ts`,
+    `nadacSearch.ts` and `fdaNadacHandoff.ts`, which check the minimums today.
+  - The server returns 400 for a blocked term, even when an NDC is also given. Today
+    `NadacPriceEndpoints.GetWithSearch` handles a too-short description differently: it blanks
+    it and returns 400 only when description and NDC are both empty, so `ndcDescription=tablet`
+    with an NDC would silently drop "tablet". See `NadacService.ValidateNdcDescription` and
+    `FdaProductService.ValidateNameSearch`, and their callers in `Endpoints/`.
+- **Scope:** NADAC description and the FDA brand and generic name fields. NDC search is not
+  affected.
+- **The server owns every search rule and serves it in `/api/app-init`.**
+  - It builds the generic words from the FDA dosage-form and route names (137 dosage forms,
+    phrases like "TABLET, FILM COATED", split into words), plus a short fixed list of unit,
+    strength, release and salt-suffix words. Those names are already in app-init, unused by the
+    client.
+  - FDA names miss NADAC's own vocabulary. Check the list against word frequencies in
+    `DrugPackages.NdcDescriptionLower`: the most common 5+-letter words include "tablet"
+    (18,829), "capsule" (4,417), "cream" (903), "patch" (629), "drops" (442), "relief" (388) and
+    "allergy" (327). "relief" and "allergy" are OTC marketing words that name no drug and are not
+    FDA dosage forms or routes. Record each word added to the fixed list, and why, beside the
+    list.
+  - Move the length minimums there too: NADAC description, NDC, and FDA name, today's
+    `MIN_*_LENGTH` in `NadacService`, `FdaProductService` and the client's
+    `library/constants.ts`. The client deletes its copies, and the AGENTS.md convention
+    "Minimum search lengths are duplicated" goes away. The client has no FDA name minimum of its
+    own today (`isValidFdaSearch` reuses `MIN_NDC_DESCRIPTION_LENGTH`), so the FDA name gets its
+    own value.
+  - The server doesn't enforce the NDC minimum today: `NadacService.ValidateNdc` is never called
+    (AGENTS.md, known rough edges). Wire it into `GetWithSearch` in this item, so the served NDC
+    rule is one the server keeps.
+  - Add a `searchRules` object to the app-init response. The client checks a term with the same
+    rule as the server (split into words, ignore case and punctuation), with a test on each
+    side for the same examples.
+  - When app-init fails or hasn't loaded yet, the client skips its own checks and sends the
+    search. The server's 400 must then carry the same readable message, shown by
+    `QueryErrorToast`, so no rule needs a client fallback copy.
+- Check the default searches (`server/Data/DefaultSearches.json`), the Help search examples and
+  `reporting/TEST_DRUGS.md` against the rule.
+
+Size: medium. One PR (server, client, Help, AGENTS.md).
+
 ## Cleanups
 
 ### Each a small PR of its own
@@ -31,9 +91,9 @@ Size: medium. One PR, or two (database + server, then client).
   each change. If profiling shows it costs, debounce in `library/persist.ts` (about 500ms) and
   flush on `pagehide` and when the page is hidden, keeping the several-windows guard and the
   failed-write toast working. Left out of the pinned-chart performance PR.
-- **`/api/app-init` returns route and dosage-form names the client never uses.** Either use them
-  (autocomplete in the FDA search form) or drop them from the response. The client uses only the
-  date range.
+- **`/api/app-init` returns route and dosage-form names the client never uses.** The generic-term
+  blocking item (Decided) replaces them with `searchRules`, built from those names. Until then the
+  client uses only the date range.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
   unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this

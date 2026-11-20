@@ -9,11 +9,15 @@ Start with the [project README](../README.md) for setup and architecture, and
 - [Browser usability](plans/browser-usability.md): decided plan, not yet built, for the app
   bar and one Search area, results columns, price activity, chart creation and the workspace
   bridge.
+- [Browser usability cleanup](plans/browser-usability-cleanup.md): ordered simplifications and
+  bug fixes from the 2026-11-19 review of the `browser-usability` merges.
 - [Topic-based Help](plans/help.md): modal-first help, shared topic pages, content migration
   and implementation record.
 - [Search filters](plans/search-filters.md): design and implementation record for the shared
   search criteria and filtering experience.
 - [Autocomplete](plans/autocomplete.md): planned search suggestions and spelling corrections.
+- [Price change scans](plans/price-change-scans.md): implementation record for percent scans of
+  package price changes, closable and pinnable event lists.
 - [Observability](plans/observability.md): proposed self-hosted monitoring.
 
 ## Reviews and content
