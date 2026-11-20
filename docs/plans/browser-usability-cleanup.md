@@ -1,5 +1,10 @@
 # Browser usability cleanup
 
+Status: steps 1–2 done in #57. #59 (price change scans) has since reworked the price changes
+components, so step 3's line numbers are stale. `eventKey` now has a single copy, private to
+`Components/ResultsSection/PriceChangeListBody.tsx`; moving it to `library/priceActivity.ts`
+with a test is still to do.
+
 ## Context
 
 The merges into `browser-usability` (#32 through #56: about 3,300 lines of code across 108

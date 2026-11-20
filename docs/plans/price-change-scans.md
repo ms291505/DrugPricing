@@ -1,6 +1,7 @@
 # Price-change scans and pinned event lists
 
-Status: revised after user review (2026-11-16). Implement only when the user asks.
+Status: implemented (2026-11-20): steps 1–2 in #58, steps 3–7 in #59. The plan predates #57, so
+where it names code, those PRs follow the code instead; their descriptions list each departure.
 
 Work the steps in order. Each step names its files and ends with what must be true. Run
 `npm run lint` and `npm test` in `client/` after every step; both must pass before the next.
