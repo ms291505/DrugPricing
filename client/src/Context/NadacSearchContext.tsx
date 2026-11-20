@@ -1,4 +1,4 @@
-import { type Dispatch, type ReactNode, type SetStateAction, createContext, useContext, useState } from "react"
+import { type Dispatch, type ReactNode, type SetStateAction, createContext, useCallback, useContext, useState } from "react"
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import {
   applyNadacSearch, createNadacCriteria, nadacLoadRequest,
@@ -12,6 +12,8 @@ type NadacSearchContextType = {
   setCriteria: Dispatch<SetStateAction<NadacCriteria>>;
   /** The Search button: applies the form's text terms. */
   search: (fields: NadacTerms) => void;
+  /** Clear search: every field back to a new tab's, so nothing loads. Pins and the tab stay. */
+  clearSearch: () => void;
   /** What the criteria ask for; its dates clip the result. See `useSearchLoad`. */
   requested: NadacLoad | null;
   /** What the query fetches: `requested`, or a wider load that holds it. */
@@ -30,6 +32,7 @@ export const NadacSearchContext = createContext<NadacSearchContextType>({
   criteria: createNadacCriteria(),
   setCriteria: () => { },
   search: () => { },
+  clearSearch: () => { },
   requested: null,
   loaded: null,
   lastSearch: null,
@@ -56,14 +59,19 @@ type ProviderProps = {
  */
 export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
-  const { criteria, setCriteria, search, requested, loaded, lastSearch, waiting } = useSearchLoad(
+  const { criteria, setCriteria, search, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
     initial?.criteria ?? createNadacCriteria(), nadacLoadRequest, applyNadacSearch);
+  const clearSearch = useCallback(() => {
+    clear(createNadacCriteria());
+    setSelectedRows({ type: "include", ids: new Set() });
+  }, [clear]);
 
   return (
     <NadacSearchContext.Provider value={{
       criteria,
       setCriteria,
       search,
+      clearSearch,
       requested,
       loaded,
       lastSearch,

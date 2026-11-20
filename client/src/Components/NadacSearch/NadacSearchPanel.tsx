@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { NadacOfferContext } from "../../Context/searchNavigation";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch.ts";
-import useRenameAfterSearch from "../../hooks/useRenameAfterSearch.ts";
+import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch.ts";
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
 import {
@@ -33,9 +33,10 @@ type Props = {
  * first search.
  */
 export default function NadacSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
-  const { criteria, setCriteria, search, waiting } = useNadacSearchContext();
+  const { criteria, setCriteria, search, clearSearch, waiting } = useNadacSearchContext();
   const { isLoading, isError, refetch } = useNadacSearch();
   const renameAfterSearch = useRenameAfterSearch();
+  const restoreTitleAfterClear = useRestoreTitleAfterClear();
 
   // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const offer = useContext(NadacOfferContext);
@@ -74,6 +75,12 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
     search(terms);
   };
 
+  const handleClearSearch = () => {
+    restoreTitleAfterClear(nadacTabTitle(criteria.ndcDescription, criteria.ndc));
+    setDraft({ ndcDescription: "", ndc: "" });
+    clearSearch();
+  };
+
   // Keep dashes: they say which segment of a 4-4-2, 5-3-2, or 5-4-1 code is short.
   const handleNdcChange = (text: string) => setNdc(text.replace(/[^\d-]/g, ""));
 
@@ -88,6 +95,8 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
       onSearch={handleSearch}
       canSearch={isValidNadacSearch(ndcDescription, searchNdc) && (changed || isError)}
       busy={isLoading || waiting}
+      onClearSearch={handleClearSearch}
+      canClearSearch={criteria.ndcDescription !== "" || criteria.ndc !== "" || ndcDescription !== "" || ndc !== ""}
       terms={[
         { id: "ndcDescription", label: "Description", value: ndcDescription, onChange: setNdcDescription, flex: 2 },
         { id: "ndc", label: "NDC", value: ndc, onChange: handleNdcChange },

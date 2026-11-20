@@ -23,6 +23,8 @@ const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringi
  *   (`useNewSearchResult`). Null until then, so a restored tab's re-run doesn't count as a new
  *   result, and neither does a change of dates.
  * - `waiting`, true while a Search waits for app-init.
+ * - `clear`, Clear search: the criteria become `empty` (a new tab's), so nothing loads, and the
+ *   next Search counts as new even for the same terms.
  */
 export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
   initial: C,
@@ -63,5 +65,11 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
     setLastSearch(loadRequest(next, lastAsOfDate));
   }, [applySearch, criteria, lastAsOfDate, loadRequest]);
 
-  return { criteria, setCriteria, search, requested, loaded, lastSearch, waiting };
+  const clear = useCallback((empty: C) => {
+    setCriteria(empty);
+    setLastSearch(null);
+    setWaiting(false);
+  }, []);
+
+  return { criteria, setCriteria, search, clear, requested, loaded, lastSearch, waiting };
 }

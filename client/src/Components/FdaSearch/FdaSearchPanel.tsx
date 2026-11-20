@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
-import useRenameAfterSearch from "../../hooks/useRenameAfterSearch";
+import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch";
 import {
-  clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, fdaSearchLabel, isValidFdaSearch,
+  clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, fdaTabTitle, isValidFdaSearch,
   type FdaExclusionKey,
 } from "../../library/searchCriteria";
 import { includeLabel } from "../../library/searchToasts";
@@ -35,9 +35,10 @@ type Props = {
  * search.
  */
 export default function FdaSearchPanel({ view, layout, navigation, standaloneAction }: Props) {
-  const { criteria, setCriteria, search, waiting } = useFdaSearchContext();
+  const { criteria, setCriteria, search, clearSearch, waiting } = useFdaSearchContext();
   const { isLoading, isError, refetch } = useFdaSearch();
   const renameAfterSearch = useRenameAfterSearch();
+  const restoreTitleAfterClear = useRestoreTitleAfterClear();
 
   // A restored tab shows the search it re-ran.
   const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
@@ -49,8 +50,16 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const handleSearch = () => {
     // The search on screen failed: applying the same name changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(fdaSearchLabel(terms).toUpperCase());
+    renameAfterSearch(fdaTabTitle(terms));
     search(terms);
+  };
+
+  const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "";
+  const handleClearSearch = () => {
+    restoreTitleAfterClear(applied ? fdaTabTitle(criteria) : null);
+    setProprietaryName("");
+    setNonProprietaryName("");
+    clearSearch();
   };
 
   return (
@@ -64,6 +73,8 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       onSearch={handleSearch}
       canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
+      onClearSearch={handleClearSearch}
+      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== ""}
       terms={[
         { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Lipitor", value: proprietaryName, onChange: setProprietaryName },
         { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. atorvastatin", value: nonProprietaryName, onChange: setNonProprietaryName },
