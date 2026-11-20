@@ -53,8 +53,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   group key, since lists at different percents share group keys). Each list card measures its own
   width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
   groups by date, pricing unit and direction, and shows five groups before Show all. Each group's
-  Package details is a small table (NDC, was, now, change), open by default from the card's own `md`
-  width up; a group the user opens or closes stays so while the page is mounted. Each package row
+  Package details is a small table (NDC, was, now, change), open by default at every card width.
+  A group the user opens or closes stays so while the page is mounted. Each package row
   has a single-series Chart this change line-chart button. It toggles that change's unpinned
   `EventChangeChart` over the page's shown dates. Charts are keyed by event key with one
   section-level id, so the same change charted from two lists is one chart and both buttons show it

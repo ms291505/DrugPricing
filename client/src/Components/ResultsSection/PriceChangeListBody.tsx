@@ -14,7 +14,7 @@ const captionSx = { display: "block", color: "text.secondary", typography: "capt
 
 export type PriceChangeListBodyProps = {
   groups: PriceEventGroup[],
-  /** The card's own width tier: Package details start open when wide, and amounts fold when narrow. */
+  /** The card's own width tier determines whether amounts fold under percentages. */
   widthTier: WidthTier,
   /** The user's own open/close of each group's Package details, by `detailsKeyPrefix` + group key. */
   detailsChoice: ReadonlyMap<string, boolean>,
@@ -32,16 +32,20 @@ export type PriceChangeListBodyProps = {
  * Package details and each package's Chart this change button. Shared by the result cards and
  * pinned lists, whose owners keep the open charts.
  */
-export default function PriceChangeListBody({ groups, widthTier, detailsChoice, detailsKeyPrefix, ...rowProps }: PriceChangeListBodyProps) {
+export default function PriceChangeListBody({
+  groups, widthTier, detailsChoice, detailsKeyPrefix, onDetailsToggle, ...rowProps
+}: PriceChangeListBodyProps) {
   const [showAllGroups, setShowAllGroups] = useState(false);
   const listId = useId();
-  const defaultOpen = widthTier === "wide";
   const compact = widthTier === "narrow";
   return <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
     <Box id={listId} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {(showAllGroups ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group =>
-        <PriceEventGroupRow key={group.key} group={group} compact={compact} detailsKey={detailsKeyPrefix + group.key}
-          detailsOpen={detailsChoice.get(detailsKeyPrefix + group.key) ?? defaultOpen} {...rowProps} />)}
+      {(showAllGroups ? groups : groups.slice(0, PRICE_CHANGE_GROUP_LIMIT)).map(group => {
+        const detailsKey = detailsKeyPrefix + group.key;
+        return <PriceEventGroupRow key={group.key} group={group} compact={compact}
+          detailsOpen={detailsChoice.get(detailsKey) ?? true}
+          onDetailsToggle={open => onDetailsToggle(detailsKey, open)} {...rowProps} />;
+      })}
     </Box>
     {groups.length > PRICE_CHANGE_GROUP_LIMIT && <Button size="small" sx={{ alignSelf: "flex-start" }}
       aria-expanded={showAllGroups} aria-controls={listId}
@@ -56,13 +60,13 @@ export default function PriceChangeListBody({ groups, widthTier, detailsChoice, 
  * package (NDC, old and new price, the change). The label gives the date, unit and direction, so
  * rows repeat none of them.
  */
-function PriceEventGroupRow({ group, compact, detailsKey, detailsOpen, onDetailsToggle, openCharts, onToggleChart, onRegisterButton }:
-  Omit<PriceChangeListBodyProps, "groups" | "widthTier" | "detailsChoice" | "detailsKeyPrefix"> & {
+function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, openCharts, onToggleChart, onRegisterButton }:
+  Pick<PriceChangeListBodyProps, "openCharts" | "onToggleChart" | "onRegisterButton"> & {
     group: PriceEventGroup,
     /** Narrow: the amount folds under the percent. */
     compact: boolean,
-    detailsKey: string,
     detailsOpen: boolean,
+    onDetailsToggle: (open: boolean) => void,
   }) {
   const [showAll, setShowAll] = useState(false);
   const tableId = useId();
@@ -74,10 +78,10 @@ function PriceEventGroupRow({ group, compact, detailsKey, detailsOpen, onDetails
   return <Box sx={{ width: "100%", borderBottom: 1, borderColor: "divider", py: 1, display: "flex", flexDirection: "column", gap: 0.5, minWidth: 0 }}>
     <Typography variant="subtitle2" component="p">{label}</Typography>
     <Box component="details" open={detailsOpen}
-      // A toggle React caused (the default changed) leaves `open` as rendered; only the user's differs.
+      // Ignore toggle events that match the rendered state.
       onToggle={(event: SyntheticEvent<HTMLDetailsElement>) => {
         const now = event.currentTarget.open;
-        if (now !== detailsOpen) onDetailsToggle(detailsKey, now);
+        if (now !== detailsOpen) onDetailsToggle(now);
       }}
       sx={{ fontSize: "0.875rem", color: "text.secondary", maxWidth: "100%", "& > summary": { cursor: "pointer", width: "fit-content" } }}>
       <summary>Package details</summary>

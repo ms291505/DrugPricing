@@ -50,7 +50,7 @@ export default function PriceChangesSection({
 }: Props) {
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
-  // loading state has no groups, which unmounts the card). Untouched groups follow the width.
+  // loading state has no groups, which unmounts the card).
   const [detailsChoice, setDetailsChoice] = useState<ReadonlyMap<string, boolean>>(new Map());
   const onDetailsToggle = useCallback((key: string, open: boolean) =>
     setDetailsChoice(prev => new Map(prev).set(key, open)), []);
