@@ -144,7 +144,7 @@ describe("scan thresholds", () => {
   });
   it("accepts a percent of at least 5 with at most one decimal", () => {
     expect(["5", "7.5", "150", " 10 "].map(parseScanThreshold)).toEqual([{ percent: 5 }, { percent: 7.5 }, { percent: 150 }, { percent: 10 }]);
-    for (const text of ["", "abc", "0", "-5", "4.9", "7.55", "Infinity", "1e2", "7."])
+    for (const text of ["", "abc", "0", "-5", "4.9", "7.55", "Infinity", "1".repeat(400), "1e2", "7."])
       expect(parseScanThreshold(text)).toEqual({ error: "Enter a percent of 5 or more, with at most one decimal." });
   });
 });

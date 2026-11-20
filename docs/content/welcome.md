@@ -82,7 +82,7 @@ NADAC is; the page doesn't explain it, but links to the explanation.
   Pinning and comparing → `pinning-and-comparing`, Which search to use →
   `which-search-to-use`, What is NADAC? → `nadac`. Open them with `openHelp(id)`.
 - "Pin one and it stays as it is" must still be true after Stage 3 of the usability plan
-  (selected rows pin directly; live comparison cards are live until pinned).
+  (selected rows pin directly; comparison cards are live until pinned).
 
 **Source:** `OnBoarding.tsx`, `About.tsx`, the Welcome and "Which search to use" pages of
 [help.md](help.md), and the usability plan's Stage 1 decisions.

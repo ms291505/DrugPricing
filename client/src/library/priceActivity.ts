@@ -2,7 +2,7 @@ import { formatDate } from "./dates";
 import { fittedPriceAxis, formatPrice } from "./chartScale";
 import { flagPriceChanges, type PackagePrices } from "./flagNadacPriceChange";
 import { pricingUnitLabel, seriesByDate, splitByPricingUnit } from "./prices";
-import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
+import { NOTABLE_PRICE_CHANGE_PERCENT, PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import type { ChartPrice, NadacPriceChange } from "./types";
 import type { SeriesKind } from "./explorerItems";
 
@@ -32,7 +32,7 @@ export type PriceEventGroup = {
  * Package changes of at least `thresholdPercent`. Compare packages, never product averages.
  * Legacy product pins lack package identity.
  */
-export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind, thresholdPercent = 10): PriceEvent[] {
+export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind, thresholdPercent = NOTABLE_PRICE_CHANGE_PERCENT): PriceEvent[] {
   const packages = new Map<string, { seriesNdc: string, packageNdc: string, prices: ChartPrice[] }>();
   for (const price of prices) {
     if (kind === "product" && !price.packageNdc) continue;
@@ -118,7 +118,8 @@ export function parseScanThreshold(text: string): { percent: number } | { error:
   const trimmed = text.trim();
   if (!/^\d+(\.\d)?$/.test(trimmed)) return { error: SCAN_THRESHOLD_ERROR };
   const percent = Number(trimmed);
-  return percent >= PRICE_CHANGE_SCAN_MIN_PERCENT ? { percent } : { error: SCAN_THRESHOLD_ERROR };
+  // 309 or more digits pass the pattern but are Infinity.
+  return Number.isFinite(percent) && percent >= PRICE_CHANGE_SCAN_MIN_PERCENT ? { percent } : { error: SCAN_THRESHOLD_ERROR };
 }
 
 export type PriceActivity = {

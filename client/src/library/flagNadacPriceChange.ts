@@ -1,3 +1,4 @@
+import { NOTABLE_PRICE_CHANGE_PERCENT } from "./constants";
 import { splitByPricingUnit, seriesByDate } from "./prices";
 import type { ChartPrice, FdaProductDetail, NadacPriceChange, PackagePriceChange } from "./types";
 
@@ -51,7 +52,7 @@ function flagPackagePriceChanges(prices: ChartPrice[], thresholdPercent: number)
 }
 
 /** Flags each package's price changes of at least `thresholdPercent` against its own prices. Both search pages use it. */
-export function flagPriceChanges(packages: PackagePrices[], thresholdPercent: number = 10): PackagePriceChange[] {
+export function flagPriceChanges(packages: PackagePrices[], thresholdPercent: number = NOTABLE_PRICE_CHANGE_PERCENT): PackagePriceChange[] {
   return packages.flatMap(({ packageNdc, prices }) => {
     if (new Set(prices.map(price => price.ndc)).size > 1) throw new Error("Tried to flag prices from different drug packages.");
     return splitByPricingUnit(prices).flatMap(group => {
