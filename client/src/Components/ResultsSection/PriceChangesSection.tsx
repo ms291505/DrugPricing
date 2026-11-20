@@ -145,16 +145,22 @@ export default function PriceChangesSection({
     onToggleChart: toggleChart, onRegisterButton: registerButton, onRegisterHeading: registerHeading,
     onClose: closeList, onRemovedWithFocus: onListRemovedWithFocus,
   };
-  return <>
-    {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
-      thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" focusOnMount={false} {...listProps} />}
-    {scans.map(scan => <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
-      thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />)}
-    {[...charts.values()].map(chart => <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
-      <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
-        onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
-    </Grid>)}
-  </>;
+  return (
+    <>
+      {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
+        thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" focusOnMount={false} {...listProps} />}
+      {scans.map(scan => (
+        <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
+          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />
+      ))}
+      {[...charts.values()].map(chart => (
+        <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
+          <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
+            onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
+        </Grid>
+      ))}
+    </>
+  );
 }
 
 /** One list's result card: Notable price changes or a scan. It can be pinned and closed. */
@@ -217,19 +223,21 @@ function PriceChangeListCard({
     toast.success(`Pinned "${defaultTitle}"`);
   };
 
-  return <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
-    <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
-      actions={<>
-        <Tooltip title="Pin a copy to this tab">
-          <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
-        </Tooltip>
-        <Button size="small" aria-label={`Close ${title}`}
-          onClick={event => { event.currentTarget.focus(); onClose(listId); }}>Close</Button>
-      </>}>
-      <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
-        onDetailsToggle={onDetailsToggle} openCharts={charts}
-        onToggleChart={(key, group, event) => onToggleChart(listId, key, group, event)}
-        onRegisterButton={(key, button) => onRegisterButton(listId, key, button)} />
-    </ExplorerGridItem>
-  </Grid>;
+  return (
+    <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
+      <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
+        actions={<>
+          <Tooltip title="Pin a copy to this tab">
+            <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
+          </Tooltip>
+          <Button size="small" aria-label={`Close ${title}`}
+            onClick={event => { event.currentTarget.focus(); onClose(listId); }}>Close</Button>
+        </>}>
+        <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
+          onDetailsToggle={onDetailsToggle} openCharts={charts}
+          onToggleChart={(key, group, event) => onToggleChart(listId, key, group, event)}
+          onRegisterButton={(key, button) => onRegisterButton(listId, key, button)} />
+      </ExplorerGridItem>
+    </Grid>
+  );
 }

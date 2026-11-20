@@ -259,6 +259,10 @@ depend on write availability read it. The action checks storage's read-only flag
 
 ### UI conventions
 
+- **Multi-line JSX goes in parentheses, starting on its own line** (`return (`, `=> (`, `= (`),
+  with the closing `)` under the line that opened it. ESLint enforces it
+  (`@stylistic/jsx-wrap-multilines`), but `--fix` adds the parentheses without reindenting, so
+  indent the block yourself.
 - **Theme:** `src/theme.ts` is the only place a color is written. It names each one once in
   `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
   `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use

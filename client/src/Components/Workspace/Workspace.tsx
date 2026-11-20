@@ -27,14 +27,14 @@ export default function Workspace({ onScreen }: { onScreen: boolean }) {
           }}
         >
           {
-            tabs.map(tab =>
+            tabs.map(tab => (
               <TabInstance
                 key={tab.id}
                 visible={paneAssignment.includes(tab.id)}
                 onScreen={onScreen && paneAssignment.includes(tab.id)}
                 workspaceTab={tab}
               />
-            )
+            ))
           }
         </Box>
       </Box>

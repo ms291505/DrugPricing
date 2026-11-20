@@ -22,12 +22,14 @@ export default function NadacSearch({ panelLayout, searchNavigation, standaloneA
   // The result as the page shows it, computed once here and passed down.
   const view = useRefinedNadacSearch();
 
-  return (<>
-    <QueryErrorToast error={error} />
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, width: "100%" }}>
-      <NadacSearchPanel view={view} layout={panelLayout} navigation={searchNavigation} standaloneAction={standaloneAction} />
-      <NadacResults view={view} />
-      {pinnedSection}
-    </Box>
-  </>);
+  return (
+    <>
+      <QueryErrorToast error={error} />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, width: "100%" }}>
+        <NadacSearchPanel view={view} layout={panelLayout} navigation={searchNavigation} standaloneAction={standaloneAction} />
+        <NadacResults view={view} />
+        {pinnedSection}
+      </Box>
+    </>
+  );
 }

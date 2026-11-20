@@ -28,10 +28,12 @@ export default function PinnedPriceChangeList({ item, openCharts, onToggleChart,
   const [detailsChoice, setDetailsChoice] = useState<ReadonlyMap<string, boolean>>(new Map());
   const onDetailsToggle = useCallback((key: string, open: boolean) =>
     setDetailsChoice(prev => new Map(prev).set(key, open)), []);
-  return <Box ref={ref} sx={{ minWidth: 0 }}>
-    <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix=""
-      onDetailsToggle={onDetailsToggle} openCharts={openCharts}
-      onToggleChart={(key, group, event) => onToggleChart(item, key, group, event)}
-      onRegisterButton={(key, button) => onRegisterButton(item.id, key, button)} />
-  </Box>;
+  return (
+    <Box ref={ref} sx={{ minWidth: 0 }}>
+      <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix=""
+        onDetailsToggle={onDetailsToggle} openCharts={openCharts}
+        onToggleChart={(key, group, event) => onToggleChart(item, key, group, event)}
+        onRegisterButton={(key, button) => onRegisterButton(item.id, key, button)} />
+    </Box>
+  );
 }

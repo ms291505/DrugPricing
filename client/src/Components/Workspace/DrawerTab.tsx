@@ -71,112 +71,114 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
     alignSelf: "stretch",
   };
 
-  return (<>
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        color: "text.primary",
-        // While its menu is open the row looks hovered, so the menu reads as this tab's.
-        backgroundColor: selected ? "action.selected" : open ? "action.hover" : "transparent",
-        "@media (hover: hover)": {
-          "&:hover": {
-            backgroundColor: selected ? "action.selected" : "action.hover",
+  return (
+    <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          color: "text.primary",
+          // While its menu is open the row looks hovered, so the menu reads as this tab's.
+          backgroundColor: selected ? "action.selected" : open ? "action.hover" : "transparent",
+          "@media (hover: hover)": {
+            "&:hover": {
+              backgroundColor: selected ? "action.selected" : "action.hover",
+            },
+            "&:hover .tab-menu-icon": {
+              opacity: 1,
+            },
           },
-          "&:hover .tab-menu-icon": {
+          // Keyboard focus shows the menu button too, e.g. when a rename returns focus to it.
+          "& .tab-menu-icon.Mui-focusVisible": {
             opacity: 1,
           },
-        },
-        // Keyboard focus shows the menu button too, e.g. when a rename returns focus to it.
-        "& .tab-menu-icon.Mui-focusVisible": {
-          opacity: 1,
-        },
-      }}
-    >
-      {/* While renaming, the row is no button: a text field inside a `role="button"` isn't
-          announced as one, and a tap in it would start the row's ripple. */}
-      {!tabRename.active
-        ? <ButtonBase
-          component="div"
-          focusRipple
-          onClick={handleTabClick}
-          data-tab-id={tab.id}
-          sx={labelSx}
-        >
-          <SearchTypeChip tabType={tab.type} />
-          <Box
-            sx={{
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-              textAlign: "left",
-              flexGrow: 1
-            }}
-          >
-            {tab.title}
-          </Box>
-        </ButtonBase>
-        : <Box sx={labelSx}>
-          <SearchTypeChip tabType={tab.type} />
-          <TextField
-            slotProps={{
-              htmlInput: {
-                "aria-label": "Tab name"
-              }
-            }}
-            value={tabRename.draft}
-            onChange={(e) => {
-              tabRename.setDraft(e.target.value);
-            }}
-            onBlur={tabRename.commit}
-            onKeyDown={tabRename.onKeyDown}
-            variant="standard"
-            inputRef={tabRename.inputRef}
-            sx={{ flexGrow: 1 }}
-          />
-        </Box>
-      }
-      <IconButton
-        ref={returnFocusRef}
-        className="tab-menu-icon"
-        id={buttonId}
-        aria-label={`Options for ${tab.title}`}
-        aria-haspopup="menu"
-        aria-controls={open ? menuId : undefined}
-        aria-expanded={open}
-        sx={{
-          // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
-          opacity: open ? 1 : 0,
-          transition: "opacity 0.15s",
-          borderRadius: 1,
         }}
-        onClick={handleClick}
       >
-        <MoreVertIcon fontSize="small" />
-      </IconButton>
-    </Box>
+        {/* While renaming, the row is no button: a text field inside a `role="button"` isn't
+            announced as one, and a tap in it would start the row's ripple. */}
+        {!tabRename.active
+          ? <ButtonBase
+            component="div"
+            focusRipple
+            onClick={handleTabClick}
+            data-tab-id={tab.id}
+            sx={labelSx}
+          >
+            <SearchTypeChip tabType={tab.type} />
+            <Box
+              sx={{
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+                textAlign: "left",
+                flexGrow: 1
+              }}
+            >
+              {tab.title}
+            </Box>
+          </ButtonBase>
+          : <Box sx={labelSx}>
+            <SearchTypeChip tabType={tab.type} />
+            <TextField
+              slotProps={{
+                htmlInput: {
+                  "aria-label": "Tab name"
+                }
+              }}
+              value={tabRename.draft}
+              onChange={(e) => {
+                tabRename.setDraft(e.target.value);
+              }}
+              onBlur={tabRename.commit}
+              onKeyDown={tabRename.onKeyDown}
+              variant="standard"
+              inputRef={tabRename.inputRef}
+              sx={{ flexGrow: 1 }}
+            />
+          </Box>
+        }
+        <IconButton
+          ref={returnFocusRef}
+          className="tab-menu-icon"
+          id={buttonId}
+          aria-label={`Options for ${tab.title}`}
+          aria-haspopup="menu"
+          aria-controls={open ? menuId : undefined}
+          aria-expanded={open}
+          sx={{
+            // Shown on hover; the phone drawer (WorkspaceDrawer) always shows it.
+            opacity: open ? 1 : 0,
+            transition: "opacity 0.15s",
+            borderRadius: 1,
+          }}
+          onClick={handleClick}
+        >
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+      </Box>
 
-    <Menu
-      id={menuId}
-      anchorEl={anchorEl}
-      open={open}
-      onClose={handleCloseMenu}
-      anchorOrigin={beside ? { vertical: "top", horizontal: "right" } : { vertical: "bottom", horizontal: "right" }}
-      transformOrigin={beside ? { vertical: "top", horizontal: "left" } : { vertical: "top", horizontal: "right" }}
-      slotProps={{
-        list: { "aria-labelledby": buttonId },
-        // A gap from the button, like the search dates' popover.
-        paper: { sx: { minWidth: 160, ...(beside ? { ml: 0.5 } : { mt: 0.5 }) } },
-      }}
-    >
-      <MenuItem onClick={onClickRename}>
-        <ListItemIcon><DriveFileRenameOutlineIcon fontSize="small" /></ListItemIcon>
-        <ListItemText>Rename</ListItemText>
-      </MenuItem>
-      <MenuItem onClick={handleCloseTab}>
-        <ListItemIcon><CloseIcon fontSize="small" /></ListItemIcon>
-        <ListItemText>Close tab</ListItemText>
-      </MenuItem>
-    </Menu>
-  </>)
+      <Menu
+        id={menuId}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleCloseMenu}
+        anchorOrigin={beside ? { vertical: "top", horizontal: "right" } : { vertical: "bottom", horizontal: "right" }}
+        transformOrigin={beside ? { vertical: "top", horizontal: "left" } : { vertical: "top", horizontal: "right" }}
+        slotProps={{
+          list: { "aria-labelledby": buttonId },
+          // A gap from the button, like the search dates' popover.
+          paper: { sx: { minWidth: 160, ...(beside ? { ml: 0.5 } : { mt: 0.5 }) } },
+        }}
+      >
+        <MenuItem onClick={onClickRename}>
+          <ListItemIcon><DriveFileRenameOutlineIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Rename</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleCloseTab}>
+          <ListItemIcon><CloseIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Close tab</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
+  )
 });

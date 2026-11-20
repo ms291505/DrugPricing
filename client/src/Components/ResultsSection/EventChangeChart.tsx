@@ -58,13 +58,15 @@ export default memo(function EventChangeChart({ chart, origin, colors, dateWindo
       queueMicrotask(() => { if (!box.isConnected) onRemovedWithFocus(chart); });
     };
   }, [chart, onRemovedWithFocus]);
-  return <Box ref={boxRef} id={chart.cardId} sx={{ minWidth: 0 }}>
-    <ExplorerGridItem title={chart.title} headingLevel={3} headingRef={headingRef}
-      actions={<><PinButton title={chart.title} chartType="line" prices={chart.prices} history={() => chart.prices}
-        origin={origin} colors={colors} dateWindow={dateWindow} eventDate={chart.eventDate} source={source} />
-        <Button size="small" onClick={event => { event.currentTarget.focus(); onClose(chart.key); }}>Close</Button></>}>
-      <LineViz nadacPrices={chart.prices} title={chart.title} colors={colors} dateWindow={dateWindow} seriesKind="package"
-        eventDate={chart.eventDate} />
-    </ExplorerGridItem>
-  </Box>;
+  return (
+    <Box ref={boxRef} id={chart.cardId} sx={{ minWidth: 0 }}>
+      <ExplorerGridItem title={chart.title} headingLevel={3} headingRef={headingRef}
+        actions={<><PinButton title={chart.title} chartType="line" prices={chart.prices} history={() => chart.prices}
+          origin={origin} colors={colors} dateWindow={dateWindow} eventDate={chart.eventDate} source={source} />
+          <Button size="small" onClick={event => { event.currentTarget.focus(); onClose(chart.key); }}>Close</Button></>}>
+        <LineViz nadacPrices={chart.prices} title={chart.title} colors={colors} dateWindow={dateWindow} seriesKind="package"
+          eventDate={chart.eventDate} />
+      </ExplorerGridItem>
+    </Box>
+  );
 });

@@ -55,19 +55,27 @@ function AppContent() {
   const isHelp = pathname === "/help" || pathname.startsWith("/help/");
   const [enteredApp, setEnteredApp] = useState(!isHelp);
   if (!isHelp && !enteredApp) setEnteredApp(true);
-  if (!enteredApp) return <>
-    <DrugPricingBar />
-    <GlobalModal />
-    <HelpRoutes />
-  </>;
-  return <WorkspaceContextProvider><AppShell /></WorkspaceContextProvider>;
+  if (!enteredApp) return (
+    <>
+      <DrugPricingBar />
+      <GlobalModal />
+      <HelpRoutes />
+    </>
+  );
+  return (
+    <WorkspaceContextProvider>
+      <AppShell />
+    </WorkspaceContextProvider>
+  );
 }
 
 function HelpRoutes() {
-  return <Routes>
-    <Route path="/help/:topic?" element={<Container maxWidth="sm" sx={{ py: 3 }}><HelpContent standalone /></Container>} />
-    <Route path="/help/*" element={<Navigate to="/help" replace />} />
-  </Routes>;
+  return (
+    <Routes>
+      <Route path="/help/:topic?" element={<Container maxWidth="sm" sx={{ py: 3 }}><HelpContent standalone /></Container>} />
+      <Route path="/help/*" element={<Navigate to="/help" replace />} />
+    </Routes>
+  );
 }
 
 /** The theme for the Settings color mode. */
@@ -111,28 +119,30 @@ function AppShell() {
   const isWorkspace = useMatch("/workspace") !== null;
   const workspace = useMemo(() => <Workspace onScreen={isWorkspace} />, [isWorkspace]);
 
-  return <Container maxWidth="xl" sx={{ pb: 2 }}>
-    <DrugPricingBar />
-    <GlobalModal />
-    <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)" }}>
-      <KeptPage visible={isWorkspace}>{workspace}</KeptPage>
-      {visited.size > 0 && <TryNadacContext value={tryNadac}><StandalonePinsProvider>
-        {visited.has("fda") && <KeptPage visible={source === "fda"}>{fda}</KeptPage>}
-        {visited.has("nadac") && <KeptPage visible={source === "nadac"}>{nadac}</KeptPage>}
-        <Box sx={{ gridArea: "2 / 1", minWidth: 0, ...(source ? { mt: 2 } : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
-          <PageVisibleContext value={source !== null}>{pins}</PageVisibleContext>
-        </Box>
-      </StandalonePinsProvider></TryNadacContext>}
-      {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
-        {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
-          <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
-          <Route path="/welcome" element={<Container maxWidth="md"><Welcome /></Container>} />
-          <Route path="/search" element={<Navigate to={`/search/${lastSource ?? "fda"}`} replace />} />
-          <Route path="/fda-search" element={<Navigate to="/search/fda" replace />} />
-          <Route path="/nadac-search" element={<Navigate to="/search/nadac" replace />} />
-          <Route path="*" element={<Navigate to={lastSource ? `/search/${lastSource}` : "/welcome"} replace />} />
-        </Routes>}
-      </Box>}
-    </Box>
-  </Container>;
+  return (
+    <Container maxWidth="xl" sx={{ pb: 2 }}>
+      <DrugPricingBar />
+      <GlobalModal />
+      <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)" }}>
+        <KeptPage visible={isWorkspace}>{workspace}</KeptPage>
+        {visited.size > 0 && <TryNadacContext value={tryNadac}><StandalonePinsProvider>
+          {visited.has("fda") && <KeptPage visible={source === "fda"}>{fda}</KeptPage>}
+          {visited.has("nadac") && <KeptPage visible={source === "nadac"}>{nadac}</KeptPage>}
+          <Box sx={{ gridArea: "2 / 1", minWidth: 0, ...(source ? { mt: 2 } : { ...hiddenPaneSx, height: 0, overflow: "clip" }) }}>
+            <PageVisibleContext value={source !== null}>{pins}</PageVisibleContext>
+          </Box>
+        </StandalonePinsProvider></TryNadacContext>}
+        {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
+          {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
+            <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
+            <Route path="/welcome" element={<Container maxWidth="md"><Welcome /></Container>} />
+            <Route path="/search" element={<Navigate to={`/search/${lastSource ?? "fda"}`} replace />} />
+            <Route path="/fda-search" element={<Navigate to="/search/fda" replace />} />
+            <Route path="/nadac-search" element={<Navigate to="/search/nadac" replace />} />
+            <Route path="*" element={<Navigate to={lastSource ? `/search/${lastSource}` : "/welcome"} replace />} />
+          </Routes>}
+        </Box>}
+      </Box>
+    </Container>
+  );
 }

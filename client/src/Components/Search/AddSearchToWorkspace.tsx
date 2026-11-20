@@ -31,39 +31,45 @@ function AddSearchToWorkspace({ state, dates, title, ready, started }: {
   const reason = readOnly ? "Reload to use the workspace changed in another window."
     : !ready ? "Load a search successfully before adding it to Workspace." : "";
   if (!visible || !started) return null;
-  return <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-    <Tooltip title={reason || "Copies this search and all pinned charts into a new workspace tab."}>
-      <span>
-        <Button type="button" variant="outlined" color="inherit" size="small" disabled={!ready || readOnly}
-          onClick={event => {
-            if (adding.current || event.detail > 1 || !dates) return;
-            adding.current = true;
-            const id = addSearchTab(copySearchToWorkspace(state, dates), title);
-            if (id) void navigate("/workspace");
-            else {
-              adding.current = false;
-              if (!isStorageReadOnly()) toast.error("Couldn't add the search: browser storage is full or unavailable.");
-            }
-          }}>
-          Add search to workspace
-        </Button>
-      </span>
-    </Tooltip>
-  </Box>;
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+      <Tooltip title={reason || "Copies this search and all pinned charts into a new workspace tab."}>
+        <span>
+          <Button type="button" variant="outlined" color="inherit" size="small" disabled={!ready || readOnly}
+            onClick={event => {
+              if (adding.current || event.detail > 1 || !dates) return;
+              adding.current = true;
+              const id = addSearchTab(copySearchToWorkspace(state, dates), title);
+              if (id) void navigate("/workspace");
+              else {
+                adding.current = false;
+                if (!isStorageReadOnly()) toast.error("Couldn't add the search: browser storage is full or unavailable.");
+              }
+            }}>
+            Add search to workspace
+          </Button>
+        </span>
+      </Tooltip>
+    </Box>
+  );
 }
 
 export function AddFdaSearchToWorkspace() {
   const { criteria, requested, loaded, fdaResultDetailLevel } = useFdaSearchContext();
   const { isSuccess } = useFdaSearch();
   const pinnedItems = usePinnedItems();
-  return <AddSearchToWorkspace state={{ type: "fda", criteria, detailLevel: fdaResultDetailLevel, pinnedItems }}
-    dates={requested?.dates} title={fdaSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} started={loaded !== null} />;
+  return (
+    <AddSearchToWorkspace state={{ type: "fda", criteria, detailLevel: fdaResultDetailLevel, pinnedItems }}
+      dates={requested?.dates} title={fdaSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} started={loaded !== null} />
+  );
 }
 
 export function AddNadacSearchToWorkspace() {
   const { criteria, requested, loaded } = useNadacSearchContext();
   const { isSuccess } = useNadacSearch();
   const pinnedItems = usePinnedItems();
-  return <AddSearchToWorkspace state={{ type: "nadac", criteria, pinnedItems }}
-    dates={requested?.dates} title={nadacSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} started={loaded !== null} />;
+  return (
+    <AddSearchToWorkspace state={{ type: "nadac", criteria, pinnedItems }}
+      dates={requested?.dates} title={nadacSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} started={loaded !== null} />
+  );
 }

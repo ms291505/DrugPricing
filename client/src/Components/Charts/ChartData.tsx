@@ -125,21 +125,23 @@ export function LineDataTable({ prices, dateWindow, bounds }: { prices: ChartPri
       <DataTable caption={caption} columns={columns}>
         {rows.slice(shownPage * ROWS_PER_PAGE, (shownPage + 1) * ROWS_PER_PAGE).map(row => {
           const range = distinctRange(row.range);
-          return (<TableRow key={`${row.date}|${row.ndc}|${row.unit}`}>
-            <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(row.date)}</TableCell>
-            <TableCell sx={{ whiteSpace: "nowrap" }}>{row.ndc}</TableCell>
-            {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
-            <TableCell align="right" sx={numericCell}>{formatPrice(row.price)}</TableCell>
-            {!hasRange ? null : isMobile
-              // May wrap after the dash, so the column fits a 390px phone.
-              ? <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
-                {range ? <>{formatPrice(range[0])}–<wbr />{formatPrice(range[1])}</> : ""}
-              </TableCell>
-              : <>
-                <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[0]) : ""}</TableCell>
-                <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[1]) : ""}</TableCell>
-              </>}
-          </TableRow>);
+          return (
+            <TableRow key={`${row.date}|${row.ndc}|${row.unit}`}>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(row.date)}</TableCell>
+              <TableCell sx={{ whiteSpace: "nowrap" }}>{row.ndc}</TableCell>
+              {units.size > 1 ? <TableCell>{pricingUnitLabel(row.unit)}</TableCell> : null}
+              <TableCell align="right" sx={numericCell}>{formatPrice(row.price)}</TableCell>
+              {!hasRange ? null : isMobile
+                // May wrap after the dash, so the column fits a 390px phone.
+                ? <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {range ? <>{formatPrice(range[0])}–<wbr />{formatPrice(range[1])}</> : ""}
+                </TableCell>
+                : <>
+                  <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[0]) : ""}</TableCell>
+                  <TableCell align="right" sx={numericCell}>{range ? formatPrice(range[1]) : ""}</TableCell>
+                </>}
+            </TableRow>
+          );
         })}
       </DataTable>
       {rows.length > ROWS_PER_PAGE

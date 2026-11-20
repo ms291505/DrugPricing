@@ -46,25 +46,29 @@ export default function AutoCharts({ prices, history, origin, colors, dateWindow
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
   const canCompare = shouldAutoChart(prices);
   if (!prices.length) return null;
-  return <>
-    <Grid size={12}>
-      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center" }}>
-        <Button size="small" variant={showLatest ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showLatest}
-          startIcon={<BarChartIcon />} onClick={() => setShowLatest(value => !value)}>Chart latest prices</Button>
-        <Button size="small" variant={showHistory ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showHistory}
-          startIcon={<ShowChartIcon />} onClick={() => setShowHistory(value => !value)}>Chart price histories</Button>
-        {!canCompare && <Typography variant="body2" color="text.secondary">
-          Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
-        </Typography>}
-        <ScanControl onScan={onScan} scanMessage={scanMessage} />
-      </Stack>
-    </Grid>
-    {canCompare && groups.map(group => <UnitAutoCharts key={group.pricingUnit}
-      prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-      unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
-      showLatest={showLatest} showHistory={showHistory}
-    />)}
-  </>;
+  return (
+    <>
+      <Grid size={12}>
+        <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", alignItems: "center" }}>
+          <Button size="small" variant={showLatest ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showLatest}
+            startIcon={<BarChartIcon />} onClick={() => setShowLatest(value => !value)}>Chart latest prices</Button>
+          <Button size="small" variant={showHistory ? "contained" : "outlined"} disabled={!canCompare} aria-pressed={showHistory}
+            startIcon={<ShowChartIcon />} onClick={() => setShowHistory(value => !value)}>Chart price histories</Button>
+          {!canCompare && <Typography variant="body2" color="text.secondary">
+            Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
+          </Typography>}
+          <ScanControl onScan={onScan} scanMessage={scanMessage} />
+        </Stack>
+      </Grid>
+      {canCompare && groups.map(group => (
+        <UnitAutoCharts key={group.pricingUnit}
+          prices={group.nadacPrices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+          unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
+          showLatest={showLatest} showHistory={showHistory}
+        />
+      ))}
+    </>
+  );
 }
 
 const SCAN_PRESETS = [PRICE_CHANGE_SCAN_MIN_PERCENT, PRICE_CHANGE_SCAN_DEFAULT_PERCENT, 20];
@@ -90,37 +94,41 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
     onScan(parsed.percent);
   };
 
-  return <>
-    <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
-      aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
-      onClick={event => { event.currentTarget.focus(); updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
-      Scan price changes
-    </Button>
-    {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}
-      anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-      slotProps={{
-        paper: { id: dialogId, role: "dialog", "aria-modal": true, "aria-label": "Scan price changes", sx: { p: 2, width: 280 } },
-        transition: { onEntered: () => inputRef.current?.focus() },
-      }}>
-      <Stack component="form" noValidate onSubmit={submit} spacing={1.5}>
-        <TextField inputRef={inputRef} size="small" label="Minimum change (%)" type="number" value={text}
-          error={error !== null} helperText={error}
-          onChange={event => updateText(event.target.value)}
-          slotProps={{ htmlInput: { min: PRICE_CHANGE_SCAN_MIN_PERCENT, step: 0.1, inputMode: "decimal" } }} />
-        <Stack direction="row" spacing={1} role="group" aria-label="Recommended thresholds">
-          {SCAN_PRESETS.map(percent => {
-            const selected = text !== "" && Number(text) === percent;
-            return <Button key={percent} type="button" size="small" variant={selected ? "contained" : "outlined"}
-              aria-pressed={selected} onClick={() => { updateText(String(percent)); inputRef.current?.focus(); }}>
-              {percent}%
-            </Button>;
-          })}
+  return (
+    <>
+      <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
+        aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
+        onClick={event => { event.currentTarget.focus(); updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
+        Scan price changes
+      </Button>
+      {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        slotProps={{
+          paper: { id: dialogId, role: "dialog", "aria-modal": true, "aria-label": "Scan price changes", sx: { p: 2, width: 280 } },
+          transition: { onEntered: () => inputRef.current?.focus() },
+        }}>
+        <Stack component="form" noValidate onSubmit={submit} spacing={1.5}>
+          <TextField inputRef={inputRef} size="small" label="Minimum change (%)" type="number" value={text}
+            error={error !== null} helperText={error}
+            onChange={event => updateText(event.target.value)}
+            slotProps={{ htmlInput: { min: PRICE_CHANGE_SCAN_MIN_PERCENT, step: 0.1, inputMode: "decimal" } }} />
+          <Stack direction="row" spacing={1} role="group" aria-label="Recommended thresholds">
+            {SCAN_PRESETS.map(percent => {
+              const selected = text !== "" && Number(text) === percent;
+              return (
+                <Button key={percent} type="button" size="small" variant={selected ? "contained" : "outlined"}
+                  aria-pressed={selected} onClick={() => { updateText(String(percent)); inputRef.current?.focus(); }}>
+                  {percent}%
+                </Button>
+              );
+            })}
+          </Stack>
+          <Button type="submit" size="small" variant="contained" sx={{ alignSelf: "flex-end" }}>Scan</Button>
         </Stack>
-        <Button type="submit" size="small" variant="contained" sx={{ alignSelf: "flex-end" }}>Scan</Button>
-      </Stack>
-    </Popover>}
-    <Typography role="status" variant="body2" color="text.secondary">{scanMessage}</Typography>
-  </>;
+      </Popover>}
+      <Typography role="status" variant="body2" color="text.secondary">{scanMessage}</Typography>
+    </>
+  );
 }
 
 function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffix, showLatest, showHistory }: Props & { unitSuffix: string, showLatest: boolean, showHistory: boolean }) {
@@ -130,37 +138,39 @@ function UnitAutoCharts({ prices, history, origin, colors, dateWindow, unitSuffi
   const lineTitle = chartTitle("line", origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
   const subtitle = chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices);
 
-  return (<>
-    {showLatest && <Grid size={HALF_WIDTH_GRID_SIZE}>
-      <ExplorerGridItem
-        title={barTitle}
-        subtitle={subtitle}
-        actions={<PinButton
-          title={barTitle} chartType="bar" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
-          colors={colors} barValue={barValue}
-        />}
-      >
-        <BarViz
-          nadacPrices={prices}
+  return (
+    <>
+      {showLatest && <Grid size={HALF_WIDTH_GRID_SIZE}>
+        <ExplorerGridItem
           title={barTitle}
-          colors={colors}
-          dateWindow={dateWindow}
-          barValue={barValue}
-          onBarValueChange={setBarValue}
-        />
-      </ExplorerGridItem>
-    </Grid>}
-    {showHistory && <Grid size={HALF_WIDTH_GRID_SIZE}>
-      <ExplorerGridItem
-        title={lineTitle}
-        subtitle={subtitle}
-        actions={<PinButton
-          title={lineTitle} chartType="line" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
-          colors={colors}
-        />}
-      >
-        <LineViz seriesKind={origin.seriesKind} nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={dateWindow} />
-      </ExplorerGridItem>
-    </Grid>}
-  </>);
+          subtitle={subtitle}
+          actions={<PinButton
+            title={barTitle} chartType="bar" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
+            colors={colors} barValue={barValue}
+          />}
+        >
+          <BarViz
+            nadacPrices={prices}
+            title={barTitle}
+            colors={colors}
+            dateWindow={dateWindow}
+            barValue={barValue}
+            onBarValueChange={setBarValue}
+          />
+        </ExplorerGridItem>
+      </Grid>}
+      {showHistory && <Grid size={HALF_WIDTH_GRID_SIZE}>
+        <ExplorerGridItem
+          title={lineTitle}
+          subtitle={subtitle}
+          actions={<PinButton
+            title={lineTitle} chartType="line" prices={prices} history={history} origin={origin} dateWindow={dateWindow}
+            colors={colors}
+          />}
+        >
+          <LineViz seriesKind={origin.seriesKind} nadacPrices={prices} title={lineTitle} colors={colors} dateWindow={dateWindow} />
+        </ExplorerGridItem>
+      </Grid>}
+    </>
+  );
 }

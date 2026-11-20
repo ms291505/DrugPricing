@@ -58,38 +58,40 @@ export default memo(function FdaResults({ view }: Props) {
   const rowCount = fdaRowCount({ products }, fdaResultDetailLevel);
   const hint = isSuccess && rowCount === 0 ? hiddenResultsHint(hidden) : null;
 
-  return (<>
-    <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
-    <ResultsSection
-      searchLabel={fdaResultsLabel(criteria)}
-      toolbar={<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-        <DetailLevelSelect />
-        <ChartSelectedControl
-          prices={nadacPrices} history={levelHistory} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
-        />
-      </Box>}
-      notice={<>
-        {isSuccess && onTryNadac && data && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
-          action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
-          {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
-        </Alert>}
-        {hint
-        ? <HiddenResultsNotice
-          hint={hint}
-          noun={noun}
-          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
-            : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
-        />
-        : null}</>}
-      priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
-        origin={packageOrigin} colors={packageColors} dateWindow={dateWindow}
-        autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
-      table={fdaResultDetailLevel === "product"
-        ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
-        : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
-    >
-      <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow}
-        onScan={scans.runScan} scanMessage={scans.emptyMessage} />
-    </ResultsSection>
-  </>);
+  return (
+    <>
+      <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
+      <ResultsSection
+        searchLabel={fdaResultsLabel(criteria)}
+        toolbar={<Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+          <DetailLevelSelect />
+          <ChartSelectedControl
+            prices={nadacPrices} history={levelHistory} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
+          />
+        </Box>}
+        notice={<>
+          {isSuccess && onTryNadac && data && !fdaHasPricesInWindow(data, dateWindow) && <Alert severity="info"
+            action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
+            {data.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
+          </Alert>}
+          {hint
+          ? <HiddenResultsNotice
+            hint={hint}
+            noun={noun}
+            onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
+              : hint.kind === "clear" ? clearFdaRefine(prev) : showAllFda(prev))}
+          />
+          : null}</>}
+        priceChanges={<PriceChangesSection prices={packageNadacPrices} history={packageHistory}
+          origin={packageOrigin} colors={packageColors} dateWindow={dateWindow}
+          autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
+        table={fdaResultDetailLevel === "product"
+          ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
+          : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
+      >
+        <AutoCharts prices={nadacPrices} history={levelHistory} origin={origin} colors={colors} dateWindow={dateWindow}
+          onScan={scans.runScan} scanMessage={scans.emptyMessage} />
+      </ResultsSection>
+    </>
+  );
 });

@@ -62,53 +62,55 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
     [rowNoun, tierColumns, narrow, narrowOrder],
   );
 
-  return (<>
-    <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-      {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
-      {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
-    </Typography>
-    <DataGrid
-      apiRef={apiRef}
-      ref={tableRef}
-      rowHeight={widthTier === "narrow" ? 44 : 52}
-      columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
-      sx={theme => ({
-        border: 0,
-        width: "100%",
-        minWidth: 0,
-        "--DataGrid-rowBorderColor": theme.palette.divider,
-        "& .MuiDataGrid-columnSeparator": { color: "divider" },
-        "& .MuiDataGrid-withBorderColor": { borderColor: "divider" },
-        "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
-        "& .MuiTablePagination-toolbar": { minHeight: 44, px: 1 },
-      })}
-      checkboxSelection
-      rows={rows}
-      columns={allColumns}
-      getRowId={getRowId}
-      loading={loading}
-      initialState={INITIAL_STATE}
-      columnVisibilityModel={visibility}
-      onColumnVisibilityModelChange={model => updateColumnOverrides(tableType, columnOverridesFromModel(DEFAULT_HIDDEN_COLUMNS[tableType], model))}
-      slots={{ footer: ResultFooter }}
-      slotProps={{
-        footer: { resultTableType: tableType, compact: widthTier === "narrow" },
-        columnsManagement: {
-          // MUI's Reset returns to the mount-time saved choices, not the app defaults.
-          // The footer's Reset columns owns that action instead.
-          disableResetButton: true,
-          getTogglableColumns: columns => columns.filter(column => column.field !== GRID_CHECKBOX_SELECTION_COL_DEF.field).map(column => column.field),
-        },
-      }}
-      hideFooterSelectedRowCount={widthTier === "narrow"}
-      pageSizeOptions={DATA_GRID_PAGE_SIZES}
-      isRowSelectable={isRowSelectable}
-      rowSelectionModel={selection}
-      onRowSelectionModelChange={onSelectionChange}
-      disableRowSelectionExcludeModel
-    />
-    <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
-  </>);
+  return (
+    <>
+      <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+        {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
+        {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
+      </Typography>
+      <DataGrid
+        apiRef={apiRef}
+        ref={tableRef}
+        rowHeight={widthTier === "narrow" ? 44 : 52}
+        columnHeaderHeight={widthTier === "narrow" ? 44 : 56}
+        sx={theme => ({
+          border: 0,
+          width: "100%",
+          minWidth: 0,
+          "--DataGrid-rowBorderColor": theme.palette.divider,
+          "& .MuiDataGrid-columnSeparator": { color: "divider" },
+          "& .MuiDataGrid-withBorderColor": { borderColor: "divider" },
+          "& .ndc-cell": { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
+          "& .MuiTablePagination-toolbar": { minHeight: 44, px: 1 },
+        })}
+        checkboxSelection
+        rows={rows}
+        columns={allColumns}
+        getRowId={getRowId}
+        loading={loading}
+        initialState={INITIAL_STATE}
+        columnVisibilityModel={visibility}
+        onColumnVisibilityModelChange={model => updateColumnOverrides(tableType, columnOverridesFromModel(DEFAULT_HIDDEN_COLUMNS[tableType], model))}
+        slots={{ footer: ResultFooter }}
+        slotProps={{
+          footer: { resultTableType: tableType, compact: widthTier === "narrow" },
+          columnsManagement: {
+            // MUI's Reset returns to the mount-time saved choices, not the app defaults.
+            // The footer's Reset columns owns that action instead.
+            disableResetButton: true,
+            getTogglableColumns: columns => columns.filter(column => column.field !== GRID_CHECKBOX_SELECTION_COL_DEF.field).map(column => column.field),
+          },
+        }}
+        hideFooterSelectedRowCount={widthTier === "narrow"}
+        pageSizeOptions={DATA_GRID_PAGE_SIZES}
+        isRowSelectable={isRowSelectable}
+        rowSelectionModel={selection}
+        onRowSelectionModelChange={onSelectionChange}
+        disableRowSelectionExcludeModel
+      />
+      <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
+    </>
+  );
 }
 
 /** The selection column, with a tooltip on the checkbox of a row that has no prices. */

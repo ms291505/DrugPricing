@@ -127,9 +127,11 @@ export default memo(function PinnedSection() {
         ))}
       </Grid>
       {charts.size > 0 && <Grid container spacing={2} alignItems="flex-start">
-        {[...charts.values()].map(chart => <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={{ minWidth: 0 }}>
-          <TemporaryChartCard chart={chart} onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
-        </Grid>)}
+        {[...charts.values()].map(chart => (
+          <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={{ minWidth: 0 }}>
+            <TemporaryChartCard chart={chart} onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
+          </Grid>
+        ))}
       </Grid>}
     </Box>
   );
@@ -145,6 +147,8 @@ const TemporaryChartCard = memo(function TemporaryChartCard({ chart, onClose, on
   const ndc = chart.prices[0]?.ndc;
   const colors = useMemo(() => new Map(chart.color && ndc ? [[ndc, themedSeriesColor(chart.color, palette)]] : []),
     [chart.color, ndc, palette]);
-  return <EventChangeChart chart={chart} origin={chart.origin} colors={colors} dateWindow={chart.dateWindow}
-    source={chart.source} onClose={onClose} onRemovedWithFocus={onRemovedWithFocus} />;
+  return (
+    <EventChangeChart chart={chart} origin={chart.origin} colors={colors} dateWindow={chart.dateWindow}
+      source={chart.source} onClose={onClose} onRemovedWithFocus={onRemovedWithFocus} />
+  );
 });

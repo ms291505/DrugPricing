@@ -40,27 +40,29 @@ export default memo(function NadacResults({ view }: Props) {
 
   const hint = isSuccess && packageCount === 0 ? hiddenResultsHint(hidden) : null;
 
-  return (<>
-    <SearchResultToast resultKey={resultKey} message={foundMessage(packageCount, hidden.total, PACKAGES)} />
-    <ResultsSection
-      searchLabel={nadacResultsLabel(criteria)}
-      toolbar={<ChartSelectedControl
-        prices={prices} history={history} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
-      />}
-      notice={hint
-        ? <HiddenResultsNotice
-          hint={hint}
-          noun={PACKAGES}
-          onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
-            : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
-        />
-        : null}
-      priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-        autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
-      table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
-    >
-      <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
-        onScan={scans.runScan} scanMessage={scans.emptyMessage} />
-    </ResultsSection>
-  </>);
+  return (
+    <>
+      <SearchResultToast resultKey={resultKey} message={foundMessage(packageCount, hidden.total, PACKAGES)} />
+      <ResultsSection
+        searchLabel={nadacResultsLabel(criteria)}
+        toolbar={<ChartSelectedControl
+          prices={prices} history={history} selection={selectedRows} origin={origin} dateWindow={dateWindow} colors={colors}
+        />}
+        notice={hint
+          ? <HiddenResultsNotice
+            hint={hint}
+            noun={PACKAGES}
+            onShow={() => setCriteria(prev => hint.kind === "include" ? { ...prev, [hint.key]: true }
+              : hint.kind === "clear" ? clearNadacRefine(prev) : showAllNadac(prev))}
+          />
+          : null}
+        priceChanges={<PriceChangesSection prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+          autoClosed={scans.autoClosed} onCloseAuto={scans.closeAuto} scans={scans.scans} onCloseScan={scans.closeScan} />}
+        table={<NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />}
+      >
+        <AutoCharts prices={prices} history={history} origin={origin} colors={colors} dateWindow={dateWindow}
+          onScan={scans.runScan} scanMessage={scans.emptyMessage} />
+      </ResultsSection>
+    </>
+  );
 });
