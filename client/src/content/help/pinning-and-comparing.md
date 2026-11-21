@@ -23,6 +23,6 @@ not have package identities and can't be switched.
 
 A pinned **price change list** keeps the listed packages’ prices and the dates it showed. Use
 its menu to move it, change its width or remove it. **Chart this change** opens a temporary
-chart below **Pinned** using the list’s dates. It stays open if you collapse or remove the list.
+chart below **Pinned** using the list’s dates. Pin in that window keeps a copy of the chart.
 Use **Pin** on that chart to save it. If a list has too many packages to pin, narrow the dates
 or filters or scan at a higher percentage.

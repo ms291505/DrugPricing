@@ -85,6 +85,7 @@ export default function ExplorerGridItem({
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
         <IconButton
           onClick={handleCollapse}
+          data-collapse-toggle
           size="small"
           // The name stays fixed and aria-expanded carries the state (the accordion pattern).
           // The content unmounts while collapsed, so only point at it when it exists.
