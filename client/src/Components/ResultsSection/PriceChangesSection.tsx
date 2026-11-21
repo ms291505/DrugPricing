@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Button, Grid, IconButton, Tooltip } from "@mui/material";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
@@ -6,17 +6,15 @@ import { derivePriceEvents, groupPriceEvents, type PriceEvent, type PriceEventGr
 import type { ChartPrice } from "../../library/types";
 import { createPriceChangeListItem, fitsPinLimit, type ChartOrigin, type ChartSource } from "../../library/explorerItems";
 import type { DateWindow } from "../../library/dates";
-import {
-  eventChartTitle, pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTitle,
-} from "../../library/chartTitles";
+import { pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTitle } from "../../library/chartTitles";
 import { HALF_WIDTH_GRID_SIZE, NOTABLE_PRICE_CHANGE_PERCENT } from "../../library/constants";
 import useWidthTier from "../../hooks/useWidthTier";
 import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
-import { ResultsHeadingContext } from "../../Context/resultsHeading";
-import EventChangeChart, { type EventChart } from "./EventChangeChart";
+import { fromKeyboard, holdsFocus, nearestVisible } from "../ui/focus";
 import PriceChangeListBody from "./PriceChangeListBody";
+import type { ChartContext } from "./PriceChangeChartDialog";
 
 type Props = {
   /**
@@ -33,15 +31,11 @@ const AUTO_LIST = "auto";
 
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
-const isShown = <T extends HTMLElement>(element: T | null | undefined): element is T =>
-  !!element?.isConnected && element.checkVisibility();
-/** In page order, the first first. */
-const byPosition = (a: Node, b: Node) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+const CARD_SELECTOR = ":scope > [data-price-change-list]";
 
 /**
- * Notable price changes, the page's scan cards and the package charts opened from any of them.
- * Always mounted, so the open charts and the focus bookkeeping outlive any one card; renders
- * nothing when there is no card and no chart.
+ * Notable price changes and the page's scan cards. Each list opens its own change charts in a
+ * dialog (`PriceChangeListBody`). Renders nothing when there is no card.
  */
 export default function PriceChangesSection({ source, scans: scanState }: Props) {
   const { prices, loadedPrices, origin, colors, dateWindow } = source;
@@ -52,97 +46,28 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   const [detailsChoice, setDetailsChoice] = useState<ReadonlyMap<string, boolean>>(new Map());
   const onDetailsToggle = useCallback((key: string, open: boolean) =>
     setDetailsChoice(prev => new Map(prev).set(key, open)), []);
-  const resultsHeadingRef = use(ResultsHeadingContext);
-  const sectionId = useId();
 
-  const [charts, setCharts] = useState<ReadonlyMap<string, EventChart>>(new Map());
-  // New prices discard every open chart (a chart's focus moves in its `onRemovedWithFocus`).
-  const [chartsPrices, setChartsPrices] = useState(prices);
-  if (chartsPrices !== prices) {
-    setChartsPrices(prices);
-    setCharts(new Map());
-  }
+  const chartPrices = useCallback((group: PriceEventGroup, event: PriceEvent) =>
+    loadedPrices().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit), [loadedPrices]);
 
-  // Each list's chart buttons by event key, and each list card's heading, for focus.
-  const buttons = useRef(new Map<string, Map<string, HTMLButtonElement>>());
-  const registerButton = useCallback((listId: string, key: string, button: HTMLButtonElement | null) => {
-    const lists = buttons.current.get(key) ?? new Map<string, HTMLButtonElement>();
-    if (button) lists.set(listId, button);
-    else lists.delete(listId);
-    if (lists.size) buttons.current.set(key, lists);
-    else buttons.current.delete(key);
-  }, []);
-  const headings = useRef(new Map<string, HTMLHeadingElement>());
-  const registerHeading = useCallback((listId: string, heading: HTMLHeadingElement | null) => {
-    if (heading) headings.current.set(listId, heading);
-    else headings.current.delete(listId);
-  }, []);
-  // The open charts as of the last commit, so the stable callbacks below can read them.
-  const chartsRef = useRef(charts);
-  useLayoutEffect(() => { chartsRef.current = charts; });
-  /** Every shown card's heading, lists and charts, in page order. */
-  const shownHeadings = useCallback(() => [
-    ...headings.current.values(),
-    ...[...chartsRef.current.values()].map(chart => document.getElementById(chart.cardId)?.querySelector("h3")),
-  ].filter(isShown).sort(byPosition), []);
-  const focusResultsHeading = useCallback(() => resultsHeadingRef?.current?.focus({ preventScroll: true }), [resultsHeadingRef]);
-
-  const toggleChart = useCallback((listId: string, key: string, group: PriceEventGroup, event: PriceEvent) => {
-    setCharts(prev => {
-      const next = new Map(prev);
-      if (next.has(key)) next.delete(key);
-      else next.set(key, {
-        // One id per change, whichever list opened it. Event keys hold no whitespace.
-        key, cardId: `${sectionId}-${key}`, openerId: listId, eventDate: group.date,
-        title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
-        prices: loadedPrices().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit),
-      });
-      return next;
-    });
-  }, [loadedPrices, sectionId]);
-  const closeChart = useCallback((key: string) => setCharts(prev => {
-    const next = new Map(prev);
-    next.delete(key);
-    return next;
-  }), []);
-  // Focus that was in a removed chart (Close, or new prices) goes to the button that opened it,
-  // else another list's button for the same change, else the first card left (a list, else a
-  // chart), else the results heading.
-  const onChartRemovedWithFocus = useCallback((chart: EventChart) => {
-    const lists = buttons.current.get(chart.key);
-    const button = [lists?.get(chart.openerId), ...(lists?.values() ?? [])].find(isShown);
-    if (button) return button.focus();
-    const heading = shownHeadings()[0];
-    if (heading) heading.focus({ preventScroll: true });
-    else focusResultsHeading();
-  }, [shownHeadings, focusResultsHeading]);
-
-  // A list's Close moves focus to the next card's heading (a list or a chart), else the previous
-  // one's, else the results heading, before the card goes.
-  const closeList = useCallback((listId: string) => {
-    const shown = shownHeadings();
-    const index = shown.indexOf(headings.current.get(listId)!);
-    const target = index < 0 ? undefined : shown[index + 1] ?? shown[index - 1];
-    if (target) target.focus({ preventScroll: true });
-    else focusResultsHeading();
+  // A list's Close, when it holds focus, moves it to the next card's toggle, else the previous
+  // card's, else the results heading, before the card goes. A tap or click moves nothing.
+  const closeList = useCallback((listId: string, event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
+    if (card && holdsFocus(card)) {
+      const cards = [...card.parentElement?.querySelectorAll<HTMLElement>(CARD_SELECTOR) ?? []].filter(c => c.checkVisibility());
+      const index = cards.indexOf(card);
+      const neighbor = cards[index + 1] ?? cards[index - 1];
+      const target = neighbor?.querySelector<HTMLElement>("[data-collapse-toggle]") ?? nearestVisible(card, "[data-results-heading]");
+      target?.focus({ preventScroll: !fromKeyboard(event) });
+    }
     if (listId === AUTO_LIST) onCloseAuto();
     else onCloseScan(listId);
-  }, [shownHeadings, focusResultsHeading, onCloseAuto, onCloseScan]);
-  // A card new prices removed with focus inside: Notable price changes, else the results heading.
-  const onListRemovedWithFocus = useCallback((listId: string) => {
-    const auto = headings.current.get(AUTO_LIST);
-    if (listId !== AUTO_LIST && isShown(auto)) auto.focus({ preventScroll: true });
-    else focusResultsHeading();
-  }, [focusResultsHeading]);
+  }, [onCloseAuto, onCloseScan]);
 
   const showAuto = groups.length > 0 && !autoClosed;
-  if (!showAuto && !scans.length && !charts.size) return null;
+  if (!showAuto && !scans.length) return null;
 
-  const listProps = {
-    prices, origin, colors, dateWindow, detailsChoice, onDetailsToggle, charts,
-    onToggleChart: toggleChart, onRegisterButton: registerButton, onRegisterHeading: registerHeading,
-    onClose: closeList, onRemovedWithFocus: onListRemovedWithFocus,
-  };
+  const listProps = { prices, origin, colors, dateWindow, detailsChoice, onDetailsToggle, chartPrices, onClose: closeList };
   return (
     <>
       {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
@@ -151,12 +76,6 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
         <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
           thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />
       ))}
-      {[...charts.values()].map(chart => (
-        <Grid key={chart.key} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
-          <EventChangeChart chart={chart} origin={origin} colors={colors} dateWindow={dateWindow}
-            onClose={closeChart} onRemovedWithFocus={onChartRemovedWithFocus} />
-        </Grid>
-      ))}
     </>
   );
 }
@@ -164,7 +83,7 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
 /** One list's result card: Notable price changes or a scan. It can be pinned and closed. */
 function PriceChangeListCard({
   listId, title, thresholdPercent, groups, detailsKeyPrefix, focusOnMount, prices, origin, colors, dateWindow,
-  detailsChoice, onDetailsToggle, charts, onToggleChart, onRegisterButton, onRegisterHeading, onClose, onRemovedWithFocus,
+  detailsChoice, onDetailsToggle, chartPrices, onClose,
 }: {
   listId: string,
   title: string,
@@ -179,36 +98,39 @@ function PriceChangeListCard({
   dateWindow: DateWindow,
   detailsChoice: ReadonlyMap<string, boolean>,
   onDetailsToggle: (key: string, open: boolean) => void,
-  charts: ReadonlyMap<string, EventChart>,
-  onToggleChart: (listId: string, key: string, group: PriceEventGroup, event: PriceEvent) => void,
-  onRegisterButton: (listId: string, key: string, button: HTMLButtonElement | null) => void,
-  onRegisterHeading: (listId: string, heading: HTMLHeadingElement | null) => void,
-  onClose: (listId: string) => void,
-  /** Called after new prices removed the card with focus inside it. */
-  onRemovedWithFocus: (listId: string) => void,
+  chartPrices: (group: PriceEventGroup, event: PriceEvent) => ChartPrice[],
+  onClose: (listId: string, event: MouseEvent<HTMLElement>, card: HTMLElement | null) => void,
 }) {
   // The card's own width: a workspace pane can be narrow in a wide window.
   const [cardRef, widthTier] = useWidthTier<HTMLDivElement>();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { addItems } = usePinActions();
-
-  useLayoutEffect(() => {
-    onRegisterHeading(listId, headingRef.current);
-    return () => onRegisterHeading(listId, null);
-  }, [listId, onRegisterHeading]);
   useEffect(() => {
     if (!focusOnMount || !headingRef.current?.checkVisibility()) return;
     headingRef.current.focus({ preventScroll: true });
     headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [focusOnMount]);
-  // As `EventChangeChart`: a layout cleanup still sees the card, and the microtask confirms it left.
+  const chartContext = useMemo<ChartContext>(() => ({ listTitle: title, origin, colors, dateWindow }),
+    [title, origin, colors, dateWindow]);
+
+  // New prices remove the card while focus is in it. A layout cleanup still sees the card, and
+  // the microtask confirms it left (not StrictMode's rehearsal). If the section is still there
+  // (Clear search unmounts all of it), focus goes to Notable price changes' toggle, else the
+  // results heading; there is no event, so it never scrolls.
   useLayoutEffect(() => {
     const card = cardRef.current;
+    const container = card?.parentElement;
     return () => {
-      if (!card?.contains(document.activeElement)) return;
-      queueMicrotask(() => { if (!card.isConnected) onRemovedWithFocus(listId); });
+      if (!card || !container || !holdsFocus(card)) return;
+      queueMicrotask(() => {
+        if (card.isConnected || !container.isConnected) return;
+        const auto = listId === AUTO_LIST ? null
+          : container.querySelector<HTMLElement>(`${CARD_SELECTOR}[data-price-change-list="${AUTO_LIST}"] [data-collapse-toggle]`);
+        const target = auto?.checkVisibility() ? auto : nearestVisible(container, "[data-results-heading]");
+        target?.focus({ preventScroll: true });
+      });
     };
-  }, [cardRef, listId, onRemovedWithFocus]);
+  }, [cardRef, listId]);
 
   const pin = () => {
     const defaultTitle = pinnedPriceChangeListTitle(origin.searchLabel, thresholdPercent);
@@ -222,19 +144,18 @@ function PriceChangeListCard({
   };
 
   return (
-    <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx}>
+    <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx} data-price-change-list={listId}>
       <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
         actions={<>
           <Tooltip title="Pin a copy to this tab">
             <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
           </Tooltip>
           <Button size="small" aria-label={`Close ${title}`}
-            onClick={event => { event.currentTarget.focus(); onClose(listId); }}>Close</Button>
+            onClick={event => onClose(listId, event, cardRef.current)}>Close</Button>
         </>}>
         <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
-          onDetailsToggle={onDetailsToggle} openCharts={charts}
-          onToggleChart={(key, group, event) => onToggleChart(listId, key, group, event)}
-          onRegisterButton={(key, button) => onRegisterButton(listId, key, button)} />
+          onDetailsToggle={onDetailsToggle}
+          chartPrices={chartPrices} chartContext={chartContext} />
       </ExplorerGridItem>
     </Grid>
   );

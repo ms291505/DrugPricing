@@ -69,7 +69,7 @@ dotnet ef migrations add <Name>
 domain types, including date strings to `Date`) · `src/library/` (domain types and pure logic,
 unit tested) · `src/hooks/` · `src/Context/` (global and per-tab state; per-tab provider stacks
 in `TabProviders.tsx`; every context lives here, even one with a single provider and reader such
-as `resultsHeading.ts`, so others can find and reuse it) · `src/theme.ts` (every color; see Theme below) ·
+as `pageVisibility.ts`, so others can find and reuse it) · `src/theme.ts` (every color; see Theme below) ·
 `src/library/constants.ts`.
 
 Feature folders in `src/Components/`: `Workspace/` (the primary UI), `NadacSearch/`, `FdaSearch/`,
@@ -134,17 +134,13 @@ one card per scan with matches (`usePriceChangeScans`), oldest first, even at a 
 scanned. A scan with no matches makes no card and says so in the control row's `role="status"` line.
 Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
 pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
-`client/CHARTS.md`). Each package row has a chart icon button that opens that
-package alone in its own unpinned ExplorerGridItem after the list cards, over the shown dates, with
-the change marked and the readout resting on it. There is one chart per change: every list that
-shows the change marks it open. A chart stays until its own Close or new prices, even when its list
-closes. New prices (a search, or new dates or filters, but not the FDA detail level) remove every
-scan and chart and reopen Notable price changes. Focus from a closed or discarded chart goes to the
-button that opened it, else another list's button for that change, else the first card left (a list
-card, else a chart), else the results heading. A list's Close sends focus to the next card's heading
-(a list or a chart), else the previous card's, else the results heading; a scan card that new prices
-remove with focus in it sends focus to Notable price changes, else the results heading. A chart card
-has no event list and no Around this change. Live comparison cards start hidden and are never
+`client/CHARTS.md`). Each package row has a chart icon button that opens that package's change in a
+dialog (`PriceChangeChartDialog`) over the shown dates, with the change marked and the readout
+resting on it. It is one chart at a time, on every screen; Pin keeps a copy. New prices (a search,
+or new dates or filters, but not the FDA detail level) remove every scan, close the dialog and
+reopen Notable price changes. A list's Close, when it holds focus, moves it to the next card's
+toggle, else the previous card's, else the results heading; a scan card that new prices remove
+with focus in it sends focus to Notable price changes, else the results heading. Live comparison cards start hidden and are never
 stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
 legacy-pin rules.
 
@@ -272,6 +268,33 @@ depend on write availability read it. The action checks storage's read-only flag
   with the closing `)` under the line that opened it. ESLint enforces it
   (`@stylistic/jsx-wrap-multilines`), but `--fix` adds the parentheses without reindenting, so
   indent the block yourself.
+- **Same behavior on every screen.** Layout adapts to the width tier; interaction doesn't. A
+  phone-only or desktop-only interaction needs a stated reason in its plan.
+- **Accessibility** means semantic HTML, MUI components used as designed, accessible names,
+  contrast, and every control reachable and usable by keyboard. It doesn't mean moving focus to
+  follow content. Helpers are in `Components/ui/focus.ts` (`fromKeyboard`, `holdsFocus`,
+  `nearestVisible`).
+  - Show what the user asked to see in a dialog, or where they're looking. Don't move focus to
+    new non-modal content; announce it in an always-mounted `role="status"` line if a screen
+    reader would miss it.
+  - An action whose purpose is to go somewhere (Chart selected, a scan's Show) scrolls there for
+    everyone, and moves focus to the destination's heading only `fromKeyboard(event)`.
+  - Dialogs, menus and popovers keep MUI's focus handling. Don't add `onEntered` focus,
+    `disableRestoreFocus` or `returnFocus` without a comment saying why.
+  - When an action removes or disables the control that has focus, check `holdsFocus` before the
+    change, and only then move focus to a nearby control that survives it, with `preventScroll`
+    unless `fromKeyboard(event)`. After a tap on iOS nothing holds focus, so nothing moves. When
+    data (new prices) removes it, there's no event: check in a layout-effect cleanup and always
+    use `preventScroll`.
+  - Actions chosen from a menu use `fromKeyboard(event)` instead of `holdsFocus` (MUI focuses a
+    menu item even after a tap), and move focus after the menu has closed.
+  - Focus a text field from code only `fromKeyboard(event)`, or when the user asked to type. It
+    opens the phone keyboard.
+  - No `event.currentTarget.focus()` in click handlers (ESLint rejects it). Custom `&:hover`
+    styles go inside `@media (hover: hover)`; open or selected states need their own look.
+  - Focus targets found through the DOM use data attributes: `data-collapse-toggle`
+    (`ExplorerGridItem`), `data-results-heading` (`ResultsSection`'s `h2`) and
+    `data-price-change-list` (each list card's grid item).
 - **Theme:** `src/theme.ts` is the only place a color is written. It names each one once in
   `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
   `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use
@@ -291,7 +314,8 @@ depend on write availability read it. The action checks storage's read-only flag
   Save button. The phone drawer closes before a modal opens and passes `returnFocus` (its
   toggle). Openers read only `useGlobalModalActions` (stable); `GlobalModal` alone reads the
   open modal, so Help buttons in every tab don't re-render. Browser Back closes a modal; a
-  modal that navigates closes itself.
+  modal that navigates closes itself. The price change chart dialog is a local `Dialog`, not this
+  one, because Pin inside it needs the tab's pin provider, which the root-level modal is outside.
 - **Help** is a catalog (`library/help.ts`; topic IDs are URLs, never rename one) and one
   Markdown article per topic in `src/content/help/`, shown in the modal and at `/help/:topic`.
   A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
@@ -330,7 +354,12 @@ npm run dev      # Vite; copy .env.example to .env.development (VITE_API_URL)
 npm run build    # tsc -b && vite build
 npm run lint
 npm test         # Vitest, src/library/*.test.ts
+npm run dev:phone  # HTTPS dev server for a real phone; see [docs/phone-testing.md](docs/phone-testing.md)
 ```
+
+The first phone check is Safari in the Xcode iOS Simulator on `http://localhost:5173`: real iOS
+WebKit (taps don't focus buttons, sticky hover, the on-screen keyboard), and `localhost` is a
+secure context, so `crypto.randomUUID()` works. It has no VoiceOver.
 
 Tests run in Node (no DOM, no component tests) with `TZ=America/Chicago`, so local-time date
 bugs fail. `persist.test.ts` re-imports the module per test because it keeps module state.

@@ -66,7 +66,11 @@ export default defineConfig([
       ].map(selector => ({
         selector,
         message: "Name colors in src/theme.ts and use a theme role here (e.g. \"text.secondary\" or theme.palette.divider).",
-      }))],
+      })), {
+        // Focus moves from code follow the rules in AGENTS.md (UI conventions, Accessibility).
+        selector: "CallExpression[callee.property.name='focus'][callee.object.property.name='currentTarget']",
+        message: "Don't focus the clicked control from its handler: it shows a focus ring after a tap. See the Accessibility rule in AGENTS.md.",
+      }],
     },
   },
 ])

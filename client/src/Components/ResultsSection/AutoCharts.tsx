@@ -94,7 +94,7 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
     <>
       <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
         aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
-        onClick={event => { event.currentTarget.focus(); updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
+        onClick={event => { updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
         Scan price changes
       </Button>
       {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}

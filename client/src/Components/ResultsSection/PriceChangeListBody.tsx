@@ -1,4 +1,4 @@
-import { useId, useState, type SyntheticEvent } from "react";
+import { useCallback, useId, useState, type SyntheticEvent } from "react";
 import { Box, Button, IconButton, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { visuallyHidden } from "@mui/utils";
@@ -7,6 +7,10 @@ import {
   type PriceEvent, type PriceEventGroup,
 } from "../../library/priceActivity";
 import { formatPrice } from "../../library/chartScale";
+import { eventChartTitle } from "../../library/chartTitles";
+import type { ChartPrice } from "../../library/types";
+import { holdsFocus } from "../ui/focus";
+import PriceChangeChartDialog, { type ChartContext, type OpenChange } from "./PriceChangeChartDialog";
 import { pricingUnitLabel } from "../../library/prices";
 import type { WidthTier } from "../../hooks/useWidthTier";
 
@@ -27,21 +31,34 @@ export type PriceChangeListBodyProps = {
   /** Sets this list's details keys apart: groups in different lists share keys. */
   detailsKeyPrefix: string,
   onDetailsToggle: (key: string, open: boolean) => void,
-  /** The open change charts by event key: a listed change's button shows its chart as open. */
-  openCharts: ReadonlyMap<string, { cardId: string }>,
-  onToggleChart: (key: string, group: PriceEventGroup, event: PriceEvent) => void,
-  onRegisterButton: (key: string, button: HTMLButtonElement | null) => void,
+  /** The prices a change's chart draws: its package's, in the group's unit. */
+  chartPrices: (group: PriceEventGroup, event: PriceEvent) => ChartPrice[],
+  /** Memoized: the open dialog is memoized on it. */
+  chartContext: ChartContext,
 };
 
 /**
  * A price change list: groups by date, unit and direction, five before Show all, each with its
- * Package details and each package's Chart button. Shared by the result cards and
- * pinned lists, whose owners keep the open charts.
+ * Package details and each package's Chart button, which opens that change in a dialog (one at
+ * a time). Shared by the result cards and pinned lists.
  */
 export default function PriceChangeListBody({
-  groups, widthTier, detailsChoice, detailsKeyPrefix, onDetailsToggle, ...rowProps
+  groups, widthTier, detailsChoice, detailsKeyPrefix, onDetailsToggle, chartPrices, chartContext,
 }: PriceChangeListBodyProps) {
   const [showAllGroups, setShowAllGroups] = useState(false);
+  const [open, setOpen] = useState<OpenChange | null>(null);
+  // New groups (new prices) close the chart.
+  const [openGroups, setOpenGroups] = useState(groups);
+  if (openGroups !== groups) {
+    setOpenGroups(groups);
+    setOpen(null);
+  }
+  const openChart = (group: PriceEventGroup, event: PriceEvent, restoreFocus: boolean) => setOpen({
+    key: eventKey(group, event), restoreFocus, eventDate: group.date,
+    title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
+    prices: chartPrices(group, event),
+  });
+  const closeChart = useCallback(() => setOpen(null), []);
   const listId = useId();
   const compact = widthTier === "narrow";
   return (
@@ -52,15 +69,16 @@ export default function PriceChangeListBody({
           return (
             <PriceEventGroupRow key={group.key} group={group} compact={compact}
               detailsOpen={detailsChoice.get(detailsKey) ?? true}
-              onDetailsToggle={open => onDetailsToggle(detailsKey, open)} {...rowProps} />
+              onDetailsToggle={detailsOpen => onDetailsToggle(detailsKey, detailsOpen)} onChart={openChart} />
           );
         })}
       </Box>
       {groups.length > PRICE_CHANGE_GROUP_LIMIT && <Button size="small" sx={{ alignSelf: "flex-start" }}
         aria-expanded={showAllGroups} aria-controls={listId}
-        onClick={event => { event.currentTarget.focus(); setShowAllGroups(!showAllGroups); }}>
+        onClick={() => setShowAllGroups(!showAllGroups)}>
         {showAllGroups ? "Show fewer" : `Show all ${groups.length} events`}
       </Button>}
+      {open && <PriceChangeChartDialog change={open} context={chartContext} onClose={closeChart} />}
     </Box>
   );
 }
@@ -70,13 +88,13 @@ export default function PriceChangeListBody({
  * package (NDC, old and new price, the change). The label gives the date, unit and direction, so
  * rows repeat none of them.
  */
-function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, openCharts, onToggleChart, onRegisterButton }:
-  Pick<PriceChangeListBodyProps, "openCharts" | "onToggleChart" | "onRegisterButton"> & {
+function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onChart }: {
     group: PriceEventGroup,
     /** Narrow: the amount folds under the percent, and the Chart button is touch-sized. */
     compact: boolean,
     detailsOpen: boolean,
     onDetailsToggle: (open: boolean) => void,
+    onChart: (group: PriceEventGroup, event: PriceEvent, restoreFocus: boolean) => void,
   }) {
   const [showAll, setShowAll] = useState(false);
   const tableId = useId();
@@ -117,7 +135,6 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
             <TableBody>
               {events.map(event => {
                 const key = eventKey(group, event);
-                const chartId = openCharts.get(key)?.cardId;
                 const { percent, amount } = signedChange(event.change);
                 const note = previousObservationNote(event, group);
                 return (
@@ -126,16 +143,14 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1,
                         [`@container (width < ${STACK_BUTTON_BELOW_PX}px)`]: { flexDirection: "column", alignItems: "flex-start" } }}>
                         {event.packageNdc}
-                        <Tooltip title={chartId ? "Hide chart" : "Chart this change"} describeChild>
-                          <IconButton ref={button => onRegisterButton(key, button)} size="small"
-                            aria-label={`${chartId ? "Hide chart" : "Chart this change"} for ${event.packageNdc}`}
-                            aria-expanded={!!chartId} aria-controls={chartId}
-                            onClick={click => { click.currentTarget.focus(); onToggleChart(key, group, event); }}
+                        <Tooltip title="Chart this change" describeChild>
+                          <IconButton size="small" aria-label={`Chart this change for ${event.packageNdc}`} aria-haspopup="dialog"
+                            onClick={click => onChart(group, event, holdsFocus(click.currentTarget))}
                             sx={{
-                              border: 1, borderRadius: 1,
-                              borderColor: chartId ? "primary.main" : "divider",
-                              color: chartId ? "primary.main" : "text.secondary",
-                              "&:hover, &.Mui-focusVisible": { borderColor: "primary.main", color: "primary.main" },
+                              border: 1, borderRadius: 1, borderColor: "divider", color: "text.secondary",
+                              // Touch screens keep `:hover` after a tap; only keyboard focus and a real pointer show it.
+                              "@media (hover: hover)": { "&:hover": { borderColor: "primary.main", color: "primary.main" } },
+                              "&.Mui-focusVisible": { borderColor: "primary.main", color: "primary.main" },
                               ...(compact && { minWidth: 44, minHeight: 44 }),
                             }}>
                             <ShowChartIcon fontSize="small" />
@@ -156,7 +171,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
             </TableBody>
           </Table>
           {capped && <Button size="small" sx={{ ml: -0.5 }} aria-expanded={showAll} aria-controls={tableId}
-            onClick={click => { click.currentTarget.focus(); setShowAll(value => !value); }}>
+            onClick={() => setShowAll(value => !value)}>
             {showAll ? "Show fewer packages" : `Show all ${group.events.length} packages`}
           </Button>}
         </Box>
@@ -165,7 +180,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, open
   );
 }
 
-/** One change, the same in every list that shows it, so a chart opened from one shows as open in all. Holds no whitespace. */
+/** One change, the same in every list that shows it. Holds no whitespace. */
 function eventKey(group: PriceEventGroup, event: PriceEvent) {
   const { startDate, endDate, oldPrice, newPrice } = event.change;
   return `${group.key}:${event.seriesNdc}:${event.packageNdc}:${startDate.getTime()}:${endDate.getTime()}:${oldPrice}:${newPrice}`;

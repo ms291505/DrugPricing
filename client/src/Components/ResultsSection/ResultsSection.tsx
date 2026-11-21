@@ -1,6 +1,5 @@
-import { useId, useRef, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import { ResultsHeadingContext } from "../../Context/resultsHeading";
 
 type Props = {
   /** What was searched, for the heading "Results: <search>" (`fdaResultsLabel`, `nadacResultsLabel`). */
@@ -11,7 +10,7 @@ type Props = {
   notice?: ReactNode,
   /** The results table. */
   table: ReactNode,
-  /** Half-width price change cards (Notable price changes, scans) and any open package event charts. */
+  /** Half-width price change cards (Notable price changes, scans). */
   priceChanges?: ReactNode,
   /** Live comparison controls and charts directly under the table. */
   children?: ReactNode,
@@ -19,17 +18,16 @@ type Props = {
 
 /**
  * The frame of both search pages' results: a heading, table, and shared responsive grid of live
- * comparisons and event cards. Pinned items sit below it, outside.
+ * comparisons and price change cards. Pinned items sit below it, outside.
  */
 export default function ResultsSection({ searchLabel, toolbar, notice, table, priceChanges, children }: Props) {
   const headingId = useId();
-  const headingRef = useRef<HTMLHeadingElement>(null);
   return (
     <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", minWidth: 0 }}>
       <Box sx={{
         display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 1, px: { xs: 1, md: 0 },
       }}>
-        <Typography component="h2" variant="h6" id={headingId} ref={headingRef} tabIndex={-1} sx={{
+        <Typography component="h2" variant="h6" id={headingId} data-results-heading tabIndex={-1} sx={{
           mr: "auto", minWidth: 0, overflowWrap: "anywhere", "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
         }}>
           Results: {searchLabel}
@@ -42,12 +40,10 @@ export default function ResultsSection({ searchLabel, toolbar, notice, table, pr
       }}>
         {table}
       </Paper>
-      <ResultsHeadingContext value={headingRef}>
-        <Grid container spacing={2} alignItems="flex-start" sx={{ minWidth: 0 }}>
-          {children}
-          {priceChanges}
-        </Grid>
-      </ResultsHeadingContext>
+      <Grid container spacing={2} alignItems="flex-start" sx={{ minWidth: 0 }}>
+        {children}
+        {priceChanges}
+      </Grid>
     </Box>
   );
 }
