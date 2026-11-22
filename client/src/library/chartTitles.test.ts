@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartSubtitle, chartTitle, seriesLabels } from "./chartTitles";
+import { chartSubtitle, chartTitle, scanReportMessage, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -22,5 +22,16 @@ describe("chart titles", () => {
     expect(chartSubtitle(2, "product", FULL_WINDOW, prices)).toBe("2 products · Jan 5, 2022 – Oct 7, 2026");
     expect(chartSubtitle(2, "product", { start: Date.parse("2026-01-01"), end: null }, prices))
       .toBe("2 products · Jan 1, 2026 – Oct 7, 2026");
+  });
+});
+
+describe("scanReportMessage", () => {
+  it("counts the package changes a scan found", () => {
+    expect(scanReportMessage(3, 25)).toBe("Found 3 package changes of 25% or more in these dates and filters.");
+    expect(scanReportMessage(1, 12.5)).toBe("Found 1 package change of 12.5% or more in these dates and filters.");
+  });
+
+  it("says when a scan found nothing", () => {
+    expect(scanReportMessage(0, 20)).toBe("No package changes of 20% or more in these dates and filters.");
   });
 });

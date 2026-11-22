@@ -1,5 +1,5 @@
 import HelpButton from "../Help/HelpButton";
-import { cloneElement, useId, useMemo, useRef, useState } from "react";
+import { cloneElement, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
@@ -12,6 +12,7 @@ import { lineChartSummary } from "../../library/chartSummary.ts";
 import { lineAnnouncement, lineReadoutHeight, rowAtIndex, tooltipRows, type TooltipRow } from "../../library/chartReadout.ts";
 import useChartReadout from "../../hooks/useChartReadout.tsx";
 import useLockedPoint from "../../hooks/useLockedPoint.ts";
+import { fromKeyboard, holdsFocus } from "../ui/focus";
 import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock.tsx";
 import { canHide, seriesSetKey, showGroup, toggleSeries, visibleSeries } from "../../library/seriesVisibility.ts";
 import SeriesLegend from "./SeriesLegend.tsx";
@@ -167,12 +168,14 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const lock = useLockedPoint<number>(readout.currentKey, date => dates.has(date));
   const eventShown = eventDate !== undefined && dates.has(eventDate);
   const restDate = eventShown ? eventDate : vizData.at(-1)?.asOfDate;
-  // Unlock unmounts with the lock: give focus back to the chart, not the page.
+  // Unlock unmounts with the lock: when it had focus, give focus back to the chart, not the page.
+  // After a tap on iOS it has none, so nothing moves.
   const focusBox = useRef<HTMLDivElement>(null);
-  const focusChart = () => focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
-  const unlockAndFocus = () => {
+  const focusChart = (options?: FocusOptions) => focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus(options);
+  const unlockAndFocus = (event: MouseEvent<HTMLElement>) => {
+    const hadFocus = holdsFocus(event.currentTarget);
     lock.unlock();
-    focusChart();
+    if (hadFocus) focusChart({ preventScroll: !fromKeyboard(event) });
   };
   const rangeCount = shownNdcs.filter(ndc => rangeNdcs.has(ndc)).length;
 
@@ -230,24 +233,21 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             portal={dock}
             // Locked: the pointer no longer moves the readout.
             active={lock.locked !== null ? false : undefined}
-            content={({ active, payload }) => {
-              const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
-              const date = hovered?.asOfDate ?? lock.locked ?? restDate;
-              const row = hovered ?? vizData.find(r => r.asOfDate === date);
-              if (date === undefined || !row) return null;
-              return (
-                <LineReadout
-                  date={date}
-                  unit={unit}
-                  rows={tooltipRows(row, shownNdcs)}
-                  status={hovered ? "hover" : lock.locked !== null ? "locked" : "default"}
-                  restLabel={eventShown ? "this change" : "latest"}
-                  onUnlock={unlockAndFocus}
-                  colorFor={colorFor}
-                  descriptionFor={isMobile ? undefined : descriptionFor}
-                />
-              );
-            }}
+            // An element, not a function: recharts renders a function as a component type, so an
+            // inline one remounts the readout on every render, and Unlock with it as Tab reaches it.
+            content={(
+              <LineTooltip
+                locked={lock.locked}
+                restDate={restDate}
+                vizData={vizData}
+                shownNdcs={shownNdcs}
+                unit={unit}
+                restLabel={eventShown ? "this change" : "latest"}
+                onUnlock={unlockAndFocus}
+                colorFor={colorFor}
+                descriptionFor={isMobile ? undefined : descriptionFor}
+              />
+            )}
           />
           {/* The chart's change: solid and wider, under the lock's thin dashed line, and kept while locked elsewhere. */}
           {eventShown
@@ -331,6 +331,41 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   );
 }
 
+type LineTooltipProps = Omit<LineReadoutProps, "date" | "rows" | "status"> & {
+  /** From recharts, which clones the element with the hovered point. */
+  active?: boolean,
+  payload?: readonly { payload?: unknown }[],
+  locked: number | null,
+  restDate: number | undefined,
+  vizData: LineVizRow[],
+  shownNdcs: string[],
+};
+
+/**
+ * The readout for the hovered date, else the locked one, else the rest date. recharts clones it
+ * with all of `Tooltip`'s props, so it passes on only the readout's, by name.
+ */
+function LineTooltip({
+  active, payload, locked, restDate, vizData, shownNdcs, unit, restLabel, onUnlock, colorFor, descriptionFor,
+}: LineTooltipProps) {
+  const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
+  const date = hovered?.asOfDate ?? locked ?? restDate;
+  const row = hovered ?? vizData.find(r => r.asOfDate === date);
+  if (date === undefined || !row) return null;
+  return (
+    <LineReadout
+      date={date}
+      rows={tooltipRows(row, shownNdcs)}
+      status={hovered ? "hover" : locked !== null ? "locked" : "default"}
+      unit={unit}
+      restLabel={restLabel}
+      onUnlock={onUnlock}
+      colorFor={colorFor}
+      descriptionFor={descriptionFor}
+    />
+  );
+}
+
 type LineReadoutProps = {
   date: number,
   unit: string,
@@ -338,7 +373,7 @@ type LineReadoutProps = {
   status: ReadoutStatus,
   /** What the resting (default) date is: the latest, or the change the chart was opened for. */
   restLabel: "latest" | "this change",
-  onUnlock: () => void,
+  onUnlock: (event: MouseEvent<HTMLElement>) => void,
   colorFor: (ndc: string) => string,
   /** Each series' description, left out on a phone to keep the readout small. */
   descriptionFor?: (ndc: string) => string,

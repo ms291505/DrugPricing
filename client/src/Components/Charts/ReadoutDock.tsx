@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from "@mui/material";
-import type { ReactNode, Ref } from "react";
+import type { MouseEvent, ReactNode, Ref } from "react";
 import { READOUT_MAX_HEIGHT } from "../../library/chartReadout";
 import useMobile from "../../hooks/useMobile";
 
@@ -82,7 +82,7 @@ export function ReadoutContent({ header, children }: { header: ReactNode, childr
 type HeaderProps = {
   children: ReactNode,
   status: ReadoutStatus,
-  onUnlock: () => void,
+  onUnlock: (event: MouseEvent<HTMLElement>) => void,
   /** The header's full text, shown on hover when it is ellipsised. */
   title?: string,
 };

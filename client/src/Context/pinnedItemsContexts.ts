@@ -7,13 +7,18 @@ import type { ExplorerItem } from "../library/explorerItems";
 
 export type PinHighlight = {
   id: string,
-  /** Scroll the item into view and move focus to its heading (Chart selected). Pin only highlights. */
+  /** Scroll the item into view (Chart selected). Pin only highlights. */
+  scroll: boolean,
+  /** Also move focus to its heading: Chart selected from the keyboard. */
   focus: boolean,
 };
 
+/** How a new item is shown: by default it's only highlighted. */
+export type AddItemsOptions = { scroll?: boolean, focus?: boolean };
+
 export type PinActions = {
-  addItems: (items: ExplorerItem[], options?: { focus?: boolean }) => void;
-  addItem: (item: ExplorerItem, options?: { focus?: boolean }) => void;
+  addItems: (items: ExplorerItem[], options?: AddItemsOptions) => void;
+  addItem: (item: ExplorerItem, options?: AddItemsOptions) => void;
   updateItem: (id: string, update: (item: ExplorerItem) => ExplorerItem) => void;
   removeItem: (id: string) => void;
   /** Moves an item up (-1) or down (+1) one place. */

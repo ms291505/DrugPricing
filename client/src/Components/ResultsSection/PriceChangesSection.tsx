@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useMemo, useState, type MouseEvent } from "react";
 import { Button, Grid, IconButton, Tooltip } from "@mui/material";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
@@ -71,10 +71,10 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   return (
     <>
       {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
-        thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" focusOnMount={false} {...listProps} />}
+        thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" {...listProps} />}
       {scans.map(scan => (
         <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
-          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} focusOnMount {...listProps} />
+          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} {...listProps} />
       ))}
     </>
   );
@@ -82,7 +82,7 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
 
 /** One list's result card: Notable price changes or a scan. It can be pinned and closed. */
 function PriceChangeListCard({
-  listId, title, thresholdPercent, groups, detailsKeyPrefix, focusOnMount, prices, origin, colors, dateWindow,
+  listId, title, thresholdPercent, groups, detailsKeyPrefix, prices, origin, colors, dateWindow,
   detailsChoice, onDetailsToggle, chartPrices, onClose,
 }: {
   listId: string,
@@ -90,8 +90,6 @@ function PriceChangeListCard({
   thresholdPercent: number,
   groups: PriceEventGroup[],
   detailsKeyPrefix: string,
-  /** A new scan's card takes focus. */
-  focusOnMount: boolean,
   prices: ChartPrice[],
   origin: ChartOrigin,
   colors: Map<string, string>,
@@ -103,13 +101,7 @@ function PriceChangeListCard({
 }) {
   // The card's own width: a workspace pane can be narrow in a wide window.
   const [cardRef, widthTier] = useWidthTier<HTMLDivElement>();
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const { addItems } = usePinActions();
-  useEffect(() => {
-    if (!focusOnMount || !headingRef.current?.checkVisibility()) return;
-    headingRef.current.focus({ preventScroll: true });
-    headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
-  }, [focusOnMount]);
   const chartContext: ChartContext = { listTitle: title, origin, colors, dateWindow };
 
   const pin = () => {
@@ -125,7 +117,7 @@ function PriceChangeListCard({
 
   return (
     <Grid ref={cardRef} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx} data-price-change-list={listId}>
-      <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3} headingRef={headingRef}
+      <ExplorerGridItem title={title} subtitle={priceChangeListSubtitle(thresholdPercent)} headingLevel={3}
         actions={<>
           <Tooltip title="Pin a copy to this tab">
             <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>

@@ -116,7 +116,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
 - New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
-  one update, highlighting/focusing the first. Older mixed-unit pins still use `UnitSplit`.
+  one update, highlighting the first. Chart selected scrolls to it and toasts what it added, and
+  focuses its heading only from the keyboard. Older mixed-unit pins still use `UnitSplit`.
 - Live comparison charts start hidden; the Chart latest prices and Chart price histories toggles
   show/hide them, retaining their choice across searches while mounted, never in storage. They are
   gated on total **series** count, not price rows (`shouldAutoChart`), before splitting into one
@@ -199,13 +200,18 @@ re-renders only the readout, not the chart.
   so the dock's height never depends on the text or the card's width.
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
   second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
-  header has an Unlock button. Unlocking by either gives focus back to the chart; in a dialog the second Esc closes it. A lock on a point the rows
+  header has an Unlock button. Esc gives focus back to the chart, and so does Unlock when it had
+  focus (after a tap on iOS it has none); in a dialog the second Esc closes it. A lock on a point the rows
   no longer hold (a new search, or a filter hid it) counts as no lock. While locked the `Tooltip` is `active={false}`, so the pointer no
   longer moves the readout, and the chart marks the point (a dashed line, or the row highlight).
   Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click the arrow
   keys no longer move the readout.
 - React events bubble out of a portal to its React parents: `ReadoutContent` stops them (keys too, except Escape, which
   reaches the chart's lock and then a dialog), or a click on Unlock would also reach the chart and lock again.
+- The `Tooltip`'s `content` is an element (`LineTooltip`, `BarTooltip`), never an inline
+  function: recharts renders a function with `createElement`, so a new one each render is a new
+  component type and remounts the readout. Tabbing off the chart re-renders it, and Unlock was
+  replaced as focus reached it.
 - The line readout gives the date and unit once, then swatch, NDC and price per series, highest
   first; descriptions, ranges and package counts show from `md` up. Check new lines at phone
   width.

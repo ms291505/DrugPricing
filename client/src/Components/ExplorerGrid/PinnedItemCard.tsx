@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -18,6 +18,7 @@ import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
 import PinnedPriceChangeList from "./PinnedPriceChangeList";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
+import { fromKeyboard, nearestVisible } from "../ui/focus";
 
 type Props = {
   item: ExplorerItem,
@@ -59,15 +60,16 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const cardRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const highlighted = highlight !== null;
+  const scrollOnAdd = highlight?.scroll ?? false;
   const focusOnAdd = highlight?.focus ?? false;
 
-  // Chart selected feedback: bring the new card into view and move focus to its heading,
-  // so keyboard and screen-reader users land on what they just created.
+  // Chart selected feedback: bring the new card into view, and from the keyboard move focus to
+  // its heading, so keyboard users land on what they just created. A tap leaves focus alone.
   useEffect(() => {
     const card = cardRef.current;
-    if (!focusOnAdd || !card?.checkVisibility()) return;
+    if (!scrollOnAdd || !card?.checkVisibility()) return;
     card.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
-    headingRef.current?.focus({ preventScroll: true });
+    if (focusOnAdd) headingRef.current?.focus({ preventScroll: true });
     // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
     // and grow past their placeholders, pushing the card down. Once the scroll stops, center the
     // card again until the charts around it have drawn and it stays put. The user scrolling
@@ -98,7 +100,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
     // Browsers without `scrollend`, and a card already in place (no scroll, so no event).
     timer = setTimeout(start, RECENTER_FALLBACK_MS);
     return stop;
-  }, [focusOnAdd]);
+  }, [scrollOnAdd, focusOnAdd]);
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuId = useId();
@@ -106,6 +108,17 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const runAndClose = (action: () => void) => () => {
     action();
     closeMenu();
+  };
+
+  // Remove unmounts the card with the menu's anchor, so keyboard focus would fall to <body>. From
+  // the keyboard (MUI focuses menu items even after a tap, so not `holdsFocus`), pick a surviving
+  // neighbor first and focus it once the menu's focus trap is gone.
+  const remove = (event: MouseEvent<HTMLElement>) => {
+    const card = cardRef.current;
+    const target = fromKeyboard(event) && card ? removalFocusTarget(card) : null;
+    closeMenu();
+    removeItem(item.id);
+    if (target) requestAnimationFrame(() => { if (target.isConnected) target.focus(); });
   };
 
   // The date picker opens from the dates chip, or from "Change dates" in the menu.
@@ -172,7 +185,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
           <ListItemIcon>{isFull ? <WidthNormalIcon fontSize="small" /> : <WidthFullIcon fontSize="small" />}</ListItemIcon>
           <ListItemText>{isFull ? "Half width" : "Full width"}</ListItemText>
         </MenuItem>
-        <MenuItem onClick={runAndClose(() => removeItem(item.id))}>
+        <MenuItem onClick={remove}>
           <ListItemIcon><DeleteOutlineIcon fontSize="small" /></ListItemIcon>
           <ListItemText>Remove</ListItemText>
         </MenuItem>
@@ -233,3 +246,17 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
     </Grid>
   );
 })
+
+/**
+ * Where keyboard focus goes when `card` is removed: the next pinned card's collapse toggle, else
+ * the previous card's, else the results heading, else the search's first field. The pinned
+ * section isn't inside the results on standalone pages, so these are found through the DOM.
+ */
+function removalFocusTarget(card: HTMLElement): HTMLElement | null {
+  const cards = [...card.parentElement?.querySelectorAll<HTMLElement>(":scope > [data-pinned-item]") ?? []];
+  const index = cards.indexOf(card);
+  const neighbor = cards[index + 1] ?? cards[index - 1];
+  return neighbor?.querySelector<HTMLElement>("[data-collapse-toggle]")
+    ?? nearestVisible(card, "[data-results-heading]")
+    ?? nearestVisible(card, "[data-first-term]");
+}

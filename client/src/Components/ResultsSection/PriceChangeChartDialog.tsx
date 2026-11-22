@@ -21,8 +21,6 @@ export type OpenChange = {
   prices: ChartPrice[],
   /** The change's date, marked on the chart. */
   eventDate: number,
-  /** Whether focus was on the button when it was pressed. After a tap on iOS nothing holds it. */
-  restoreFocus: boolean,
 };
 
 /** What a list gives the charts it opens. */
@@ -65,10 +63,7 @@ export default function PriceChangeChartDialog({ change, context, onClose }: Pro
   const { listTitle, origin, colors, dateWindow, source } = context;
   const dates = formatWindow(dateWindow, dateBounds(change.prices));
   return (
-    <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md" aria-describedby={contextId}
-      // MUI restores focus to whatever had it before opening. After a tap that can be a stale
-      // element (a heading, an earlier text field), and it scrolls there, so a tap restores nothing.
-      disableRestoreFocus={!change.restoreFocus}>
+    <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md" aria-describedby={contextId}>
       <TitleBar title={change.title} onClose={onClose} />
       <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

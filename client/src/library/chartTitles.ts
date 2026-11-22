@@ -47,6 +47,14 @@ export const priceChangeListTitle = (thresholdPercent: number) => `Price changes
 export const priceChangeListSubtitle = (thresholdPercent: number) =>
   `Package changes of ${thresholdPercent}% or more in these dates and filters.`;
 
+/**
+ * What a scan found, for the status line beside Scan price changes: "Found 3 package changes of
+ * 25% or more in these dates and filters.", or that it found none.
+ */
+export const scanReportMessage = (changeCount: number, thresholdPercent: number) => changeCount === 0
+  ? `No package changes of ${thresholdPercent}% or more in these dates and filters.`
+  : `Found ${changeCount} package ${changeCount === 1 ? "change" : "changes"} of ${thresholdPercent}% or more in these dates and filters.`;
+
 /** "Metformin: price changes of 25% or more": a pinned list's title. */
 export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
   `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
