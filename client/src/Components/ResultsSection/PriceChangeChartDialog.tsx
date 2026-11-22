@@ -81,7 +81,8 @@ export default function PriceChangeChartDialog({ change, context, onClose }: Pro
         </Box>
         {/* Always mounted so a screen reader hears it (MUI hides the app's toasts while the dialog is open); the text changes per pin so a second pin is heard too. */}
         <Box role="status" sx={visuallyHidden}>
-          {pins > 0 && `Pinned${pins > 1 ? ` again, ${pins} times` : ""}. It's under Pinned on this tab.`}
+          {pins === 1 && "Pinned. It's under Pinned on this tab."}
+          {pins > 1 && `Pinned ${pins} copies. They're under Pinned on this tab.`}
         </Box>
         <LineViz nadacPrices={change.prices} title={change.title} colors={colors} dateWindow={dateWindow} seriesKind="package"
           eventDate={change.eventDate} />

@@ -3,6 +3,16 @@
  * focus from code only when the user would otherwise lose their place, and never because
  * something new appeared.
  *
+ * The one pattern for that case: when the user's own action removes the control that has focus
+ * (a card's Close, a pin's Remove, Close tab), focus would fall to `<body>` and the next Tab
+ * starts over (WCAG 2.4.3). Use it only there, and try the flow with a keyboard first.
+ * - A button decides with `holdsFocus` before the change. After a tap on iOS nothing holds focus,
+ *   so nothing moves.
+ * - A menu item decides with `fromKeyboard(event)`, since MUI focuses menu items even after a
+ *   tap, and moves focus after the menu has closed, or the menu's focus trap pulls it back.
+ * - The target is a surviving neighbor (the next card's toggle, else the previous card's, else a
+ *   heading), focused with `preventScroll` unless `fromKeyboard(event)`.
+ *
  * Focus targets found through the DOM use data attributes, not class names or text:
  * `data-collapse-toggle` (`ExplorerGridItem`'s collapse button), `data-results-heading`
  * (`ResultsSection`'s `h2`) and `data-price-change-list` (each list card's grid item).

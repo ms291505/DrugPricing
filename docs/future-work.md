@@ -142,6 +142,11 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   description an NDC has had. Either way it changes what typed searches find. Autocomplete's
   view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
   follows the fix with no change of its own. Small.
+- **Back the WCAG 2.2 AA target with checks** (from PR 64's review). The rules in AGENTS.md
+  can't show conformance on their own, and nothing lints accessibility today. Add
+  `eslint-plugin-jsx-a11y`, run axe (DevTools or Lighthouse) once per page type (Welcome, each
+  search, the workspace, Help, Settings), and do a keyboard-only pass and a VoiceOver pass
+  through the main flows. Fix or record what they find.
 - **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
 - **Two global modals are never opened.** Nothing calls `openModal("about")` or
   `openModal("onboarding")`; About and Welcome render only as pages. Remove both entries from
