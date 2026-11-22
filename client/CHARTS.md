@@ -55,14 +55,13 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   groups by date, pricing unit and direction, and shows five groups before Show all. Each group's
   Package details is a small table (NDC, was, now, change), open by default at every card width.
   A group the user opens or closes stays so while the page is mounted. Each package row
-  has an outlined chart icon button that uses the primary color while open. It toggles that change's unpinned
-  `EventChangeChart` over the page's shown dates. Charts are keyed by event key with one
-  section-level id, so the same change charted from two lists is one chart and both buttons show it
-  open. Several can be open; collapsing or closing a list leaves them open; new prices discard them,
-  every scan card, and a closed Notable price changes. Opening moves focus to the chart's heading;
-  AGENTS.md (Price Activity) has where focus goes when a chart or card closes. `eventDate` marks the
+  has an outlined chart icon button (`aria-haspopup="dialog"`; it doesn't toggle) that opens that
+  change in `PriceChangeChartDialog`, a local MUI `Dialog` that `PriceChangeListBody` renders for
+  results lists and pinned lists alike. One change is open at a time; new prices (new groups)
+  close it, and it closes itself while its page is hidden. MUI moves focus into it and back to the
+  button on close; after a tap the button didn't hold focus, so nothing is restored. `eventDate` marks the
   change with a solid line (the lock's is thin and dashed), and the readout rests on that date
-  instead of the latest. A pin keeps `eventDate`; pins without it draw as before. A chart card has
+  instead of the latest. A pin keeps `eventDate`; pins without it draw as before. The chart has
   no event list and no way to zoom itself: neither the readout nor the plot lists events, and there
   is no Around this change. Legacy pins that stored a zoomed `dateWindow` (made by the old Around
   this change) still load and draw that window; the pinned card's Dates control is the only thing
@@ -75,12 +74,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   histories with the result over the same dates. A list whose JSON is over
   `PRICE_CHANGE_LIST_PIN_LIMIT` (500,000 characters) is not pinned (`fitsPinLimit`); it is never
   truncated. A pinned list's dates are fixed: its menu has only Move up, Move down, Half/Full width
-  and Remove, and its dates chip isn't clickable. Its Chart button opens a temporary chart in a
-  second grid below the pinned items, held by `PinnedSection` (never stored), over the list's dates
-  only; it stays when the list is collapsed or removed, and a pin of it keeps the list's provenance
-  (`createChartItem`'s `source`). Only list cards receive the open charts, so opening one doesn't
-  redraw pinned chart cards. Focus from a closed temporary chart goes to the button that opened it,
-  else its list's heading, else the Pinned heading.
+  and Remove, and its dates chip isn't clickable. Its Chart button opens the dialog over the list's
+  dates only, and a pin of it keeps the list's provenance (`createChartItem`'s `source`).
 - Price Activity (`library/priceActivity.ts`) uses per-package range, rounded to 0.1% at the
   5% cutoff; significant steps remain 10%. Product state comes from packages, never their
   average, and product rows have no sparkline. Package sparklines use `fittedPriceAxis`.
@@ -107,7 +102,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   products. The dates chip is the actual date window, and Match scale shares axes only by pricing
   unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
-  `h3` inside Pinned and for Price changes or event charts), with a collapse toggle wired with
+  `h3` inside Pinned and for Price changes), with a collapse toggle wired with
   `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
@@ -127,7 +122,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   gated on total **series** count, not price rows (`shouldAutoChart`), before splitting into one
   card per pricing unit.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
-  time"), the subtitle the count and dates. Focused event charts name the event date and unit.
+  time"), the subtitle the count and dates. The change chart dialog's title names the event date, package and unit.
 
 ## Axes and labels
 
@@ -204,13 +199,13 @@ re-renders only the readout, not the chart.
   so the dock's height never depends on the text or the card's width.
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
   second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
-  header has an Unlock button, which gives focus back to the chart. A lock on a point the rows
+  header has an Unlock button. Unlocking by either gives focus back to the chart; in a dialog the second Esc closes it. A lock on a point the rows
   no longer hold (a new search, or a filter hid it) counts as no lock. While locked the `Tooltip` is `active={false}`, so the pointer no
   longer moves the readout, and the chart marks the point (a dashed line, or the row highlight).
   Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click the arrow
   keys no longer move the readout.
-- React events bubble out of a portal to its React parents: `ReadoutContent` stops them, or a
-  click on Unlock would also reach the chart and lock again.
+- React events bubble out of a portal to its React parents: `ReadoutContent` stops them (keys too, except Escape, which
+  reaches the chart's lock and then a dialog), or a click on Unlock would also reach the chart and lock again.
 - The line readout gives the date and unit once, then swatch, NDC and price per series, highest
   first; descriptions, ranges and package counts show from `md` up. Check new lines at phone
   width.

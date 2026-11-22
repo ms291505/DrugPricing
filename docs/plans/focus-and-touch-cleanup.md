@@ -50,31 +50,23 @@ disagree.
 **Same behavior on every screen.** Layout adapts to the width tier; interaction doesn't. A
 phone-only or desktop-only interaction needs a stated reason in its plan.
 
-**Accessibility** means semantic HTML, MUI components used as designed, accessible names,
-contrast, and every control reachable and usable by keyboard. It doesn't mean moving focus to
-follow content. Helpers are in `Components/ui/focus.ts`.
+**Accessibility: WCAG 2.2 Level AA.** As built after PR 1's review, AGENTS.md keeps only the
+policy: semantic HTML and MUI's keyboard and focus behavior first, accessible names, visible
+focus, a logical order, status messages in an always-mounted `role="status"` line (new content
+doesn't take focus), and custom focus handling only for a specific usability problem, with the
+reason in a comment. Try the flow with a keyboard first; if you can tell where you are and
+continue, keep the default. Two touch rules stay: focus a text field from code only
+`fromKeyboard(event)` or when the user asked to type, and no `event.currentTarget.focus()` in
+click handlers (ESLint rejects it). Custom `&:hover` styles go inside `@media (hover: hover)`.
 
-- Show what the user asked to see in a dialog, or where they're looking. Don't move focus to new
-  non-modal content; announce it in an always-mounted `role="status"` line if a screen reader
-  would miss it.
-- An action whose purpose is to go somewhere (Chart selected, a scan's Show) scrolls there for
-  everyone, and moves focus to the destination's heading only `fromKeyboard(event)`. A toast or
-  status line confirms it.
-- Dialogs, menus and popovers keep MUI's focus handling. Don't add `onEntered` focus,
-  `disableRestoreFocus` or `returnFocus` without a comment saying why.
-- When an action removes or disables the control that has focus, check `holdsFocus` before the
-  change, and only then move focus to a nearby control that survives it, with `preventScroll`
-  unless `fromKeyboard(event)`. After a tap on iOS nothing holds focus, so nothing moves. When
-  data (new prices) removes it, there's no event: check in a layout-effect cleanup and always use
-  `preventScroll`.
-- Actions chosen from a menu use `fromKeyboard(event)` instead of `holdsFocus` (MUI focuses a
-  menu item even after a tap), and move focus after the menu has closed (`requestAnimationFrame`
-  or an effect), or the menu's focus trap pulls it back.
-- Focus a text field from code only `fromKeyboard(event)`, or when the user asked to type
-  (opening a rename). It opens the phone keyboard.
-- No `event.currentTarget.focus()` in click handlers (ESLint rejects it). Custom `&:hover` styles
-  go inside `@media (hover: hover)`; open or selected states need their own look, not the focus
-  or hover style.
+The review proposed a longer block that tied each rule to a criterion and spelled out the focus
+techniques. It wasn't adopted: detailed techniques in AGENTS.md invite the hand-rolled routing
+this plan removes. The one pattern still needed, for an action that removes the focused control
+(`holdsFocus` before the change, `fromKeyboard` and after-close timing for menu items, a
+surviving neighbor, `preventScroll` unless from the keyboard), is in `focus.ts`'s header, where
+only code that already moves focus reads it. PR 2's items below follow it, and its "go
+somewhere" actions (Chart selected, Show) scroll for everyone and focus the destination's
+heading only `fromKeyboard(event)`.
 
 ```ts
 /**
@@ -151,10 +143,10 @@ Every price change list (Notable price changes, scan cards, pinned lists) opens 
 the same way.
 
 - **The button.** "Chart this change for <NDC>" with `aria-haspopup="dialog"`. It no longer
-  toggles: no `aria-expanded`, `aria-controls`, `ref` or open styling. Its custom hover border goes
-  inside `@media (hover: hover)`; its `&.Mui-focusVisible` border stays outside it, so keyboard
-  focus is visible. Keep the 44px size on narrow cards. Remove its `click.currentTarget.focus()`.
-- **`PriceChangeChartDialog.tsx`** (replaces `EventChangeChart.tsx`), memoized. A local MUI
+  toggles: no `aria-expanded`, `aria-controls`, `ref` or open styling. It keeps its divider border
+  and no custom hover or focus colors: MUI's `IconButton` already drops its hover background
+  under `@media (hover: none)` and shows a focus ripple. Keep the 44px size on narrow cards. Remove its `click.currentTarget.focus()`.
+- **`PriceChangeChartDialog.tsx`** (replaces `EventChangeChart.tsx`). A local MUI
   `Dialog`, not `GlobalModal`: the global modal renders at the app root, outside each tab's pin
   provider, so Pin inside it would reach the wrong pins or none. React context passes through the
   dialog's portal, so the local one reaches the tab's pins.
@@ -171,22 +163,23 @@ the same way.
     `colors`, `dateWindow`, and the pinned list's `source` under Pinned). It pins a regular line
     chart pin and toasts, and the dialog stays open. While a dialog is open MUI sets `aria-hidden`
     on `#root`, which holds the `<Toaster>`, so screen readers won't hear the toast: the dialog
-    also has an always-mounted `role="status"` line that says "Pinned. It's under Pinned on this
-    tab." after a pin.
+    also has an always-mounted, visually hidden `role="status"` line. Its text changes with each
+    pin, so a second pin is announced too (the visible toast shows above the backdrop).
   - **Close:** the title bar's close button, Esc, or the backdrop. Esc needs one fix:
     `ReadoutContent` (`Charts/ReadoutDock.tsx`) stops every `keydown`, so Esc from Unlock never
-    reaches the dialog. Let `Escape` through. With a point locked and focus on the chart, the
-    first Esc unlocks (`useLockedPoint` stops it) and the second closes; say so in CHARTS.md.
+    reaches the dialog. Let `Escape` through. With a point locked, the first Esc (from the chart
+    or from Unlock) unlocks (`useLockedPoint` stops it) and gives focus back to the chart, since
+    Unlock unmounts; the second closes. Say so in CHARTS.md.
   - **Restoring focus.** MUI's FocusTrap restores whatever had focus before the dialog opened
     (`relatedTarget`), not the chart button, and without `preventScroll`. After a tap on iOS that
     can be a stale element: a heading Chart selected focused, an earlier text field. In the
     button's click handler, record `holdsFocus(event.currentTarget)`, and pass
     `disableRestoreFocus` when it was false, with a comment. A keyboard user gets focus back on
-    the button; a tap restores nothing.
+    the button; a tap restores nothing. Revisit in PR 2 (see "Restoring focus after a tap").
 - **State.** `PriceChangeListBody` holds the one open change (`{ key, title, prices, eventDate,
   restoreFocus }`, captured in the click handler: `loadedPrices()` computes when called) and
   renders the dialog, for results lists and pinned lists alike. It takes `chartPrices(group,
-  event)` and a memoized `chartContext` (`listTitle`, `origin`, `colors`, `dateWindow`, and
+  event)` and a `chartContext` (`listTitle`, `origin`, `colors`, `dateWindow`, and
   `source` under Pinned) in place of `openCharts`, `onToggleChart` and `onRegisterButton`.
   - `PriceChangesSection` builds them from the page's `ChartSource` (the `loadedPrices` filter by
     package NDC and unit that `toggleChart` uses today).
@@ -234,11 +227,11 @@ Behavior that changes on purpose:
   `[data-collapse-toggle]`, else the previous card's, else `[data-results-heading]`, with
   `preventScroll: !fromKeyboard(event)`. Cards are found by `data-price-change-list`. Remove
   Close's `event.currentTarget.focus()`.
-- **New prices remove a focused scan card.** Keep each list card's layout-effect check (does the
-  card hold focus as it unmounts?). In the microtask, if the section is still shown (Clear search
-  unmounts all of it), focus Notable price changes' collapse toggle when it's shown, else the
-  results heading, always with `preventScroll`. Check that the results heading is still mounted
-  while a new search loads; if it isn't, pick a target that is.
+- **New prices remove a focused scan card: nothing moves focus.** PR 1 first kept a layout-effect
+  check that sent focus to Notable price changes or the results heading; the review removed it.
+  It only ran when a slow fetch landed after the user tabbed into a card, the Notable card
+  unmounts during loading too, and browsers resume Tab from the removed node's position. A small,
+  deliberate risk under 2.4.3, traded for the most intricate lifecycle code left.
 
 ### Docs in PR 1
 
@@ -292,12 +285,11 @@ In the iOS Simulator (Safari, `localhost:5173`):
 On desktop with the keyboard only (Chrome, and Safari with "Press Tab to highlight each item" on):
 
 - Enter on a chart button opens the dialog with focus inside it; Esc closes it and focus is back
-  on that button. Lock a point, Tab to Unlock, press Esc: the dialog closes. Lock a point with
-  focus on the chart: the first Esc unlocks, the second closes.
+  on that button. Lock a point, then from the chart and again from Unlock: the first Esc unlocks
+  and focus is on the chart, the second closes the dialog. Outside a dialog (a pinned chart), Esc
+  from Unlock unlocks and focus is on the chart.
 - Close a list card with the keyboard: focus lands on the next card's toggle, else the previous
   card's, else the results heading.
-- With focus inside a scan card, change the dates with the keyboard so new prices remove it: focus
-  lands on Notable price changes or the results heading.
 
 On a real device with `npm run dev:phone`, once with VoiceOver: the dialog is announced by its
 title and context line; Pin announces "Pinned…"; Android Chrome, if available, repeats the
@@ -358,6 +350,15 @@ No layout changes. The data attributes and helpers come from PR 1.
   `unlockAndFocus` gives focus back to the chart only when `holdsFocus(event.currentTarget)`, with
   `preventScroll: !fromKeyboard(event)`. Check in the Simulator that a tap on Unlock doesn't switch
   `useChartReadout` into announcing.
+- **Unlock can't be reached with Tab** (found verifying PR 1; older than this plan). `LineViz` and
+  `BarViz` pass `Tooltip` an inline `content` function, and recharts 3 renders a function with
+  `createElement`, so every chart render is a new component type and remounts the readout.
+  Tabbing off the chart runs `useChartReadout`'s `onBlur`, which re-renders, and Unlock is
+  replaced as focus moves to it: focus falls to `<body>` (in a dialog, MUI's trap catches it on
+  the container). Pass a stable `content` instead: a `useCallback` render function whose inputs
+  (lock, rest date, rows, colors) come through refs or its dependencies, or an element recharts
+  clones with `active` and `payload`. Keep the readout from re-rendering the chart on hover.
+  Say in CHARTS.md's readout section why `content` must be stable.
 - **Help navigation** (`Help/HelpBrowser.tsx`): it moves focus because the clicked link unmounts,
   in a layout effect that runs after the old content is gone. Record `holdsFocus(root)` in the
   handlers that navigate (open topic, Back, All topics, topic links) and focus in the effect only
@@ -369,6 +370,12 @@ No layout changes. The data attributes and helpers come from PR 1.
   nothing reserves its height, so Shift+Tab can put focus under it, and the phone FAB can cover
   the bottom edge. Add `scroll-padding-top` (app bar height) and `scroll-padding-bottom` (FAB) on
   `html`, in the theme's global styles.
+- **Restoring focus after a tap** (`PriceChangeChartDialog.tsx`, from PR 1's review): the
+  `restoreFocus` field and `disableRestoreFocus` guard against MUI restoring focus to a stale
+  element after an iOS tap. That stale focus mostly comes from the tap-time focus moves this PR
+  removes (the scan's `focusOnMount`, Chart selected's heading focus). Once they're gone, try
+  MUI's default in the Simulator: tap Chart selected, open and close a change chart. If no ring
+  appears and the page doesn't move, delete the field, the click-time `holdsFocus` and the prop.
 - **Sweep**: search for `\.focus\(`, `preventScroll`, `checkVisibility`, `returnFocus` and
   `&:hover`. Each focus call left must follow the rules; each custom hover style must be inside
   `@media (hover: hover)`.
@@ -401,10 +408,14 @@ The same commands. In the iOS Simulator:
 - Chart selected scrolls to the new pinned card and shows the toast, with no ring on its heading.
 - Unlock, Help navigation, Close tab, pinned Remove, and closing Help or Settings opened from the
   phone drawer: no focus ring after a tap.
+- Without `disableRestoreFocus`, if it was removed: closing a change chart leaves the page where
+  it was and shows no ring.
 
 On desktop with the keyboard only:
 
 - Every control in these flows is reachable with Tab and works with Enter or Space.
+- Lock a point on a line chart and a bar chart, in a dialog and pinned: Shift+Tab from the chart
+  reaches Unlock, and Enter or Esc there unlocks with focus back on the chart.
 - Nothing leaves focus on `<body>` when used from the keyboard: Clear search, Clear filters,
   pinned Remove (including the only pin after Clear search, when there's no results heading), Close
   tab, Help navigation, Unlock.
