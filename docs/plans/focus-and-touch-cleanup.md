@@ -350,6 +350,15 @@ No layout changes. The data attributes and helpers come from PR 1.
   `unlockAndFocus` gives focus back to the chart only when `holdsFocus(event.currentTarget)`, with
   `preventScroll: !fromKeyboard(event)`. Check in the Simulator that a tap on Unlock doesn't switch
   `useChartReadout` into announcing.
+- **Unlock can't be reached with Tab** (found verifying PR 1; older than this plan). `LineViz` and
+  `BarViz` pass `Tooltip` an inline `content` function, and recharts 3 renders a function with
+  `createElement`, so every chart render is a new component type and remounts the readout.
+  Tabbing off the chart runs `useChartReadout`'s `onBlur`, which re-renders, and Unlock is
+  replaced as focus moves to it: focus falls to `<body>` (in a dialog, MUI's trap catches it on
+  the container). Pass a stable `content` instead: a `useCallback` render function whose inputs
+  (lock, rest date, rows, colors) come through refs or its dependencies, or an element recharts
+  clones with `active` and `payload`. Keep the readout from re-rendering the chart on hover.
+  Say in CHARTS.md's readout section why `content` must be stable.
 - **Help navigation** (`Help/HelpBrowser.tsx`): it moves focus because the clicked link unmounts,
   in a layout effect that runs after the old content is gone. Record `holdsFocus(root)` in the
   handlers that navigate (open topic, Back, All topics, topic links) and focus in the effect only
@@ -405,6 +414,8 @@ The same commands. In the iOS Simulator:
 On desktop with the keyboard only:
 
 - Every control in these flows is reachable with Tab and works with Enter or Space.
+- Lock a point on a line chart and a bar chart, in a dialog and pinned: Shift+Tab from the chart
+  reaches Unlock, and Enter or Esc there unlocks with focus back on the chart.
 - Nothing leaves focus on `<body>` when used from the keyboard: Clear search, Clear filters,
   pinned Remove (including the only pin after Clear search, when there's no results heading), Close
   tab, Help navigation, Unlock.
