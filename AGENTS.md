@@ -131,7 +131,10 @@ The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold 
 with up to one decimal place. Price change list cards share the responsive
 half-width grid with live comparison charts: Notable price changes (10%, when it has changes) and
 one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
-scanned. A scan with no matches makes no card and says so in the control row's `role="status"` line.
+scanned. Every scan reports what it found in the control row's `role="status"` line ("Found N
+package changes…", or none), and a scan with no matches makes no card. A new card neither scrolls
+nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
+keyboard, and goes once that card is closed.
 Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
 pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
 `client/CHARTS.md`). Each package row has a chart icon button that opens that package's change in a
@@ -150,7 +153,7 @@ tab's provider and page from `library/tabTypeRegistry.ts`. Hidden tabs stay moun
 
 - **A workspace always has a tab.** Startup falls back to one blank tab, and closing the only tab
   leaves a blank one: `removeTab` passes the reducer a `fallback` and returns the tab that takes
-  over the pane, which the drawer focuses.
+  over the pane, which the drawer focuses after a keyboard close.
   "Clear workspace" (`clearWorkspace`, the reducer's `reset`) starts over with one blank tab and
   deletes every tab's saved state; it takes two clicks (`ui/ConfirmButton`).
 - **Keep imports acyclic and provider modules component-only**, or dev hot updates break.

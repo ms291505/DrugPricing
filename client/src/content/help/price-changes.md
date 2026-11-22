@@ -15,9 +15,10 @@ may have happened any time between the dates shown.
 
 To look for smaller or larger changes, open **Scan price changes**. Choose 5%, 10%, or 20%,
 or enter your own **Minimum change (%)**. Use at least 5%, with up to one decimal place.
-Choose **Scan** or press Enter from the field. Each scan with matches adds a card such as
-**Price changes of 25% or more**, using the search’s dates and filters. If nothing matches,
-a message appears beside the button. Scan cards clear when new terms, dates or filters
+Choose **Scan** or press Enter from the field. A message beside the button says how many
+package changes the scan found. Each scan with matches adds a card such as **Price changes of
+25% or more**, using the search’s dates and filters, and **Show** beside the message takes you
+to it. Scan cards clear when new terms, dates or filters
 change the prices.
 
 Every price change card has **Pin** and **Close**. **Notable price changes** returns when the

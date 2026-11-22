@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Link as RouterLink, useNavigate, useParams } from "react-router";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import { filterHelpPageLinks, filterHelpTopics, findHelpTopic, HELP_GROUPS, type HelpTopicId } from "../../library/help";
+import { holdsFocus } from "../ui/focus";
 
 const articles = import.meta.glob<string>("../../content/help/*.md", { query: "?raw", import: "default", eager: true });
 
@@ -21,6 +22,12 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   const root = useRef<HTMLDivElement>(null);
   const indexPosition = useRef({ top: 0, id: undefined as HelpTopicId | undefined });
   const first = useRef(true);
+  // The navigation's link or button unmounts with the old content. Focus follows to the new
+  // content only when it was in Help when the user navigated: after a tap on iOS nothing holds
+  // focus, and focusing the heading would show a ring for nothing. Set by every handler that
+  // navigates; true for the first topic shown.
+  const focusOnNavigate = useRef(true);
+  const noteFocus = () => { focusOnNavigate.current = holdsFocus(root.current); };
 
   const scrollHost = () => root.current?.closest<HTMLElement>(".MuiDialogContent-root");
   /** Leaving the index: remember where it was, so coming back restores its scroll and focus. */
@@ -28,6 +35,7 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     if (!topic) indexPosition.current = { top: scrollHost()?.scrollTop ?? window.scrollY, id: next };
   };
   const openTopic = (next?: HelpTopicId) => {
+    noteFocus();
     recordIndexPosition(next);
     if (standalone) void navigate(next ? `/help/${next}` : "/help");
     else setHistory(previous => [...previous, next]);
@@ -40,6 +48,8 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     else if (standalone) window.scrollTo(0, top);
     if (first.current && !id) { first.current = false; return; }
     first.current = false;
+    if (!focusOnNavigate.current) return;
+    focusOnNavigate.current = false;
     const previousButton = !id && indexPosition.current.id
       ? root.current?.querySelector<HTMLElement>(`[data-help-topic="${indexPosition.current.id}"]`)
       : null;
@@ -49,7 +59,11 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   // Standalone, a topic is a real link that navigates by itself; in the modal it opens in place.
   const topicLink = (id: HelpTopicId, title: string) => (
     <TopicLink key={id} id={id} title={title} standalone={standalone}
-      onClick={() => standalone ? recordIndexPosition(id) : openTopic(id)} />
+      onClick={() => {
+        if (!standalone) return openTopic(id);
+        noteFocus();
+        recordIndexPosition(id);
+      }} />
   );
 
   const topics = filterHelpTopics(query);
@@ -57,7 +71,7 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   return (
     <Box ref={root} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
-        {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
+        {!standalone && history.length > 1 && <Button onClick={() => { noteFocus(); setHistory(previous => previous.slice(0, -1)); }}>Back</Button>}
         {id && <Button onClick={() => openTopic()}>All topics</Button>}
         {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open in new tab</Link>}
       </Box>
@@ -114,7 +128,7 @@ function TopicLink({ id, title, standalone, onClick }: { id: HelpTopicId, title:
         textAlign: "left",
         color: "primary.main",
         "& .MuiListItemText-primary": { textDecoration: "underline", textUnderlineOffset: "0.15em" },
-        "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" },
+        "@media (hover: hover)": { "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" } },
         "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
       }}>
       <ListItemText primary={title} />

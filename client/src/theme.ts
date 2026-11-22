@@ -116,8 +116,26 @@ export const LIGHT_CHART_SERIES_COLORS = [
   "#2F5FB8", // blue
 ];
 
+/**
+ * The fixed app bar's height (MUI's `Toolbar`) and the phone FABs' reach from the bottom, plus a
+ * gap: scrolling a focused control into view keeps it clear of both (WCAG 2.4.11).
+ */
+const APP_BAR_SCROLL_PADDING = { xs: 56 + 8, sm: 64 + 8 };
+const PHONE_FAB_SCROLL_PADDING = 16 + 40 + 8;
+
 /** Shared by both modes: everything but the palette. */
 const SHARED_OPTIONS: ThemeOptions = {
+  "components": {
+    "MuiCssBaseline": {
+      "styleOverrides": theme => ({
+        html: {
+          scrollPaddingTop: APP_BAR_SCROLL_PADDING.xs,
+          scrollPaddingBottom: PHONE_FAB_SCROLL_PADDING,
+          [theme.breakpoints.up("sm")]: { scrollPaddingTop: APP_BAR_SCROLL_PADDING.sm, scrollPaddingBottom: 0 },
+        },
+      }),
+    },
+  },
   "spacing": 8,
   "shape": {
     "borderRadius": BORDER_RADIUS
@@ -210,6 +228,7 @@ export const lightTheme = createTheme({
   // Flat surfaces: cards and the app bar get a thin border in place of a drop shadow. Menus,
   // popovers and dialogs (elevation 8 and up) keep their shadow, since they float over the page.
   "components": {
+    ...SHARED_OPTIONS.components,
     "MuiPaper": {
       "styleOverrides": {
         "root": ({ ownerState, theme }) =>

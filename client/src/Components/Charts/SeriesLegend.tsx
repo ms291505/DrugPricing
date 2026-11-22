@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Box, Button, ButtonBase, Tooltip, Typography } from "@mui/material";
+import { fromKeyboard, holdsFocus } from "../ui/focus";
 
 export type LegendSeries = {
   ndc: string,
@@ -49,7 +50,7 @@ export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight 
                   onBlur={() => onHighlight(null)}
                   sx={{
                     gap: 0.75, px: 0.75, py: 0.25, borderRadius: 1,
-                    "&:hover": { bgcolor: "action.hover" },
+                    "@media (hover: hover)": { "&:hover": { bgcolor: "action.hover" } },
                     "&.Mui-focusVisible": { outline: 2, outlineColor: "primary.main", outlineOffset: 1 },
                   }}
                 >
@@ -77,9 +78,10 @@ export default function SeriesLegend({ series, onToggle, onShowAll, onHighlight 
         ? <Button
           size="small"
           onClick={(event) => {
+            // The button goes away: when it had focus, keep it in the legend.
+            const hadFocus = holdsFocus(event.currentTarget);
             onShowAll();
-            // The button goes away; keep keyboard focus (detail 0: Enter or Space) in the legend.
-            if (event.detail === 0) listRef.current?.querySelector("button")?.focus();
+            if (hadFocus) listRef.current?.querySelector("button")?.focus({ preventScroll: !fromKeyboard(event) });
           }}
           sx={{ py: 0, minWidth: 0, textTransform: "none" }}
         >

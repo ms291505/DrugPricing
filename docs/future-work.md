@@ -108,11 +108,23 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   failed-write toast working. Left out of the pinned-chart performance PR.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
-  unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
-  (`DrawerTabList` focuses the row of the tab `removeTab` returns). Give the FAB the same
-  treatment: after Close, focus the replacement tab's FAB, or its drawer row when that tab is a
-  blank "new" tab with no FAB. After Minimize, the pane is empty, so focus its drawer row. On a
+  unmounts that FAB and its menu, so focus lands on `<body>`. Follow the menu pattern in
+  `Components/ui/focus.ts`, as the drawer's Close tab does (`DrawerTabList`): decide with
+  `fromKeyboard(event)` from the menu item, and focus after the menu has closed. After Close,
+  focus the replacement tab's FAB, or its drawer row when that tab is a blank "new" tab with no
+  FAB. After Minimize, the pane is empty, so focus its drawer row. After a tap nothing moves. On a
   phone the drawer is closed, so a drawer row isn't a target there. Small.
+- **Chart selected's re-centering loop** (`PinnedItemCard.tsx`, about 30 lines). It re-centers the
+  new pinned card while charts above it draw and grow past their placeholders. With the
+  `scroll-padding` on `html` (theme), try placeholders of the right height (or
+  `contain-intrinsic-size`). If the card then lands in place in the iOS Simulator, delete the
+  loop.
+- **MUI Menu may focus its first item after a tap**, which could show a ring on iOS. Check the tab
+  and pinned card menus in the Simulator; if the ring shows, pass `disableAutoFocusItem` when the
+  menu was opened by a tap (MUI then focuses the menu list instead).
+- **Scan presets could run the scan** at their percent (`type="submit"`). Today a preset only
+  fills the field, so after choosing one by keyboard, Enter presses the preset again and Tab
+  reaches Scan. A behavior change; decide separately.
 - **`SettingsContext.tsx` isn't a Fast Refresh boundary.** It exports the context next to the
   provider, so every hot update of it or of `library/settings.ts` re-creates the context and
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
@@ -129,7 +141,7 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   picks the unit), or set `filterable: false` on the three price columns.
 - **Restyle the focus outline on headings that take focus from code.** Card headings
   (`ExplorerGridItem`) and the results heading (`ResultsSection`) are out of the tab order but
-  take focus from code (keyboard Chart selected, the fallbacks after a close), so keyboard and
+  take focus from code (keyboard Chart selected and Show, the fallbacks after a close), so keyboard and
   screen-reader users land in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
   doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
   corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.

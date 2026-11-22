@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { ExplorerItem } from "../library/explorerItems";
 import type { PersistedExplorerState } from "../library/persist";
-import { PinActionsContext, PinHighlightContext, PinnedItemsContext, type PinHighlight } from "./pinnedItemsContexts";
+import { PinActionsContext, PinHighlightContext, PinnedItemsContext, type AddItemsOptions, type PinHighlight } from "./pinnedItemsContexts";
 
 const HIGHLIGHT_MS = 2000;
 
@@ -20,15 +20,15 @@ export const PinnedItemsProvider = ({ children, initial }: ProviderProps) => {
   const [highlight, setHighlight] = useState<PinHighlight | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const addItems = useCallback((items: ExplorerItem[], options?: { focus?: boolean }) => {
+  const addItems = useCallback((items: ExplorerItem[], options?: AddItemsOptions) => {
     if (!items.length) return;
     setPinnedItems(prev => [...prev, ...items]);
-    setHighlight({ id: items[0].id, focus: options?.focus ?? false });
+    setHighlight({ id: items[0].id, scroll: options?.scroll ?? false, focus: options?.focus ?? false });
     clearTimeout(highlightTimer.current);
     highlightTimer.current = setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
   }, []);
 
-  const addItem = useCallback((item: ExplorerItem, options?: { focus?: boolean }) => {
+  const addItem = useCallback((item: ExplorerItem, options?: AddItemsOptions) => {
     addItems([item], options);
   }, [addItems]);
 

@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import toast from "react-hot-toast";
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -6,6 +7,7 @@ import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { createChartItems, withLoadedDates, type ChartSource, type ChartType } from "../../library/explorerItems";
 import { chartTitle, seriesLabels } from "../../library/chartTitles";
+import { fromKeyboard } from "../ui/focus";
 
 type Props = {
   /** At the table's level: a row's id is its prices' `ndc`. A new chart starts at the search's dates. */
@@ -19,7 +21,7 @@ export default function ChartSelectedControl({ source, selection }: Props) {
   const { addItems } = usePinActions();
   const count = selection.ids.size;
 
-  const handleChart = (chartType: ChartType) => {
+  const handleChart = (chartType: ChartType, event: MouseEvent<HTMLElement>) => {
     const ndcs = new Set([...selection.ids].map(String));
     const chartPrices = prices.filter(price => ndcs.has(price.ndc));
     if (chartPrices.length === 0) return;
@@ -31,8 +33,11 @@ export default function ChartSelectedControl({ source, selection }: Props) {
       dateWindow,
       colors,
     }, unitPrices => chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(unitPrices)));
-    addItems(items, { focus: true });
+    // It goes somewhere: the new card scrolls into view for everyone, and takes focus only from
+    // the keyboard. The toast says what was added.
+    addItems(items, { scroll: true, focus: fromKeyboard(event) });
     if (items.length > 1) toast.success(`Added ${items.length} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`);
+    else toast.success(`Added a ${chartType} chart to Pinned.`);
   };
 
   return (
@@ -41,9 +46,9 @@ export default function ChartSelectedControl({ source, selection }: Props) {
         {count === 0 ? "Select rows to chart" : `Chart ${count} selected`}
       </Typography>
       <ButtonGroup size="small" variant="outlined" disabled={count === 0}>
-        <Button startIcon={<SsidChartIcon />} onClick={() => handleChart("line")}
+        <Button startIcon={<SsidChartIcon />} onClick={event => handleChart("line", event)}
           aria-label={`Line chart of ${count} selected`}>Line</Button>
-        <Button startIcon={<BarChartIcon />} onClick={() => handleChart("bar")}
+        <Button startIcon={<BarChartIcon />} onClick={event => handleChart("bar", event)}
           aria-label={`Bar chart of ${count} selected`}>Bar</Button>
       </ButtonGroup>
     </Box>
