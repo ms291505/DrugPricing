@@ -270,31 +270,17 @@ depend on write availability read it. The action checks storage's read-only flag
   indent the block yourself.
 - **Same behavior on every screen.** Layout adapts to the width tier; interaction doesn't. A
   phone-only or desktop-only interaction needs a stated reason in its plan.
-- **Accessibility** means semantic HTML, MUI components used as designed, accessible names,
-  contrast, and every control reachable and usable by keyboard. It doesn't mean moving focus to
-  follow content. Helpers are in `Components/ui/focus.ts` (`fromKeyboard`, `holdsFocus`,
-  `nearestVisible`).
-  - Show what the user asked to see in a dialog, or where they're looking. Don't move focus to
-    new non-modal content; announce it in an always-mounted `role="status"` line if a screen
-    reader would miss it.
-  - An action whose purpose is to go somewhere (Chart selected, a scan's Show) scrolls there for
-    everyone, and moves focus to the destination's heading only `fromKeyboard(event)`.
-  - Dialogs, menus and popovers keep MUI's focus handling. Don't add `onEntered` focus,
-    `disableRestoreFocus` or `returnFocus` without a comment saying why.
-  - When an action removes or disables the control that has focus, check `holdsFocus` before the
-    change, and only then move focus to a nearby control that survives it, with `preventScroll`
-    unless `fromKeyboard(event)`. After a tap on iOS nothing holds focus, so nothing moves. When
-    data (new prices) removes it, there's no event: check in a layout-effect cleanup and always
-    use `preventScroll`.
-  - Actions chosen from a menu use `fromKeyboard(event)` instead of `holdsFocus` (MUI focuses a
-    menu item even after a tap), and move focus after the menu has closed.
-  - Focus a text field from code only `fromKeyboard(event)`, or when the user asked to type. It
-    opens the phone keyboard.
-  - No `event.currentTarget.focus()` in click handlers (ESLint rejects it). Custom `&:hover`
-    styles go inside `@media (hover: hover)`; open or selected states need their own look.
-  - Focus targets found through the DOM use data attributes: `data-collapse-toggle`
-    (`ExplorerGridItem`), `data-results-heading` (`ResultsSection`'s `h2`) and
-    `data-price-change-list` (each list card's grid item).
+- **Accessibility: WCAG 2.2 Level AA.** Start with semantic HTML and MUI's built-in keyboard and
+  focus behavior. Give controls accessible names and visible keyboard focus, keep a logical
+  navigation order, and make status messages available to screen readers (an always-mounted
+  `role="status"` line; new content doesn't take focus). Add custom focus handling only for a
+  specific usability problem, and say why in a comment beside it. Try the flow with a keyboard
+  first: if you can tell where you are and continue, keep the default. Helpers are in
+  `Components/ui/focus.ts`. Two project rules for touch: don't focus a text field from code unless
+  `fromKeyboard(event)` or the user asked to type (it opens the phone keyboard), and no
+  `event.currentTarget.focus()` in click handlers (ESLint rejects it). Custom `&:hover` styles go
+  inside `@media (hover: hover)`; open or selected states need their own look. Targets are at
+  least 24px (2.5.8); 44px on narrow layouts.
 - **Theme:** `src/theme.ts` is the only place a color is written. It names each one once in
   `COLORS`, maps them to MUI roles, and adds two custom roles: `palette.chart` (series, `rise`,
   `drop`) and `palette.inverse` (light surfaces: the tab button, `HtmlTooltip`). Components use

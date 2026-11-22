@@ -2,6 +2,10 @@
  * Focus helpers. The rules they serve are in AGENTS.md (UI conventions, Accessibility): move
  * focus from code only when the user would otherwise lose their place, and never because
  * something new appeared.
+ *
+ * Focus targets found through the DOM use data attributes, not class names or text:
+ * `data-collapse-toggle` (`ExplorerGridItem`'s collapse button), `data-results-heading`
+ * (`ResultsSection`'s `h2`) and `data-price-change-list` (each list card's grid item).
  */
 
 /**
