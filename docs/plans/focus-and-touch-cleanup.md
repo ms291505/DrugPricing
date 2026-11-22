@@ -143,9 +143,9 @@ Every price change list (Notable price changes, scan cards, pinned lists) opens 
 the same way.
 
 - **The button.** "Chart this change for <NDC>" with `aria-haspopup="dialog"`. It no longer
-  toggles: no `aria-expanded`, `aria-controls`, `ref` or open styling. Its custom hover border goes
-  inside `@media (hover: hover)`; its `&.Mui-focusVisible` border stays outside it, so keyboard
-  focus is visible. Keep the 44px size on narrow cards. Remove its `click.currentTarget.focus()`.
+  toggles: no `aria-expanded`, `aria-controls`, `ref` or open styling. It keeps its divider border
+  and no custom hover or focus colors: MUI's `IconButton` already drops its hover background
+  under `@media (hover: none)` and shows a focus ripple. Keep the 44px size on narrow cards. Remove its `click.currentTarget.focus()`.
 - **`PriceChangeChartDialog.tsx`** (replaces `EventChangeChart.tsx`). A local MUI
   `Dialog`, not `GlobalModal`: the global modal renders at the app root, outside each tab's pin
   provider, so Pin inside it would reach the wrong pins or none. React context passes through the

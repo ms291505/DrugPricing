@@ -33,7 +33,7 @@ export type PriceChangeListBodyProps = {
   onDetailsToggle: (key: string, open: boolean) => void,
   /** The prices a change's chart draws: its package's, in the group's unit. */
   chartPrices: (group: PriceEventGroup, event: PriceEvent) => ChartPrice[],
-  /** Memoized: the open dialog is memoized on it. */
+  /** The list's title, origin, colors and dates, for the change chart dialog. */
   chartContext: ChartContext,
 };
 
