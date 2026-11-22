@@ -9,7 +9,6 @@ import {
 import { formatPrice } from "../../library/chartScale";
 import { eventChartTitle } from "../../library/chartTitles";
 import type { ChartPrice } from "../../library/types";
-import { holdsFocus } from "../ui/focus";
 import PriceChangeChartDialog, { type ChartContext, type OpenChange } from "./PriceChangeChartDialog";
 import { pricingUnitLabel } from "../../library/prices";
 import type { WidthTier } from "../../hooks/useWidthTier";
@@ -53,8 +52,8 @@ export default function PriceChangeListBody({
     setOpenGroups(groups);
     setOpen(null);
   }
-  const openChart = (group: PriceEventGroup, event: PriceEvent, restoreFocus: boolean) => setOpen({
-    key: eventKey(group, event), restoreFocus, eventDate: group.date,
+  const openChart = (group: PriceEventGroup, event: PriceEvent) => setOpen({
+    key: eventKey(group, event), eventDate: group.date,
     title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
     prices: chartPrices(group, event),
   });
@@ -94,7 +93,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
     compact: boolean,
     detailsOpen: boolean,
     onDetailsToggle: (open: boolean) => void,
-    onChart: (group: PriceEventGroup, event: PriceEvent, restoreFocus: boolean) => void,
+    onChart: (group: PriceEventGroup, event: PriceEvent) => void,
   }) {
   const [showAll, setShowAll] = useState(false);
   const tableId = useId();
@@ -145,7 +144,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
                         {event.packageNdc}
                         <Tooltip title="Chart this change" describeChild>
                           <IconButton size="small" aria-label={`Chart this change for ${event.packageNdc}`} aria-haspopup="dialog"
-                            onClick={click => onChart(group, event, holdsFocus(click.currentTarget))}
+                            onClick={() => onChart(group, event)}
                             sx={{
                               border: 1, borderRadius: 1, borderColor: "divider", color: "text.secondary",
                               ...(compact && { minWidth: 44, minHeight: 44 }),
