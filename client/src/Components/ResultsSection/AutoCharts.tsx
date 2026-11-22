@@ -95,7 +95,7 @@ function ScanControl({ onScan, report, scans }: ScanProps) {
     // The card's top, not its center: a long list is taller than the window, and centering it
     // would leave its heading above the top. `scroll-padding-top` keeps it clear of the app bar.
     card.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
-    if (fromKeyboard(event)) card.querySelector<HTMLElement>("h2, h3, h4")?.focus({ preventScroll: true });
+    if (fromKeyboard(event)) card.querySelector<HTMLElement>("[data-card-heading]")?.focus({ preventScroll: true });
   };
 
   const updateText = (value: string) => {

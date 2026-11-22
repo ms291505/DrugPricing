@@ -117,8 +117,9 @@ export const LIGHT_CHART_SERIES_COLORS = [
 ];
 
 /**
- * The fixed app bar's height (MUI's `Toolbar`) and the phone FABs' reach from the bottom, plus a
- * gap: scrolling a focused control into view keeps it clear of both (WCAG 2.4.11).
+ * The fixed app bar's height (MUI's `Toolbar`, taller from `sm`) and the FABs' reach from the
+ * bottom (shown below `md`, as `useMobile`), plus a gap: scrolling a focused control into view
+ * keeps it clear of both (WCAG 2.4.11).
  */
 const APP_BAR_SCROLL_PADDING = { xs: 56 + 8, sm: 64 + 8 };
 const PHONE_FAB_SCROLL_PADDING = 16 + 40 + 8;
@@ -131,7 +132,8 @@ const SHARED_OPTIONS: ThemeOptions = {
         html: {
           scrollPaddingTop: APP_BAR_SCROLL_PADDING.xs,
           scrollPaddingBottom: PHONE_FAB_SCROLL_PADDING,
-          [theme.breakpoints.up("sm")]: { scrollPaddingTop: APP_BAR_SCROLL_PADDING.sm, scrollPaddingBottom: 0 },
+          [theme.breakpoints.up("sm")]: { scrollPaddingTop: APP_BAR_SCROLL_PADDING.sm },
+          [theme.breakpoints.up("md")]: { scrollPaddingBottom: 0 },
         },
       }),
     },

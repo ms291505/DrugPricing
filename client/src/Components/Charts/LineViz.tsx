@@ -341,8 +341,13 @@ type LineTooltipProps = Omit<LineReadoutProps, "date" | "rows" | "status"> & {
   shownNdcs: string[],
 };
 
-/** The readout for the hovered date, else the locked one, else the rest date. */
-function LineTooltip({ active, payload, locked, restDate, vizData, shownNdcs, ...readout }: LineTooltipProps) {
+/**
+ * The readout for the hovered date, else the locked one, else the rest date. recharts clones it
+ * with all of `Tooltip`'s props, so it passes on only the readout's, by name.
+ */
+function LineTooltip({
+  active, payload, locked, restDate, vizData, shownNdcs, unit, restLabel, onUnlock, colorFor, descriptionFor,
+}: LineTooltipProps) {
   const hovered = active && payload?.length ? payload[0].payload as LineVizRow : undefined;
   const date = hovered?.asOfDate ?? locked ?? restDate;
   const row = hovered ?? vizData.find(r => r.asOfDate === date);
@@ -352,7 +357,11 @@ function LineTooltip({ active, payload, locked, restDate, vizData, shownNdcs, ..
       date={date}
       rows={tooltipRows(row, shownNdcs)}
       status={hovered ? "hover" : locked !== null ? "locked" : "default"}
-      {...readout}
+      unit={unit}
+      restLabel={restLabel}
+      onUnlock={onUnlock}
+      colorFor={colorFor}
+      descriptionFor={descriptionFor}
     />
   );
 }

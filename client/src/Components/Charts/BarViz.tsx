@@ -281,13 +281,16 @@ type BarTooltipProps = Omit<BarReadoutProps, "row" | "color" | "status"> & {
   colorFor: (ndc: string, index: number) => string,
 };
 
-/** The readout for the hovered row, else the locked one, else a hint. */
-function BarTooltip({ active, payload, locked, rows, colorFor, ...readout }: BarTooltipProps) {
+/**
+ * The readout for the hovered row, else the locked one, else a hint. recharts clones it with all
+ * of `Tooltip`'s props, so it passes on only the readout's, by name.
+ */
+function BarTooltip({ active, payload, locked, rows, colorFor, barValue, unit, compact, onUnlock }: BarTooltipProps) {
   const hovered = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
   const row = hovered ?? rows.find(r => r.ndc === locked);
   const status: ReadoutStatus = hovered ? "hover" : row ? "locked" : "default";
   const color = row ? colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc)) : undefined;
-  return <BarReadout row={row} color={color} status={status} {...readout} />;
+  return <BarReadout row={row} color={color} status={status} barValue={barValue} unit={unit} compact={compact} onUnlock={onUnlock} />;
 }
 
 type BarReadoutProps = {

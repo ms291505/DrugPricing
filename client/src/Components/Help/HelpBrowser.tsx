@@ -23,9 +23,9 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   const indexPosition = useRef({ top: 0, id: undefined as HelpTopicId | undefined });
   const first = useRef(true);
   // The navigation's link or button unmounts with the old content. Focus follows to the new
-  // content only when it was in Help when the user navigated: after a tap on iOS nothing holds
-  // focus, and focusing the heading would show a ring for nothing. Set by every handler that
-  // navigates; true for the first topic shown.
+  // content only when it was in Help at the user's last click (Enter on a link or button is a
+  // click too): after a tap on iOS nothing holds focus, and focusing the heading would show a
+  // ring for nothing. Browser Back and Forward follow the last click. True for the first topic.
   const focusOnNavigate = useRef(true);
   const noteFocus = () => { focusOnNavigate.current = holdsFocus(root.current); };
 
@@ -35,7 +35,6 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     if (!topic) indexPosition.current = { top: scrollHost()?.scrollTop ?? window.scrollY, id: next };
   };
   const openTopic = (next?: HelpTopicId) => {
-    noteFocus();
     recordIndexPosition(next);
     if (standalone) void navigate(next ? `/help/${next}` : "/help");
     else setHistory(previous => [...previous, next]);
@@ -49,7 +48,6 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     if (first.current && !id) { first.current = false; return; }
     first.current = false;
     if (!focusOnNavigate.current) return;
-    focusOnNavigate.current = false;
     const previousButton = !id && indexPosition.current.id
       ? root.current?.querySelector<HTMLElement>(`[data-help-topic="${indexPosition.current.id}"]`)
       : null;
@@ -59,19 +57,15 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   // Standalone, a topic is a real link that navigates by itself; in the modal it opens in place.
   const topicLink = (id: HelpTopicId, title: string) => (
     <TopicLink key={id} id={id} title={title} standalone={standalone}
-      onClick={() => {
-        if (!standalone) return openTopic(id);
-        noteFocus();
-        recordIndexPosition(id);
-      }} />
+      onClick={() => standalone ? recordIndexPosition(id) : openTopic(id)} />
   );
 
   const topics = filterHelpTopics(query);
   const pageLinks = filterHelpPageLinks(query);
   return (
-    <Box ref={root} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+    <Box ref={root} onClickCapture={noteFocus} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
-        {!standalone && history.length > 1 && <Button onClick={() => { noteFocus(); setHistory(previous => previous.slice(0, -1)); }}>Back</Button>}
+        {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
         {id && <Button onClick={() => openTopic()}>All topics</Button>}
         {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open in new tab</Link>}
       </Box>

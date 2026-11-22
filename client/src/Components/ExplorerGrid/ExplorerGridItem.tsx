@@ -110,6 +110,7 @@ export default function ExplorerGridItem({
               component={`h${headingLevel}`}
               id={titleId}
               ref={headingRef}
+              data-card-heading
               tabIndex={-1}
               variant="subtitle1"
               onMouseEnter={checkTruncated}
