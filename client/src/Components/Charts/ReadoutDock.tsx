@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from "@mui/material";
-import type { ReactNode, Ref } from "react";
+import type { MouseEvent, ReactNode, Ref } from "react";
 import { READOUT_MAX_HEIGHT } from "../../library/chartReadout";
 import useMobile from "../../hooks/useMobile";
 
@@ -50,6 +50,10 @@ export const DOCKED_TOOLTIP = {
 export type ReadoutStatus = "hover" | "locked" | "default";
 
 const stop = (event: { stopPropagation: () => void }) => event.stopPropagation();
+/** Keys stay in the readout, except Escape: the chart's lock takes it first, then a dialog the chart is in. */
+const stopKey = (event: { key: string, stopPropagation: () => void }) => {
+  if (event.key !== "Escape") event.stopPropagation();
+};
 
 /**
  * The readout's root. React events bubble out of a portal to its React parents, so without this a
@@ -65,7 +69,7 @@ export function ReadoutContent({ header, children }: { header: ReactNode, childr
       onPointerMove={stop}
       onTouchStart={stop}
       onTouchMove={stop}
-      onKeyDown={stop}
+      onKeyDown={stopKey}
     >
       {header}
       {children
@@ -78,7 +82,7 @@ export function ReadoutContent({ header, children }: { header: ReactNode, childr
 type HeaderProps = {
   children: ReactNode,
   status: ReadoutStatus,
-  onUnlock: () => void,
+  onUnlock: (event: MouseEvent<HTMLElement>) => void,
   /** The header's full text, shown on hover when it is ellipsised. */
   title?: string,
 };

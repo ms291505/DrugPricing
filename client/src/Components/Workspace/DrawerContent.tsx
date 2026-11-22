@@ -2,12 +2,13 @@ import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../
 import { Box, Button } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, type MouseEvent } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
 import { useGlobalModalActions, type GlobalModal } from "../../Context/globalModalContexts";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 import ConfirmButton from "../ui/ConfirmButton.tsx";
+import { holdsFocus } from "../ui/focus";
 
 /** `inMobileDrawer`: rendered in the phone drawer, which closes when a modal opens. */
 export default function DrawerContent({ inMobileDrawer = false }: { inMobileDrawer?: boolean }) {
@@ -28,10 +29,13 @@ export default function DrawerContent({ inMobileDrawer = false }: { inMobileDraw
   }
 
   // On a phone the drawer would otherwise stay open behind the modal, and closing the modal
-  // would land back in it. Its buttons go with it, so focus returns to the drawer's toggle.
-  const openFromDrawer = (modal: GlobalModal) => {
+  // would land back in it. Its buttons go with it, so focus returns to the drawer's toggle, but
+  // only when the button had focus: after a tap on iOS nothing holds it, and focusing the toggle
+  // would show a ring for nothing.
+  const openFromDrawer = (modal: GlobalModal, event: MouseEvent<HTMLElement>) => {
+    const returnFocus = inMobileDrawer && holdsFocus(event.currentTarget) ? mobileDrawerToggle.current : null;
     closeMobileDrawer();
-    openModal(modal, inMobileDrawer ? { returnFocus: mobileDrawerToggle.current } : undefined);
+    openModal(modal, returnFocus ? { returnFocus } : undefined);
   }
 
   return (
@@ -51,10 +55,10 @@ export default function DrawerContent({ inMobileDrawer = false }: { inMobileDraw
       </Box>
       {/* Outlined, like Add Tab above, so they read as buttons; a rule sets them off from the tabs. */}
       <Box sx={{ display: "flex", gap: 1, py: 1, borderTop: 1, borderColor: "divider" }}>
-        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={() => openFromDrawer("settings")} sx={{ flex: 1 }}>
+        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={event => openFromDrawer("settings", event)} sx={{ flex: 1 }}>
           Settings
         </Button>
-        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={() => openFromDrawer("help")} sx={{ flex: 1 }}>
+        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={event => openFromDrawer("help", event)} sx={{ flex: 1 }}>
           Help
         </Button>
       </Box>
@@ -81,11 +85,13 @@ function DrawerTabList({ onAddTab, onClearWorkspace }: { onAddTab: () => void, o
   }, [tabs]);
 
   // The closed row unmounts with its menu and the button the menu would return focus to, which
-  // would leave focus on <body>. Focus moves to the tab that takes over its pane instead, which
-  // is a new blank tab when the closed one was the only tab. Stable, so the memoized rows don't
-  // re-render on every add, close, or rename.
-  const closeTab = useCallback((id: string) => {
-    focusAfterClose.current = removeTab(id);
+  // would leave keyboard focus on <body>. From the keyboard, focus moves to the tab that takes
+  // over its pane instead (a new blank tab when the closed one was the only tab), in the effect
+  // above, after the menu's focus trap is gone. After a tap nothing moves. Stable, so the
+  // memoized rows don't re-render on every add, close, or rename.
+  const closeTab = useCallback((id: string, fromKeyboard: boolean) => {
+    const replacement = removeTab(id);
+    if (fromKeyboard) focusAfterClose.current = replacement;
   }, [removeTab]);
 
   return (

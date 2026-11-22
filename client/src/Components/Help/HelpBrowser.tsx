@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Link as RouterLink, useNavigate, useParams } from "react-router";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import { filterHelpPageLinks, filterHelpTopics, findHelpTopic, HELP_GROUPS, type HelpTopicId } from "../../library/help";
+import { holdsFocus } from "../ui/focus";
 
 const articles = import.meta.glob<string>("../../content/help/*.md", { query: "?raw", import: "default", eager: true });
 
@@ -21,6 +22,12 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   const root = useRef<HTMLDivElement>(null);
   const indexPosition = useRef({ top: 0, id: undefined as HelpTopicId | undefined });
   const first = useRef(true);
+  // The navigation's link or button unmounts with the old content. Focus follows to the new
+  // content only when it was in Help at the user's last click (Enter on a link or button is a
+  // click too): after a tap on iOS nothing holds focus, and focusing the heading would show a
+  // ring for nothing. Browser Back and Forward follow the last click. True for the first topic.
+  const focusOnNavigate = useRef(true);
+  const noteFocus = () => { focusOnNavigate.current = holdsFocus(root.current); };
 
   const scrollHost = () => root.current?.closest<HTMLElement>(".MuiDialogContent-root");
   /** Leaving the index: remember where it was, so coming back restores its scroll and focus. */
@@ -40,6 +47,7 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     else if (standalone) window.scrollTo(0, top);
     if (first.current && !id) { first.current = false; return; }
     first.current = false;
+    if (!focusOnNavigate.current) return;
     const previousButton = !id && indexPosition.current.id
       ? root.current?.querySelector<HTMLElement>(`[data-help-topic="${indexPosition.current.id}"]`)
       : null;
@@ -55,7 +63,7 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   const topics = filterHelpTopics(query);
   const pageLinks = filterHelpPageLinks(query);
   return (
-    <Box ref={root} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
+    <Box ref={root} onClickCapture={noteFocus} sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
         {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
         {id && <Button onClick={() => openTopic()}>All topics</Button>}
@@ -114,7 +122,7 @@ function TopicLink({ id, title, standalone, onClick }: { id: HelpTopicId, title:
         textAlign: "left",
         color: "primary.main",
         "& .MuiListItemText-primary": { textDecoration: "underline", textUnderlineOffset: "0.15em" },
-        "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" },
+        "@media (hover: hover)": { "&:hover .MuiListItemText-primary": { textDecorationThickness: "0.14em" } },
         "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
       }}>
       <ListItemText primary={title} />

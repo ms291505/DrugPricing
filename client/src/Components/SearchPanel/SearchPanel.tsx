@@ -3,6 +3,7 @@ import { Box, Button, CircularProgress, Collapse, FormControl, FormGroup, FormLa
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import useWidthTier from "../../hooks/useWidthTier";
 import type { ChartDates } from "../../library/dates";
+import { fromKeyboard } from "../ui/focus";
 import DatesField from "./DatesField";
 import IncludeCheckbox from "./IncludeCheckbox";
 
@@ -101,6 +102,7 @@ export default function SearchPanel({
   const moreId = useId();
   const includeId = useId();
   const firstTermRef = useRef<HTMLInputElement>(null);
+  const moreFiltersRef = useRef<HTMLButtonElement>(null);
   // Clear search remounts Dates: its own state (Custom picked, typed dates waiting to apply)
   // would otherwise outlive the reset, since nothing else changes the dates from outside.
   const [clearCount, setClearCount] = useState(0);
@@ -133,6 +135,7 @@ export default function SearchPanel({
           <TextField
             key={term.id}
             inputRef={index === 0 ? firstTermRef : undefined}
+            slotProps={index === 0 ? { htmlInput: { "data-first-term": true } } : undefined}
             size={desktop ? "medium" : "small"}
             id={term.id}
             name={term.id}
@@ -155,11 +158,12 @@ export default function SearchPanel({
         <Button
           type="button"
           disabled={!canClearSearch}
-          onClick={() => {
+          onClick={event => {
             onClearSearch();
             setClearCount(count => count + 1);
-            // The button disables itself, so focus goes where the next search starts.
-            firstTermRef.current?.focus();
+            // The button disables itself: from the keyboard, focus goes where the next search
+            // starts. Not after a tap, where focusing a text field opens the phone keyboard.
+            if (fromKeyboard(event)) firstTermRef.current?.focus();
           }}
           sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
         >
@@ -189,6 +193,7 @@ export default function SearchPanel({
       <Box>
         <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
           <Button
+            ref={moreFiltersRef}
             size="small"
             aria-expanded={moreOpen}
             aria-controls={moreId}
@@ -197,7 +202,17 @@ export default function SearchPanel({
           >
             More filters{!moreOpen && moreFilterCount > 0 ? ` (${moreFilterCount})` : ""}
           </Button>
-          <Button size="small" disabled={!canClear} onClick={onClear}>Clear filters</Button>
+          <Button
+            size="small"
+            disabled={!canClear}
+            onClick={event => {
+              onClear();
+              // The button disables itself: from the keyboard, focus goes to its neighbor.
+              if (fromKeyboard(event)) moreFiltersRef.current?.focus();
+            }}
+          >
+            Clear filters
+          </Button>
           {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", ml: "auto", minWidth: 0 }}>
             {standaloneAction}
           </Box>}

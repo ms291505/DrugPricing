@@ -26,13 +26,15 @@ type Props = {
   barValue?: BarValue,
   /** A pinned item's provenance, for a chart opened from it (`createChartItem`'s `source`). */
   source?: ExplorerItemSource,
+  /** Called after the pin was added. */
+  onPinned?: () => void,
 }
 
 /**
  * Pins a system (auto) chart: copies it into the tab's Pinned section as a frozen snapshot,
  * which then survives new searches and filter changes.
  */
-export default function PinButton({ title, chartType, prices, loadedPrices, origin, dateWindow, changeSpan, eventDate, colors, barValue, source }: Props) {
+export default function PinButton({ title, chartType, prices, loadedPrices, origin, dateWindow, changeSpan, eventDate, colors, barValue, source, onPinned }: Props) {
   const { addItems } = usePinActions();
 
   const handlePin = () => {
@@ -44,6 +46,7 @@ export default function PinButton({ title, chartType, prices, loadedPrices, orig
     toast.success(items.length > 1
       ? `Added ${items.length} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`
       : `Pinned "${title}"`);
+    onPinned?.();
   };
 
   return (

@@ -251,6 +251,7 @@ secrets.json
 # Environment & secrets
 .env*
 !.env.example
+!client/.env.phone
 *.pem
 *.key
 *.cert

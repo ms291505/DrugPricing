@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, type MouseEvent } from "react";
 import { Bar, BarChart, Rectangle, Tooltip, XAxis, YAxis } from "recharts";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
@@ -14,6 +14,7 @@ import { barChartSummary } from "../../library/chartSummary";
 import { BAR_DESCRIPTION_LINES, READOUT_LINE_HEIGHT, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
 import useLockedPoint from "../../hooks/useLockedPoint";
+import { fromKeyboard, holdsFocus } from "../ui/focus";
 import { DOCKED_TOOLTIP, ReadoutContent, ReadoutDock, ReadoutHeader, type ReadoutStatus } from "./ReadoutDock";
 import { barCsv, barDataRows } from "../../library/chartCsv";
 import ChartData, { BarDataTable } from "./ChartData";
@@ -121,11 +122,14 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   // The docked readout: the hovered bar, else the locked one, else a hint.
   const [dock, setDock] = useState<HTMLDivElement | null>(null);
   const lock = useLockedPoint<string>(readout.currentKey, ndc => rows.some(row => row.ndc === ndc));
-  // Unlock unmounts with the lock: give focus back to the chart, not the page.
+  // Unlock unmounts with the lock: when it had focus, give focus back to the chart, not the page.
+  // After a tap on iOS it has none, so nothing moves.
   const focusBox = useRef<HTMLDivElement>(null);
-  const unlockAndFocus = () => {
+  const focusChart = (options?: FocusOptions) => focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus(options);
+  const unlockAndFocus = (event: MouseEvent<HTMLElement>) => {
+    const hadFocus = holdsFocus(event.currentTarget);
     lock.unlock();
-    focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
+    if (hadFocus) focusChart({ preventScroll: !fromKeyboard(event) });
   };
 
   return (
@@ -140,7 +144,10 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
         {...readout.focusProps}
         onKeyDown={event => {
           readout.focusProps.onKeyDown();
+          const wasLocked = lock.locked !== null;
           lock.onKeyDown(event);
+          // Esc from Unlock unmounts it with the focus: give it back to the chart.
+          if (event.key === "Escape" && wasLocked) focusChart();
         }}
         sx={{ position: "relative", height: rows.length * BAR_ROW_HEIGHT + 40 }}
       >
@@ -180,13 +187,12 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
             active={lock.locked !== null ? false : undefined}
             // Highlights the whole row, label to value, under the pointer.
             cursor={{ fill: chartTheme.textSecondary, fillOpacity: ROW_HIGHLIGHT_OPACITY }}
-            content={({ active, payload }) => {
-              const hovered = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
-              const row = hovered ?? rows.find(r => r.ndc === lock.locked);
-              const status: ReadoutStatus = hovered ? "hover" : row ? "locked" : "default";
-              const color = row ? colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc)) : undefined;
-              return <BarReadout row={row} barValue={barValue} unit={unit} color={color} compact={isMobile} status={status} onUnlock={unlockAndFocus} />;
-            }}
+            // An element, not a function: recharts renders a function as a component type, so an
+            // inline one remounts the readout on every render, and Unlock with it as Tab reaches it.
+            content={(
+              <BarTooltip locked={lock.locked} rows={rows} colorFor={colorFor}
+                barValue={barValue} unit={unit} compact={isMobile} onUnlock={unlockAndFocus} />
+            )}
           />
           <Bar
             dataKey="value"
@@ -266,6 +272,27 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   );
 }
 
+type BarTooltipProps = Omit<BarReadoutProps, "row" | "color" | "status"> & {
+  /** From recharts, which clones the element with the hovered row. */
+  active?: boolean,
+  payload?: readonly { payload?: unknown }[],
+  locked: string | null,
+  rows: BarRow[],
+  colorFor: (ndc: string, index: number) => string,
+};
+
+/**
+ * The readout for the hovered row, else the locked one, else a hint. recharts clones it with all
+ * of `Tooltip`'s props, so it passes on only the readout's, by name.
+ */
+function BarTooltip({ active, payload, locked, rows, colorFor, barValue, unit, compact, onUnlock }: BarTooltipProps) {
+  const hovered = active ? payload?.[0]?.payload as BarRow | undefined : undefined;
+  const row = hovered ?? rows.find(r => r.ndc === locked);
+  const status: ReadoutStatus = hovered ? "hover" : row ? "locked" : "default";
+  const color = row ? colorFor(row.ndc, rows.findIndex(r => r.ndc === row.ndc)) : undefined;
+  return <BarReadout row={row} color={color} status={status} barValue={barValue} unit={unit} compact={compact} onUnlock={onUnlock} />;
+}
+
 type BarReadoutProps = {
   /** The hovered or locked row; none shows a hint. */
   row: BarRow | undefined,
@@ -275,7 +302,7 @@ type BarReadoutProps = {
   /** Phone: no description or package count. */
   compact: boolean,
   status: ReadoutStatus,
-  onUnlock: () => void,
+  onUnlock: (event: MouseEvent<HTMLElement>) => void,
 }
 
 /** One row in full, laid out like the line chart's readout: the value, its date, and the range. */

@@ -15,18 +15,18 @@ may have happened any time between the dates shown.
 
 To look for smaller or larger changes, open **Scan price changes**. Choose 5%, 10%, or 20%,
 or enter your own **Minimum change (%)**. Use at least 5%, with up to one decimal place.
-Choose **Scan** or press Enter from the field. Each scan with matches adds a card such as
-**Price changes of 25% or more**, using the search’s dates and filters. If nothing matches,
-a message appears beside the button. Scan cards clear when new terms, dates or filters
+Choose **Scan** or press Enter from the field. A message beside the button says how many
+package changes the scan found. Each scan with matches adds a card such as **Price changes of
+25% or more**, using the search’s dates and filters, and **Show** beside the message takes you
+to it. Scan cards clear when new terms, dates or filters
 change the prices.
 
 Every price change card has **Pin** and **Close**. **Notable price changes** returns when the
 prices change. Use **Pin** to keep a copy in **Pinned**. See [Pinning and comparing](/help/pinning-and-comparing).
 
-Choose **Chart this change** beside a package NDC to open its history below the price change
-cards. A solid line marks the change, and the readout starts on that date. Each change shares a
-chart across the lists that show it. The chart stays open if you collapse or close its list.
-Use **Pin** to keep a copy, or **Close** or **Hide chart** to dismiss it. New prices close these charts.
+Choose **Chart this change** beside a package NDC to open its history in a window. A solid line
+marks the change, and the readout starts on that date. Use **Pin** in the window to keep a copy,
+and close it with its close button or Esc. One change is charted at a time. New prices close it.
 
 Line charts mark significant changes within their dates. Several series changing on the same
 date share one label. A product marker represents one or more package changes. Older product

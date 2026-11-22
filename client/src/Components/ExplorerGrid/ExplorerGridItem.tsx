@@ -18,7 +18,7 @@ type Props = {
   headingLevel?: 2 | 3 | 4,
   /** Briefly outline the card, e.g. right after it was added. */
   highlighted?: boolean,
-  /** The heading is focusable (tabIndex -1) so new cards can receive focus. */
+  /** The heading is focusable (tabIndex -1), so code can move focus to it (keyboard Chart selected). */
   headingRef?: Ref<HTMLHeadingElement>,
 }
 
@@ -85,6 +85,7 @@ export default function ExplorerGridItem({
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
         <IconButton
           onClick={handleCollapse}
+          data-collapse-toggle
           size="small"
           // The name stays fixed and aria-expanded carries the state (the accordion pattern).
           // The content unmounts while collapsed, so only point at it when it exists.
@@ -109,6 +110,7 @@ export default function ExplorerGridItem({
               component={`h${headingLevel}`}
               id={titleId}
               ref={headingRef}
+              data-card-heading
               tabIndex={-1}
               variant="subtitle1"
               onMouseEnter={checkTruncated}

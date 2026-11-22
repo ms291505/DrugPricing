@@ -108,11 +108,29 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   failed-write toast working. Left out of the pinned-chart performance PR.
 - **The tab FAB's Close Tab and Minimize drop keyboard focus** (`TabContextFab.tsx`, found in PR
   13's review). Each visible tab renders its own FAB (`TabInstance`). Closing or minimizing the tab
-  unmounts that FAB and its menu, so focus lands on `<body>`. The drawer rows already handle this
-  (`DrawerTabList` focuses the row of the tab `removeTab` returns). Give the FAB the same
-  treatment: after Close, focus the replacement tab's FAB, or its drawer row when that tab is a
-  blank "new" tab with no FAB. After Minimize, the pane is empty, so focus its drawer row. On a
+  unmounts that FAB and its menu, so focus lands on `<body>`. Follow the menu pattern in
+  `Components/ui/focus.ts`, as the drawer's Close tab does (`DrawerTabList`): decide with
+  `fromKeyboard(event)` from the menu item, and focus after the menu has closed. After Close,
+  focus the replacement tab's FAB, or its drawer row when that tab is a blank "new" tab with no
+  FAB. After Minimize, the pane is empty, so focus its drawer row. After a tap nothing moves. On a
   phone the drawer is closed, so a drawer row isn't a target there. Small.
+- **Chart selected's re-centering loop** (`PinnedItemCard.tsx`, about 30 lines). It re-centers the
+  new pinned card while charts above it draw and grow past their placeholders. With the
+  `scroll-padding` on `html` (theme), try placeholders of the right height (or
+  `contain-intrinsic-size`). If the card then lands in place in the iOS Simulator, delete the
+  loop.
+- **The Pin toast covers the change chart dialog's close button on phones** (found in the iOS
+  Simulator, 2026-11-22). Toasts come from the top on phones (`App.tsx`), and the full-screen
+  `PriceChangeChartDialog` has its close button top right, so after Pin it's hidden for about
+  three seconds. Either let the dialog's own status line confirm the pin visibly and skip the toast
+  there (`PinButton` always toasts), or show toasts at the bottom while a dialog is open. Small.
+- **A tap on a results-table checkbox leaves a focus outline** on the cell (MUI X DataGrid's own
+  cell focus, seen in the iOS Simulator, 2026-11-22). The focus and touch cleanup kept the
+  DataGrid's focus handling on purpose; decide whether the outline after a tap is worth styling
+  away (for example, only under `:focus-visible`). Small.
+- **Scan presets could run the scan** at their percent (`type="submit"`). Today a preset only
+  fills the field, so after choosing one by keyboard, Enter presses the preset again and Tab
+  reaches Scan. A behavior change; decide separately.
 - **`SettingsContext.tsx` isn't a Fast Refresh boundary.** It exports the context next to the
   provider, so every hot update of it or of `library/settings.ts` re-creates the context and
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
@@ -129,8 +147,8 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   picks the unit), or set `filterable: false` on the three price columns.
 - **Restyle the focus outline on headings that take focus from code.** Card headings
   (`ExplorerGridItem`) and the results heading (`ResultsSection`) are out of the tab order but
-  take focus when a package event chart opens or closes, so keyboard and screen-reader users land
-  in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
+  take focus from code (keyboard Chart selected and Show, the fallbacks after a close), so keyboard and
+  screen-reader users land in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
   doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
   corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.
 - **NADAC description search misses an NDC's current name.** `update_drug_package` inserts
@@ -142,12 +160,37 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   description an NDC has had. Either way it changes what typed searches find. Autocomplete's
   view reads `DrugPackages` too ([docs/plans/autocomplete.md](plans/autocomplete.md)), so it
   follows the fix with no change of its own. Small.
+- **Back the WCAG 2.2 AA target with checks** (from PR 64's review). The rules in AGENTS.md
+  can't show conformance on their own, and nothing lints accessibility today. Add
+  `eslint-plugin-jsx-a11y`, run axe (DevTools or Lighthouse) once per page type (Welcome, each
+  search, the workspace, Help, Settings), and do a keyboard-only pass and a VoiceOver pass
+  through the main flows. Fix or record what they find.
+  The touch pass is done: on 2026-11-22 every tap check from PRs 64 and 65 passed in the iOS
+  Simulator (no focus ring, keyboard or page jump), MUI menus opened by a tap showed no ring on
+  their first item, and Shift+Tab up a long page at phone width never left focus under the app
+  bar. Still open, on a real device with VoiceOver (`npm run dev:phone`): whether the change chart
+  dialog is announced by its title and context line, the Pin status line, the scan report and the
+  Chart selected toast are spoken, and where the cursor lands after a menu's Remove or Close tab.
+  Also check that a tap on Unlock doesn't switch `useChartReadout` into announcing.
 - **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
 - **Two global modals are never opened.** Nothing calls `openModal("about")` or
   `openModal("onboarding")`; About and Welcome render only as pages. Remove both entries from
   `GlobalModal` and the `showHeading` props, or wire up an opener. Small.
 
 ## Ideas
+
+### Previous and Next in the change chart dialog
+
+Step through a list's changes without closing the dialog.
+
+### Chart a change group
+
+One multi-series chart of a group's packages, in the same dialog, for comparing.
+
+### Browser Back closes dialogs
+
+On a phone, Back with a full-screen dialog open leaves the page; Help has the same problem. It
+needs a history entry when a dialog opens.
 
 ### Smaller search responses (2026-11-12)
 

@@ -7,6 +7,7 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import { memo, useId, useState } from "react";
 import SearchTypeChip from "../ui/SearchTypeChip.tsx";
 import useTabRename from "../../hooks/useTabRename.ts";
+import { fromKeyboard } from "../ui/focus";
 
 /** The room the menu needs beside its button to open there, in px: its width and the gaps. */
 const MENU_SIDE_ROOM = 200;
@@ -14,8 +15,11 @@ const MENU_SIDE_ROOM = 200;
 type Props = {
   tab: WorkspaceTab,
   selected: boolean,
-  /** Stable: `DrawerTabList` removes the tab and moves focus to the row that takes over. */
-  onClose: (id: string) => void,
+  /**
+   * Stable: `DrawerTabList` removes the tab and, when closed from the keyboard, moves focus to the
+   * row that takes over.
+   */
+  onClose: (id: string, fromKeyboard: boolean) => void,
 }
 
 // Memoized: a tab switch re-renders only the two tabs whose `selected` changed.
@@ -54,9 +58,10 @@ export default memo(function DrawerTab({ tab, selected, onClose }: Props) {
     tabRename.start();
   }
 
-  const handleCloseTab = () => {
+  // A menu item: MUI focuses it even after a tap, so the keyboard check is `fromKeyboard`.
+  const handleCloseTab = (event: React.MouseEvent<HTMLElement>) => {
     handleCloseMenu();
-    onClose(tab.id);
+    onClose(tab.id, fromKeyboard(event));
   }
 
   // The chip and title, shared by the tab button and the rename row.

@@ -36,7 +36,7 @@ export default function GlobalModal() {
   const handleClose = () => {
     closeModal();
     // After the dialog's focus trap lets go.
-    if (returnFocus) requestAnimationFrame(() => returnFocus.focus());
+    if (returnFocus) requestAnimationFrame(() => returnFocus.focus({ preventScroll: true }));
   };
 
   return (

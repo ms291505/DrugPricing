@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type FormEvent } from "react";
+import { useId, useMemo, useState, type FormEvent, type MouseEvent } from "react";
 import { Button, Grid, Popover, Stack, TextField, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
@@ -12,10 +12,11 @@ import {
 } from "../../library/constants";
 import { parseScanThreshold } from "../../library/priceActivity";
 import { shouldAutoChart } from "../../library/chartSeries";
-import { chartSubtitle, chartTitle, seriesLabels } from "../../library/chartTitles";
+import { chartSubtitle, chartTitle, priceChangeListTitle, seriesLabels } from "../../library/chartTitles";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
 import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
-import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
+import type { PriceChangeScan, PriceChangeScans, ScanReport } from "../../hooks/usePriceChangeScans";
+import { fromKeyboard, nearestVisible } from "../ui/focus";
 
 type Props = {
   /** At the series level the charts draw: the table's. */
@@ -27,8 +28,10 @@ type Props = {
 type ScanProps = {
   /** Scans the page's package prices at a percent (`usePriceChangeScans`). */
   onScan: (thresholdPercent: number) => void,
-  /** Why the last scan found nothing, or null. */
-  scanMessage: string | null,
+  /** What the last scan found, shown in the status line beside Scan; null before any scan. */
+  report: ScanReport | null,
+  /** The scan cards still open, to offer Show for the last one. */
+  scans: PriceChangeScan[],
 };
 
 /**
@@ -53,7 +56,7 @@ export default function AutoCharts({ source, scans }: Props) {
           {!canCompare && <Typography variant="body2" color="text.secondary">
             Chart up to {MAX_AUTO_CHART_SERIES} series. Select rows and use Line or Bar to chart a smaller group.
           </Typography>}
-          <ScanControl onScan={scans.runScan} scanMessage={scans.emptyMessage} />
+          <ScanControl onScan={scans.runScan} report={scans.report} scans={scans.scans} />
         </Stack>
       </Grid>
       {canCompare && groups.map(group => (
@@ -69,13 +72,31 @@ export default function AutoCharts({ source, scans }: Props) {
 
 const SCAN_PRESETS = [PRICE_CHANGE_SCAN_MIN_PERCENT, PRICE_CHANGE_SCAN_DEFAULT_PERCENT, 20];
 
-function ScanControl({ onScan, scanMessage }: ScanProps) {
+/**
+ * Scan price changes and its popover. A scan's card neither scrolls into view nor takes focus:
+ * MUI gives focus back to Scan price changes, and the status line beside it says what the scan
+ * found, with Show to go to the card.
+ */
+function ScanControl({ onScan, report, scans }: ScanProps) {
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const [lastPercent, setLastPercent] = useState(PRICE_CHANGE_SCAN_DEFAULT_PERCENT);
   const [text, setText] = useState(String(lastPercent));
   const [error, setError] = useState<string | null>(null);
   const dialogId = useId();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const shownScan = report?.scanId ? scans.find(scan => scan.id === report.scanId) : undefined;
+  const shownTitle = shownScan ? priceChangeListTitle(shownScan.thresholdPercent) : "";
+
+  // Show goes somewhere: it scrolls to the card for everyone and focuses its heading only from
+  // the keyboard, so a tap leaves no ring.
+  const show = (event: MouseEvent<HTMLElement>) => {
+    const card = nearestVisible(event.currentTarget, `[data-price-change-list="${report?.scanId}"]`);
+    if (!card) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // The card's top, not its center: a long list is taller than the window, and centering it
+    // would leave its heading above the top. `scroll-padding-top` keeps it clear of the app bar.
+    card.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
+    if (fromKeyboard(event)) card.querySelector<HTMLElement>("[data-card-heading]")?.focus({ preventScroll: true });
+  };
 
   const updateText = (value: string) => {
     setText(value);
@@ -94,17 +115,16 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
     <>
       <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
         aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
-        onClick={event => { event.currentTarget.focus(); updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
+        onClick={event => { updateText(String(lastPercent)); setAnchor(event.currentTarget); }}>
         Scan price changes
       </Button>
       {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         slotProps={{
           paper: { id: dialogId, role: "dialog", "aria-modal": true, "aria-label": "Scan price changes", sx: { p: 2, width: 280 } },
-          transition: { onEntered: () => inputRef.current?.focus() },
         }}>
         <Stack component="form" noValidate onSubmit={submit} spacing={1.5}>
-          <TextField inputRef={inputRef} size="small" label="Minimum change (%)" type="number" value={text}
+          <TextField size="small" label="Minimum change (%)" type="number" value={text}
             error={error !== null} helperText={error}
             onChange={event => updateText(event.target.value)}
             slotProps={{ htmlInput: { min: PRICE_CHANGE_SCAN_MIN_PERCENT, step: 0.1, inputMode: "decimal" } }} />
@@ -113,7 +133,7 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
               const selected = text !== "" && Number(text) === percent;
               return (
                 <Button key={percent} type="button" size="small" variant={selected ? "contained" : "outlined"}
-                  aria-pressed={selected} onClick={() => { updateText(String(percent)); inputRef.current?.focus(); }}>
+                  aria-pressed={selected} onClick={() => updateText(String(percent))}>
                   {percent}%
                 </Button>
               );
@@ -122,7 +142,8 @@ function ScanControl({ onScan, scanMessage }: ScanProps) {
           <Button type="submit" size="small" variant="contained" sx={{ alignSelf: "flex-end" }}>Scan</Button>
         </Stack>
       </Popover>}
-      <Typography role="status" variant="body2" color="text.secondary">{scanMessage}</Typography>
+      <Typography role="status" variant="body2" color="text.secondary">{report?.message}</Typography>
+      {shownScan && <Button size="small" aria-label={`Show ${shownTitle}`} onClick={show}>Show</Button>}
     </>
   );
 }
