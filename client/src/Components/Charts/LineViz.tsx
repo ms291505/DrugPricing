@@ -169,9 +169,10 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const restDate = eventShown ? eventDate : vizData.at(-1)?.asOfDate;
   // Unlock unmounts with the lock: give focus back to the chart, not the page.
   const focusBox = useRef<HTMLDivElement>(null);
+  const focusChart = () => focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
   const unlockAndFocus = () => {
     lock.unlock();
-    focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
+    focusChart();
   };
   const rangeCount = shownNdcs.filter(ndc => rangeNdcs.has(ndc)).length;
 
@@ -188,7 +189,10 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
         {...readout.focusProps}
         onKeyDown={event => {
           readout.focusProps.onKeyDown();
+          const wasLocked = lock.locked !== null;
           lock.onKeyDown(event);
+          // Esc from Unlock unmounts it with the focus: give it back to the chart.
+          if (event.key === "Escape" && wasLocked) focusChart();
         }}
       >
         <ComposedChart

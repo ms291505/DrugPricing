@@ -34,11 +34,12 @@ export default function PinnedPriceChangeList({ item }: { item: PriceChangeListI
   const colors = useMemo(() => new Map(histories.flatMap(history =>
     history.color ? [[history.ndc, themedSeriesColor(history.color, palette)] as const] : [])), [histories, palette]);
   const title = itemTitle(item);
-  const chartContext = useMemo<ChartContext>(() => {
-    const { searchSource, searchLabel, seriesKind } = source;
+  const { searchSource, searchLabel, seriesKind } = source;
+  const chartContext: ChartContext = {
+    listTitle: title, colors, dateWindow, source,
     // A pin of the chart keeps `source`; `origin` only names the search.
-    return { listTitle: title, colors, dateWindow, source, origin: { searchSource, searchLabel, seriesKind, resultPrices: [] } };
-  }, [title, colors, dateWindow, source]);
+    origin: { searchSource, searchLabel, seriesKind, resultPrices: [] },
+  };
 
   return (
     <Box ref={ref} sx={{ minWidth: 0 }}>

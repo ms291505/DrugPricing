@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Button, Grid, IconButton, Tooltip } from "@mui/material";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
@@ -54,7 +54,7 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   // card's, else the results heading, before the card goes. A tap or click moves nothing.
   const closeList = useCallback((listId: string, event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
     if (card && holdsFocus(card)) {
-      const cards = [...card.parentElement?.querySelectorAll<HTMLElement>(CARD_SELECTOR) ?? []].filter(c => c.checkVisibility());
+      const cards = [...card.parentElement?.querySelectorAll<HTMLElement>(CARD_SELECTOR) ?? []];
       const index = cards.indexOf(card);
       const neighbor = cards[index + 1] ?? cards[index - 1];
       const target = neighbor?.querySelector<HTMLElement>("[data-collapse-toggle]") ?? nearestVisible(card, "[data-results-heading]");
@@ -110,27 +110,7 @@ function PriceChangeListCard({
     headingRef.current.focus({ preventScroll: true });
     headingRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [focusOnMount]);
-  const chartContext = useMemo<ChartContext>(() => ({ listTitle: title, origin, colors, dateWindow }),
-    [title, origin, colors, dateWindow]);
-
-  // New prices remove the card while focus is in it. A layout cleanup still sees the card, and
-  // the microtask confirms it left (not StrictMode's rehearsal). If the section is still there
-  // (Clear search unmounts all of it), focus goes to Notable price changes' toggle, else the
-  // results heading; there is no event, so it never scrolls.
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-    const container = card?.parentElement;
-    return () => {
-      if (!card || !container || !holdsFocus(card)) return;
-      queueMicrotask(() => {
-        if (card.isConnected || !container.isConnected) return;
-        const auto = listId === AUTO_LIST ? null
-          : container.querySelector<HTMLElement>(`${CARD_SELECTOR}[data-price-change-list="${AUTO_LIST}"] [data-collapse-toggle]`);
-        const target = auto?.checkVisibility() ? auto : nearestVisible(container, "[data-results-heading]");
-        target?.focus({ preventScroll: true });
-      });
-    };
-  }, [cardRef, listId]);
+  const chartContext: ChartContext = { listTitle: title, origin, colors, dateWindow };
 
   const pin = () => {
     const defaultTitle = pinnedPriceChangeListTitle(origin.searchLabel, thresholdPercent);

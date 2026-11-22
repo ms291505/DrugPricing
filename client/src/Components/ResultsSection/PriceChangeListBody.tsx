@@ -148,9 +148,6 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
                             onClick={click => onChart(group, event, holdsFocus(click.currentTarget))}
                             sx={{
                               border: 1, borderRadius: 1, borderColor: "divider", color: "text.secondary",
-                              // Touch screens keep `:hover` after a tap; only keyboard focus and a real pointer show it.
-                              "@media (hover: hover)": { "&:hover": { borderColor: "primary.main", color: "primary.main" } },
-                              "&.Mui-focusVisible": { borderColor: "primary.main", color: "primary.main" },
                               ...(compact && { minWidth: 44, minHeight: 44 }),
                             }}>
                             <ShowChartIcon fontSize="small" />

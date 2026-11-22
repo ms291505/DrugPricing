@@ -1,5 +1,6 @@
-import { memo, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Box, Dialog, DialogContent, Typography } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { ChartPrice } from "../../library/types";
@@ -24,7 +25,7 @@ export type OpenChange = {
   restoreFocus: boolean,
 };
 
-/** What a list gives the charts it opens. Memoize it: the dialog is memoized on it. */
+/** What a list gives the charts it opens. */
 export type ChartContext = {
   /** The list's title, shown under the dialog's own. */
   listTitle: string,
@@ -48,7 +49,7 @@ type Props = {
  * is open. Hidden pages and tabs stay mounted and the dialog portals into `<body>`, so it closes
  * itself while its page isn't shown.
  */
-export default memo(function PriceChangeChartDialog({ change, context, onClose }: Props) {
+export default function PriceChangeChartDialog({ change, context, onClose }: Props) {
   const visible = usePageVisible();
   useEffect(() => {
     if (!visible) onClose();
@@ -58,11 +59,11 @@ export default memo(function PriceChangeChartDialog({ change, context, onClose }
   // Landscape phones are wider than `sm` but too short for a card.
   const fullScreen = useMediaQuery(`${theme.breakpoints.down("sm")}, (max-height: 500px)`);
   const contextId = useId();
-  const [pinned, setPinned] = useState(false);
+  const [pins, setPins] = useState(0);
 
   if (!visible) return null;
   const { listTitle, origin, colors, dateWindow, source } = context;
-  const window = formatWindow(dateWindow, dateBounds(change.prices));
+  const dates = formatWindow(dateWindow, dateBounds(change.prices));
   return (
     <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md" aria-describedby={contextId}
       // MUI restores focus to whatever had it before opening. After a tap that can be a stale
@@ -72,19 +73,19 @@ export default memo(function PriceChangeChartDialog({ change, context, onClose }
       <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography id={contextId} variant="body2" color="text.secondary" sx={{ flexGrow: 1, minWidth: 0 }}>
-            {listTitle}{window && ` · ${window}`}
+            {listTitle}{dates && ` · ${dates}`}
           </Typography>
           <PinButton title={change.title} chartType="line" prices={change.prices} loadedPrices={() => change.prices}
             origin={origin} colors={colors} dateWindow={dateWindow} eventDate={change.eventDate} source={source}
-            onPinned={() => setPinned(true)} />
+            onPinned={() => setPins(count => count + 1)} />
         </Box>
-        {/* Always mounted so a screen reader hears the change; MUI hides the app's toasts while the dialog is open. */}
-        <Typography role="status" variant="caption" color="text.secondary" sx={{ minHeight: "1.5em" }}>
-          {pinned && "Pinned. It's under Pinned on this tab."}
-        </Typography>
+        {/* Always mounted so a screen reader hears it (MUI hides the app's toasts while the dialog is open); the text changes per pin so a second pin is heard too. */}
+        <Box role="status" sx={visuallyHidden}>
+          {pins > 0 && `Pinned${pins > 1 ? ` again, ${pins} times` : ""}. It's under Pinned on this tab.`}
+        </Box>
         <LineViz nadacPrices={change.prices} title={change.title} colors={colors} dateWindow={dateWindow} seriesKind="package"
           eventDate={change.eventDate} />
       </DialogContent>
     </Dialog>
   );
-});
+}

@@ -139,8 +139,7 @@ dialog (`PriceChangeChartDialog`) over the shown dates, with the change marked a
 resting on it. It is one chart at a time, on every screen; Pin keeps a copy. New prices (a search,
 or new dates or filters, but not the FDA detail level) remove every scan, close the dialog and
 reopen Notable price changes. A list's Close, when it holds focus, moves it to the next card's
-toggle, else the previous card's, else the results heading; a scan card that new prices remove
-with focus in it sends focus to Notable price changes, else the results heading. Live comparison cards start hidden and are never
+toggle, else the previous card's, else the results heading. Live comparison cards start hidden and are never
 stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
 legacy-pin rules.
 

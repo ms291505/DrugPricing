@@ -50,7 +50,7 @@ export const DOCKED_TOOLTIP = {
 export type ReadoutStatus = "hover" | "locked" | "default";
 
 const stop = (event: { stopPropagation: () => void }) => event.stopPropagation();
-/** Keys stay in the readout, except Escape, which closes a dialog the chart is in. */
+/** Keys stay in the readout, except Escape: the chart's lock takes it first, then a dialog the chart is in. */
 const stopKey = (event: { key: string, stopPropagation: () => void }) => {
   if (event.key !== "Escape") event.stopPropagation();
 };

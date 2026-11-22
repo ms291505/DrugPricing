@@ -123,9 +123,10 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
   const lock = useLockedPoint<string>(readout.currentKey, ndc => rows.some(row => row.ndc === ndc));
   // Unlock unmounts with the lock: give focus back to the chart, not the page.
   const focusBox = useRef<HTMLDivElement>(null);
+  const focusChart = () => focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
   const unlockAndFocus = () => {
     lock.unlock();
-    focusBox.current?.querySelector<SVGElement>("svg[tabindex]")?.focus();
+    focusChart();
   };
 
   return (
@@ -140,7 +141,10 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
         {...readout.focusProps}
         onKeyDown={event => {
           readout.focusProps.onKeyDown();
+          const wasLocked = lock.locked !== null;
           lock.onKeyDown(event);
+          // Esc from Unlock unmounts it with the focus: give it back to the chart.
+          if (event.key === "Escape" && wasLocked) focusChart();
         }}
         sx={{ position: "relative", height: rows.length * BAR_ROW_HEIGHT + 40 }}
       >

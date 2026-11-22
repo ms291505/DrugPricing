@@ -199,13 +199,13 @@ re-renders only the readout, not the chart.
   so the dock's height never depends on the text or the card's width.
 - **Locking** (`useLockedPoint`): click or tap locks the date or bar under the pointer, and a
   second click unlocks. Enter or Space lock the point the arrow keys reached, Esc unlocks, and the
-  header has an Unlock button, which gives focus back to the chart. In a dialog, a locked point with focus on the chart takes two Esc presses: the first unlocks, the second closes it. A lock on a point the rows
+  header has an Unlock button. Unlocking by either gives focus back to the chart; in a dialog the second Esc closes it. A lock on a point the rows
   no longer hold (a new search, or a filter hid it) counts as no lock. While locked the `Tooltip` is `active={false}`, so the pointer no
   longer moves the readout, and the chart marks the point (a dashed line, or the row highlight).
   Don't use recharts' `trigger="click"`: it can't be dismissed, and after one click the arrow
   keys no longer move the readout.
 - React events bubble out of a portal to its React parents: `ReadoutContent` stops them (keys too, except Escape, which
-  must reach a dialog), or a click on Unlock would also reach the chart and lock again.
+  reaches the chart's lock and then a dialog), or a click on Unlock would also reach the chart and lock again.
 - The line readout gives the date and unit once, then swatch, NDC and price per series, highest
   first; descriptions, ranges and package counts show from `md` up. Check new lines at phone
   width.
