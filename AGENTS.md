@@ -187,7 +187,7 @@ across all routes (`KeptPage`, using the workspace tabs' shared `hiddenPaneSx` a
 `KeptPage` restores each page's document scroll. Source tabs live inside the standalone search
 panels; workspace tabs omit them. `/search` returns to the last source (FDA initially), saved
 under `drugpricing.v<VERSION>.last-search-source`, separate from Settings. Bare and unknown
-addresses show Welcome until a source has been visited, then return to that source. Legacy
+addresses always show Welcome. Legacy
 `/fda-search` and `/nadac-search` addresses redirect. Empty FDA results offer a one-click
 handoff to standalone NADAC through the stable action in `Context/searchNavigation.ts`;
 only that explicit handoff changes NADAC's draft and runs the copied terms.
