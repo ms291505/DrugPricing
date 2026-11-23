@@ -49,7 +49,7 @@ and the [documentation index](docs/README.md) for plans, review notes, published
 ### Disclaimer
 
 DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the
-FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll
+FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what patients
 pay at the pharmacy, and it isn’t a retail price or a reimbursement rate. The data may be incomplete or
 out of date. DrugPricing does not provide medical, financial or pricing advice.
 

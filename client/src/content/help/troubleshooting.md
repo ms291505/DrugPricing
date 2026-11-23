@@ -3,9 +3,9 @@
   search source.
 - **Search is disabled.** Check the minimum length. If the current results already match the
   terms, edit the terms to run another search.
-- **A package has no prices.** NADAC covers certain drugs sold through retail community
-  pharmacies. In FDA search, select **Results without prices** to see listings with no price
-  in the selected dates.
+- **A package has no prices.** Choose **All** under **NADAC price dates** to check for a price in another week.
+  In FDA search, select **Results without prices** under **Include** to see packages even when
+  they have no matching price. See [why a package might have no NADAC price](/help/nadac).
 - **The price looks unusual.** Check whether it is per tablet, milliliter, gram or another
   unit, and check the selected dates.
 - **The app asks you to reload.** Another window saved changes. Reload this window before

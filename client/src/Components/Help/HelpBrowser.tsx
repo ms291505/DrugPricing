@@ -81,7 +81,7 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
                 ? <Link href={href} onClick={event => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); openTopic(target.id); } }}>{children}</Link>
                 : <Link href={href} target="_blank" rel="noopener noreferrer">{children}</Link>;
             },
-            h2: ({ children }) => <Typography component="h3" variant="h6" sx={{ mt: 3 }}>{children}</Typography>,
+            h2: ({ children }) => <Typography component={standalone ? "h2" : "h3"} variant="h6" sx={{ mt: 3 }}>{children}</Typography>,
             table: ({ children }) => <Box role="region" aria-label="Help reference table" tabIndex={0} sx={{ overflowX: "auto", my: 2 }}><Box component="table" sx={{ borderCollapse: "collapse", width: "100%", minWidth: 440, overflowWrap: "normal", "& th, & td": { borderBottom: 1, borderColor: "divider", p: 1, textAlign: "left", verticalAlign: "top" } }}>{children}</Box></Box>,
           }}>{articles[`../../content/help/${topic.id}.md`]}</Markdown>
         </Box>

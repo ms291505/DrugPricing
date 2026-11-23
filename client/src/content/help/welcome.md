@@ -3,4 +3,4 @@ Explore weekly US drug acquisition prices. Search for a drug, chart its price hi
 - **FDA search** finds products and packages by brand or generic name and shows matching NADAC prices.
 - **NADAC search** finds package price histories by description or NDC, including packages absent from the FDA directory.
 
-These are pharmacy acquisition costs, not what a patient pays. See [What the prices mean](/help/what-the-prices-mean).
+NADAC estimates what retail community pharmacies pay to buy drugs. It doesn’t show what patients pay at the pharmacy. See [What the prices mean](/help/what-the-prices-mean).
