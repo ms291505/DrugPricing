@@ -6,7 +6,7 @@ for chart and card design rules.
 
 ## User-facing copy
 
-- [Welcome](../client/src/Components/Welcome/Welcome.tsx) and its [Learn the basics cards](../client/src/Components/Welcome/IDEAS.ts)
+- [Welcome](../client/src/Components/Welcome/Welcome.tsx) and its [Learn the basics cards](../client/src/Components/Welcome/ideas.ts)
 - [About](../client/src/Components/About/About.tsx)
 - [Help articles](../client/src/content/help/) and [topic catalog](../client/src/library/help.ts)
 

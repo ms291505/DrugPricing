@@ -1,7 +1,7 @@
 import { Box, Button, Divider, Link, Paper, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
-import { IDEAS } from "./IDEAS.ts";
+import { IDEAS } from "./ideas";
 
 /** The page at `/welcome`, where the bare address goes until a search source is visited. */
 export default function Welcome() {
@@ -25,7 +25,7 @@ export default function Welcome() {
 
       <Box component="section" aria-labelledby="welcome-ideas">
         <Typography id="welcome-ideas" variant="h5" component="h2" sx={{ mb: 2 }}>Learn the basics</Typography>
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" } }}>
           {IDEAS.map(({ title, text, link, topic, Icon }) => (
             <Paper key={topic} sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1 }}>
               <Icon sx={{ color: "primary.main" }} aria-hidden />

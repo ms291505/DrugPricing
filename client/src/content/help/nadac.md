@@ -8,6 +8,6 @@ The app shows the price recorded in each weekly file it has loaded. The same est
 - **Where the drug is sold.** The survey covers retail community pharmacies. A drug supplied mainly through hospitals or clinics may rarely appear on their invoices.
 - **Which drugs qualify.** CMS publishes rates for Medicaid covered outpatient drugs. A package can have an FDA directory listing and fall outside that group. CMS also removes package codes that no longer qualify.
 
-In FDA search, choose **All** under **Dates** to check the package’s full history in the app. A blank price means the app found no matching NADAC record for that package in the selected period. The weekly files don’t give a reason for an individual missing price.
+In FDA search, choose **All** under **NADAC price dates** to check the package’s full history in the app. A blank price means the app found no matching NADAC record for that package in the selected period. The weekly files don’t give a reason for an individual missing price.
 
 For the survey rules, see the [CMS NADAC methodology](https://www.medicaid.gov/medicaid-chip-program-information/by-topics/prescription-drugs/ful-nadac-downloads/nadacmethodology.pdf) and [CMS survey questions and responses](https://www.medicaid.gov/medicaid-chip-program-information/by-topics/prescription-drugs/ful-nadac-downloads/nadacqa.pdf).
