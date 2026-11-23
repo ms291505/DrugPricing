@@ -1,7 +1,9 @@
-Below the results table, choose **Chart latest prices** or **Chart price histories** to show a
-live comparison. The cards follow the search and filters and support up to eight series.
-To chart specific results, select rows and choose **Line** or **Bar** above the table. This
-creates a snapshot in **Pinned**. Use **Pin** on a live comparison to keep a snapshot of it.
+To chart results, select their rows, then choose **Line** or **Bar** above the table. Each
+turns its chart on or off. The charts follow your selection, dates and filters: check another row
+and it joins the chart, and a row a filter hides comes back when the filter does. They chart up to
+30 series, and more than eight can be slow and hard to read. Unchecking every row, or a new
+search, turns them off. Choose **Pin** on a chart to keep a copy that stays as it is. To pin every
+chart you make, turn on **Pin charts when you make them** in Settings.
 
 **Line charts** show price over time. The line moves in steps between weekly NADAC prices. A gap at the start or end means the app has no recorded price for that series in those weeks.
 

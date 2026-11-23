@@ -360,6 +360,7 @@ export function loadSettings(): AppSettings {
   return {
     barStyle: raw && isBarStyle(raw.barStyle) ? raw.barStyle : DEFAULT_SETTINGS.barStyle,
     colorMode: raw && isColorMode(raw.colorMode) ? raw.colorMode : DEFAULT_SETTINGS.colorMode,
+    autoPinCharts: raw && typeof raw.autoPinCharts === "boolean" ? raw.autoPinCharts : DEFAULT_SETTINGS.autoPinCharts,
     columnOverrides: readColumnOverrides(raw && raw.columnOverrides),
   };
 }

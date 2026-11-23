@@ -23,13 +23,13 @@ type Props<R extends PricedRow> = {
    * other columns follow in `columns` order. Keep it stable (a module constant).
    */
   narrowOrder?: readonly string[],
-  /** A row's id is the `ndc` of its chart prices, which Add Chart filters the selection on. */
+  /** A row's id is the `ndc` of its chart prices, which Line and Bar filter the selection on. */
   getRowId: (row: R) => GridRowId,
   /** What a row is, for the checkbox tooltip of a row without prices: "product", "package". */
   rowNoun: string,
   loading: boolean,
   dateWindow?: DateWindow,
-  /** The rows picked for Add Chart. */
+  /** The rows picked for Line and Bar. */
   selection: GridRowSelectionModel,
   onSelectionChange: (selection: GridRowSelectionModel) => void,
 }
@@ -43,7 +43,7 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
 
 /**
  * The results table of a search page: one row per series, with the shared price columns
- * (`createPriceColumns`) and checkboxes that pick rows for Add Chart. A row without prices can't
+ * (`createPriceColumns`) and checkboxes that pick rows for Line and Bar. A row without prices can't
  * be charted, so it can't be selected, and its checkbox says why.
  */
 export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, narrowOrder, getRowId, rowNoun, loading, selection, onSelectionChange, dateWindow }: Props<R>) {
@@ -106,6 +106,10 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
         isRowSelectable={isRowSelectable}
         rowSelectionModel={selection}
         onRowSelectionModelChange={onSelectionChange}
+        // A selected row that the dates or a filter hide stays selected, so it comes back to the
+        // live charts with the filter (`selectedChartPrices` charts only the shown rows). A new
+        // search clears the selection in the search context.
+        keepNonExistentRowsSelected
         disableRowSelectionExcludeModel
       />
       <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />

@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Box, Paper, Typography, Collapse, IconButton, Divider, Tooltip } from "@mui/material";
 import { keyframes, useTheme } from "@mui/material/styles";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -18,12 +18,10 @@ type Props = {
   headingLevel?: 2 | 3 | 4,
   /** Briefly outline the card, e.g. right after it was added. */
   highlighted?: boolean,
-  /** The heading is focusable (tabIndex -1), so code can move focus to it (keyboard Chart selected). */
-  headingRef?: Ref<HTMLHeadingElement>,
 }
 
 /**
- * Card shell for everything in the explorer grid: the results table, auto charts, and pinned
+ * Card shell for everything in the explorer grid: the results table, live charts, and pinned
  * items. A labelled `<section>` with a real heading, a collapse toggle wired for assistive tech,
  * and slots for a subtitle, badges, and actions.
  */
@@ -38,7 +36,6 @@ export default function ExplorerGridItem({
   defaultCollapsed = false,
   headingLevel = 2,
   highlighted = false,
-  headingRef,
 }: Props) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
   const collapsed = controlledCollapsed ?? uncontrolledCollapsed;
@@ -109,8 +106,8 @@ export default function ExplorerGridItem({
             <Typography
               component={`h${headingLevel}`}
               id={titleId}
-              ref={headingRef}
               data-card-heading
+              // Focusable from code: the toolbar's Line, Bar and Show move focus here from the keyboard.
               tabIndex={-1}
               variant="subtitle1"
               onMouseEnter={checkTruncated}
