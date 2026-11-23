@@ -3,7 +3,7 @@ live comparison. The cards follow the search and filters and support up to eight
 To chart specific results, select rows and choose **Line** or **Bar** above the table. This
 creates a snapshot in **Pinned**. Use **Pin** on a live comparison to keep a snapshot of it.
 
-**Line charts** show price over time. The line moves in steps between the weekly observations. A gap at the start or end means the drug had no price in those weeks.
+**Line charts** show price over time. The line moves in steps between weekly NADAC prices. A gap at the start or end means the app has no recorded price for that series in those weeks.
 
 When a line stands for a product with several packages at different prices, it shows their
 average, and a shaded band shows their lowest to highest price that week.

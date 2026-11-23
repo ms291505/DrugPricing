@@ -41,21 +41,17 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         The Pi is also a self-hosted GitHub Actions runner. A push to the main branch builds and deploys the app, and a
         scheduled job loads the weekly NADAC files.
       </p>
-      <p>
-        I check the job logs and rely on my home network to tell me if the Pi goes down. When CMS once posted a weekly
-        file with an unexpected name, I contacted them and added a fallback for that format while they corrected it.
-      </p>
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I built it</Typography>
       <p>
-        At work I write a lot of SQL for data extracts and reporting. Outside of work, I built tutorial projects to
+        At work I write SQL for data extracts and reporting. Outside of work, I built tutorial projects to
         practice designing a database, loading data, writing an API, building a front end, and deploying a server.
         DrugPricing is the first project I’ve built to keep running in production and share with others.
       </p>
       <p>
-        The hardest part was deciding when I had enough to ship. I learned from official documentation, tutorials and a
-        handful of books. I try to build things that will still make sense to me two weeks later, and the app keeps growing
-        as I learn.
+        I used official documentation, tutorials and a handful of books to build a tool for looking up
+        NADAC prices and spotting changes over time. I plan to keep building and maintaining it. I’d like
+        to hear from people I know, both inside and outside my industry, about what would make it more useful to them.
       </p>
 
       <Divider />
@@ -66,7 +62,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       </ul>
       <p>
         DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the FDA. NADAC
-        estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what you’ll pay at the pharmacy,
+        estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what patients pay at the pharmacy,
         and it isn’t a retail price or a reimbursement rate. The data may be incomplete or out of date. DrugPricing does
         not provide medical, financial or pricing advice.
       </p>

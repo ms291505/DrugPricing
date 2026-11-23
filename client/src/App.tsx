@@ -22,7 +22,7 @@ import { SettingsProvider, useSettings } from "./Context/SettingsContext";
 import { Toaster } from "react-hot-toast"
 import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
-import Welcome from "./Components/Welcome";
+import Welcome from "./Components/Welcome/Welcome";
 import GlobalModal from "./Components/GlobalModal";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden

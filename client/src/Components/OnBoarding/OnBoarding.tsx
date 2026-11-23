@@ -16,14 +16,14 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           sx={{ pb: 3 }}
         >
           <Typography variant="body1">
-            DrugPricing is a tool you can use to search for drug products currently on the market and see historical prices for many prescription drugs and over the counter products. It offers two data sources:
+            Search for prescription and over-the-counter drugs and chart their price histories. DrugPricing uses two public sources.
           </Typography>
           <Box component="ol" sx={{ typography: 'body1', pl: 3 }}>
-            <li>National Average Drug Acquisition Cost (NADAC) provided by CMS.</li>
-            <li>The FDA's directory of products and packages currently on the market. When available, NADAC prices for drug packages in the FDA data are provided.</li>
+            <li>The Centers for Medicare &amp; Medicaid Services (CMS) publishes the National Average Drug Acquisition Cost (NADAC) weekly. It estimates what retail community pharmacies pay to buy drugs.</li>
+            <li>The FDA’s National Drug Code Directory lists products and packages. FDA search shows a package’s NADAC prices when its code appears in the weekly files.</li>
           </Box>
           <Typography variant="body1">
-            NADAC data is updated weekly and the tool contains data going back to 2022. Not all products in the FDA data have prices tracked by CMS.
+            The app’s price history goes back to 2022. NADAC doesn’t show what patients pay at the pharmacy.
           </Typography>
         </Box>
         <Box
@@ -39,26 +39,20 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           <Typography
             variant="body1"
           >
-            All drugs in both datasets are identified by their National Drug Code (NDC). The NDC specifies a drug's manufacturer, the <strong>Product</strong>, which specifies formulation (i.e., active ingredient, strength, and dosage form), and the <strong>Package</strong>, which specifies the container size and type.
+            A package’s National Drug Code (NDC) identifies the labeler, the <strong>product</strong> (the drug, strength and form) and the <strong>package</strong> (the container type and size).
           </Typography>
           <Typography
             variant="body1"
           >
-            For example, something you might think of as a single product, like Eliquis,
-            actually includes many products with one or more packages.
-            Note below four examples of NDCs for Eliquis, each of them unique. All examples here are from
-            the same labeler, "0003" or E.R. Squibb & Sons (Bristol-Myers Squibb). The first two entries are different packages (21 and 91) for
-            the same product (0003-0893).
+            The four Eliquis packages below share a brand name and labeler (0003, E.R. Squibb &amp; Sons).
+            The first two contain the same 2.5 mg tablet, product 0003-0893. Package 21 is a bottle of 60 tablets.
+            Package 91 is a blister pack of 14.
           </Typography>
           <EliquisTable />
           <Typography
             variant="body1">
-            It's important to understand that the entire product NDC includes
-            the labeler, when generic versions of Eliquis enter the market, those labelers do not need to use
-            "0893" to identify their product. Instead, the product will be a unique combination of their
-            labeler ID and a three or four digit code. The code itself has no meaning, it is only useful in that
-            it is unique. The last two examples are different products with the same proprietary name, "Eliquis".
-            Note that they have different strengths and/or formulations from 0003-0893.
+            The last two rows have different strengths and different product NDCs. Read the first two parts
+            of the NDC together to identify a product. Another labeler can use the same middle digits for a different drug.
           </Typography>
         </Box>
       </Box>

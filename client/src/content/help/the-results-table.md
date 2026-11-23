@@ -2,8 +2,8 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
 
 - **Latest Price** is the most recent price in your dates, with its unit. **Min Price** and
   **Max Price** are the lowest and highest in your dates.
-- A **warning triangle** beside a latest price means the row stopped being priced before the end
-  of your dates; tap or focus it to see when it was last priced. The **Latest Price Date**
+- A **warning triangle** means the latest price for that unit comes from an earlier week than
+  the last available week in the selected period. Tap or focus it to see the date. The **Latest Price Date**
   column is hidden by default and can be shown from **Columns**.
 - An FDA product row averages the prices of the product’s packages for each date.
 - **Mixed units** means the product’s packages use different pricing units. Choose **Packages**
