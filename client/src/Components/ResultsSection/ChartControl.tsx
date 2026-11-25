@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent } from "react";
+import { useEffect, useId, useRef, type MouseEvent } from "react";
 import toast from "react-hot-toast";
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -47,6 +47,7 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
   // rows) can still be turned off.
   const cantTurnOn = seriesCount === 0 || overSeriesLimit(seriesCount);
   const { on, toggle, closedAtSeries } = charts;
+  const labelId = useId();
 
   // Toasts follow what is charted, so they come from what rendered rather than from the toggle:
   // the selection changes in the table. The warning shows on crossing `CHART_SERIES_WARNING`
@@ -98,13 +99,14 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
 
   return (
     // Narrow: the label is a caption above Line and Bar, so they and Scan fit one line on a phone.
+    // The two make one block, as wide as the wider, so the caption reads as the buttons' own.
     <Box sx={compact
-      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }
+      ? { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 0.25 }
       : { display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography variant={compact ? "caption" : "body2"} color={cantTurnOn ? "text.secondary" : "text.primary"}>
+      <Typography id={labelId} variant={compact ? "caption" : "body2"} color={cantTurnOn ? "text.secondary" : "text.primary"}>
         {chartControlLabel(seriesCount, hiddenCount)}
       </Typography>
-      <ButtonGroup size="small" variant="outlined">
+      <ButtonGroup size="small" variant="outlined" fullWidth={compact} aria-labelledby={labelId}>
         {CHART_TYPES.map(({ type, label, Icon }) => (
           <Button key={type} startIcon={<Icon />} variant={on[type] ? "contained" : "outlined"} aria-pressed={on[type]}
             disabled={cantTurnOn && !on[type]}

@@ -41,8 +41,9 @@ export default function ScanControl({ onScan, compact }: Props) {
   return (
     <>
       {/* Narrow: "Price changes" is a caption above a short "Scan", like Line and Bar's label, so
-          they fit one line on a phone. The button's name stays the whole phrase. */}
-      <Box sx={compact ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 } : { display: "contents" }}>
+          they fit one line on a phone. The button stretches to the caption's width, so the two
+          read as one block. The button's name stays the whole phrase. */}
+      <Box sx={compact ? { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 0.25 } : { display: "contents" }}>
         {compact && <Typography variant="caption" color="text.secondary" aria-hidden>Price changes</Typography>}
         <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
           aria-label={compact ? "Scan price changes" : undefined}
