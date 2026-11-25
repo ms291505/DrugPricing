@@ -10,7 +10,7 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
   from **Show** above the FDA table to see their individual prices.
 - Sorting a price column groups prices by unit before ranking the values within each group.
 - Select the checkboxes on priced rows, then choose **Line** or **Bar** beside the results heading to
-  chart them. The chart follows your selection until you turn it off; **Pin** keeps a copy.
+  add a chart of them below the table. **Pin** on the chart keeps a copy. See [Charts](/help/charts).
 
 Choose **Columns** beside the pagination below the table to show or hide fields, including
 **Min Price**, **Max Price**, **Generic Name** and **Labeler** where available. **Reset columns**, available on wider tables,

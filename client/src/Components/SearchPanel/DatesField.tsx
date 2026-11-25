@@ -9,6 +9,8 @@ type Props = {
   /** The search's dates, which apply at once. */
   value: ChartDates,
   onChange: (value: ChartDates) => void,
+  /** A narrow panel: the presets fill the row as touch-sized buttons. */
+  fill?: boolean,
 };
 
 /**
@@ -17,7 +19,7 @@ type Props = {
  * (today until app-init answers, as `resolveSearchDates` does), and the inputs are limited to the
  * loaded dates.
  */
-export default function DatesField({ value, onChange }: Props) {
+export default function DatesField({ value, onChange, fill = false }: Props) {
   const { data: appInit } = useAppInit();
   const { forDisplay: lastAsOfDate } = useLastAsOfDate();
   const loadedDates = appInit ? { first: appInit.nadacDates.first, last: appInit.nadacDates.last } : null;
@@ -32,6 +34,7 @@ export default function DatesField({ value, onChange }: Props) {
       customPreset
       // Each change may fetch.
       typedDelayMs={TYPED_DELAY_MS}
+      fill={fill}
     />
   );
 }

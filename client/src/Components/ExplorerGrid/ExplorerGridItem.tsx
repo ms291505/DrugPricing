@@ -21,7 +21,7 @@ type Props = {
 }
 
 /**
- * Card shell for everything in the explorer grid: the results table, live charts, and pinned
+ * Card shell for everything in the explorer grid: the results table, added charts, and pinned
  * items. A labelled `<section>` with a real heading, a collapse toggle wired for assistive tech,
  * and slots for a subtitle, badges, and actions.
  */

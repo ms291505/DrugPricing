@@ -13,7 +13,7 @@ export default function Welcome() {
         <Stack spacing={2} sx={{ alignItems: "center", textAlign: "center" }}>
           <Typography id="welcome-heading" variant="h3" component="h1" sx={{ fontWeight: 500, fontSize: { xs: "2.5rem", sm: "3rem" } }}>DrugPricing</Typography>
           <Typography variant="h6" component="p" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: "36em" }}>
-            Explore weekly US drug acquisition prices. Search for a drug, chart its price history, and pin charts to compare them.
+            Look up a drug’s NADAC, compare products and packages, and see when the benchmark changed and by how much.
           </Typography>
           {/* A grid of equal columns, so side by side both buttons take the wider label's width. */}
           <Box sx={{ display: "grid", gridAutoFlow: { xs: "row", sm: "column" }, gridAutoColumns: "1fr", gap: 2, pt: 2, width: { xs: "100%", sm: "auto" } }}>

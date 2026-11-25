@@ -21,9 +21,9 @@ export const CONSTANT = {
 
 export const SMALL_SPACING = 1;
 
-/** Above this many series (NDCs), turning on or growing a live chart warns that it may be slow and hard to read. */
+/** Above this many series (NDCs), adding a chart warns that it may be slow and hard to read. */
 export const CHART_SERIES_WARNING = 8;
-/** The most series a live chart draws: past it, Line and Bar turn off and can't be turned on. */
+/** The most series Line and Bar chart: past it, they are disabled. */
 export const CHART_SERIES_LIMIT = 30;
 /**
  * The percent of a significant package price change: the automatic Notable price changes card,

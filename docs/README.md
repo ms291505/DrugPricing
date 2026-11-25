@@ -9,6 +9,8 @@ for chart and card design rules.
 - [Welcome](../client/src/Components/Welcome/Welcome.tsx) and its [Learn the basics cards](../client/src/Components/Welcome/ideas.ts)
 - [About](../client/src/Components/About/About.tsx)
 - [Help articles](../client/src/content/help/) and [topic catalog](../client/src/library/help.ts)
+- [Audience and writing brief](content/audience-and-writing-brief.md): who opens the app, the
+  questions examples are built around, and how each page should use them
 
 ## Writing style
 

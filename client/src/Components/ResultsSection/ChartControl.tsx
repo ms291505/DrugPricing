@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type MouseEvent } from "react";
+import { useId } from "react";
 import toast from "react-hot-toast";
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -6,13 +6,11 @@ import SsidChartIcon from "@mui/icons-material/SsidChart";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { useSettings } from "../../Context/SettingsContext";
 import { createChartItems, withLoadedDates, type ChartSource, type ChartType } from "../../library/explorerItems";
-import { chartTitle, seriesLabels } from "../../library/chartTitles";
-import {
-  chartControlLabel, countSeries, manySeries, manySeriesWarning, overSeriesLimit, seriesLimitNotice,
-} from "../../library/chartSeries";
+import { addedChartMessage, chartTitle, seriesLabels } from "../../library/chartTitles";
+import { chartControlLabel, countSeries, manySeries, manySeriesWarning, overSeriesLimit } from "../../library/chartSeries";
+import { splitByPricingUnit } from "../../library/prices";
 import type { ChartPrice } from "../../library/types";
-import type { LiveCharts } from "../../hooks/useLiveCharts";
-import { fromKeyboard, nearestVisible } from "../ui/focus";
+import type { AddedCharts } from "../../hooks/useAddedCharts";
 
 type Props = {
   /** At the table's level: a pin keeps its loaded dates, origin and colors. */
@@ -21,7 +19,7 @@ type Props = {
   chartPrices: ChartPrice[],
   /** The rows checked, shown or hidden: the label names the hidden ones. */
   selectedCount: number,
-  charts: LiveCharts,
+  charts: AddedCharts,
   /** The results' narrow tier: the label goes above the buttons, which are touch-sized. */
   compact: boolean,
 };
@@ -32,9 +30,11 @@ const CHART_TYPES: Array<{ type: ChartType, label: string, Icon: typeof BarChart
 ];
 
 /**
- * The results toolbar's label and Line / Bar toggles. Each toggle shows or hides a live card of
- * the selected rows (`SelectionCharts`), which follows the selection, dates and filters until the
- * user pins a copy. With Pin charts when you make them on, turning one on also pins a copy.
+ * The results toolbar's label and Line / Bar. Each press adds a card of the selected rows that are
+ * shown (`AddedChartCards`), as Scan adds a list: the card keeps those rows while the selection
+ * changes, and the status line under the toolbar reports it (`ResultsReport`). The selection
+ * stays, so Bar can chart the same rows. With Pin charts when you make them on, each add also pins
+ * a copy.
  */
 export default function ChartControl({ source, chartPrices, selectedCount, charts, compact }: Props) {
   const { loadedPrices, origin, dateWindow, colors } = source;
@@ -43,25 +43,9 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
   // At the table's level a shown row is one series, so this is also the shown selected rows.
   const seriesCount = countSeries(chartPrices);
   const hiddenCount = selectedCount - seriesCount;
-  // Nothing to draw, or too much: a chart can't be turned on, but one that's on (a filter hid its
-  // rows) can still be turned off.
-  const cantTurnOn = seriesCount === 0 || overSeriesLimit(seriesCount);
-  const { on, toggle, closedAtSeries } = charts;
+  // Nothing to draw, or too much.
+  const cantAdd = seriesCount === 0 || overSeriesLimit(seriesCount);
   const labelId = useId();
-
-  // Toasts follow what is charted, so they come from what rendered rather than from the toggle:
-  // the selection changes in the table. The warning shows on crossing `CHART_SERIES_WARNING`
-  // with a chart on, and again only after the count drops back and crosses again.
-  const charting = on.line || on.bar ? seriesCount : 0;
-  const wasMany = useRef(false);
-  useEffect(() => {
-    const many = manySeries(charting);
-    if (many && !wasMany.current) toast(manySeriesWarning(charting));
-    wasMany.current = many;
-  }, [charting]);
-  useEffect(() => {
-    if (closedAtSeries !== null) toast(seriesLimitNotice(closedAtSeries));
-  }, [closedAtSeries]);
 
   const pin = (chartType: ChartType) => {
     const items = createChartItems({
@@ -77,24 +61,16 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
     else if (items.length === 1) toast.success(`Pinned a ${chartType} chart.`);
   };
 
-  const handleToggle = (chartType: ChartType, event: MouseEvent<HTMLElement>) => {
-    const turningOn = !on[chartType];
-    toggle(chartType);
-    if (!turningOn) return;
+  // Like a scan's card, the new card neither scrolls into view nor takes focus: the status line
+  // says what was added, and its Show goes there.
+  const add = (chartType: ChartType) => {
+    const labels = seriesLabels(chartPrices);
+    const ndcs = [...new Set(chartPrices.map(price => price.ndc))];
+    const pricingUnits = splitByPricingUnit(chartPrices).map(group => group.pricingUnit);
+    charts.add({ chartType, ndcs, labels, seriesKind: origin.seriesKind, pricingUnits },
+      addedChartMessage(chartType, ndcs.length, origin.seriesKind, pricingUnits.length));
+    if (manySeries(seriesCount)) toast(manySeriesWarning(seriesCount));
     if (settings.autoPinCharts) pin(chartType);
-    // The toolbar is above the table, so the new card can be off screen: bring it into view
-    // for everyone, and from the keyboard move focus to its heading so keyboard users land on
-    // what they made. A tap leaves focus on the toggle. The card renders with this click, so
-    // look for it on the next frame.
-    const button = event.currentTarget;
-    const keyboard = fromKeyboard(event);
-    requestAnimationFrame(() => {
-      const card = nearestVisible(button, `[data-live-chart="${chartType}"]`);
-      if (!card) return;
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      card.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
-      if (keyboard) card.querySelector<HTMLElement>("[data-card-heading]")?.focus({ preventScroll: true });
-    });
   };
 
   return (
@@ -103,14 +79,13 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
     <Box sx={compact
       ? { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 0.25 }
       : { display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography id={labelId} variant={compact ? "caption" : "body2"} color={cantTurnOn ? "text.secondary" : "text.primary"}>
-        {chartControlLabel(seriesCount, hiddenCount, on.line || on.bar)}
+      <Typography id={labelId} variant={compact ? "caption" : "body2"} color={cantAdd ? "text.secondary" : "text.primary"}>
+        {chartControlLabel(seriesCount, hiddenCount)}
       </Typography>
       <ButtonGroup size="small" variant="outlined" fullWidth={compact} aria-labelledby={labelId}>
         {CHART_TYPES.map(({ type, label, Icon }) => (
-          <Button key={type} startIcon={<Icon />} variant={on[type] ? "contained" : "outlined"} aria-pressed={on[type]}
-            disabled={cantTurnOn && !on[type]}
-            aria-label={`${label} chart of ${seriesCount} selected`} onClick={event => handleToggle(type, event)}
+          <Button key={type} startIcon={<Icon />} disabled={cantAdd}
+            aria-label={`${label} chart of ${seriesCount} selected`} onClick={() => add(type)}
             sx={compact ? { minHeight: 44 } : undefined}>
             {label}
           </Button>

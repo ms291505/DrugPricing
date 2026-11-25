@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Box, Button, Chip, Popover, Tooltip } from "@mui/material";
+import { Box, Button, Chip, Popover, Tooltip, useMediaQuery, useTheme } from "@mui/material";
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { chartDataBounds, type ChartItem } from "../../library/explorerItems";
@@ -23,6 +23,9 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
   const { updateItem } = usePinActions();
   const dialogId = useId();
   const open = anchor !== null;
+  // A popover floats over the page, so the window's width decides, as for the app's dialogs: on a
+  // phone it spans the screen and its presets fill the row as touch-sized buttons.
+  const fill = useMediaQuery(useTheme().breakpoints.down("sm"));
 
   const dataBounds = chartDataBounds(item);
   const label = formatWindow(item.dateWindow, dataBounds);
@@ -50,7 +53,12 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
         anchorEl={anchor}
         onClose={onClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        slotProps={{ paper: { id: dialogId, role: "dialog", "aria-label": `Dates for ${title}`, sx: { p: 2, maxWidth: 360 } } }}
+        slotProps={{ paper: { id: dialogId, role: "dialog", "aria-label": `Dates for ${title}`, sx: {
+          p: 2, maxWidth: 360, ...(fill && { width: "calc(100vw - 32px)" }),
+          // A popover's dark-theme elevation overlay lightens it to about the divider's color,
+          // which hides the presets' outlines; a stronger line shows on it in both themes.
+          "& .MuiToggleButton-root": { borderColor: "action.disabled" },
+        } } }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <ChartDatesControl
@@ -59,8 +67,9 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
               ...prev, dateWindow: resolveChartDates(chartDates, dataBounds),
             }))}
             bounds={dataBounds}
+            fill={fill}
           />
-          <Button size="small" sx={{ alignSelf: "flex-end" }} onClick={onClose}>Done</Button>
+          <Button size="small" sx={{ alignSelf: "flex-end", ...(fill && { minHeight: 44, px: 2 }) }} onClick={onClose}>Done</Button>
         </Box>
       </Popover>
     </>

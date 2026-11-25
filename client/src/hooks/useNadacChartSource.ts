@@ -7,7 +7,7 @@ import useSeriesColors from "./useSeriesColors";
 /** What the NADAC page's charts draw from: its refined result, by package. */
 export default function useNadacChartSource({ prices, loadedPrices, dateWindow }: NadacResultView): ChartSource {
   const origin = useNadacChartOrigin();
-  // The live charts can draw any row of the refined result, so all of it is the visible set.
+  // The added charts can draw any row of the refined result, so all of it is the visible set.
   const colors = useSeriesColors(origin.resultPrices, prices);
   return useMemo(() => ({ prices, loadedPrices, origin, colors, dateWindow }), [prices, loadedPrices, origin, colors, dateWindow]);
 }

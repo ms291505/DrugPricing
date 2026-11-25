@@ -179,7 +179,10 @@ export default function SearchPanel({
           display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 1.5,
           ml: theme => `calc(-${theme.spacing(GROUP_PADDING)} - 1px)`,
         }}>
-          <Box sx={groupSx}><DatesField key={clearCount} value={dates} onChange={onDatesChange} /></Box>
+          {/* A narrow panel gives Dates the whole row, so its presets can be touch-sized. */}
+          <Box sx={{ ...groupSx, flexBasis: stacked ? "100%" : "auto" }}>
+            <DatesField key={clearCount} value={dates} onChange={onDatesChange} fill={stacked} />
+          </Box>
           <FormControl component="fieldset" sx={groupSx}>
             <FormLabel component="legend" id={includeId} sx={{ typography: "subtitle2", color: "text.primary" }}>Include</FormLabel>
             {/* The top margin puts the boxes level with the Dates presets beside them. */}

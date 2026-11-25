@@ -4,14 +4,14 @@ import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch
 import useNadacChartSource from "../../hooks/useNadacChartSource";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
-import useLiveCharts from "../../hooks/useLiveCharts";
+import useAddedCharts from "../../hooks/useAddedCharts";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { hiddenResultsHint, nadacResultsLabel, revealNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
-import { countSeries, selectedChartPrices } from "../../library/chartSeries";
+import { selectedChartPrices } from "../../library/chartSeries";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { HiddenResultsNotice, ResultsToolbar, ScanReport, SelectionCharts } from "../ResultsSection";
+import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar } from "../ResultsSection";
 
 const PACKAGES: Noun = ["package", "packages"];
 
@@ -21,7 +21,7 @@ type Props = {
 };
 
 /**
- * The NADAC search's results: the toolbar, table, live charts and price events, all reading the
+ * The NADAC search's results: the toolbar, table, added charts and price events, all reading the
  * refined result. Hidden until the tab has a search. Memoized (its one prop is memoized) so the
  * search panel's keystrokes and changes to the workspace's tab list, such as a rename after a
  * search, don't re-render every NADAC tab's results.
@@ -36,8 +36,9 @@ export default memo(function NadacResults({ view }: Props) {
   const packageCount = useMemo(() => new Set(prices.map(price => price.ndc)).size, [prices]);
   const scans = usePriceChangeScans(prices);
   const chartPrices = useMemo(() => selectedChartPrices(source.prices, selectedRows.ids), [source.prices, selectedRows]);
-  const charts = useLiveCharts(selectedRows.ids.size, countSeries(chartPrices));
-  // A toggle re-renders the page, but not the table.
+  // A new search or Clear search makes the rows another result's.
+  const charts = useAddedCharts(lastSearch);
+  // Adding a chart re-renders the page, but not the table.
   const table = useMemo(
     () => <NadacResultTable nadacPrices={prices} loading={isLoading} dateWindow={dateWindow} />,
     [prices, isLoading, dateWindow],
@@ -56,12 +57,12 @@ export default memo(function NadacResults({ view }: Props) {
           <ResultsToolbar source={source} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans}
             compact={compact} />
         )}
-        status={compact => <ScanReport scans={scans} compact={compact} />}
+        status={compact => <ResultsReport scans={scans} charts={charts} compact={compact} />}
         notice={hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
         priceChanges={<PriceChangesSection source={source} scans={scans} />}
         table={table}
       >
-        <SelectionCharts source={source} chartPrices={chartPrices} on={charts.on} />
+        <AddedChartCards source={source} charts={charts} />
       </ResultsSection>
     </>
   );

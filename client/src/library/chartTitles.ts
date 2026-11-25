@@ -55,6 +55,18 @@ export const scanReportMessage = (changeCount: number, thresholdPercent: number)
   ? `No package changes of ${thresholdPercent}% or more in these dates and filters.`
   : `Found ${changeCount} package ${changeCount === 1 ? "change" : "changes"} of ${thresholdPercent}% or more in these dates and filters.`;
 
+/**
+ * What Line or Bar added, for the status line under the results toolbar: "Added a line chart of
+ * 3 packages.", saying when its pricing units split it into several cards.
+ */
+export function addedChartMessage(chartType: ChartType, seriesCount: number, seriesKind: SeriesKind, unitCount: number): string {
+  const chart = `Added a ${chartType} chart of ${seriesCountLabel(seriesCount, seriesKind)}`;
+  return unitCount > 1 ? `${chart}, one card for each of its ${unitCount} pricing units.` : `${chart}.`;
+}
+
+/** An added chart's subtitle note when the dates or filters hide some of its rows: "2 hidden". */
+export const hiddenSeriesNote = (hiddenCount: number) => hiddenCount > 0 ? `${hiddenCount} hidden` : "";
+
 /** "Metformin: price changes of 25% or more": a pinned list's title. */
 export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
   `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
