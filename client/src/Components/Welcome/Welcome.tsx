@@ -3,7 +3,7 @@ import { Link as RouterLink } from "react-router";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import { IDEAS } from "./ideas";
 
-/** The page at `/welcome`, where the bare address goes until a search source is visited. */
+/** The page at `/welcome`, where the bare address and unknown addresses always go. */
 export default function Welcome() {
   const { openHelp } = useGlobalModalActions();
   return (
