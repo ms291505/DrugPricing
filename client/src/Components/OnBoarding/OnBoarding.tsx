@@ -16,14 +16,14 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           sx={{ pb: 3 }}
         >
           <Typography variant="body1">
-            Search for prescription and over-the-counter drugs and chart their price histories. DrugPricing uses two public sources.
+            Look up a drug’s NADAC, compare products and packages, and see when the benchmark changed and by how much. DrugPricing uses two public sources.
           </Typography>
           <Box component="ol" sx={{ typography: 'body1', pl: 3 }}>
-            <li>The Centers for Medicare &amp; Medicaid Services (CMS) publishes the National Average Drug Acquisition Cost (NADAC) weekly. It estimates what retail community pharmacies pay to buy drugs.</li>
-            <li>The FDA’s National Drug Code Directory lists products and packages. FDA search shows a package’s NADAC prices when its code appears in the weekly files.</li>
+            <li>The Centers for Medicare &amp; Medicaid Services (CMS) publishes the National Average Drug Acquisition Cost (NADAC) weekly. It estimates what retail community pharmacies pay per unit to buy drugs, from invoices pharmacies voluntarily submit to a monthly survey. CMS supplies the price history.</li>
+            <li>The FDA’s National Drug Code Directory lists products and packages. It helps you identify what you’re looking at, and FDA search shows a package’s NADAC prices when its code appears in the weekly files.</li>
           </Box>
           <Typography variant="body1">
-            The app’s price history goes back to 2022. NADAC doesn’t show what patients pay at the pharmacy.
+            The app’s price history goes back to 2022. For example, if your plan’s PBM report shows different ingredient costs for two drugs, chart both over the same dates to see whether NADAC shows a similar gap. NADAC doesn’t show what patients pay at the pharmacy.
           </Typography>
         </Box>
         <Box
@@ -46,13 +46,20 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           >
             The four Eliquis packages below share a brand name and labeler (0003, E.R. Squibb &amp; Sons).
             The first two contain the same 2.5 mg tablet, product 0003-0893. Package 21 is a bottle of 60 tablets.
-            Package 91 is a blister pack of 14.
+            Package 31 is a carton of 10 blister packs of 10 tablets.
           </Typography>
           <EliquisTable />
           <Typography
             variant="body1">
             The last two rows have different strengths and different product NDCs. Read the first two parts
             of the NDC together to identify a product. Another labeler can use the same middle digits for a different drug.
+          </Typography>
+          <Typography
+            variant="body1">
+            These details answer two common questions. To check whether a tablet has the same NADAC per tablet in every
+            package size, compare the packages of one product, such as 0003-0893-21 and 0003-0893-31. To check whether
+            the price per tablet varies with strength, compare products such as 0003-0893 and 0003-0894. In NADAC, the
+            Eliquis 2.5 mg tablet has the same price per tablet in both packages, and the 5 mg tablet costs nearly the same.
           </Typography>
         </Box>
       </Box>

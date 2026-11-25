@@ -6,7 +6,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, the live charts of the selection and price change lists) are derived
+- *System* items (the results table, the charts Line and Bar added, and price change lists) are derived
   from the current search on every render and never stored.
 - *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
   (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
@@ -34,7 +34,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   inclusive, a null end is open), which the card's dates chip can widen later. `UnitSplit` clips
   to the window, and `LineViz` stretches the x-axis across all of it, so a late series shows a gap.
 - There is no page-level chart dates control: the search panel's **Dates** decide which prices
-  load, and so the window of everything on the page. Live charts show the result's dates (the
+  load, and so the window of everything on the page. Added charts show the result's dates (the
   view's `dateWindow`: the search's, snapped to as-of dates); Pin starts new
   items at them, as fixed dates, with every loaded date of their series (`withLoadedDates`
   over the view's `loadedPrices`). After a narrowing that didn't fetch, more is loaded than shown;
@@ -45,7 +45,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
   is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in the
   results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `PriceChangesSection`
-  follows the live charts in the shared responsive grid: Notable price changes,
+  follows the added charts in the shared responsive grid: Notable price changes,
   then one card per scan with matches (`usePriceChangeScans`, called once per page with the
   section's `prices`), all half width. Change charts open in a dialog, not the grid (below). The
   section is always mounted and holds the list headings for focus and the Package details
@@ -118,15 +118,15 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   chart with its unit. Unit charts share one date axis.
 - New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
-- The live charts (`SelectionCharts`) start off. Line and Bar in the results toolbar turn on one
-  line and one bar card per pricing unit of the selected rows that are shown, never stored. The
-  state lives in the results page (`useLiveCharts`), which resets it during render
-  (`liveChartsAfter`) when the selection empties or passes `CHART_SERIES_LIMIT` (30) **series**,
-  not price rows, counted before splitting by unit. A shown row is one series at the table's
-  level, so the label counts shown rows that way and names hidden ones. A selection the filters
-  hide entirely leaves a toggle on with no card, still enabled so it can be turned off. Crossing `CHART_SERIES_WARNING` (8) with a card on toasts a warning once per
-  crossing (`ChartControl`). Turning a toggle on scrolls to its card (`data-live-chart`) and
-  focuses the card's heading only from the keyboard; turning it off moves nothing.
+- Added charts (`AddedChartCards`): each press of Line or Bar in the results toolbar adds a chart
+  of the selected rows that are shown, drawn as one card per pricing unit and never stored. The
+  page holds them (`useAddedCharts`), each with its rows' ids, and resets them during render when
+  its reset keys change (a new search, Clear search, FDA's detail level). Line and Bar are
+  disabled past `CHART_SERIES_LIMIT` (30) **series**, not price rows, counted before splitting by
+  unit; a shown row is one series at the table's level, so the label counts shown rows that way
+  and names hidden ones. An add past `CHART_SERIES_WARNING` (8) toasts a warning (`ChartControl`).
+  A new card neither scrolls nor takes focus: the status line reports it (`ResultsReport`), and
+  its Show scrolls to the card (`data-added-chart`) and focuses its heading only from the keyboard.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
   time"), the subtitle the count and dates. The change chart dialog's title names the event date, package and unit.
 
@@ -166,7 +166,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy
   `changeSpan` remains a fallback inside its dates. Pinned line charts save `showPriceChanges`
-  (absent means on); the live charts always mark events. Bars have no event markers.
+  (absent means on); added charts always mark events. Bars have no event markers.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown
   series can't be hidden. Hiding never recolors. Hidden series leave the axis fit

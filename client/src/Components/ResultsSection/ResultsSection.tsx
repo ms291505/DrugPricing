@@ -10,7 +10,7 @@ type Props = {
    * narrow tier. It moves under the heading, as one piece, when the two don't fit one line.
    */
   toolbar: (compact: boolean) => ReactNode,
-  /** Under the heading row: the scan report (`ScanReport`), given the narrow tier. */
+  /** Under the heading row: the last action's report (`ResultsReport`), given the narrow tier. */
   status?: (compact: boolean) => ReactNode,
   /** Above the table: what the filters hid, when they hid everything. */
   notice?: ReactNode,
@@ -18,13 +18,13 @@ type Props = {
   table: ReactNode,
   /** Half-width price change cards (Notable price changes, scans). */
   priceChanges?: ReactNode,
-  /** The live charts of the selected rows (`SelectionCharts`), first in the grid under the table. */
+  /** The charts Line and Bar added (`AddedChartCards`), first in the grid under the table. */
   children?: ReactNode,
 };
 
 /**
  * The frame of both search pages' results: a heading row with the toolbar, the table, and a shared
- * responsive grid of live charts and price change cards. Pinned items sit below it, outside.
+ * responsive grid of added charts and price change cards. Pinned items sit below it, outside.
  */
 export default function ResultsSection({ searchLabel, toolbar, status, notice, table, priceChanges, children }: Props) {
   const headingId = useId();

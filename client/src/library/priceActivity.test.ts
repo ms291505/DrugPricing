@@ -153,14 +153,11 @@ describe("scan thresholds", () => {
 describe("activityCounts", () => {
   const activities = (...states: PriceActivity["state"][]) => states.map(state => ({ state }) as PriceActivity);
 
-  it("lists every state, and mixed units only when there are any", () => {
-    expect(activityCounts(activities("significant", "significant", "stable")))
-      .toBe("2 with significant changes, 0 other changed, 1 stable, 0 insufficient history");
-    expect(activityCounts(activities("mixed"))).toBe("0 with significant changes, 0 other changed, 0 stable, 0 insufficient history, 1 mixed units");
-  });
-
-  it("leaves out empty states for narrow tables", () => {
-    expect(activityCounts(activities("significant", "significant", "stable"), { omitZero: true })).toBe("2 with significant changes, 1 stable");
-    expect(activityCounts(activities("mixed", "changed"), { omitZero: true })).toBe("1 other changed, 1 mixed units");
+  it("lists only the states that have rows, naming what changed", () => {
+    expect(activityCounts(activities("significant", "significant", "significant", "stable")))
+      .toBe("3 with significant price changes, 1 with stable prices");
+    expect(activityCounts(activities("mixed", "changed", "insufficient")))
+      .toBe("1 with other price changes, 1 with insufficient price history, 1 with mixed pricing units");
+    expect(activityCounts([])).toBe("");
   });
 });

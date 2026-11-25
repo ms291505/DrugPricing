@@ -4,15 +4,15 @@ import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useFdaChartSource from "../../hooks/useFdaChartSource";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
-import useLiveCharts from "../../hooks/useLiveCharts";
+import useAddedCharts from "../../hooks/useAddedCharts";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, revealFda } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
-import { countSeries, selectedChartPrices } from "../../library/chartSeries";
+import { selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { HiddenResultsNotice, ResultsToolbar, ScanReport, SelectionCharts } from "../ResultsSection";
+import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar } from "../ResultsSection";
 import DetailLevelSelect from "./DetailLevelSelect";
 import NadacHandoffNotice from "./NadacHandoffNotice";
 
@@ -27,7 +27,7 @@ type Props = {
 };
 
 /**
- * The FDA search's results at the tab's detail level: the toolbar, table, live charts and price
+ * The FDA search's results at the tab's detail level: the toolbar, table, added charts and price
  * events, all reading the refined result. Hidden until the tab has a search. Memoized (its one
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
@@ -36,14 +36,15 @@ export default memo(function FdaResults({ view }: Props) {
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden } = view;
-  // The table, Line / Bar and live charts draw at the detail level; price change lists and their
+  // The table, Line / Bar and added charts draw at the detail level; price change lists and their
   // scans list packages at every level.
   const levelSource = useFdaChartSource(view, fdaResultDetailLevel);
   const packageSource = useFdaChartSource(view, "package");
   const scans = usePriceChangeScans(packageSource.prices);
   const chartPrices = useMemo(() => selectedChartPrices(levelSource.prices, selectedRows.ids), [levelSource.prices, selectedRows]);
-  const charts = useLiveCharts(selectedRows.ids.size, countSeries(chartPrices));
-  // A toggle re-renders the page, but not the table.
+  // A new search, Clear search or a detail level change makes the rows another result's.
+  const charts = useAddedCharts(lastSearch, fdaResultDetailLevel);
+  // Adding a chart re-renders the page, but not the table.
   const table = useMemo(() => fdaResultDetailLevel === "product"
     ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
     : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />,
@@ -64,7 +65,7 @@ export default memo(function FdaResults({ view }: Props) {
           <ResultsToolbar source={levelSource} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans} end={<DetailLevelSelect />}
             compact={compact} />
         )}
-        status={compact => <ScanReport scans={scans} compact={compact} />}
+        status={compact => <ResultsReport scans={scans} charts={charts} compact={compact} />}
         notice={
           <>
             <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
@@ -74,7 +75,7 @@ export default memo(function FdaResults({ view }: Props) {
         priceChanges={<PriceChangesSection source={packageSource} scans={scans} />}
         table={table}
       >
-        <SelectionCharts source={levelSource} chartPrices={chartPrices} on={charts.on} />
+        <AddedChartCards source={levelSource} charts={charts} />
       </ResultsSection>
     </>
   );

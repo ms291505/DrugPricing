@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartSubtitle, chartTitle, scanReportMessage, seriesLabels } from "./chartTitles";
+import { addedChartMessage, chartSubtitle, chartTitle, hiddenSeriesNote, scanReportMessage, seriesLabels } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
 
@@ -22,6 +22,24 @@ describe("chart titles", () => {
     expect(chartSubtitle(2, "product", FULL_WINDOW, prices)).toBe("2 products · Jan 5, 2022 – Oct 7, 2026");
     expect(chartSubtitle(2, "product", { start: Date.parse("2026-01-01"), end: null }, prices))
       .toBe("2 products · Jan 1, 2026 – Oct 7, 2026");
+  });
+});
+
+describe("addedChartMessage", () => {
+  it("says what Line or Bar added", () => {
+    expect(addedChartMessage("line", 3, "package", 1)).toBe("Added a line chart of 3 packages.");
+    expect(addedChartMessage("bar", 1, "product", 1)).toBe("Added a bar chart of 1 product.");
+  });
+
+  it("says when pricing units split the chart into cards", () => {
+    expect(addedChartMessage("line", 4, "product", 2)).toBe("Added a line chart of 4 products, one card for each of its 2 pricing units.");
+  });
+});
+
+describe("hiddenSeriesNote", () => {
+  it("counts an added chart's hidden rows, or says nothing", () => {
+    expect(hiddenSeriesNote(2)).toBe("2 hidden");
+    expect(hiddenSeriesNote(0)).toBe("");
   });
 });
 

@@ -13,16 +13,51 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
     <Box>
       {showHeading && <Typography component="h1" variant="h5">About</Typography>}
       <p>
-        DrugPricing shows how US drug acquisition prices change over time. I chose the National Average Drug Acquisition
-        Cost (NADAC) because it’s public, covers tens of thousands of drug packages, and has several years of price history.
-        The Centers for Medicare &amp; Medicaid Services (CMS) publishes the estimates weekly.
+        DrugPricing lets you look up the National Average Drug Acquisition Cost (NADAC), compare products and packages,
+        and see when the benchmark changed and by how much. The Centers for Medicare &amp; Medicaid Services (CMS)
+        publishes NADAC weekly. It estimates what retail community pharmacies pay to buy drugs.
       </p>
 
-      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Two ways to search</Typography>
+      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I built it</Typography>
+      <p>
+        I manage a retiree healthcare plan. I wanted to know whether the differences I saw in ingredient cost across
+        GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and keep track of the figures in
+        Excel. The harder question was how those differences had changed since last year. I built DrugPricing to make
+        that history easier to compare.
+      </p>
+      <p>
+        Strength turned out to be worth checking too. Under the Medicare GLP-1 Bridge, all six strengths of the Zepbound
+        KwikPen share one manufacturer net price, $245 per monthly supply. I wondered whether they were priced
+        differently further up the supply chain. In NADAC they are: the three lower strengths cost about $201 per mL and
+        the three higher strengths about $282 per mL.
+      </p>
+
+      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>
+      <p>
+        DrugPricing is for people whose work connects them to prescription drug purchasing and who look closely at the
+        details: payers and benefits administrators, people at manufacturers, and pharmacists who manage purchasing.
+        They usually arrive with a question.
+      </p>
+      <ul>
+        <li>My PBM report shows different ingredient costs for two drugs. Does NADAC show a similar gap, and was it there a year ago?</li>
+        <li>Does this tablet have the same NADAC per tablet in every package size, or at every strength?</li>
+        <li>After insulin list prices were cut, did NADAC move when and as much as people expected?</li>
+        <li>Where did the benchmark start for a new drug?</li>
+        <li>How does what my pharmacy paid compare with the benchmark?</li>
+      </ul>
+      <p>
+        <Link component={RouterLink} to="/help/things-to-try">Things to try</Link> walks through each one.
+      </p>
+
+      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>The two sources</Typography>
+      <p>
+        CMS supplies the price history. The FDA’s National Drug Code (NDC) Directory helps you identify products and
+        packages by brand or generic name, strength, dosage form, route and labeler. Each search starts from one of them.
+      </p>
       <ul>
         <li>
-          <strong>FDA search</strong> finds products and packages by brand or generic name in the FDA’s National Drug Code
-          (NDC) Directory. You can filter by dosage form, route or labeler and see NADAC prices for matching packages.
+          <strong>FDA search</strong> finds products and packages in the FDA directory and shows NADAC prices for the
+          matching packages.
         </li>
         <li>
           <strong>NADAC search</strong> finds packages by description or NDC, including packages with price history that no
@@ -35,23 +70,21 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         to search. <Link component={RouterLink} to="/help/how-the-two-fit-together">How the two sources fit together</Link>
       </p>
 
-      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>How it’s hosted</Typography>
+      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>How I built it</Typography>
+      <p>
+        At work I write SQL for data extracts and reporting. Outside of work, I built tutorial projects to
+        practice designing a database, loading data, writing an API, building a front end, and deploying a server.
+        DrugPricing is the first project I’ve built to keep running in production and share with others. I used
+        official documentation, tutorials and a handful of books to build it.
+      </p>
       <p>
         Everything runs on a Raspberry Pi in my basement, from the PostgreSQL database to the .NET API and React site.
         The Pi is also a self-hosted GitHub Actions runner. A push to the main branch builds and deploys the app, and a
         scheduled job loads the weekly NADAC files.
       </p>
-
-      <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I built it</Typography>
       <p>
-        At work I write SQL for data extracts and reporting. Outside of work, I built tutorial projects to
-        practice designing a database, loading data, writing an API, building a front end, and deploying a server.
-        DrugPricing is the first project I’ve built to keep running in production and share with others.
-      </p>
-      <p>
-        I used official documentation, tutorials and a handful of books to build a tool for looking up
-        NADAC prices and spotting changes over time. I plan to keep building and maintaining it. I’d like
-        to hear from people I know, both inside and outside my industry, about what would make it more useful to them.
+        I plan to keep building and maintaining it. I’d like to hear from people I know, both inside and outside my
+        industry, about what would make it more useful to them.
       </p>
 
       <Divider />

@@ -6,7 +6,7 @@ import useStableValue from "../../hooks/useStableValue";
 import PinnedItemCard from "./PinnedItemCard";
 
 /**
- * A tab's pinned items: charts pinned from the live charts (by Pin, or by Line and Bar with Pin
+ * A tab's pinned items: charts pinned from the added charts (by Pin, or by Line and Bar with Pin
  * charts when you make them on) and from change charts, and pinned
  * price change lists. They stay as they are across new searches and filter changes. Hidden until
  * something is pinned. Memoized (no props), so a search page's refine changes don't redraw every pinned chart, and so

@@ -11,6 +11,8 @@ export type ScanReport = {
   message: string,
   /** The card it made, or null when it found nothing. */
   scanId: string | null,
+  /** When it ran (`performance.now()`), so the status line shows the newer of this and an added chart's. */
+  order: number,
 };
 
 export type PriceChangeScans = {
@@ -48,7 +50,7 @@ export default function usePriceChangeScans(prices: ChartPrice[]): PriceChangeSc
     const groups = groupPriceEvents(derivePriceEvents(prices, "package", thresholdPercent));
     const changeCount = groups.reduce((count, group) => count + group.events.length, 0);
     const scanId = groups.length ? crypto.randomUUID() : null;
-    setReport({ message: scanReportMessage(changeCount, thresholdPercent), scanId });
+    setReport({ message: scanReportMessage(changeCount, thresholdPercent), scanId, order: performance.now() });
     if (scanId) setScans(prev => [...prev, { id: scanId, thresholdPercent, groups }]);
   }, [prices]);
   const closeScan = useCallback((id: string) => setScans(prev => prev.filter(scan => scan.id !== id)), []);

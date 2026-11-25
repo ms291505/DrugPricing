@@ -13,7 +13,7 @@ import useWidthTier from "../../hooks/useWidthTier";
 import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
-import { fromKeyboard, holdsFocus, nearestVisible } from "../ui/focus";
+import { moveFocusFromClosingCard } from "./closeCard";
 import PriceChangeListBody from "./PriceChangeListBody";
 import type { ChartContext } from "./PriceChangeChartDialog";
 
@@ -32,8 +32,6 @@ const AUTO_LIST = "auto";
 
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
-const CARD_SELECTOR = ":scope > [data-price-change-list]";
-
 /**
  * Notable price changes and the page's scan cards. Each list opens its own change charts in a
  * dialog (`PriceChangeListBody`). Renders nothing when there is no card.
@@ -51,16 +49,9 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   const chartPrices = useCallback((group: PriceEventGroup, event: PriceEvent) =>
     loadedPrices().filter(p => p.ndc === event.packageNdc && p.pricingUnit === group.pricingUnit), [loadedPrices]);
 
-  // A list's Close, when it holds focus, moves it to the next card's toggle, else the previous
-  // card's, else the results heading, before the card goes. A tap or click moves nothing.
+  // Close keeps focus in the grid when the card holds it (`moveFocusFromClosingCard`).
   const closeList = useCallback((listId: string, event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
-    if (card && holdsFocus(card)) {
-      const cards = [...card.parentElement?.querySelectorAll<HTMLElement>(CARD_SELECTOR) ?? []];
-      const index = cards.indexOf(card);
-      const neighbor = cards[index + 1] ?? cards[index - 1];
-      const target = neighbor?.querySelector<HTMLElement>("[data-collapse-toggle]") ?? nearestVisible(card, "[data-results-heading]");
-      target?.focus({ preventScroll: !fromKeyboard(event) });
-    }
+    moveFocusFromClosingCard(card, event);
     if (listId === AUTO_LIST) onCloseAuto();
     else onCloseScan(listId);
   }, [onCloseAuto, onCloseScan]);
