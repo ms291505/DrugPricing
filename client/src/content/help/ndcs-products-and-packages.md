@@ -3,7 +3,7 @@ An FDA package’s National Drug Code (NDC) has three parts.
 | Part | What it identifies | Example (`0003-0894-21`) |
 | --- | --- | --- |
 | Labeler | the company | `0003` |
-| Product | the drug, strength and form | `0894` (Eliquis 5 mg tablet) |
+| Product | the drug, strength, and form | `0894` (Eliquis 5 mg tablet) |
 | Package | the container type and size | `21` (bottle of 60) |
 
 The first two parts together are the **product NDC** (`0003-0894`). One product can have several

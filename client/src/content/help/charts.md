@@ -6,7 +6,7 @@ to 30 series, and more than eight can be slow and hard to read.
 
 An added chart keeps its rows when you change the selection, and redraws when you change the dates
 or filters. A row a filter hides drops out until the filter brings it back, and the subtitle counts
-it as hidden. A new search, **Clear search** or a change between **Packages** and **Products**
+it as hidden. A new search, **Clear search**, or a change between **Packages** and **Products**
 removes the added charts. Choose **Close** to remove one yourself (a chart with several pricing units has a card for each, and each closes on its own), or **Pin** to keep a copy that
 stays as it is. To pin every chart you add, turn on **Pin charts when you make them** in Settings.
 

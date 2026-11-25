@@ -28,8 +28,10 @@ export default function Welcome() {
         <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" } }}>
           {IDEAS.map(({ title, text, link, topic, Icon }) => (
             <Paper key={topic} sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1 }}>
-              <Icon sx={{ color: "primary.main" }} aria-hidden />
-              <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>{title}</Typography>
+              <Box sx={{ display: "flex", flexDirection: "row", gap: 1, alignItems: "center" }}>
+                <Icon sx={{ color: "primary.main" }} aria-hidden />
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>{title}</Typography>
+              </Box>
               <Typography variant="body2" sx={{ color: "text.secondary", flexGrow: 1 }}>{text}</Typography>
               <Link component="button" onClick={() => openHelp(topic)} sx={{ alignSelf: "flex-start", textAlign: "left", mt: 1 }}>{link}</Link>
             </Paper>

@@ -7,7 +7,8 @@ import ScaleOutlined from "@mui/icons-material/ScaleOutlined";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import type { HelpTopicId } from "../../library/help";
 
-// Cards start with what a visitor came to do, then explain the data they'll need to read it.
+// The first card says where NADAC comes from, so a visitor who knows the benchmark can skip it. The rest start with
+// what a visitor came to do, then explain the data they'll need to read it.
 export const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Icon: SvgIconComponent }[] = [
   {
     title: "Where NADAC comes from",
@@ -32,7 +33,7 @@ export const IDEAS: { title: string, text: string, link: string, topic: HelpTopi
   },
   {
     title: "Prices are per unit",
-    text: "Each price estimates what a pharmacy pays per unit, such as a tablet, milliliter or gram. Convert your own figure to the same unit before you compare. A patient’s bill depends on the pharmacy’s retail price, insurance coverage and any discounts.",
+    text: "Each price estimates what a pharmacy pays per unit, such as a tablet, milliliter, or gram. Convert your own figure to the same unit before you compare. A patient’s bill depends on the pharmacy’s retail price, insurance coverage, and any discounts.",
     link: "What the prices mean",
     topic: "what-the-prices-mean",
     Icon: ScaleOutlined

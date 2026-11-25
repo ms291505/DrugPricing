@@ -14,15 +14,34 @@ for chart and card design rules.
 
 ## Writing style
 
-- Use direct, plain language throughout headings, labels and body copy. Avoid slogans,
-  wordplay and “X is not Y” constructions. State the fact or tell the reader what to check.
-  For example, “Check the pricing unit, strength and package size before comparing prices.”
-- Disclaimers and cautions are the exception: when the likely misreading is the point, say
-  plainly what a figure isn’t. For example, “NADAC doesn’t show what patients pay at the
-  pharmacy.” Keep that caution wherever the prices are introduced.
+- Use plain language throughout headings, labels, and body copy. Explain things the
+  straightforward way: no slogans, wordplay, cute framing, roundabout setups, or “X is not Y”
+  constructions. State the fact or tell the reader what to check. For example, “Check the
+  pricing unit, strength, and package size before comparing prices.” Plain doesn’t mean short:
+  when one thought depends on another, join them with a conjunction or a comma instead of
+  splitting them into a run of short sentences.
+- Disclaimers and cautions are the exception to “X is not Y”: when the likely misreading is
+  the point, say plainly what a figure isn’t. For example, “NADAC doesn’t show what patients
+  pay at the pharmacy.” Keep that caution wherever the prices are introduced.
+- Use the serial comma in every list of three or more. For example, “It doesn’t import PBM
+  reports, calculate rebates, or show what a plan pays.”
+- Don’t state the author’s job; describe the kind of work. For example, “I think about drug
+  prices a lot at work.” App copy and the README use the first person and never say “the
+  author”. The README’s license section is exempt.
+- Name the source document. Write “your PBM report”, not “your report”.
+- Call a dated NADAC release an update: “the January 14, 2026 NADAC update”, not “the January
+  14, 2026 file”. The Help article that explains publication (`nadac.md`) can still say weekly
+  files.
+- Use the reader’s professional terms. Write “acquisition cost”, not “what my pharmacy paid”.
+  Frame market events as regulatory action and what the industry expected, not as “what you
+  remember from the news”.
+- Describe what the reader does in the app (“you can see how close…”), not what they might
+  wonder (“you can ask…”).
+- Name the specific control (“the line chart shows”), not a generic one (“the chart”).
 - Address the reader directly for actions they can take in the app. For example, “Pin a chart
   to keep its data and dates when you search again.” When explaining the data, name the people
-  or organizations involved. Say who submits invoices, who buys the drug and who pays for a prescription.
+  or organizations involved. Say who submits invoices, who buys the drug, and who pays for a
+  prescription.
 - Use sentence case for headings and labels. When referring to an existing control, match
   its spelling and capitalization in the app.
 - Keep Help topic IDs stable so existing links continue to work.

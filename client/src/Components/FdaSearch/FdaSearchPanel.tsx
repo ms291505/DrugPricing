@@ -79,7 +79,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       onClearSearch={handleClearSearch}
       canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== ""}
       terms={[
-        { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Lipitor", value: proprietaryName, onChange: setProprietaryName },
+        { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Eliquis", value: proprietaryName, onChange: setProprietaryName },
         { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. atorvastatin", value: nonProprietaryName, onChange: setNonProprietaryName },
       ]}
       dates={criteria.dates}

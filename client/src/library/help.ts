@@ -7,7 +7,7 @@ const TOPICS = [
   { id: "what-the-prices-mean", title: "What the prices mean", group: "Start here", keywords: "unit per each ml gram patient cost", related: ["ndcs-products-and-packages", "five-ways-a-price-can-mislead", "sources-and-disclaimer"] },
   { id: "nadac", title: "NADAC", group: "The data", keywords: "cms survey missing package without prices no price", related: ["the-fda-directory", "how-the-two-fit-together", "how-current-it-is"] },
   { id: "the-fda-directory", title: "The FDA directory", group: "The data", related: ["nadac", "how-the-two-fit-together"] },
-  { id: "ndcs-products-and-packages", title: "NDCs, products and packages", group: "The data", keywords: "labeler code format dashes", related: ["the-results-table", "the-fda-directory"] },
+  { id: "ndcs-products-and-packages", title: "NDCs, products, and packages", group: "The data", keywords: "labeler code format dashes", related: ["the-results-table", "the-fda-directory"] },
   { id: "how-the-two-fit-together", title: "How the two fit together", group: "The data", keywords: "match missing", related: ["which-search-to-use", "filters-and-hidden-results"] },
   { id: "how-current-it-is", title: "How current it is", group: "The data", keywords: "weekly updated latest", related: ["dates", "nadac"] },
   { id: "which-search-to-use", title: "Which search to use", group: "Using the app", keywords: "fda nadac brand generic", related: ["searching", "how-the-two-fit-together"] },

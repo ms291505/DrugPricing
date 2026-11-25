@@ -16,7 +16,7 @@ to show it.
 classification.
 
 **More filters** has lists built from your results: Drug and Pricing unit on NADAC; Product NDC,
-Dosage form, Route, Labeler and Pricing unit on FDA. Clear a value’s checkbox to hide it.
+Dosage form, Route, Labeler, and Pricing unit on FDA. Clear a value’s checkbox to hide it.
 **Clear filters** restores the default filters, including the default **Include** settings.
 
 Pinned items keep their saved data when filters change.
