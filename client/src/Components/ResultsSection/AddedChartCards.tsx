@@ -25,40 +25,45 @@ const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 /**
  * The cards Line and Bar added, oldest first, first in the grid under the table. Each draws its
  * rows' shown prices, so it redraws with the dates and filters, one card per pricing unit. They
- * are never stored: Pin keeps a copy, and Close removes the chart. Each grid item carries
+ * are never stored: Pin keeps a copy, and Close removes that card (the last open one removes the
+ * chart). Each grid item carries
  * `data-added-chart` (the chart's id), which Show in the status line scrolls to.
  */
 export default function AddedChartCards({ source, charts: { charts, close } }: Props) {
   return charts.map(chart => <AddedChartCard key={chart.id} source={source} chart={chart} onClose={close} />);
 }
 
-function AddedChartCard({ source, chart, onClose }: { source: ChartSource, chart: AddedChart, onClose: (id: string) => void }) {
+function AddedChartCard({ source, chart, onClose }: {
+  source: ChartSource, chart: AddedChart, onClose: (id: string, pricingUnit?: string) => void,
+}) {
   const ndcs = useMemo(() => new Set(chart.ndcs), [chart.ndcs]);
   const prices = useMemo(() => selectedChartPrices(source.prices, ndcs), [source.prices, ndcs]);
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
+  const openGroups = groups.filter(group => !chart.closedUnits.includes(group.pricingUnit));
   const hiddenCount = chart.ndcs.length - countSeries(prices);
-  const close = (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
+  // Each unit's card closes on its own; the last open one removes the chart.
+  const close = (pricingUnit: string | undefined) => (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
     moveFocusFromClosingCard(card, event);
-    onClose(chart.id);
+    onClose(chart.id, pricingUnit !== undefined && openGroups.length > 1 ? pricingUnit : undefined);
   };
 
-  // The dates or filters hide every row: the card stays, so it can be closed, and says why it's empty.
-  if (!groups.length) {
+  // The dates or filters hide every open row: the card stays, so it can be closed, and says why it's empty.
+  if (!openGroups.length) {
     const title = chartTitle(chart.chartType, source.origin.searchLabel, chart.seriesKind, chart.labels);
     return (
-      <UnitCard chart={chart} title={title} subtitle={hiddenSeriesNote(hiddenCount)} onClose={close}>
+      <UnitCard chart={chart} title={title} subtitle={hiddenSeriesNote(hiddenCount)} onClose={close(undefined)}>
         <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-          The dates or filters hide this chart’s {seriesCountLabel(chart.ndcs.length, chart.seriesKind)}.
+          The dates or filters hide this chart’s {seriesCountLabel(hiddenCount, chart.seriesKind)}.
         </Typography>
       </UnitCard>
     );
   }
-  return groups.map(group => (
+  return openGroups.map(group => (
     <UnitChart key={group.pricingUnit} chart={chart}
       source={{ ...source, prices: group.nadacPrices }}
       unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
       hiddenCount={hiddenCount}
-      onClose={close}
+      onClose={close(group.pricingUnit)}
     />
   ));
 }

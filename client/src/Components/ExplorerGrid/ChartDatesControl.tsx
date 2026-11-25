@@ -34,7 +34,8 @@ type Props = {
   typedDelayMs?: number,
   label?: string,
   /**
-   * The presets fill the row as equal buttons with their short labels, 44px tall for touch: for a
+   * The presets fill the row as equal buttons with their short labels (Custom keeps its label's
+   * width where five equal ones don't fit), 44px tall for touch: for a
    * narrow search panel, or a pinned chart's date picker on a phone.
    */
   fill?: boolean,
@@ -173,7 +174,9 @@ export default function ChartDatesControl({
           onChange(preset.chartDates);
         }}
         fullWidth={fill}
-        sx={{ flexWrap: fill ? "nowrap" : "wrap" }}
+        // Filling, equal columns while every label fits; on the narrowest phones a longer label
+        // (Custom) keeps its width and the others share the rest.
+        sx={fill ? { display: "grid", gridAutoFlow: "column", gridAutoColumns: "minmax(min-content, 1fr)" } : { flexWrap: "wrap" }}
       >
         {presets.map(preset => (
           <ToggleButton

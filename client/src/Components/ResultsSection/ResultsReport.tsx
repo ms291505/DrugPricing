@@ -1,5 +1,6 @@
-import type { MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { Box, Button, Typography } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { priceChangeListTitle } from "../../library/chartTitles";
 import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
 import type { AddedCharts } from "../../hooks/useAddedCharts";
@@ -17,14 +18,21 @@ type Props = {
 /**
  * What the toolbar's last action made, under the results heading row: the newer of the last scan's
  * report and the last added chart's, with Show to go to its card while it's open. A new card
- * neither scrolls nor takes focus; Show does. The `role="status"` line is always mounted, so a
- * screen reader hears each report; empty, the row takes no space.
+ * neither scrolls nor takes focus; Show does. Empty, the row takes no space.
+ *
+ * A live region speaks only when its text changes, and a second scan at the same percent or a
+ * second chart of the same rows repeats the message. So the visible line is hidden from screen
+ * readers, and two always-mounted, visually hidden status regions take turns: each report goes
+ * into the one that was empty, so it is announced every time.
  */
 export default function ResultsReport({ scans, charts, compact }: Props) {
   const scanReport = scans.report;
   const chartReport = charts.report;
   const chartIsNewer = chartReport !== null && (scanReport === null || chartReport.order > scanReport.order);
   const report = chartIsNewer ? chartReport : scanReport;
+  // Which status region speaks the current report: it changes with every new report.
+  const [slot, setSlot] = useState<{ order: number | undefined, index: 0 | 1 }>({ order: report?.order, index: 0 });
+  if (slot.order !== report?.order) setSlot({ order: report?.order, index: slot.index === 0 ? 1 : 0 });
 
   // The card Show goes to, and its name for Show's label, while it's still open.
   const target = chartIsNewer
@@ -52,7 +60,11 @@ export default function ResultsReport({ scans, charts, compact }: Props) {
 
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1, px: { xs: 1, md: 0 }, mt: report ? 1 : 0 }}>
-      <Typography role="status" variant="body2" color="text.secondary">{report?.message}</Typography>
+      <Typography aria-hidden variant="body2" color="text.secondary">{report?.message}</Typography>
+      <Box sx={visuallyHidden}>
+        <span role="status">{slot.index === 0 ? report?.message : ""}</span>
+        <span role="status">{slot.index === 1 ? report?.message : ""}</span>
+      </Box>
       {target && <Button size="small" aria-label={`Show ${target.name}`} onClick={show}
         sx={compact ? { minHeight: 44 } : undefined}>Show</Button>}
     </Box>

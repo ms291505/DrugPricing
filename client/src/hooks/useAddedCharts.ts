@@ -13,6 +13,8 @@ export type AddedChart = {
   /** Each row's label when it was added, for the title while the dates or filters hide them all. */
   labels: string[],
   seriesKind: SeriesKind,
+  /** Pricing units whose card was closed while the chart's other cards stay. */
+  closedUnits: string[],
 };
 
 /** What the last Line or Bar press added, for the status line under the toolbar (`ResultsReport`). */
@@ -27,8 +29,9 @@ export type AddedCharts = {
   /** Oldest first. */
   charts: AddedChart[],
   /** Adds a card and reports it. */
-  add: (chart: Omit<AddedChart, "id">, message: string) => void,
-  close: (id: string) => void,
+  add: (chart: Omit<AddedChart, "id" | "closedUnits">, message: string) => void,
+  /** Removes the chart, or with `pricingUnit` only that unit's card. */
+  close: (id: string, pricingUnit?: string) => void,
   /** What the last add made; null until the first, and again once the charts reset. */
   report: ChartReport | null,
 };
@@ -50,12 +53,14 @@ export default function useAddedCharts(...resetKeys: unknown[]): AddedCharts {
     setReport(null);
   }
 
-  const add = useCallback((chart: Omit<AddedChart, "id">, message: string) => {
+  const add = useCallback((chart: Omit<AddedChart, "id" | "closedUnits">, message: string) => {
     const id = crypto.randomUUID();
-    setCharts(prev => [...prev, { ...chart, id }]);
+    setCharts(prev => [...prev, { ...chart, id, closedUnits: [] }]);
     setReport({ message, chartId: id, order: performance.now() });
   }, []);
-  const close = useCallback((id: string) => setCharts(prev => prev.filter(chart => chart.id !== id)), []);
+  const close = useCallback((id: string, pricingUnit?: string) => setCharts(prev => pricingUnit === undefined
+    ? prev.filter(chart => chart.id !== id)
+    : prev.map(chart => chart.id === id ? { ...chart, closedUnits: [...chart.closedUnits, pricingUnit] } : chart)), []);
 
   return { charts, add, close, report };
 }
