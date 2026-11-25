@@ -10,11 +10,11 @@ Suppose your plan’s PBM report shows different ingredient costs for Mounjaro a
 2. Under **NADAC price dates**, choose **All**.
 3. Select the Mounjaro and Zepbound packages with a strength of 5 mg per 0.5 mL, then choose **Line**.
 
-The legend names each line by package NDC: `0002-1495-80` is Mounjaro and `0002-2495-80` is Zepbound. Both pens hold 0.5 mL, and NADAC prices both per milliliter, so the two lines compare directly. Move along the chart to read the gap in any week. To compare a figure from your report, convert it to the same unit and the same weeks.
+The legend names each line by package NDC: `0002-1495-80` is Mounjaro and `0002-2495-80` is Zepbound. Both pens hold 0.5 mL, and NADAC prices both per milliliter, so the two lines compare directly. Move along the chart to read the gap in any week. To compare a figure from your PBM report, convert it to the same unit and the same weeks.
 
-To check a year-over-year change, read both lines in the same week a year apart. On January 15, 2025, Mounjaro’s 5 mg pen was $2.64 per mL below Zepbound’s ($521.11 and $523.75). In the January 14, 2026 file, Mounjaro rose 3% and Zepbound didn’t, so Mounjaro was $12.67 per mL above it ($538.74 and $526.08).
+To check a year-over-year change, read both lines in the same week a year apart. On January 15, 2025, Mounjaro’s 5 mg pen was $2.64 per mL below Zepbound’s ($521.11 and $523.75). In the January 14, 2026 NADAC update, Mounjaro rose 3% and Zepbound didn’t, so Mounjaro was $12.67 per mL above it ($538.74 and $526.08).
 
-If you have rebate information, you can also ask how close your ingredient cost net of rebates comes to NADAC. DrugPricing doesn’t import PBM reports, calculate rebates or show what a plan pays.
+If you have rebate information, you can also see how close your ingredient cost net of rebates comes to NADAC. DrugPricing doesn’t import PBM reports, calculate rebates, or show what a plan pays.
 
 ## Is the price per tablet the same in every package size or strength?
 
@@ -30,13 +30,14 @@ Keep the unit with every number. Wegovy’s 0.5 mL pens are about $653 per mL an
 
 ## Did insulin prices move the way people expected?
 
-Start with what you remember from the news. For example, several insulin makers cut list prices when the Medicaid rebate cap ended on January 1, 2024. Then check the published history around that date.
+List prices and acquisition costs can change as a result of regulatory action. For example, several insulin makers cut list prices when the Medicaid rebate cap ended on January 1, 2024. Checking the published history around that date
+is one way to verify if prices moved the way industry analysts expected.
 
 1. Open **NADAC search**, enter `lantus` in **Description** and choose **Search**.
 2. Under **NADAC price dates**, choose **All**.
 3. Select the Lantus vial rows and choose **Line**.
 
-**Price Activity** shows that each vial dropped 78% on Jan 3, 2024, from $28.00 to $6.16 per mL. Search `humalog` or `novolog` to compare other insulins. The chart shows when NADAC moved and by how much. It can’t establish why.
+**Price Activity** shows that each vial dropped 78% on Jan 3, 2024, from $28.00 to $6.16 per mL. `Humalog` or `novolog` are other insulins that can be checked and compared. The line chart shows when NADAC moved and by how much, but it can’t establish why.
 
 ## Where did the benchmark start for a new drug?
 
@@ -46,7 +47,7 @@ Start with what you remember from the news. For example, several insulin makers 
 
 Zepbound’s 2.5 mg pen first appears in the January 17, 2024 file at $508.28 per mL. The first observation is the first week a NADAC file listed the package. It can come weeks after the drug went on sale, and it isn’t a launch price.
 
-## How does what my pharmacy paid compare?
+## How does my acquisition cost compare?
 
 1. Open **NADAC search**, leave **Description** empty, enter the package NDC from your invoice in **NDC** and choose **Search**.
 2. Under **NADAC price dates**, choose **Custom** and enter dates around the invoice date.
