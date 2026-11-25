@@ -23,13 +23,13 @@ type Props<R extends PricedRow> = {
    * other columns follow in `columns` order. Keep it stable (a module constant).
    */
   narrowOrder?: readonly string[],
-  /** A row's id is the `ndc` of its chart prices, which Add Chart filters the selection on. */
+  /** A row's id is the `ndc` of its chart prices, which Line and Bar filter the selection on. */
   getRowId: (row: R) => GridRowId,
   /** What a row is, for the checkbox tooltip of a row without prices: "product", "package". */
   rowNoun: string,
   loading: boolean,
   dateWindow?: DateWindow,
-  /** The rows picked for Add Chart. */
+  /** The rows picked for Line and Bar. */
   selection: GridRowSelectionModel,
   onSelectionChange: (selection: GridRowSelectionModel) => void,
 }
@@ -43,7 +43,7 @@ const isRowSelectable = (params: GridRowParams<PricedRow>) => hasPrices(params.r
 
 /**
  * The results table of a search page: one row per series, with the shared price columns
- * (`createPriceColumns`) and checkboxes that pick rows for Add Chart. A row without prices can't
+ * (`createPriceColumns`) and checkboxes that pick rows for Line and Bar. A row without prices can't
  * be charted, so it can't be selected, and its checkbox says why.
  */
 export default function ResultTable<R extends PricedRow>({ rows, tableType, columns, narrowOrder, getRowId, rowNoun, loading, selection, onSelectionChange, dateWindow }: Props<R>) {
@@ -62,10 +62,20 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
     [rowNoun, tierColumns, narrow, narrowOrder],
   );
 
+  // Unchecking every row you can see clears the selection: the grid's uncheck-all keeps hidden
+  // rows (`keepNonExistentRowsSelected`), which would leave a selection nobody can see or uncheck.
+  const rowIds = useMemo(() => new Set(rows.map(getRowId)), [rows, getRowId]);
+  const changeSelection = (model: GridRowSelectionModel) => {
+    const keepsShownRow = [...model.ids].some(id => rowIds.has(id));
+    onSelectionChange(model.ids.size > 0 && !keepsShownRow ? { type: "include", ids: new Set() } : model);
+  };
+
   return (
     <>
       <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-        {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
+        {/* Narrow tables leave out the empty states, so the line stays short on a phone. */}
+        {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}
+        {rows.length > 0 && `: ${activityCounts(rows.map(row => row.priceActivity), { omitZero: widthTier === "narrow" })}`}
         {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
       </Typography>
       <DataGrid
@@ -105,7 +115,11 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
         pageSizeOptions={DATA_GRID_PAGE_SIZES}
         isRowSelectable={isRowSelectable}
         rowSelectionModel={selection}
-        onRowSelectionModelChange={onSelectionChange}
+        onRowSelectionModelChange={changeSelection}
+        // A selected row that the dates or a filter hide stays selected, so it comes back to the
+        // live charts with the filter (`selectedChartPrices` charts only the shown rows). A new
+        // search clears the selection in the search context.
+        keepNonExistentRowsSelected
         disableRowSelectionExcludeModel
       />
       <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />

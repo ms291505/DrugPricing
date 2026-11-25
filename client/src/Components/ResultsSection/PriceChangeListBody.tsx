@@ -16,10 +16,12 @@ import type { WidthTier } from "../../hooks/useWidthTier";
 const captionSx = { display: "block", color: "text.secondary", typography: "caption" } as const;
 
 /**
- * Below this list width the Chart button goes under its NDC. A narrow row (no Amount column,
- * 44px button) needs about 330px, so this stacks on phones but not in a narrow card with room.
+ * Below this list width the Was column goes: Now and the change give it, and without it the Chart
+ * button fits beside its NDC on a phone. A narrow row with Was needs about 410px.
  */
-const STACK_BUTTON_BELOW_PX = 360;
+const HIDE_WAS_BELOW_PX = 420;
+/** Below this list width the Chart button goes under its NDC: a row without Was needs about 280px. */
+const STACK_BUTTON_BELOW_PX = 280;
 
 export type PriceChangeListBodyProps = {
   groups: PriceEventGroup[],
@@ -116,16 +118,17 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
         <Box sx={{ maxWidth: "100%", overflowX: "auto", mt: 0.5, containerType: "inline-size" }}>
           <Table id={tableId} size="small" sx={{
             width: "100%",
-            "& th, & td": { px: 1, py: 0.5, borderColor: "divider", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", verticalAlign: "top" },
+            "& th, & td": { px: 1, py: 0.5, borderColor: "divider", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", verticalAlign: "middle" },
             "& th:first-of-type, & td:first-of-type": { pl: 0 },
             "& thead th": { color: "text.secondary", typography: "caption", fontWeight: 600 },
             "& tbody tr:last-of-type th, & tbody tr:last-of-type td": { borderBottom: 0 },
+            [`@container (width < ${HIDE_WAS_BELOW_PX}px)`]: { "& .was": { display: "none" } },
           }}>
             <Box component="caption" sx={visuallyHidden}>{label}: prices per {pricingUnitLabel(group.pricingUnit)}</Box>
             <TableHead>
               <TableRow>
                 <TableCell>Package NDC</TableCell>
-                <TableCell align="right">Was</TableCell>
+                <TableCell align="right" className="was">Was</TableCell>
                 <TableCell align="right">Now</TableCell>
                 <TableCell align="right">Change</TableCell>
                 {!compact && <TableCell align="right">Amount</TableCell>}
@@ -155,7 +158,7 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
                       </Box>
                       {note && <Box component="span" sx={captionSx}>{note}</Box>}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: "text.secondary" }}>{formatPrice(event.change.oldPrice)}</TableCell>
+                    <TableCell align="right" className="was" sx={{ color: "text.secondary" }}>{formatPrice(event.change.oldPrice)}</TableCell>
                     <TableCell align="right">{formatPrice(event.change.newPrice)}</TableCell>
                     <TableCell align="right"><Box component="span" aria-hidden sx={{ color: glyphColor, mr: 0.5, fontSize: "0.75em" }}>{glyph}</Box>
                       {percent}{compact && <Box component="span" sx={captionSx}>{amount}</Box>}

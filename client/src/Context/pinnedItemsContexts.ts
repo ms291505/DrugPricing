@@ -5,20 +5,12 @@ import type { ExplorerItem } from "../library/explorerItems";
 // what it reads. The provider is `PinnedItemsProvider`; this module holds no components (see
 // "Keep imports acyclic and provider modules component-only" in AGENTS.md).
 
-export type PinHighlight = {
-  id: string,
-  /** Scroll the item into view (Chart selected). Pin only highlights. */
-  scroll: boolean,
-  /** Also move focus to its heading: Chart selected from the keyboard. */
-  focus: boolean,
-};
-
-/** How a new item is shown: by default it's only highlighted. */
-export type AddItemsOptions = { scroll?: boolean, focus?: boolean };
+/** The item just added, which its card highlights. */
+export type PinHighlight = { id: string };
 
 export type PinActions = {
-  addItems: (items: ExplorerItem[], options?: AddItemsOptions) => void;
-  addItem: (item: ExplorerItem, options?: AddItemsOptions) => void;
+  addItems: (items: ExplorerItem[]) => void;
+  addItem: (item: ExplorerItem) => void;
   updateItem: (id: string, update: (item: ExplorerItem) => ExplorerItem) => void;
   removeItem: (id: string) => void;
   /** Moves an item up (-1) or down (+1) one place. */

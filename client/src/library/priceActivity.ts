@@ -184,13 +184,20 @@ export function comparePriceActivity(a: PriceActivity, b: PriceActivity): number
   return ACTIVITY_ORDER[a.state] - ACTIVITY_ORDER[b.state] || b.magnitude - a.magnitude;
 }
 
-export function activityCounts(activities: PriceActivity[]): string {
+/**
+ * How many rows are in each activity state, for the line above a results table. `omitZero`
+ * leaves out the empty states, for narrow tables; mixed units is listed only when there are any.
+ */
+export function activityCounts(activities: PriceActivity[], { omitZero = false } = {}): string {
   const count = (state: PriceActivity["state"]) => activities.filter(a => a.state === state).length;
-  return [
-    `${count("significant")} with significant changes`, `${count("changed")} other changed`,
-    `${count("stable")} stable`, `${count("insufficient")} insufficient history`,
-    ...(count("mixed") ? [`${count("mixed")} mixed units`] : []),
-  ].join(", ");
+  const parts: Array<[number, string]> = [
+    [count("significant"), "with significant changes"], [count("changed"), "other changed"],
+    [count("stable"), "stable"], [count("insufficient"), "insufficient history"],
+  ];
+  const mixed = count("mixed");
+  return [...parts.filter(([n]) => !omitZero || n > 0), ...(mixed ? [[mixed, "mixed units"] as [number, string]] : [])]
+    .map(([n, label]) => `${n} ${label}`)
+    .join(", ");
 }
 
 /** A 56×24 step path, with proportional dates and the same bounded scale as full charts. */

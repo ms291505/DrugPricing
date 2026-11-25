@@ -1,6 +1,6 @@
 /*
- * App-wide preferences saved once for every tab and window (`persist.ts`). Appearance is edited
- * in Settings; column visibility is edited from each results table's Columns tool.
+ * App-wide preferences saved once for every tab and window (`persist.ts`). Appearance and charts
+ * are edited in Settings; column visibility is edited from each results table's Columns tool.
  */
 
 /**
@@ -62,11 +62,14 @@ export function columnOverridesFromModel(hiddenDefaults: string[], model: Record
 export type AppSettings = {
   barStyle: BarStyle,
   colorMode: ColorMode,
+  /** Turning on Line or Bar above the results also pins a copy of what it charts. */
+  autoPinCharts: boolean,
   columnOverrides: TableColumnOverrides,
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   barStyle: "dot",
   colorMode: "dark",
+  autoPinCharts: false,
   columnOverrides: DEFAULT_COLUMN_OVERRIDES,
 };

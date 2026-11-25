@@ -43,7 +43,7 @@ const EMPTY_PRODUCTS: FdaProductDetail[] = [];
 export type FdaResultView = {
   /** `refineFda`'s products: what every consumer of the page's results reads. */
   products: FdaProductDetail[],
-  /** The dates shown (`fdaShownDates`): the auto charts' window, and new charts' dates. */
+  /** The dates shown (`fdaShownDates`): the live charts' window, and new charts' dates. */
   dateWindow: DateWindow,
   /** The from-results lists' options (`fdaFilterOptions`). */
   options: Record<FdaExclusionKey, string[]>,

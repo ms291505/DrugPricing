@@ -86,7 +86,7 @@ the tab creator doesn't offer (see "Workspace redo" in docs/future-work.md).
 ### Result tables
 
 Each table is one file in `ResultTables/` that takes its search's data and `loading` as props,
-lists its columns, and renders `ResultTable` (paging, and the selection that Chart selected charts).
+lists its columns, and renders `ResultTable` (paging, and the selection that Line and Bar chart).
 `ResultsSection` gives it its `Paper`. Rows are built in `library/resultRows.ts` (tested): each
 carries `priceSummaries` (`summarizeByUnit`, from the prices the row's chart would draw, keyed the
 same way), and `createPriceColumns` (`priceColumns.tsx`) shows them, each price with its unit and
@@ -125,24 +125,41 @@ Price Activity (`library/priceActivity.ts`) classifies package histories over th
 a rounded 5% range cutoff and 10% significant steps (`NOTABLE_PRICE_CHANGE_PERCENT`). Every
 threshold compares in tenths of a percent (`meetsThreshold`), and a change from $0 meets every
 threshold and reads "from $0", never as a percent. Products use their packages' states, not an
-averaged line; only package rows have sparklines. The live comparison controls (Chart latest prices,
-Chart price histories) and the Scan price changes button sit directly below the results table.
+averaged line; only package rows have sparklines. Every way to act on the results is in one
+toolbar in the results heading's row (`ResultsToolbar`): the chart label, Line and Bar, Scan price
+changes, then FDA's detail level. It is one flex item, so when the heading and the toolbar don't
+fit one line, the heading takes its own line first, and only then does the toolbar wrap. The
+scan's status line and Show sit under that row (`ScanReport`). Line and Bar are toggles for one
+live card each of the selected rows that are shown (`selectedChartPrices`, `useLiveCharts`). They
+follow the selection, dates and filters: the table keeps a hidden row selected
+(`keepNonExistentRowsSelected`), and the label counts shown rows and names hidden ones ("Chart 3
+selected (5 hidden)"), but unchecking every shown row clears the hidden ones too. They can't turn
+on with no shown selection or past 30 series (`CHART_SERIES_LIMIT`), warn once on crossing 8
+(`CHART_SERIES_WARNING`), and turn off when the selection empties or passes 30
+(`liveChartsAfter`). A new search, Clear search and an FDA detail level change clear the
+selection. Turning one on scrolls to its card and focuses the heading only from the keyboard;
+with the `autoPinCharts` setting it also pins a copy. On the narrow tier the chart label is a
+caption above Line and Bar, and Scan is a short "Scan" under a "Price changes" caption, each as
+wide as its caption, so both groups fit one line on a phone, and FDA's detail level comes first,
+on its own line under the heading; the table's count line there leaves out empty states
+(`activityCounts`' `omitZero`).
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
-half-width grid with live comparison charts: Notable price changes (10%, when it has changes) and
+half-width grid with the live charts: Notable price changes (10%, when it has changes) and
 one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
-scanned. Every scan reports what it found in the control row's `role="status"` line ("Found N
-package changes…", or none), and a scan with no matches makes no card. A new card neither scrolls
-nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
+scanned. Every scan reports what it found in a `role="status"` line under the heading row
+(`ScanReport`: "Found N package changes…", or none), and a scan with no matches makes no card. A
+new card neither scrolls nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
 keyboard, and goes once that card is closed.
-Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
+Each list groups by date, unit and direction, each with its packages' old and new prices (below a
+420px list the Was column goes, so each row's Chart button fits beside its NDC on a phone), and can be
 pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
 `client/CHARTS.md`). Each package row has a chart icon button that opens that package's change in a
 dialog (`PriceChangeChartDialog`) over the shown dates, with the change marked and the readout
 resting on it. It is one chart at a time, on every screen; Pin keeps a copy. New prices (a search,
 or new dates or filters, but not the FDA detail level) remove every scan, close the dialog and
 reopen Notable price changes. A list's Close, when it holds focus, moves it to the next card's
-toggle, else the previous card's, else the results heading. Live comparison cards start hidden and are never
+toggle, else the previous card's, else the results heading. Live chart cards start off and are never
 stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
 legacy-pin rules.
 
@@ -309,7 +326,7 @@ depend on write availability read it. The action checks storage's read-only flag
   A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
   the existing app and search pages mounted.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
-  never change (`barStyle`, `colorMode`), plus per-table column visibility overrides
+  never change (`barStyle`, `colorMode`, `autoPinCharts`), plus per-table column visibility overrides
   (`columnOverrides`) edited from the results footer. They are saved once under
   `drugpricing.v<VERSION>.settings` and
   validated field by field. Other windows follow a change (`watchSettings`). The panel opens

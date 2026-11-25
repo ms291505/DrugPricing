@@ -114,11 +114,6 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   focus the replacement tab's FAB, or its drawer row when that tab is a blank "new" tab with no
   FAB. After Minimize, the pane is empty, so focus its drawer row. After a tap nothing moves. On a
   phone the drawer is closed, so a drawer row isn't a target there. Small.
-- **Chart selected's re-centering loop** (`PinnedItemCard.tsx`, about 30 lines). It re-centers the
-  new pinned card while charts above it draw and grow past their placeholders. With the
-  `scroll-padding` on `html` (theme), try placeholders of the right height (or
-  `contain-intrinsic-size`). If the card then lands in place in the iOS Simulator, delete the
-  loop.
 - **The Pin toast covers the change chart dialog's close button on phones** (found in the iOS
   Simulator, 2026-11-22). Toasts come from the top on phones (`App.tsx`), and the full-screen
   `PriceChangeChartDialog` has its close button top right, so after Pin it's hidden for about
@@ -147,7 +142,7 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   picks the unit), or set `filterable: false` on the three price columns.
 - **Restyle the focus outline on headings that take focus from code.** Card headings
   (`ExplorerGridItem`) and the results heading (`ResultsSection`) are out of the tab order but
-  take focus from code (keyboard Chart selected and Show, the fallbacks after a close), so keyboard and
+  take focus from code (keyboard Line, Bar and Show, the fallbacks after a close), so keyboard and
   screen-reader users land in the right place. They show a plain 2px `:focus-visible` box that reads as a stray border and
   doesn't fit the app. Keep a visible indicator, but design one that fits (theme color, offset,
   corners from `BORDER_RADIUS`, or an underline), and use it for both. Small.
@@ -170,8 +165,18 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   their first item, and Shift+Tab up a long page at phone width never left focus under the app
   bar. Still open, on a real device with VoiceOver (`npm run dev:phone`): whether the change chart
   dialog is announced by its title and context line, the Pin status line, the scan report and the
-  Chart selected toast are spoken, and where the cursor lands after a menu's Remove or Close tab.
+  chart toasts are spoken, and where the cursor lands after a menu's Remove or Close tab.
   Also check that a tap on Unlock doesn't switch `useChartReadout` into announcing.
+- **Card header targets on the narrow tier** (from PR 67's review). A card header's collapse
+  toggle, Pin and a price change list's X are small `IconButton`s, about 34px, and AGENTS.md asks
+  for 44px on narrow layouts. Size them up below the card's `sm` tier (`ExplorerGridItem` and its
+  callers' actions) without crowding the title. Small.
+- **Rows hidden by the grid's own column filter count as shown** (from PR 67's review; Chart
+  selected behaved the same). `ResultTable`'s `rowIds` and the toolbar's shown count use the
+  table's `rows`, which still include rows the DataGrid's column filter hides, so such a row is
+  counted, charted and survives header uncheck-all. Either count grid-visible rows
+  (`gridExpandedSortedRowIdsSelector`) as shown, or `disableColumnFilter` on the result tables
+  (the page's own filters cover most uses). Small.
 - **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
 - **Two global modals are never opened.** Nothing calls `openModal("about")` or
   `openModal("onboarding")`; About and Welcome render only as pages. Remove both entries from

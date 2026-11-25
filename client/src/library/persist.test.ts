@@ -357,7 +357,7 @@ describe("watchOtherWindows", () => {
     window.dispatchEvent(storageEvent(settingsKey, value));
 
     expect(onConflict).not.toHaveBeenCalled();
-    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(onSettings).toHaveBeenCalledWith({ barStyle: "bar", colorMode: "dark", autoPinCharts: false, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.saveTabState("t1", fdaTab(createFdaCriteria()));
     expect(localStorage.getItem(persist.tabKey("t1"))).not.toBeNull();
   });
@@ -365,19 +365,27 @@ describe("watchOtherWindows", () => {
 
 describe("settings", () => {
   it("defaults when nothing or something unreadable is saved", () => {
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", autoPinCharts: false, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     localStorage.setItem(`drugpricing.v${persist.VERSION}.settings`, JSON.stringify({ version: persist.VERSION, data: { barStyle: "pie", colorMode: "sepia" } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "dark", autoPinCharts: false, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+  });
+
+  it("reads a missing or bad autoPinCharts as off without discarding the rest", () => {
+    const key = `drugpricing.v${persist.VERSION}.settings`;
+    localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: { colorMode: "light" } }));
+    expect(persist.loadSettings().autoPinCharts).toBe(false);
+    localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: { colorMode: "light", autoPinCharts: "yes" } }));
+    expect(persist.loadSettings()).toMatchObject({ colorMode: "light", autoPinCharts: false });
   });
 
   it("round-trips what saveSettings wrote", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", autoPinCharts: true, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", autoPinCharts: true, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 
   it("round-trips independent column choices and follows another window", () => {
     const columnOverrides = { fdaProduct: { proprietaryName: false }, fdaPackage: {}, nadac: { ndcDescription: false, minPrice: true } };
-    const settings = { barStyle: "dot" as const, colorMode: "light" as const, columnOverrides };
+    const settings = { barStyle: "dot" as const, colorMode: "light" as const, autoPinCharts: false, columnOverrides };
     const onSettings = vi.fn();
     const onConflict = vi.fn();
     persist.watchSettings(onSettings);
@@ -398,7 +406,7 @@ describe("settings", () => {
     localStorage.setItem(key, JSON.stringify({ version: persist.VERSION, data: {
       colorMode: "light", columnOverrides: { fdaProduct: { latestPrice: false, minPrice: true, maxPrice: 42, routeName: null, [RESULT_SELECTION_FIELD]: false }, fdaPackage: "bad", nadac: [] },
     } }));
-    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", columnOverrides: {
+    expect(persist.loadSettings()).toEqual({ barStyle: "dot", colorMode: "light", autoPinCharts: false, columnOverrides: {
       fdaProduct: { latestPrice: false, minPrice: true }, fdaPackage: {}, nadac: {},
     } });
   });
@@ -435,9 +443,9 @@ describe("settings", () => {
   });
 
   it("survives pruning, which only removes tab state and old versions", () => {
-    persist.saveSettings({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    persist.saveSettings({ barStyle: "bar", colorMode: "light", autoPinCharts: false, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
     persist.pruneStoredState([]);
-    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", columnOverrides: DEFAULT_COLUMN_OVERRIDES });
+    expect(persist.loadSettings()).toEqual({ barStyle: "bar", colorMode: "light", autoPinCharts: false, columnOverrides: DEFAULT_COLUMN_OVERRIDES });
   });
 });
 

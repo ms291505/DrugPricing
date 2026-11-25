@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
+import { memo, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -30,16 +30,6 @@ type Props = {
   priceRanges?: Map<string, [number, number]>,
 };
 
-/** When to start centering a new card again if no `scrollend` arrives. */
-const RECENTER_FALLBACK_MS = 1000;
-/** How often, and how many times, to check that a new card is still centered. */
-const RECENTER_INTERVAL_MS = 150;
-const RECENTER_CHECKS = 6;
-/** How far off center a new card may sit. */
-const SETTLED_PX = 24;
-/** Input that scrolls the page: the user taking over from the centering. */
-const USER_SCROLL_EVENTS = ["wheel", "touchmove", "keydown"] as const;
-
 const sourceBadge = (source: ExplorerItem["source"]) => {
   switch (source.searchSource) {
     case "fda": return { label: "FDA Search", detail: "Found and grouped using FDA reference data. Prices are from NADAC." };
@@ -47,8 +37,6 @@ const sourceBadge = (source: ExplorerItem["source"]) => {
     default: return { label: "Search source unknown", detail: "This pin predates saved search sources. Prices are from NADAC." };
   }
 };
-
-const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * A pinned item's card. Memoized: its props change only when its own item does.
@@ -58,49 +46,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const isFull = item.layout.width === "full";
 
   const cardRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
   const highlighted = highlight !== null;
-  const scrollOnAdd = highlight?.scroll ?? false;
-  const focusOnAdd = highlight?.focus ?? false;
-
-  // Chart selected feedback: bring the new card into view, and from the keyboard move focus to
-  // its heading, so keyboard users land on what they just created. A tap leaves focus alone.
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!scrollOnAdd || !card?.checkVisibility()) return;
-    card.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
-    if (focusOnAdd) headingRef.current?.focus({ preventScroll: true });
-    // Pinned charts draw as the scroll passes them, or after it when it jumps (`ChartItemBody`),
-    // and grow past their placeholders, pushing the card down. Once the scroll stops, center the
-    // card again until the charts around it have drawn and it stays put. The user scrolling
-    // first ends it.
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let checks = 0;
-    const settle = () => {
-      if (!card.checkVisibility()) return;
-      const { top, bottom } = card.getBoundingClientRect();
-      const offCenter = Math.abs((top + bottom) / 2 - window.innerHeight / 2);
-      if (offCenter > SETTLED_PX) {
-        card.scrollIntoView({ block: "center", behavior: "auto" });
-      }
-      if (++checks < RECENTER_CHECKS) timer = setTimeout(settle, RECENTER_INTERVAL_MS);
-    };
-    const start = () => {
-      window.removeEventListener("scrollend", start);
-      clearTimeout(timer);
-      settle();
-    };
-    const stop = () => {
-      clearTimeout(timer);
-      window.removeEventListener("scrollend", start);
-      for (const type of USER_SCROLL_EVENTS) window.removeEventListener(type, stop);
-    };
-    window.addEventListener("scrollend", start);
-    for (const type of USER_SCROLL_EVENTS) window.addEventListener(type, stop, { passive: true });
-    // Browsers without `scrollend`, and a card already in place (no scroll, so no event).
-    timer = setTimeout(start, RECENTER_FALLBACK_MS);
-    return stop;
-  }, [scrollOnAdd, focusOnAdd]);
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuId = useId();
@@ -198,7 +144,6 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
       <ExplorerGridItem
         title={title}
         headingLevel={3}
-        headingRef={headingRef}
         highlighted={highlighted}
         badges={<>
           <Tooltip title={source.detail}>
