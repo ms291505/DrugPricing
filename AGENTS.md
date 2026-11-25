@@ -274,6 +274,8 @@ depend on write availability read it. The action checks storage's read-only flag
   is no separate chart dates control). NADAC's server snaps both dates to loaded as-of dates;
   FDA's filters strictly, so the client widens its request (`widenToAsOfDates`) and snaps the
   same way (`fdaShownDates`). The snap reaches less than one week (as-of dates are weekly).
+  On a narrow panel the Dates presets take the whole row as equal 44px buttons with short
+  labels (`ChartDatesControl`'s `fill`); wider panels and pinned charts keep the small group.
 - React Query doesn't refetch on focus or reconnect: every mounted tab would refetch at once.
 - **A search's toasts show only while its page is on screen** (`PageVisibleContext` in
   `Context/pageVisibility.ts`): a workspace tab while shown on the workspace route, a standalone

@@ -33,6 +33,11 @@ type Props = {
    */
   typedDelayMs?: number,
   label?: string,
+  /**
+   * The presets fill the row as equal buttons with their short labels, 44px tall for touch: for a
+   * narrow search panel, where the row would otherwise leave room unused beside small targets.
+   */
+  fill?: boolean,
 }
 
 const RECENT_PRESETS = [
@@ -63,6 +68,7 @@ const isCustom = (value: ChartDates) => value.kind === "window" && !isFullWindow
  */
 export default function ChartDatesControl({
   value, onChange, bounds, inputBounds = bounds, customPreset = false, typedDelayMs = 0, label = "Chart dates",
+  fill = false,
 }: Props) {
   const labelId = useId();
 
@@ -166,7 +172,8 @@ export default function ChartDatesControl({
           setCustomPicked(preset.key === "custom");
           onChange(preset.chartDates);
         }}
-        sx={{ flexWrap: "wrap" }}
+        fullWidth={fill}
+        sx={{ flexWrap: fill ? "nowrap" : "wrap" }}
       >
         {presets.map(preset => (
           <ToggleButton
@@ -176,9 +183,11 @@ export default function ChartDatesControl({
             // Also when Custom is already picked, to change its dates.
             onClick={preset.key === "custom" ? (e) => setCustomAnchor(e.currentTarget) : undefined}
             aria-haspopup={preset.key === "custom" ? "dialog" : undefined}
-            sx={{ px: 1, py: 0.25 }}
+            sx={fill ? { px: 0.5, minHeight: 44, whiteSpace: "nowrap" } : { px: 1, py: 0.25 }}
           >
-            {preset.shortLabel
+            {fill
+              ? preset.shortLabel ?? preset.label
+              : preset.shortLabel
               ? <>
                 <Box component="span" aria-hidden sx={{ display: { xs: "inline", sm: "none" } }}>{preset.shortLabel}</Box>
                 <Box component="span" aria-hidden sx={{ display: { xs: "none", sm: "inline" } }}>{preset.label}</Box>
