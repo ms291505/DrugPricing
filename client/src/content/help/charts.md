@@ -1,10 +1,14 @@
 To chart results, select their rows, then choose **Line** or **Bar** beside the results heading.
-Each turns its chart on or off. The charts follow your selection, dates and filters: check another
-row and it joins the chart, and a selected row a filter hides comes back when the filter does
-(the label counts it as hidden). They chart up to 30 series, and more than eight can be slow and
-hard to read. Unchecking every row you can see, or a new search, clears the selection and turns
-them off. Choose **Pin** on a chart to keep a copy that stays as it is. To pin every
-chart you make, turn on **Pin charts when you make them** in Settings.
+Each press adds a chart of the selected rows below the table, and a message under the heading
+says what was added. **Show** beside it takes you to the chart. The selection stays, so you can
+add a **Bar** of the same rows or change the selection and add another chart. A chart can show up
+to 30 series, and more than eight can be slow and hard to read.
+
+An added chart keeps its rows when you change the selection, and redraws when you change the dates
+or filters. A row a filter hides drops out until the filter brings it back, and the subtitle counts
+it as hidden. A new search, **Clear search** or a change between **Packages** and **Products**
+removes the added charts. Choose **Close** to remove one yourself, or **Pin** to keep a copy that
+stays as it is. To pin every chart you add, turn on **Pin charts when you make them** in Settings.
 
 **Line charts** show price over time. The line moves in steps between weekly NADAC prices. A gap at the start or end means the app has no recorded price for that series in those weeks.
 

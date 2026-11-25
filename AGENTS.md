@@ -129,16 +129,18 @@ averaged line; only package rows have sparklines. Every way to act on the result
 toolbar in the results heading's row (`ResultsToolbar`): the chart label, Line and Bar, Scan price
 changes, then FDA's detail level. It is one flex item, so when the heading and the toolbar don't
 fit one line, the heading takes its own line first, and only then does the toolbar wrap. The
-scan's status line and Show sit under that row (`ScanReport`). Line and Bar are toggles for one
-live card each of the selected rows that are shown (`selectedChartPrices`, `useLiveCharts`). They
-follow the selection, dates and filters: the table keeps a hidden row selected
-(`keepNonExistentRowsSelected`), and the label counts shown rows and names hidden ones ("Chart 3
-selected (5 hidden)"), but unchecking every shown row clears the hidden ones too. They can't turn
-on with no shown selection or past 30 series (`CHART_SERIES_LIMIT`), warn once on crossing 8
-(`CHART_SERIES_WARNING`), and turn off when the selection empties or passes 30
-(`liveChartsAfter`). A new search, Clear search and an FDA detail level change clear the
-selection. Turning one on scrolls to its card and focuses the heading only from the keyboard;
-with the `autoPinCharts` setting it also pins a copy. On the narrow tier the chart label is a
+status line and Show sit under that row (`ResultsReport`), reporting the newer of the last scan
+and the last added chart. Line and Bar add a card, as Scan does: each press adds one of the selected
+rows that are shown (`selectedChartPrices`, `useAddedCharts`, `AddedChartCards`), oldest first, and
+the selection stays. A card keeps its rows (their ids) while the selection changes and redraws with
+the dates and filters; a row they hide drops out and the subtitle counts it ("2 hidden"), and a card
+whose rows are all hidden stays with a note so it can be closed. A new search, Clear search and an
+FDA detail level change remove every added card (`useAddedCharts`' reset keys) and clear the
+selection. The table keeps a hidden row selected (`keepNonExistentRowsSelected`), and the label
+counts shown rows and names hidden ones ("Chart 3 selected (5 hidden)"), but unchecking every shown
+row clears the hidden ones too. Line and Bar are disabled with no shown selection or past 30 series
+(`CHART_SERIES_LIMIT`), and an add past 8 (`CHART_SERIES_WARNING`) toasts a warning. A new card
+neither scrolls nor takes focus; with the `autoPinCharts` setting an add also pins a copy. On the narrow tier the chart label is a
 caption above Line and Bar, and Scan is a short "Scan" under a "Price changes" caption, each as
 wide as its caption, so both groups fit one line on a phone, and FDA's detail level comes first,
 on its own line under the heading. The table's count line, on every width, lists only the
@@ -146,10 +148,10 @@ activity states that have rows and names the price ("3 with significant price ch
 stable prices"; `activityCounts`), then the shown dates unless they're All.
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
-half-width grid with the live charts: Notable price changes (10%, when it has changes) and
+half-width grid after the added charts: Notable price changes (10%, when it has changes) and
 one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
 scanned. Every scan reports what it found in a `role="status"` line under the heading row
-(`ScanReport`: "Found N package changes…", or none), and a scan with no matches makes no card. A
+(`ResultsReport`: "Found N package changes…", or none), and a scan with no matches makes no card. A
 new card neither scrolls nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
 keyboard, and goes once that card is closed.
 Each list groups by date, unit and direction, each with its packages' old and new prices (below a
@@ -159,9 +161,9 @@ pinned or closed. The cards are never stored; a pin stores a `PriceChangeListIte
 dialog (`PriceChangeChartDialog`) over the shown dates, with the change marked and the readout
 resting on it. It is one chart at a time, on every screen; Pin keeps a copy. New prices (a search,
 or new dates or filters, but not the FDA detail level) remove every scan, close the dialog and
-reopen Notable price changes. A list's Close, when it holds focus, moves it to the next card's
-toggle, else the previous card's, else the results heading. Live chart cards start off and are never
-stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
+reopen Notable price changes. Close on an added chart or a list, when it holds focus, moves it to
+the next card's toggle, else the previous card's, else the results heading
+(`moveFocusFromClosingCard`). Added chart cards are never stored. New product pins retain package identity per point; see `client/CHARTS.md` for callout and
 legacy-pin rules.
 
 ### Workspace

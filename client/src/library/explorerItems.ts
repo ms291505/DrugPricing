@@ -7,7 +7,7 @@ import { PRICE_CHANGE_LIST_PIN_LIMIT } from "./constants";
 
 /**
  * Explorer items are the cards in a search tab's Pinned section. *System* items (the results
- * table, live charts, price change lists) are derived from the current search on every render
+ * table, added charts, price change lists) are derived from the current search on every render
  * and never stored. *User* items are pinned snapshots: they stay as they are across new searches
  * and filter changes until the user acts on them.
  *

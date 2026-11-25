@@ -118,8 +118,8 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
         isRowSelectable={isRowSelectable}
         rowSelectionModel={selection}
         onRowSelectionModelChange={changeSelection}
-        // A selected row that the dates or a filter hide stays selected, so it comes back to the
-        // live charts with the filter (`selectedChartPrices` charts only the shown rows). A new
+        // A selected row that the dates or a filter hide stays selected, so it comes back with the
+        // filter for the next Line or Bar (`selectedChartPrices` charts only the shown rows). A new
         // search clears the selection in the search context.
         keepNonExistentRowsSelected
         disableRowSelectionExcludeModel

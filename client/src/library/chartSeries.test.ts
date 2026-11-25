@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartControlLabel, countSeries, liveChartsAfter, manySeries, manySeriesWarning, overSeriesLimit, selectedChartPrices,
-  seriesLimitNotice,
+  chartControlLabel, countSeries, manySeries, manySeriesWarning, overSeriesLimit, selectedChartPrices,
 } from "./chartSeries";
 import type { ChartPrice } from "./types";
 
@@ -45,41 +44,14 @@ describe("series thresholds", () => {
     expect([manySeries(8), manySeries(9)]).toEqual([false, true]);
     expect([overSeriesLimit(30), overSeriesLimit(31)]).toEqual([false, true]);
     expect(manySeriesWarning(12)).toBe("Charting 12 series. Charts with more than 8 can be slow and hard to read.");
-    expect(seriesLimitNotice(31)).toBe("Charts show up to 30 series, and 31 are selected. Select fewer rows, then turn Line or Bar back on.");
   });
 
   it("labels the control by the shown selection, naming hidden rows", () => {
     expect(chartControlLabel(0, 0)).toBe("Select rows to chart");
     expect(chartControlLabel(0, 5)).toBe("Select rows to chart (5 hidden)");
-    expect(chartControlLabel(0, 5, true)).toBe("0 shown (5 hidden)");
-    expect(chartControlLabel(0, 0, true)).toBe("Select rows to chart");
-    expect(chartControlLabel(3, 5, true)).toBe("Chart 3 selected (5 hidden)");
     expect(chartControlLabel(3, 0)).toBe("Chart 3 selected");
     expect(chartControlLabel(3, 5)).toBe("Chart 3 selected (5 hidden)");
     expect(chartControlLabel(30, 0)).toBe("Chart 30 selected");
     expect(chartControlLabel(31, 5)).toBe("31 selected (5 hidden) · chart up to 30");
-  });
-});
-
-describe("liveChartsAfter", () => {
-  const lineOn = { line: true, bar: false };
-
-  it("leaves charts that are off alone", () => {
-    expect(liveChartsAfter({ line: false, bar: false }, 0, 0)).toBeNull();
-    expect(liveChartsAfter({ line: false, bar: false }, 40, 40)).toBeNull();
-  });
-
-  it("turns off when nothing is selected", () => {
-    expect(liveChartsAfter(lineOn, 0, 0)).toEqual({ on: { line: false, bar: false }, closedAtSeries: null });
-  });
-
-  it("turns off past the limit and records the count", () => {
-    expect(liveChartsAfter(lineOn, 30, 30)).toBeNull();
-    expect(liveChartsAfter(lineOn, 36, 31)).toEqual({ on: { line: false, bar: false }, closedAtSeries: 31 });
-  });
-
-  it("stays on for a selection the filters hide, and for hidden rows past the limit", () => {
-    expect(liveChartsAfter(lineOn, 5, 0)).toBeNull();
-    expect(liveChartsAfter(lineOn, 36, 30)).toBeNull();
   });
 });
