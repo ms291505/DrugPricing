@@ -10,6 +10,13 @@ import type { HelpTopicId } from "../../library/help";
 // Cards start with what a visitor came to do, then explain the data they'll need to read it.
 export const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Icon: SvgIconComponent }[] = [
   {
+    title: "Where NADAC comes from",
+    text: "Retail community pharmacies voluntarily submit purchase invoices to a monthly survey for the Centers for Medicare & Medicaid Services (CMS). CMS publishes the National Average Drug Acquisition Cost (NADAC) each week.",
+    link: "What is NADAC?",
+    topic: "nadac",
+    Icon: AttachMoneyIcon
+  },
+  {
     title: "Compare two drugs",
     text: "Your plan’s PBM report shows different ingredient costs for Mounjaro and Zepbound. Does NADAC show a similar gap? In FDA search, enter tirzepatide as the Generic name, select a 5 mg pen of each, and choose Line.",
     link: "Things to try",
@@ -22,13 +29,6 @@ export const IDEAS: { title: string, text: string, link: string, topic: HelpTopi
     link: "Price changes",
     topic: "price-changes",
     Icon: TimelineIcon
-  },
-  {
-    title: "Where NADAC comes from",
-    text: "Retail community pharmacies voluntarily submit purchase invoices to a monthly survey for the Centers for Medicare & Medicaid Services (CMS). CMS publishes the National Average Drug Acquisition Cost (NADAC) each week.",
-    link: "What is NADAC?",
-    topic: "nadac",
-    Icon: AttachMoneyIcon
   },
   {
     title: "Prices are per unit",
