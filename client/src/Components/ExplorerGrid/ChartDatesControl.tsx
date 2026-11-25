@@ -35,7 +35,7 @@ type Props = {
   label?: string,
   /**
    * The presets fill the row as equal buttons with their short labels, 44px tall for touch: for a
-   * narrow search panel, where the row would otherwise leave room unused beside small targets.
+   * narrow search panel, or a pinned chart's date picker on a phone.
    */
   fill?: boolean,
 }
