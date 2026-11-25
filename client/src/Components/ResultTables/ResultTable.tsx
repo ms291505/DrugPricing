@@ -62,6 +62,14 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
     [rowNoun, tierColumns, narrow, narrowOrder],
   );
 
+  // Unchecking every row you can see clears the selection: the grid's uncheck-all keeps hidden
+  // rows (`keepNonExistentRowsSelected`), which would leave a selection nobody can see or uncheck.
+  const rowIds = useMemo(() => new Set(rows.map(getRowId)), [rows, getRowId]);
+  const changeSelection = (model: GridRowSelectionModel) => {
+    const keepsShownRow = [...model.ids].some(id => rowIds.has(id));
+    onSelectionChange(model.ids.size > 0 && !keepsShownRow ? { type: "include", ids: new Set() } : model);
+  };
+
   return (
     <>
       <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
@@ -105,7 +113,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
         pageSizeOptions={DATA_GRID_PAGE_SIZES}
         isRowSelectable={isRowSelectable}
         rowSelectionModel={selection}
-        onRowSelectionModelChange={onSelectionChange}
+        onRowSelectionModelChange={changeSelection}
         // A selected row that the dates or a filter hide stays selected, so it comes back to the
         // live charts with the filter (`selectedChartPrices` charts only the shown rows). A new
         // search clears the selection in the search context.

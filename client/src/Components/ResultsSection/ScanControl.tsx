@@ -1,20 +1,13 @@
-import { useId, useState, type FormEvent, type MouseEvent } from "react";
-import { Button, Popover, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { useId, useState, type FormEvent } from "react";
+import { Button, Popover, Stack, TextField, Tooltip } from "@mui/material";
 import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
 import { PRICE_CHANGE_SCAN_DEFAULT_PERCENT, PRICE_CHANGE_SCAN_MIN_PERCENT } from "../../library/constants";
 import { parseScanThreshold } from "../../library/priceActivity";
-import { priceChangeListTitle } from "../../library/chartTitles";
-import type { PriceChangeScan, ScanReport } from "../../hooks/usePriceChangeScans";
-import { fromKeyboard, nearestVisible } from "../ui/focus";
 
 type Props = {
   /** Scans the page's package prices at a percent (`usePriceChangeScans`). */
   onScan: (thresholdPercent: number) => void,
-  /** What the last scan found, shown in the status line beside Scan; null before any scan. */
-  report: ScanReport | null,
-  /** The scan cards still open, to offer Show for the last one. */
-  scans: PriceChangeScan[],
-  /** The toolbar's narrow tier: Scan shows only its icon, and targets are 44px. */
+  /** The results' narrow tier: Scan shows only its icon, and its target is 44px. */
   compact: boolean,
 };
 
@@ -22,29 +15,15 @@ const SCAN_PRESETS = [PRICE_CHANGE_SCAN_MIN_PERCENT, PRICE_CHANGE_SCAN_DEFAULT_P
 
 /**
  * Scan price changes and its popover. A scan's card neither scrolls into view nor takes focus:
- * MUI gives focus back to Scan price changes, and the status line beside it says what the scan
- * found, with Show to go to the card.
+ * MUI gives focus back to Scan price changes, and the status line under the heading row
+ * (`ScanReport`) says what the scan found, with Show to go to the card.
  */
-export default function ScanControl({ onScan, report, scans, compact }: Props) {
+export default function ScanControl({ onScan, compact }: Props) {
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const [lastPercent, setLastPercent] = useState(PRICE_CHANGE_SCAN_DEFAULT_PERCENT);
   const [text, setText] = useState(String(lastPercent));
   const [error, setError] = useState<string | null>(null);
   const dialogId = useId();
-  const shownScan = report?.scanId ? scans.find(scan => scan.id === report.scanId) : undefined;
-  const shownTitle = shownScan ? priceChangeListTitle(shownScan.thresholdPercent) : "";
-
-  // Show goes somewhere: it scrolls to the card for everyone and focuses its heading only from
-  // the keyboard, so a tap leaves no ring.
-  const show = (event: MouseEvent<HTMLElement>) => {
-    const card = nearestVisible(event.currentTarget, `[data-price-change-list="${report?.scanId}"]`);
-    if (!card) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // The card's top, not its center: a long list is taller than the window, and centering it
-    // would leave its heading above the top. `scroll-padding-top` keeps it clear of the app bar.
-    card.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
-    if (fromKeyboard(event)) card.querySelector<HTMLElement>("[data-card-heading]")?.focus({ preventScroll: true });
-  };
 
   const updateText = (value: string) => {
     setText(value);
@@ -95,9 +74,6 @@ export default function ScanControl({ onScan, report, scans, compact }: Props) {
           <Button type="submit" size="small" variant="contained" sx={{ alignSelf: "flex-end" }}>Scan</Button>
         </Stack>
       </Popover>}
-      <Typography role="status" variant="body2" color="text.secondary">{report?.message}</Typography>
-      {shownScan && <Button size="small" aria-label={`Show ${shownTitle}`} onClick={show}
-        sx={compact ? { minHeight: 44 } : undefined}>Show</Button>}
     </>
   );
 }

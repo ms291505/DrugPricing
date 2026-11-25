@@ -11,7 +11,7 @@ import { foundMessage, type Noun } from "../../library/searchToasts";
 import { countSeries, selectedChartPrices } from "../../library/chartSeries";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { HiddenResultsNotice, ResultsToolbar, SelectionCharts } from "../ResultsSection";
+import ResultsSection, { HiddenResultsNotice, ResultsToolbar, ScanReport, SelectionCharts } from "../ResultsSection";
 
 const PACKAGES: Noun = ["package", "packages"];
 
@@ -52,8 +52,12 @@ export default memo(function NadacResults({ view }: Props) {
       <SearchResultToast resultKey={resultKey} message={foundMessage(packageCount, hidden.total, PACKAGES)} />
       <ResultsSection
         searchLabel={nadacResultsLabel(criteria)}
+        toolbar={compact => (
+          <ResultsToolbar source={source} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans}
+            compact={compact} />
+        )}
+        status={compact => <ScanReport scans={scans} compact={compact} />}
         notice={hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
-        actions={<ResultsToolbar source={source} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans} />}
         priceChanges={<PriceChangesSection source={source} scans={scans} />}
         table={table}
       >

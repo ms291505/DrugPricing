@@ -12,7 +12,7 @@ import { countSeries, selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { HiddenResultsNotice, ResultsToolbar, SelectionCharts } from "../ResultsSection";
+import ResultsSection, { HiddenResultsNotice, ResultsToolbar, ScanReport, SelectionCharts } from "../ResultsSection";
 import DetailLevelSelect from "./DetailLevelSelect";
 import NadacHandoffNotice from "./NadacHandoffNotice";
 
@@ -60,14 +60,17 @@ export default memo(function FdaResults({ view }: Props) {
       <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
       <ResultsSection
         searchLabel={fdaResultsLabel(criteria)}
-        toolbar={<DetailLevelSelect />}
+        toolbar={compact => (
+          <ResultsToolbar source={levelSource} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans} end={<DetailLevelSelect />}
+            compact={compact} />
+        )}
+        status={compact => <ScanReport scans={scans} compact={compact} />}
         notice={
           <>
             <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
             {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
           </>
         }
-        actions={<ResultsToolbar source={levelSource} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans} />}
         priceChanges={<PriceChangesSection source={packageSource} scans={scans} />}
         table={table}
       >

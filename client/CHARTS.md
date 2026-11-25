@@ -44,7 +44,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
   tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
   is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in the
-  results toolbar above the table, after Line and Bar. Below the table, `PriceChangesSection`
+  results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `PriceChangesSection`
   follows the live charts in the shared responsive grid: Notable price changes,
   then one card per scan with matches (`usePriceChangeScans`, called once per page with the
   section's `prices`), then the open change charts, all half width. The section is always mounted
@@ -120,9 +120,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
 - The live charts (`SelectionCharts`) start off. Line and Bar in the results toolbar turn on one
   line and one bar card per pricing unit of the selected rows that are shown, never stored. The
-  state lives in the results page (`useLiveCharts`), which resets it during render when the
-  selection empties or passes `CHART_SERIES_LIMIT` (30) **series**, not price rows, counted before
-  splitting by unit. Crossing `CHART_SERIES_WARNING` (8) with a card on toasts a warning once per
+  state lives in the results page (`useLiveCharts`), which resets it during render
+  (`liveChartsAfter`) when the selection empties or passes `CHART_SERIES_LIMIT` (30) **series**,
+  not price rows, counted before splitting by unit. A shown row is one series at the table's
+  level, so the label counts shown rows that way and names hidden ones. A selection the filters
+  hide entirely leaves a toggle on with no card, still enabled so it can be turned off. Crossing `CHART_SERIES_WARNING` (8) with a card on toasts a warning once per
   crossing (`ChartControl`). Turning a toggle on scrolls to its card (`data-live-chart`) and
   focuses the card's heading only from the keyboard; turning it off moves nothing.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over

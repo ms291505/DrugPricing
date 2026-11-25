@@ -19,7 +19,7 @@ type Props = {
   source: ChartSource,
   /** The shown prices of the selected rows (`selectedChartPrices`): what Line and Bar chart. */
   chartPrices: ChartPrice[],
-  /** The rows checked, shown or not, for the label. */
+  /** The rows checked, shown or hidden: the label names the hidden ones. */
   selectedCount: number,
   charts: LiveCharts,
   /** Touch-sized buttons: the toolbar's narrow tier. */
@@ -40,8 +40,12 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
   const { loadedPrices, origin, dateWindow, colors } = source;
   const { addItems } = usePinActions();
   const { settings } = useSettings();
+  // At the table's level a shown row is one series, so this is also the shown selected rows.
   const seriesCount = countSeries(chartPrices);
-  const disabled = selectedCount === 0 || overSeriesLimit(seriesCount);
+  const hiddenCount = selectedCount - seriesCount;
+  // Nothing to draw, or too much: a chart can't be turned on, but one that's on (a filter hid its
+  // rows) can still be turned off.
+  const cantTurnOn = seriesCount === 0 || overSeriesLimit(seriesCount);
   const { on, toggle, closedAtSeries } = charts;
 
   // Toasts follow what is charted, so they come from what rendered rather than from the toggle:
@@ -77,7 +81,7 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
     toggle(chartType);
     if (!turningOn) return;
     if (settings.autoPinCharts) pin(chartType);
-    // The toolbar is above the table, so the new card can appear off screen: bring it into view
+    // The toolbar is above the table, so the new card can be off screen: bring it into view
     // for everyone, and from the keyboard move focus to its heading so keyboard users land on
     // what they made. A tap leaves focus on the toggle. The card renders with this click, so
     // look for it on the next frame.
@@ -94,13 +98,14 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography variant="body2" color={disabled ? "text.secondary" : "text.primary"}>
-        {chartControlLabel(selectedCount, seriesCount)}
+      <Typography variant="body2" color={cantTurnOn ? "text.secondary" : "text.primary"}>
+        {chartControlLabel(seriesCount, hiddenCount)}
       </Typography>
-      <ButtonGroup size="small" variant="outlined" disabled={disabled}>
+      <ButtonGroup size="small" variant="outlined">
         {CHART_TYPES.map(({ type, label, Icon }) => (
           <Button key={type} startIcon={<Icon />} variant={on[type] ? "contained" : "outlined"} aria-pressed={on[type]}
-            aria-label={`${label} chart of ${selectedCount} selected`} onClick={event => handleToggle(type, event)}
+            disabled={cantTurnOn && !on[type]}
+            aria-label={`${label} chart of ${seriesCount} selected`} onClick={event => handleToggle(type, event)}
             // Narrow: touch height, and tighter padding so Scan still fits on the row on a phone.
             sx={compact ? { minHeight: 44, px: 1, "& .MuiButton-startIcon": { mr: 0.5 } } : undefined}>
             {label}
