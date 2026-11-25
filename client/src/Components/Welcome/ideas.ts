@@ -11,7 +11,7 @@ import type { HelpTopicId } from "../../library/help";
 export const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Icon: SvgIconComponent }[] = [
   {
     title: "Where NADAC comes from",
-    text: "Retail community pharmacies voluntarily submit purchase invoices to a monthly survey for the Centers for Medicare & Medicaid Services (CMS). CMS publishes the National Average Drug Acquisition Cost (NADAC) each week.",
+    text: "Retail pharmacies voluntarily submit purchase invoices to a monthly survey for the Centers for Medicare & Medicaid Services (CMS). CMS publishes the National Average Drug Acquisition Cost (NADAC) each week.",
     link: "What is NADAC?",
     topic: "nadac",
     Icon: AttachMoneyIcon
