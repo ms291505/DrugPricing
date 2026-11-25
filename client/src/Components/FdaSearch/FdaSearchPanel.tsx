@@ -80,7 +80,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== ""}
       terms={[
         { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Eliquis", value: proprietaryName, onChange: setProprietaryName },
-        { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. atorvastatin", value: nonProprietaryName, onChange: setNonProprietaryName },
+        { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. apixaban", value: nonProprietaryName, onChange: setNonProprietaryName },
       ]}
       dates={criteria.dates}
       onDatesChange={dates => setCriteria(prev => ({ ...prev, dates }))}
