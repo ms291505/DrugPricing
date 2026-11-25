@@ -185,19 +185,17 @@ export function comparePriceActivity(a: PriceActivity, b: PriceActivity): number
 }
 
 /**
- * How many rows are in each activity state, for the line above a results table. `omitZero`
- * leaves out the empty states, for narrow tables; mixed units is listed only when there are any.
+ * How many rows are in each activity state, for the line above a results table, naming what
+ * changed ("3 with significant price changes, 1 with stable prices"). Empty states are left out.
  */
-export function activityCounts(activities: PriceActivity[], { omitZero = false } = {}): string {
+export function activityCounts(activities: PriceActivity[]): string {
   const count = (state: PriceActivity["state"]) => activities.filter(a => a.state === state).length;
   const parts: Array<[number, string]> = [
-    [count("significant"), "with significant changes"], [count("changed"), "other changed"],
-    [count("stable"), "stable"], [count("insufficient"), "insufficient history"],
+    [count("significant"), "with significant price changes"], [count("changed"), "with other price changes"],
+    [count("stable"), "with stable prices"], [count("insufficient"), "with insufficient price history"],
+    [count("mixed"), "with mixed pricing units"],
   ];
-  const mixed = count("mixed");
-  return [...parts.filter(([n]) => !omitZero || n > 0), ...(mixed ? [[mixed, "mixed units"] as [number, string]] : [])]
-    .map(([n, label]) => `${n} ${label}`)
-    .join(", ");
+  return parts.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`).join(", ");
 }
 
 /** A 56×24 step path, with proportional dates and the same bounded scale as full charts. */

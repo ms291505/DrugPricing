@@ -141,8 +141,9 @@ selection. Turning one on scrolls to its card and focuses the heading only from 
 with the `autoPinCharts` setting it also pins a copy. On the narrow tier the chart label is a
 caption above Line and Bar, and Scan is a short "Scan" under a "Price changes" caption, each as
 wide as its caption, so both groups fit one line on a phone, and FDA's detail level comes first,
-on its own line under the heading; the table's count line there leaves out empty states
-(`activityCounts`' `omitZero`).
+on its own line under the heading. The table's count line, on every width, lists only the
+activity states that have rows and names the price ("3 with significant price changes, 1 with
+stable prices"; `activityCounts`), then the shown dates unless they're All.
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
 half-width grid with the live charts: Notable price changes (10%, when it has changes) and

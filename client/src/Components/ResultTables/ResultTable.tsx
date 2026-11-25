@@ -70,13 +70,15 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
     onSelectionChange(model.ids.size > 0 && !keepsShownRow ? { type: "include", ids: new Set() } : model);
   };
 
+  const windowText = dateWindow ? formatWindow(dateWindow, null) : null;
+
   return (
     <>
       <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-        {/* Narrow tables leave out the empty states, so the line stays short on a phone. */}
         {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}
-        {rows.length > 0 && `: ${activityCounts(rows.map(row => row.priceActivity), { omitZero: widthTier === "narrow" })}`}
-        {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
+        {rows.length > 0 && `: ${activityCounts(rows.map(row => row.priceActivity))}`}
+        {/* An open window (All dates) has no text here; the search panel shows the dates. */}
+        {windowText ? ` · ${windowText}` : ""}
       </Typography>
       <DataGrid
         apiRef={apiRef}
