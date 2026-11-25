@@ -22,7 +22,7 @@ type Props = {
   /** The rows checked, shown or hidden: the label names the hidden ones. */
   selectedCount: number,
   charts: LiveCharts,
-  /** Touch-sized buttons: the toolbar's narrow tier. */
+  /** The results' narrow tier: the label goes above the buttons, which are touch-sized. */
   compact: boolean,
 };
 
@@ -97,8 +97,11 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
   };
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography variant="body2" color={cantTurnOn ? "text.secondary" : "text.primary"}>
+    // Narrow: the label is a caption above Line and Bar, so they and Scan fit one line on a phone.
+    <Box sx={compact
+      ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }
+      : { display: "flex", alignItems: "center", gap: 1 }}>
+      <Typography variant={compact ? "caption" : "body2"} color={cantTurnOn ? "text.secondary" : "text.primary"}>
         {chartControlLabel(seriesCount, hiddenCount)}
       </Typography>
       <ButtonGroup size="small" variant="outlined">
@@ -106,8 +109,7 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
           <Button key={type} startIcon={<Icon />} variant={on[type] ? "contained" : "outlined"} aria-pressed={on[type]}
             disabled={cantTurnOn && !on[type]}
             aria-label={`${label} chart of ${seriesCount} selected`} onClick={event => handleToggle(type, event)}
-            // Narrow: touch height, and tighter padding so Scan still fits on the row on a phone.
-            sx={compact ? { minHeight: 44, px: 1, "& .MuiButton-startIcon": { mr: 0.5 } } : undefined}>
+            sx={compact ? { minHeight: 44 } : undefined}>
             {label}
           </Button>
         ))}

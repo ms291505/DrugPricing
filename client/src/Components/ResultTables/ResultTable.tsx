@@ -73,7 +73,9 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
   return (
     <>
       <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
-        {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}: {activityCounts(rows.map(row => row.priceActivity))}
+        {/* Narrow tables leave out the empty states, so the line stays short on a phone. */}
+        {rows.length} {rowNoun}{rows.length === 1 ? "" : "s"}
+        {rows.length > 0 && `: ${activityCounts(rows.map(row => row.priceActivity), { omitZero: widthTier === "narrow" })}`}
         {dateWindow ? ` · ${formatWindow(dateWindow, null)}` : ""}
       </Typography>
       <DataGrid

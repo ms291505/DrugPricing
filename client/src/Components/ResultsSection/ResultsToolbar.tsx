@@ -19,7 +19,7 @@ type Props = {
   scans: PriceChangeScans,
   /** Last in the row: FDA's detail level. */
   end?: ReactNode,
-  /** The results' narrow tier: touch-sized targets, and Scan shows only its icon. */
+  /** The results' narrow tier: captions above the buttons, and touch-sized targets. */
   compact: boolean,
 };
 
@@ -27,12 +27,14 @@ type Props = {
  * Every way to act on the results, in the heading row: the chart label and Line / Bar, Scan price
  * changes, and on FDA the detail level. It's one item of that row, so when the heading and the
  * toolbar don't fit one line, the heading takes its own line above and the toolbar keeps its
- * line; only then does the toolbar wrap, and the label stays with Line and Bar. The scan's report
- * is under the row (`ScanReport`).
+ * line; only then does the toolbar wrap, and the label stays with Line and Bar. On the narrow tier
+ * the label and a "Price changes" caption sit above their buttons. The scan's report is under the
+ * row (`ScanReport`).
  */
 export default function ResultsToolbar({ source, chartPrices, selectedCount, charts, scans, end, compact }: Props) {
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: compact ? 1 : 2, rowGap: 1, minWidth: 0 }}>
+    // Narrow: the captioned controls line up by their buttons.
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: compact ? "flex-end" : "center", columnGap: compact ? 1.5 : 2, rowGap: 1, minWidth: 0 }}>
       <ChartControl source={source} chartPrices={chartPrices} selectedCount={selectedCount} charts={charts} compact={compact} />
       <ScanControl onScan={scans.runScan} compact={compact} />
       {end}

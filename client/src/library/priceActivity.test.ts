@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
+import { activityCounts, activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
 import type { ChartPrice } from "./types";
+import type { PriceActivity } from "./priceActivity";
 
 const series = (values: number[], ndc = "A", pricingUnit = "each", start = Date.parse("2026-01-07")): ChartPrice[] =>
   values.map((nadacPerUnit, i) => ({ ndc, pricingUnit, nadacPerUnit, asOfDate: new Date(start + i * 7 * 86400000), ndcDescription: ndc }));
@@ -146,5 +147,20 @@ describe("scan thresholds", () => {
     expect(["5", "7.5", "150", " 10 "].map(parseScanThreshold)).toEqual([{ percent: 5 }, { percent: 7.5 }, { percent: 150 }, { percent: 10 }]);
     for (const text of ["", "abc", "0", "-5", "4.9", "7.55", "Infinity", "1".repeat(400), "1e2", "7."])
       expect(parseScanThreshold(text)).toEqual({ error: "Enter a percent of 5 or more, with at most one decimal." });
+  });
+});
+
+describe("activityCounts", () => {
+  const activities = (...states: PriceActivity["state"][]) => states.map(state => ({ state }) as PriceActivity);
+
+  it("lists every state, and mixed units only when there are any", () => {
+    expect(activityCounts(activities("significant", "significant", "stable")))
+      .toBe("2 with significant changes, 0 other changed, 1 stable, 0 insufficient history");
+    expect(activityCounts(activities("mixed"))).toBe("0 with significant changes, 0 other changed, 0 stable, 0 insufficient history, 1 mixed units");
+  });
+
+  it("leaves out empty states for narrow tables", () => {
+    expect(activityCounts(activities("significant", "significant", "stable"), { omitZero: true })).toBe("2 with significant changes, 1 stable");
+    expect(activityCounts(activities("mixed", "changed"), { omitZero: true })).toBe("1 other changed, 1 mixed units");
   });
 });

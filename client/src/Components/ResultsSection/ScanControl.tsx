@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
-import { Button, Popover, Stack, TextField, Tooltip } from "@mui/material";
+import { Box, Button, Popover, Stack, TextField, Typography } from "@mui/material";
 import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
 import { PRICE_CHANGE_SCAN_DEFAULT_PERCENT, PRICE_CHANGE_SCAN_MIN_PERCENT } from "../../library/constants";
 import { parseScanThreshold } from "../../library/priceActivity";
@@ -7,7 +7,7 @@ import { parseScanThreshold } from "../../library/priceActivity";
 type Props = {
   /** Scans the page's package prices at a percent (`usePriceChangeScans`). */
   onScan: (thresholdPercent: number) => void,
-  /** The results' narrow tier: Scan shows only its icon, and its target is 44px. */
+  /** The results' narrow tier: a "Price changes" caption above a short "Scan", 44px tall. */
   compact: boolean,
 };
 
@@ -40,16 +40,18 @@ export default function ScanControl({ onScan, compact }: Props) {
 
   return (
     <>
-      {/* Narrow: the icon alone, so the label, Line / Bar and Scan fit one row on a phone. */}
-      <Tooltip title={compact ? "Scan price changes" : ""}>
-        <Button size="small" variant="outlined" startIcon={compact ? undefined : <TroubleshootIcon />}
+      {/* Narrow: "Price changes" is a caption above a short "Scan", like Line and Bar's label, so
+          they fit one line on a phone. The button's name stays the whole phrase. */}
+      <Box sx={compact ? { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 } : { display: "contents" }}>
+        {compact && <Typography variant="caption" color="text.secondary" aria-hidden>Price changes</Typography>}
+        <Button size="small" variant="outlined" startIcon={<TroubleshootIcon />}
           aria-label={compact ? "Scan price changes" : undefined}
           aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? dialogId : undefined}
           onClick={event => { updateText(String(lastPercent)); setAnchor(event.currentTarget); }}
-          sx={compact ? { minWidth: 44, minHeight: 44, px: 0 } : undefined}>
-          {compact ? <TroubleshootIcon fontSize="small" /> : "Scan price changes"}
+          sx={compact ? { minHeight: 44 } : undefined}>
+          {compact ? "Scan" : "Scan price changes"}
         </Button>
-      </Tooltip>
+      </Box>
       {anchor && <Popover open anchorEl={anchor} onClose={() => setAnchor(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         slotProps={{

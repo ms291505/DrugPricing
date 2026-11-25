@@ -138,8 +138,10 @@ on with no shown selection or past 30 series (`CHART_SERIES_LIMIT`), warn once o
 (`CHART_SERIES_WARNING`), and turn off when the selection empties or passes 30
 (`liveChartsAfter`). A new search, Clear search and an FDA detail level change clear the
 selection. Turning one on scrolls to its card and focuses the heading only from the keyboard;
-with the `autoPinCharts` setting it also pins a copy. On the narrow tier Scan is icon-only, so the
-label, Line, Bar and Scan fit one line on a phone.
+with the `autoPinCharts` setting it also pins a copy. On the narrow tier the chart label is a
+caption above Line and Bar, and Scan is a short "Scan" under a "Price changes" caption, so both
+groups fit one line on a phone; the table's count line there leaves out empty states
+(`activityCounts`' `omitZero`).
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
 half-width grid with the live charts: Notable price changes (10%, when it has changes) and
