@@ -1,6 +1,6 @@
 Each example starts with a question someone brings to the app. DrugPricing supplies the published NADAC per unit, and figures from your plan’s PBM reports, your pharmacy’s invoices, or your own records are yours to bring. See [Comparing NADAC with your own figures](/help/comparing-with-your-own-figures).
 
-The dates and prices below come from the weekly NADAC files. Your results can differ with the loaded data, dates, and filters. If a previous search is on screen, choose **Clear search** before you start an example.
+The dates and prices below come from the weekly NADAC updates. Your results can differ with the loaded data, dates, and filters. If a previous search is on screen, choose **Clear search** before you start an example.
 
 ## Does NADAC show the gap in my PBM report?
 
@@ -28,15 +28,15 @@ Eliquis 2.5 mg and 5 mg tablets have nearly the same NADAC per tablet: about $5.
 
 Keep the unit with every number. Wegovy’s 0.5 mL pens are about $653 per mL and its 0.75 mL pens about $436 per mL, which comes to about $327 per pen for each.
 
-## Did insulin prices move the way people expected?
+## Did insulin prices move the way the industry expected?
 
-List prices and acquisition costs can change as a result of regulatory action. For example, several insulin makers cut list prices when the Medicaid rebate cap ended on January 1, 2024. Checking the published history around that date is one way to verify whether prices moved the way industry analysts expected.
+Several insulin makers cut list prices when the Medicaid rebate cap ended on January 1, 2024. Check the published history around that date to see whether NADAC moved the way the industry expected.
 
 1. Open **NADAC search**, enter `lantus` in **Description**, and choose **Search**.
 2. Under **NADAC price dates**, choose **All**.
 3. Select the Lantus vial rows and choose **Line**.
 
-**Price Activity** shows that each vial dropped 78% on Jan 3, 2024, from $28.00 to $6.16 per mL. To compare other insulins, search `humalog` or `novolog` in **Description**. The line chart shows when NADAC moved and by how much, but it can’t establish why.
+**Price Activity** shows that each vial dropped 78% on Jan 3, 2024, from $28.00 to $6.16 per mL. To compare other insulins, search `humalog` or `novolog` in **Description**: their packages drop in the January 10, 2024 NADAC update, a week after Lantus. The line chart shows when NADAC moved and by how much, but it can’t establish why.
 
 ## Where did the benchmark start for a new drug?
 

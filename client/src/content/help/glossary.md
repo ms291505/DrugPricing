@@ -1,4 +1,4 @@
-- **As-of date:** the week a price belongs to; the date of its NADAC file.
+- **As-of date:** the week a price belongs to; the date of its NADAC update.
 - **Brand / generic:** NADAC's classification of a drug for pricing. Brand includes brands sold
   under a generic approval and biologics.
 - **CMS:** Centers for Medicare & Medicaid Services, which publishes NADAC.

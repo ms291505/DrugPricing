@@ -20,7 +20,7 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           </Typography>
           <Box component="ol" sx={{ typography: 'body1', pl: 3 }}>
             <li>The Centers for Medicare &amp; Medicaid Services (CMS) publishes the National Average Drug Acquisition Cost (NADAC) weekly. It estimates what retail community pharmacies pay per unit to buy drugs, from invoices pharmacies voluntarily submit to a monthly survey. CMS supplies the price history.</li>
-            <li>The FDA’s National Drug Code Directory lists products and packages. It helps you identify what you’re looking at, and FDA search shows a package’s NADAC prices when its code appears in the weekly files.</li>
+            <li>The FDA’s National Drug Code Directory lists products and packages. It helps you identify what you’re looking at, and FDA search shows a package’s NADAC prices when its code appears in the weekly NADAC updates.</li>
           </Box>
           <Typography variant="body1">
             The app’s price history goes back to 2022. For example, if your plan’s PBM report shows different ingredient costs for two drugs, chart both over the same dates to see whether NADAC shows a similar gap. NADAC doesn’t show what patients pay at the pharmacy.

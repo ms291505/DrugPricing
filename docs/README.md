@@ -1,6 +1,6 @@
 # Documentation
 
-Start with the [project README](../README.md) for setup, architecture and deployment. See
+Start with the [project README](../README.md) for setup, architecture, and deployment. See
 [AGENTS.md](../AGENTS.md) for development conventions and [Charts and explorer cards](../client/CHARTS.md)
 for chart and card design rules.
 
@@ -48,7 +48,7 @@ for chart and card design rules.
 
 ## Future work
 
-- [Backlog](future-work.md) for decisions, cleanups and ideas.
+- [Backlog](future-work.md) for decisions, cleanups, and ideas.
 - [Search autocomplete](plans/autocomplete.md) for name suggestions and spelling corrections.
 - [Browser usability cleanup](plans/browser-usability-cleanup.md) for the remaining
   refactoring and bug fixes from the November 19 review.

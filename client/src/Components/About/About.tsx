@@ -27,9 +27,9 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       </p>
       <p>
         Strength turned out to be worth checking too. Under the Medicare GLP-1 Bridge, all six strengths of the Zepbound
-        KwikPen share one manufacturer net price, $245 per monthly supply, so I wondered whether a benchmark further up
-        the supply chain priced them the same way. In NADAC they differ: the three lower strengths cost about $201 per mL
-        and the three higher strengths about $282 per mL.
+        KwikPen share one manufacturer net price, $245 per monthly supply, so I wondered whether pharmacies paid the same
+        for every strength. In NADAC they don’t: the three lower strengths cost about $201 per mL and the three higher
+        strengths about $282 per mL.
       </p>
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>
@@ -41,7 +41,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       <ul>
         <li>My PBM report shows different ingredient costs for two drugs. Does NADAC show a similar gap, and was it there a year ago?</li>
         <li>Does this tablet have the same NADAC per tablet in every package size, or at every strength?</li>
-        <li>After the Medicaid rebate cap ended and insulin makers cut list prices, did NADAC move when and as much as the industry expected?</li>
+        <li>After the Medicaid rebate cap ended, did insulin NADACs drop when and as much as the industry expected?</li>
         <li>Where did the benchmark start for a new drug?</li>
         <li>How does my acquisition cost compare with the benchmark?</li>
       </ul>

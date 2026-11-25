@@ -2,8 +2,8 @@ DrugPricing shows one figure: the published NADAC per unit for a package on a gi
 
 | Figure | Where it comes from | Unit |
 | --- | --- | --- |
-| Published NADAC | DrugPricing, from the CMS weekly files | per tablet, mL, gram, or other listed unit |
-| Pharmacy purchase price | the pharmacy’s invoice from its wholesaler | usually per package |
+| Published NADAC | DrugPricing, from the weekly CMS updates | per tablet, mL, gram, or other listed unit |
+| Pharmacy acquisition cost | the pharmacy’s invoice from its wholesaler | usually per package |
 | Plan ingredient cost | the plan’s PBM report | per claim, per package, or per unit, depending on the report |
 
 ## Put the figures on the same basis
