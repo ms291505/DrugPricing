@@ -47,8 +47,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `PriceChangesSection`
   follows the live charts in the shared responsive grid: Notable price changes,
   then one card per scan with matches (`usePriceChangeScans`, called once per page with the
-  section's `prices`), then the open change charts, all half width. The section is always mounted
-  and holds the open charts, the chart buttons and list headings for focus, and the Package details
+  section's `prices`), all half width. Change charts open in a dialog, not the grid (below). The
+  section is always mounted and holds the list headings for focus and the Package details
   choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
   group key, since lists at different percents share group keys). Each list card measures its own
   width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
