@@ -144,8 +144,8 @@ the `drugpricing` service. Production reads its database settings from the stand
 environment variables (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`).
 
 To run the ETL without prompts, use `python drug_pricing_etl.py <mode> --fda --nadac` with
-either or both flags. `--nadac` selects the most recent Wednesday’s file without reading
-`NADAC_FILE_DATES`. Before noon Eastern on Wednesdays, it selects the previous week’s file, so a
+either or both flags. `--nadac` selects the most recent Wednesday’s file and ignores
+`NADAC_FILE_DATES`, which a run without flags uses instead. Before noon Eastern on Wednesdays, it selects the previous week’s file, so a
 run before noon reloads last week’s. From noon on it asks for that Wednesday’s file, but CMS may
 not have published it yet: the run then exits with `NADAC_NOT_200`, and nothing retries it.
 Schedule the job at noon Eastern or later, and retry it until the file is available.

@@ -21,4 +21,6 @@ Afterward, remove the trust profile from the device: anyone with `rootCA-key.pem
 its traffic. `--host` exposes Vite and the proxied API to the LAN, so use a trusted network, and
 expect the macOS firewall prompt for node. Android Chrome can skip the certificate: forward ports
 5173 and 5250 from `chrome://inspect` and open `http://localhost:5173`.
-`@vitejs/plugin-basic-ssl` (self-signed) is a fallback, not a dependency.
+
+`dev:phone` needs the mkcert certificate: without `client/.cert/key.pem` and `cert.pem`, Vite
+stops with an error while it reads its config.

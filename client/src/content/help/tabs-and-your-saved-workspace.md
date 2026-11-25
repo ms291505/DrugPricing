@@ -6,8 +6,9 @@ Clearing this site’s browser data deletes the saved workspace.
 
 - Closing a tab deletes its pinned items.
 - **Clear workspace** deletes all tabs and starts with a blank one after you confirm.
-- If you open the app in a second window and change something there, the first window stops
-  saving and asks you to reload, so the two don't overwrite each other.
+- If you open the app in a second window and change a search, tab or pin there, the first
+  window stops saving and asks you to reload, so the two don't overwrite each other. Settings
+  changes apply in every window without a reload.
 
 The FDA and NADAC pages under **Search** also save their criteria and shared pins in this browser.
 

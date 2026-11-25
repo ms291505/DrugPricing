@@ -1,5 +1,6 @@
 Some results are hidden until you ask for them, with the boxes under **Include**. Each box
-shows how many results it is hiding.
+shows how many more results you would see by checking that box alone. A result that two boxes
+hide, such as a sample package without a price, doesn’t count toward either box.
 
 | Box | Hides by default | On |
 | --- | --- | --- |

@@ -9,14 +9,16 @@ chart you make, turn on **Pin charts when you make them** in Settings.
 **Line charts** show price over time. The line moves in steps between weekly NADAC prices. A gap at the start or end means the app has no recorded price for that series in those weeks.
 
 When a line stands for a product with several packages at different prices, it shows their
-average, and a shaded band shows their lowest to highest price that week.
+average, and a shaded band shows their lowest to highest price that week. The band is left out
+when the spread is too thin to see on the chart; **View data** and the CSV still show the
+range.
 
 **Bar charts** compare drugs side by side, sorted by price. Switch between **Latest** price and
 the **Average** over the chart's dates. Each row also shows the low-to-high range over those
 dates.
 
 **The readout** above the plot shows the date or bar under your pointer. Click or tap to lock
-that point so you can scroll the readout. Click again, press Esc, or choose **Unlock** to release it.
+that point so you can scroll the readout. Click again, press Esc while the chart has focus, or choose **Unlock** to release it.
 
 **The legend** hides and shows lines. Colors stay with their drug when you filter.
 
