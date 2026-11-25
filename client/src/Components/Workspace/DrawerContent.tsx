@@ -1,19 +1,14 @@
 import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
-import { Box, Button } from "@mui/material";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { useCallback, useEffect, useRef, type MouseEvent } from "react";
+import { Box, } from "@mui/material";
+import { useCallback, useEffect, useRef, } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
-import { useGlobalModalActions, type GlobalModal } from "../../Context/globalModalContexts";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 import ConfirmButton from "../ui/ConfirmButton.tsx";
-import { holdsFocus } from "../ui/focus";
 
 /** `inMobileDrawer`: rendered in the phone drawer, which closes when a modal opens. */
-export default function DrawerContent({ inMobileDrawer = false }: { inMobileDrawer?: boolean }) {
-  const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen, mobileDrawerToggle } = useWorkspaceActions();
-  const { openModal } = useGlobalModalActions();
+export default function DrawerContent() {
+  const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen, } = useWorkspaceActions();
 
   const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
 
@@ -26,16 +21,6 @@ export default function DrawerContent({ inMobileDrawer = false }: { inMobileDraw
   const onClearWorkspace = () => {
     clearWorkspace();
     closeMobileDrawer();
-  }
-
-  // On a phone the drawer would otherwise stay open behind the modal, and closing the modal
-  // would land back in it. Its buttons go with it, so focus returns to the drawer's toggle, but
-  // only when the button had focus: after a tap on iOS nothing holds it, and focusing the toggle
-  // would show a ring for nothing.
-  const openFromDrawer = (modal: GlobalModal, event: MouseEvent<HTMLElement>) => {
-    const returnFocus = inMobileDrawer && holdsFocus(event.currentTarget) ? mobileDrawerToggle.current : null;
-    closeMobileDrawer();
-    openModal(modal, returnFocus ? { returnFocus } : undefined);
   }
 
   return (
@@ -52,15 +37,6 @@ export default function DrawerContent({ inMobileDrawer = false }: { inMobileDraw
         }}
       >
         <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} />
-      </Box>
-      {/* Outlined, like Add Tab above, so they read as buttons; a rule sets them off from the tabs. */}
-      <Box sx={{ display: "flex", gap: 1, py: 1, borderTop: 1, borderColor: "divider" }}>
-        <Button variant="outlined" startIcon={<SettingsIcon />} onClick={event => openFromDrawer("settings", event)} sx={{ flex: 1 }}>
-          Settings
-        </Button>
-        <Button variant="outlined" startIcon={<HelpOutlineIcon />} onClick={event => openFromDrawer("help", event)} sx={{ flex: 1 }}>
-          Help
-        </Button>
       </Box>
     </>
   )
