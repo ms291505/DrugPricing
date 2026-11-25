@@ -22,6 +22,5 @@ its traffic. `--host` exposes Vite and the proxied API to the LAN, so use a trus
 expect the macOS firewall prompt for node. Android Chrome can skip the certificate: forward ports
 5173 and 5250 from `chrome://inspect` and open `http://localhost:5173`.
 
-`dev:phone` has no self-signed fallback: without `client/.cert/key.pem` and `cert.pem` Vite stops
-with an error. To use a self-signed certificate instead, add `@vitejs/plugin-basic-ssl` to
-`vite.config.ts` yourself; it isn't a dependency.
+`dev:phone` needs the mkcert certificate: without `client/.cert/key.pem` and `cert.pem`, Vite
+stops with an error while it reads its config.

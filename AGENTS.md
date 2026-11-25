@@ -410,31 +410,45 @@ into `main` to ship. Never target `main` from a feature branch.
 ### Running a worktree beside the main checkout
 
 The author's own servers use the default ports (client 5173, API 5250), and the API's CORS
-allows only `DevClientHost`. A worktree under `.claude/worktrees/` runs a second pair on 5174
-and 5251, with nothing in the tracked config changed:
+allows only `DevClientHost`. Each worktree under `.claude/worktrees/` takes a numbered slot
+with its own pair of ports, set in `.claude/launch.json` without changing tracked config:
+
+| Slot | Client | API |
+| --- | --- | --- |
+| `worktree1` | 5174 | 5251 |
+| `worktree2` | 5175 | 5252 |
+| `worktree3` | 5176 | 5253 |
 
 1. Base the worktree on `dev` (`git worktree add -b <branch> .claude/worktrees/<name> dev`);
    `EnterWorktree` with a `name` branches from `origin/main`.
 2. Copy the gitignored server settings without reading them, `cp -n
    <main>/server/appsettings.Development.json server/`, and run `npm ci` in `client/`.
-3. Start `worktree-server` and `worktree-client` from `.claude/launch.json`. The server
-   overrides `DevClientHost` with an environment variable (it beats the JSON file) and listens
-   on 5251; the client gets `VITE_API_URL=http://localhost:5251/api` the same way and fails
-   rather than moves if 5174 is taken (`--strictPort`). If neither starts (no output, no port
-   after a minute), the desktop app is waiting on a macOS permission prompt for its launcher:
-   ask the author to approve it, or run the same two commands in the background meanwhile.
+3. Pick the first slot whose client and API ports are both free (`lsof -nP -iTCP:<port>
+   -sTCP:LISTEN` prints nothing), and use that slot's two configs only: `worktree<N>-server`
+   and `worktree<N>-client`. The server gets its `DevClientHost` (the slot's client origin)
+   from an environment variable, which beats the JSON file; the client gets its
+   `VITE_API_URL` the same way and fails rather than moves if its port is taken
+   (`--strictPort`). If a server fails to bind because another agent took the slot first,
+   stop what you started and use the next slot. Past three worktrees, add a slot to
+   `launch.json` in the same pattern.
+4. If neither server starts (no output and no port after a minute), one possible cause is a
+   macOS permission prompt for the desktop app's launcher: ask the author to check. Otherwise,
+   or meanwhile, run the same two commands in the background from the shell and read their
+   output.
 
-Both servers share the `drug_dev` database: the worktree API's `Database.Migrate()` applies
-the branch's migrations to it, so warn the author before running one that adds a migration.
-Port 5174 is its own origin, so its `localStorage` workspace and settings are separate from
+Routine checks share the `drug_dev` database. The worktree API runs `Database.Migrate()` on
+start, so a branch that adds a migration needs its own database: ask the author for one and
+point the slot's server at it with a `ConnectionStrings__Default` environment variable. Each
+client port is its own origin, so its `localStorage` workspace and settings are separate from
 5173's.
 
-**Shut both servers down as soon as the browser checks are done**, not at the end of the
-session: they hold the ports, a database connection and a build watcher, and the next worktree
-needs 5174 and 5251 free. Use `preview_stop` with each server's id, or `kill $(lsof -tiTCP:5174
--sTCP:LISTEN) $(lsof -tiTCP:5251 -sTCP:LISTEN)` for ones started from the shell, and check that
-both ports are free. Start them again if a later change needs another look. Never leave them
-running for the author: say they're stopped and how to start them.
+**Shut your servers down as soon as the browser checks are done**, not at the end of the
+session: they hold the slot's ports, a database connection and a build watcher, and the next
+worktree may need the slot. Stop only what this session started: `preview_stop` with the ids
+`preview_start` returned, or the background shell jobs you ran. Never kill by port: a
+listener on your slot may be another worktree's healthy server. Then check with `lsof` that
+the slot's ports are free. Start them again if a later change needs another look. Never leave
+them running for the author: say they're stopped and how to start them.
 
 ## Conventions
 

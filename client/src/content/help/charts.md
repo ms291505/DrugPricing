@@ -18,7 +18,7 @@ the **Average** over the chart's dates. Each row also shows the low-to-high rang
 dates.
 
 **The readout** above the plot shows the date or bar under your pointer. Click or tap to lock
-that point so you can scroll the readout. Click again, press Esc, or choose **Unlock** to release it.
+that point so you can scroll the readout. Click again, press Esc while the chart has focus, or choose **Unlock** to release it.
 
 **The legend** hides and shows lines. Colors stay with their drug when you filter.
 
