@@ -79,7 +79,9 @@ export default function ExplorerGridItem({
           "@media (prefers-reduced-motion: reduce)": { animation: "none", outlineColor: highlightColor },
         }),
       }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+      {/* A grid, so the subtitle and badges run under the actions to the card's edge instead of
+          wrapping in the title's column. */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr) auto", alignItems: "start", columnGap: 1 }}>
         <IconButton
           onClick={handleCollapse}
           data-collapse-toggle
@@ -101,7 +103,7 @@ export default function ExplorerGridItem({
             }}
           />
         </IconButton>
-        <Box sx={{ flexGrow: 1, minWidth: 0, pt: 0.5 }}>
+        <Box sx={{ minWidth: 0, pt: 0.5 }}>
           <Tooltip title={titleTruncated ? title : ""} placement="top-start">
             <Typography
               component={`h${headingLevel}`}
@@ -129,17 +131,17 @@ export default function ExplorerGridItem({
               </Box>
             </Typography>
           </Tooltip>
-          {subtitle
-            ? <Typography variant="body2" color="text.secondary">{subtitle}</Typography>
-            : null
-          }
-          {badges
-            ? <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{badges}</Box>
-            : null
-          }
         </Box>
         {actions
-          ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>{actions}</Box>
+          ? <Box sx={{ gridColumn: 3, gridRow: 1, display: "flex", alignItems: "center", gap: 0.5 }}>{actions}</Box>
+          : null
+        }
+        {subtitle
+          ? <Typography variant="body2" color="text.secondary" sx={{ gridColumn: "2 / -1" }}>{subtitle}</Typography>
+          : null
+        }
+        {badges
+          ? <Box sx={{ gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{badges}</Box>
           : null
         }
       </Box>
