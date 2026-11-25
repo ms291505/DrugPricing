@@ -26,9 +26,10 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         that history easier to compare.
       </p>
       <p>
-        Strength turned out to be worth checking too. When I saw that GLP-1 strengths would be priced the same under the
-        Medicare GLP-1 Bridge, I wondered whether they were priced differently further up the supply chain. NADAC let me
-        check that benchmark across strengths.
+        Strength turned out to be worth checking too. Under the Medicare GLP-1 Bridge, all six strengths of the Zepbound
+        KwikPen share one manufacturer net price, $245 per monthly supply. I wondered whether they were priced
+        differently further up the supply chain. In NADAC they are: the three lower strengths cost about $201 per mL and
+        the three higher strengths about $282 per mL.
       </p>
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>

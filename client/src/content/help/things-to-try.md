@@ -1,6 +1,6 @@
 Each example starts with a question someone brings to the app. DrugPricing supplies the published NADAC per unit. Figures from your plan’s reports, your pharmacy’s invoices or your own records are yours to bring. See [Comparing NADAC with your own figures](/help/comparing-with-your-own-figures).
 
-The dates and prices below come from the weekly NADAC files. Your results can differ with the loaded data, dates and filters.
+The dates and prices below come from the weekly NADAC files. Your results can differ with the loaded data, dates and filters. If a previous search is on screen, choose **Clear search** before you start an example.
 
 ## Does NADAC show the gap in my PBM report?
 
@@ -12,7 +12,7 @@ Suppose your plan’s PBM report shows different ingredient costs for Mounjaro a
 
 The legend names each line by package NDC: `0002-1495-80` is Mounjaro and `0002-2495-80` is Zepbound. Both pens hold 0.5 mL, and NADAC prices both per milliliter, so the two lines compare directly. Move along the chart to read the gap in any week. To compare a figure from your report, convert it to the same unit and the same weeks.
 
-To check a year-over-year change, read each line a year apart. In the January 14, 2026 file, Mounjaro’s 5 mg pen rose 3%, from $523.05 to $538.74 per mL. Zepbound’s 5 mg pen rose 3% on February 25, 2026 and returned to its earlier price the next week.
+To check a year-over-year change, read both lines in the same week a year apart. On January 15, 2025, Mounjaro’s 5 mg pen was $2.64 per mL below Zepbound’s ($521.11 and $523.75). In the January 14, 2026 file, Mounjaro rose 3% and Zepbound didn’t, so Mounjaro was $12.67 per mL above it ($538.74 and $526.08).
 
 If you have rebate information, you can also ask how close your ingredient cost net of rebates comes to NADAC. DrugPricing doesn’t import PBM reports, calculate rebates or show what a plan pays.
 
@@ -48,7 +48,7 @@ Zepbound’s 2.5 mg pen first appears in the January 17, 2024 file at $508.28 pe
 
 ## How does what my pharmacy paid compare?
 
-1. Open **NADAC search** and enter the package NDC from your invoice in **NDC**.
+1. Open **NADAC search**, leave **Description** empty, enter the package NDC from your invoice in **NDC** and choose **Search**.
 2. Under **NADAC price dates**, choose **Custom** and enter dates around the invoice date.
 3. Divide the invoice cost by the units in the package, such as 60 tablets or 3 mL, to get a price in the same unit as NADAC.
 
