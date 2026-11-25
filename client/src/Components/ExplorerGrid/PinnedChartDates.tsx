@@ -53,7 +53,12 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
         anchorEl={anchor}
         onClose={onClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        slotProps={{ paper: { id: dialogId, role: "dialog", "aria-label": `Dates for ${title}`, sx: { p: 2, maxWidth: 360, ...(fill && { width: "calc(100vw - 32px)" }) } } }}
+        slotProps={{ paper: { id: dialogId, role: "dialog", "aria-label": `Dates for ${title}`, sx: {
+          p: 2, maxWidth: 360, ...(fill && { width: "calc(100vw - 32px)" }),
+          // A popover's dark-theme elevation overlay lightens it to about the divider's color,
+          // which hides the presets' outlines; a stronger line shows on it in both themes.
+          "& .MuiToggleButton-root": { borderColor: "action.disabled" },
+        } } }}
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <ChartDatesControl
