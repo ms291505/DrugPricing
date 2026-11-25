@@ -1,11 +1,37 @@
 # DrugPricing
 
-A full-stack web app for exploring weekly US drug acquisition prices. Search NADAC by drug
-description or National Drug Code (NDC), or find products and packages in the FDA directory
-by brand or generic name and chart their matching NADAC prices. The app began as a way to
-learn new skills end to end, from database to deployment.
+DrugPricing charts the National Average Drug Acquisition Cost (NADAC), the public benchmark for what US retail
+community pharmacies pay to buy drugs. Look up a drug’s NADAC, compare products and packages, and see when the
+benchmark changed and by how much.
+
+I manage a retiree healthcare plan. I wanted to know whether the differences I saw in ingredient cost across
+GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and keep track of the figures in
+Excel. The harder question was how those differences had changed since last year. I built DrugPricing to make
+that history easier to compare.
 
 **Live demo:** <https://drugpricing.mikesteiner.info>
+
+## Try a comparison
+
+Mounjaro and Zepbound are two brands of tirzepatide, sold in pens that each hold 0.5 mL.
+
+1. Open **Find a drug**, then **FDA search**. Enter `tirzepatide` in **Generic name** and choose **Search**.
+2. Under **NADAC price dates**, choose **All**.
+3. Select the Mounjaro and Zepbound packages with a strength of 5 mg per 0.5 mL, then choose **Line**.
+
+The legend names each line by package NDC: `0002-1495-80` is Mounjaro and `0002-2495-80` is Zepbound.
+Both lines are NADAC per mL, so you can read the gap between them in any week. In the January 14, 2026 file,
+Mounjaro’s 5 mg pen rose 3%, from $523.05 to $538.74 per mL, and Zepbound’s didn’t. A plan comparing its own
+ingredient costs would convert them to the same unit and dates. DrugPricing supplies only the NADAC figures. It
+doesn’t import PBM reports, calculate rebates or show what a plan pays.
+
+More questions to try, such as whether a tablet costs the same per tablet in every package size, are in the
+app’s Help under [Things to try](https://drugpricing.mikesteiner.info/help/things-to-try).
+
+## About the project
+
+DrugPricing is also a learning project. I built it end to end, from the database and data loads to the API,
+the React client and deployment on a Raspberry Pi. The rest of this README covers how it works and how to run it.
 
 ## What it does
 

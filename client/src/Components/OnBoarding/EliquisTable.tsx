@@ -21,12 +21,12 @@ export default function EliquisTable() {
     },
     {
       proprietaryName: 'ELIQUIS',
-      ndc: '0003-0893-91',
+      ndc: '0003-0893-31',
       productNdc: '0003-0893',
-      packageCode: '91',
+      packageCode: '31',
       strength: '2.5 mg/1',
       packageDescription:
-        '1 BLISTER PACK in 1 CARTON (0003-0893-91) / 14 TABLET, FILM COATED in 1 BLISTER PACK',
+        '10 BLISTER PACK in 1 CARTON (0003-0893-31) / 10 TABLET, FILM COATED in 1 BLISTER PACK',
     },
     {
       proprietaryName: 'ELIQUIS',
