@@ -4,8 +4,8 @@
 - **CMS:** Centers for Medicare & Medicaid Services, which publishes NADAC.
 - **Dosage form:** tablet, capsule, cream, solution and so on.
 - **Labeler:** the company whose code begins the NDC: a manufacturer, repackager or distributor.
-- **NADAC:** National Average Drug Acquisition Cost. What retail pharmacies pay, on average, per
-  unit.
+- **NADAC:** National Average Drug Acquisition Cost. CMS’s estimate of what retail community
+  pharmacies pay per unit, based on the purchase invoices they submit.
 - **NDC:** National Drug Code. Identifies labeler, product and package.
 - **OTC:** over the counter; sold without a prescription.
 - **Package:** one container of a product, such as a bottle of 60.

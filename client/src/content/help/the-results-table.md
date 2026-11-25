@@ -2,15 +2,15 @@ Each row is one NDC on NADAC search, and one product or one package on FDA searc
 
 - **Latest Price** is the most recent price in your dates, with its unit. **Min Price** and
   **Max Price** are the lowest and highest in your dates.
-- A **warning triangle** beside a latest price means the row stopped being priced before the end
-  of your dates; tap or focus it to see when it was last priced. The **Latest Price Date**
+- A **warning triangle** means the latest price for that unit comes from an earlier week than
+  the last available week in the selected period. Tap or focus it to see the date. The **Latest Price Date**
   column is hidden by default and can be shown from **Columns**.
 - An FDA product row averages the prices of the product’s packages for each date.
 - **Mixed units** means the product’s packages use different pricing units. Choose **Packages**
   from **Show** above the FDA table to see their individual prices.
 - Sorting a price column groups prices by unit before ranking the values within each group.
-- Select the checkboxes on priced rows, then choose **Line** or **Bar** above the table to
-  create a pinned chart for those rows.
+- Select the checkboxes on priced rows, then choose **Line** or **Bar** beside the results heading to
+  chart them. The chart follows your selection until you turn it off; **Pin** keeps a copy.
 
 Choose **Columns** beside the pagination below the table to show or hide fields, including
 **Min Price**, **Max Price**, **Generic Name** and **Labeler** where available. **Reset columns**, available on wider tables,

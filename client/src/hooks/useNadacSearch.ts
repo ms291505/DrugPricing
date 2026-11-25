@@ -17,7 +17,7 @@ export type NadacResultView = {
   /** `refineNadac` of the loaded result: what every consumer of the page's results reads. */
   prices: NadacPrice[],
   /**
-   * The dates shown: the search's, snapped to as-of dates. The auto charts' window, and the
+   * The dates shown: the search's, snapped to as-of dates. The live charts' window, and the
    * dates a new chart starts with.
    */
   dateWindow: DateWindow,

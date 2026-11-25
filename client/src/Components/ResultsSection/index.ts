@@ -1,4 +1,5 @@
 export { default } from "./ResultsSection.tsx";
-export { default as AutoCharts } from "./AutoCharts.tsx";
-export { default as ChartSelectedControl } from "./ChartSelectedControl.tsx";
 export { default as HiddenResultsNotice } from "./HiddenResultsNotice.tsx";
+export { default as ResultsToolbar } from "./ResultsToolbar.tsx";
+export { default as ScanReport } from "./ScanReport.tsx";
+export { default as SelectionCharts } from "./SelectionCharts.tsx";

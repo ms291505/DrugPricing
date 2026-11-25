@@ -46,12 +46,12 @@ Files: `Components/Charts/LineViz.tsx`, `library/lineChanges.ts`.
 ## Pinned charts and pinning
 
 Files: `Components/ExplorerGrid/PinButton.tsx`, `PinnedItemCard.tsx`,
-`Components/ResultsSection/ChartSelectedControl.tsx`, `library/explorerItems.ts`, `library/persist.ts`,
-`Context/PinnedItemsProvider.tsx`, `Components/Charts/ChartItemBody.tsx`.
+`Components/ResultsSection/ChartControl.tsx`, `library/explorerItems.ts`, `library/persist.ts`,
+`Context/PinnedItemsProvider.tsx`, `Components/ExplorerGrid/ChartItemBody.tsx`.
 
 - Remove `PinButton`'s per-unit branch and its "Added N charts, one per pricing unit" toast.
-  Both callers pass single-unit prices (`AutoCharts` splits by unit, the change chart
-  dialog filters by unit), so it only ever makes one chart. Keep the toast in `ChartSelectedControl`,
+  Both callers pass single-unit prices (`SelectionCharts` splits by unit, the change chart
+  dialog filters by unit), so it only ever makes one chart. Keep the toast in `ChartControl`,
   where it can show, and put its text in one place if anything else needs it.
 - In `PinnedItemCard`, drop the `seriesKind === "product"` check that `canDrillDownToPackages`
   already makes. Keep its `item.kind === "chart"` checks: since #59 an `ExplorerItem` can also be

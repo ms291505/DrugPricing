@@ -1,19 +1,9 @@
 import { Box, Button, Divider, Link, Paper, Stack, Typography } from "@mui/material";
-import type { SvgIconComponent } from "@mui/icons-material";
-import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
-import PushPinOutlined from "@mui/icons-material/PushPinOutlined";
-import ScaleOutlined from "@mui/icons-material/ScaleOutlined";
 import { Link as RouterLink } from "react-router";
-import { useGlobalModalActions } from "../Context/globalModalContexts";
-import type { HelpTopicId } from "../library/help";
+import { useGlobalModalActions } from "../../Context/globalModalContexts";
+import { IDEAS } from "./ideas";
 
-const IDEAS: { title: string, text: string, link: string, topic: HelpTopicId, Icon: SvgIconComponent }[] = [
-  { title: "Products and packages", text: "A product identifies a drug at one strength and in one form from one labeler. Packages identify the sizes and containers it comes in. FDA search shows either level. NADAC search lists package codes.", link: "More about products and packages", topic: "ndcs-products-and-packages", Icon: Inventory2Outlined },
-  { title: "Prices are per unit", text: "A price estimates the pharmacy’s acquisition cost per unit, such as a tablet, milliliter or gram. Your prescription bill depends on other factors.", link: "What the prices mean", topic: "what-the-prices-mean", Icon: ScaleOutlined },
-  { title: "Pin a chart to keep it", text: "Pin a chart to keep its data and dates when you search again. The FDA and NADAC pages under Search share pins. Each Workspace tab keeps its own.", link: "Pinning and comparing", topic: "pinning-and-comparing", Icon: PushPinOutlined },
-];
-
-/** The page at `/welcome`, where the bare address goes until a search source is visited. */
+/** The page at `/welcome`, where the bare address and unknown addresses always go. */
 export default function Welcome() {
   const { openHelp } = useGlobalModalActions();
   return (
@@ -35,7 +25,7 @@ export default function Welcome() {
 
       <Box component="section" aria-labelledby="welcome-ideas">
         <Typography id="welcome-ideas" variant="h5" component="h2" sx={{ mb: 2 }}>Learn the basics</Typography>
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(3, minmax(0, 1fr))" } }}>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" } }}>
           {IDEAS.map(({ title, text, link, topic, Icon }) => (
             <Paper key={topic} sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1 }}>
               <Icon sx={{ color: "primary.main" }} aria-hidden />
@@ -49,11 +39,8 @@ export default function Welcome() {
 
       <Box component="section">
         <Divider sx={{ mb: 2 }} />
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          The Centers for Medicare &amp; Medicaid Services publishes the National Average Drug Acquisition Cost (NADAC) weekly. The benchmark is based on purchase invoices that retail community pharmacies submit voluntarily.
-        </Typography>
         <Stack direction="row" spacing={3} useFlexGap flexWrap="wrap" sx={{ mt: 1.5, typography: "body2" }}>
-          <Link component="button" onClick={() => openHelp("nadac")} sx={{ typography: "body2" }}>What is NADAC?</Link>
+          <Link component="button" onClick={() => openHelp("sources-and-disclaimer")} sx={{ typography: "body2" }}>Sources and disclaimer</Link>
           <Link component={RouterLink} to="/about">About this project</Link>
         </Stack>
       </Box>

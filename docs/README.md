@@ -6,7 +6,7 @@ for chart and card design rules.
 
 ## User-facing copy
 
-- [Welcome](../client/src/Components/Welcome.tsx)
+- [Welcome](../client/src/Components/Welcome/Welcome.tsx) and its [Learn the basics cards](../client/src/Components/Welcome/ideas.ts)
 - [About](../client/src/Components/About/About.tsx)
 - [Help articles](../client/src/content/help/) and [topic catalog](../client/src/library/help.ts)
 
@@ -16,8 +16,11 @@ for chart and card design rules.
   wordplay and “X is not Y” constructions. State the fact or tell the reader what to check.
   For example, “Check the pricing unit, strength and package size before comparing prices.”
 - Disclaimers and cautions are the exception: when the likely misreading is the point, say
-  plainly what a figure isn’t. For example, “NADAC doesn’t show what you’ll pay at the
+  plainly what a figure isn’t. For example, “NADAC doesn’t show what patients pay at the
   pharmacy.” Keep that caution wherever the prices are introduced.
+- Address the reader directly for actions they can take in the app. For example, “Pin a chart
+  to keep its data and dates when you search again.” When explaining the data, name the people
+  or organizations involved. Say who submits invoices, who buys the drug and who pays for a prescription.
 - Use sentence case for headings and labels. When referring to an existing control, match
   its spelling and capitalization in the app.
 - Keep Help topic IDs stable so existing links continue to work.

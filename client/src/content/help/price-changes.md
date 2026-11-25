@@ -10,10 +10,13 @@ every threshold and appears as “from $0.”
 
 The **Notable price changes** card below the results table groups changes by date, pricing unit
 and direction. **Package details** opens by default and shows each package’s price before and
-after, plus its change in percent and dollars per unit. A change across a gap in observations
+after, plus its change in percent and dollars per unit. In a narrow list, such as on a phone, the
+table leaves out the earlier price (**Was**). The **Change** column still shows the difference,
+and **Chart this change** shows the earlier price. A change across a gap in observations
 may have happened any time between the dates shown.
 
-To look for smaller or larger changes, open **Scan price changes**. Choose 5%, 10%, or 20%,
+To look for smaller or larger changes, open **Scan price changes** (on a narrow screen,
+**Scan** under **Price changes**). Choose 5%, 10%, or 20%,
 or enter your own **Minimum change (%)**. Use at least 5%, with up to one decimal place.
 Choose **Scan** or press Enter from the field. A message beside the button says how many
 package changes the scan found. Each scan with matches adds a card such as **Price changes of
@@ -26,7 +29,10 @@ prices change. Use **Pin** to keep a copy in **Pinned**. See [Pinning and compar
 
 Choose **Chart this change** beside a package NDC to open its history in a window. A solid line
 marks the change, and the readout starts on that date. Use **Pin** in the window to keep a copy,
-and close it with its close button or Esc. One change is charted at a time. New prices close it.
+and close it with its close button or Esc. If you locked the readout, Esc on the chart unlocks
+it and the next Esc closes the window. From **Pin** or the close button, Esc closes the window
+at once; choose **Unlock** to release the readout instead. One change is charted at a time. New
+prices close it.
 
 Line charts mark significant changes within their dates. Several series changing on the same
 date share one label. A product marker represents one or more package changes. Older product

@@ -1,17 +1,18 @@
-import { memo } from "react";
-import { Box } from "@mui/material";
+import { memo, useMemo } from "react";
 import { FdaPackageResultTable, FdaProductResultTable } from "../ResultTables";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useFdaChartSource from "../../hooks/useFdaChartSource";
 import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
+import useLiveCharts from "../../hooks/useLiveCharts";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, revealFda } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
+import { countSeries, selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { AutoCharts, ChartSelectedControl, HiddenResultsNotice } from "../ResultsSection";
+import ResultsSection, { HiddenResultsNotice, ResultsToolbar, ScanReport, SelectionCharts } from "../ResultsSection";
 import DetailLevelSelect from "./DetailLevelSelect";
 import NadacHandoffNotice from "./NadacHandoffNotice";
 
@@ -26,7 +27,8 @@ type Props = {
 };
 
 /**
- * The FDA search's results at the tab's detail level: the table, live comparisons and price events, all reading the refined result. Hidden until the tab has a search. Memoized (its one
+ * The FDA search's results at the tab's detail level: the toolbar, table, live charts and price
+ * events, all reading the refined result. Hidden until the tab has a search. Memoized (its one
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
 export default memo(function FdaResults({ view }: Props) {
@@ -34,11 +36,18 @@ export default memo(function FdaResults({ view }: Props) {
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden } = view;
-  // The table, Chart selected and live comparisons draw at the detail level; price change lists
-  // and their scans list packages at every level.
+  // The table, Line / Bar and live charts draw at the detail level; price change lists and their
+  // scans list packages at every level.
   const levelSource = useFdaChartSource(view, fdaResultDetailLevel);
   const packageSource = useFdaChartSource(view, "package");
   const scans = usePriceChangeScans(packageSource.prices);
+  const chartPrices = useMemo(() => selectedChartPrices(levelSource.prices, selectedRows.ids), [levelSource.prices, selectedRows]);
+  const charts = useLiveCharts(selectedRows.ids.size, countSeries(chartPrices));
+  // A toggle re-renders the page, but not the table.
+  const table = useMemo(() => fdaResultDetailLevel === "product"
+    ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
+    : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />,
+  [fdaResultDetailLevel, products, isLoading, dateWindow]);
 
   if (loaded === null) return null;
 
@@ -51,12 +60,11 @@ export default memo(function FdaResults({ view }: Props) {
       <SearchResultToast resultKey={resultKey} message={isSuccess ? foundMessage(rowCount, hidden.total, noun) : null} />
       <ResultsSection
         searchLabel={fdaResultsLabel(criteria)}
-        toolbar={
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-            <DetailLevelSelect />
-            <ChartSelectedControl source={levelSource} selection={selectedRows} />
-          </Box>
-        }
+        toolbar={compact => (
+          <ResultsToolbar source={levelSource} chartPrices={chartPrices} selectedCount={selectedRows.ids.size} charts={charts} scans={scans} end={<DetailLevelSelect />}
+            compact={compact} />
+        )}
+        status={compact => <ScanReport scans={scans} compact={compact} />}
         notice={
           <>
             <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
@@ -64,11 +72,9 @@ export default memo(function FdaResults({ view }: Props) {
           </>
         }
         priceChanges={<PriceChangesSection source={packageSource} scans={scans} />}
-        table={fdaResultDetailLevel === "product"
-          ? <FdaProductResultTable products={products} loading={isLoading} dateWindow={dateWindow} />
-          : <FdaPackageResultTable products={products} loading={isLoading} dateWindow={dateWindow} />}
+        table={table}
       >
-        <AutoCharts source={levelSource} scans={scans} />
+        <SelectionCharts source={levelSource} chartPrices={chartPrices} on={charts.on} />
       </ResultsSection>
     </>
   );

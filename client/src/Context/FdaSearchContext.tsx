@@ -61,7 +61,7 @@ type ProviderProps = {
 };
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
-  const { criteria, setCriteria, search, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
+  const { criteria, setCriteria, search: load, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
     initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? DEFAULT_FDA_DETAIL_LEVEL);
 
@@ -74,6 +74,13 @@ export const FdaSearchContextProvider = ({ children, initial, searchEnabled = tr
     setDetailLevelState(level);
     setSelectedRows({ type: "include", ids: new Set() });
   }, [fdaResultDetailLevel]);
+
+  // A new search clears the selection, as Clear search does: its rows are another search's. A
+  // restored tab's first load and a change of dates don't come through here.
+  const search = useCallback((fields: FdaTerms) => {
+    load(fields);
+    setSelectedRows({ type: "include", ids: new Set() });
+  }, [load]);
 
   const clearSearch = useCallback(() => {
     clear(createFdaCriteria());

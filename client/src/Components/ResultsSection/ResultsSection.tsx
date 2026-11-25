@@ -1,38 +1,52 @@
 import { useId, type ReactNode } from "react";
 import { Box, Grid, Paper, Typography } from "@mui/material";
+import useWidthTier from "../../hooks/useWidthTier";
 
 type Props = {
   /** What was searched, for the heading "Results: <search>" (`fdaResultsLabel`, `nadacResultsLabel`). */
   searchLabel: string,
-  /** At the heading's right: the detail level on FDA, and Chart selected. */
-  toolbar: ReactNode,
+  /**
+   * After the heading, in its row: the results toolbar (`ResultsToolbar`), given the section's
+   * narrow tier. It moves under the heading, as one piece, when the two don't fit one line.
+   */
+  toolbar: (compact: boolean) => ReactNode,
+  /** Under the heading row: the scan report (`ScanReport`), given the narrow tier. */
+  status?: (compact: boolean) => ReactNode,
   /** Above the table: what the filters hid, when they hid everything. */
   notice?: ReactNode,
   /** The results table. */
   table: ReactNode,
   /** Half-width price change cards (Notable price changes, scans). */
   priceChanges?: ReactNode,
-  /** Live comparison controls and charts directly under the table. */
+  /** The live charts of the selected rows (`SelectionCharts`), first in the grid under the table. */
   children?: ReactNode,
 };
 
 /**
- * The frame of both search pages' results: a heading, table, and shared responsive grid of live
- * comparisons and price change cards. Pinned items sit below it, outside.
+ * The frame of both search pages' results: a heading row with the toolbar, the table, and a shared
+ * responsive grid of live charts and price change cards. Pinned items sit below it, outside.
  */
-export default function ResultsSection({ searchLabel, toolbar, notice, table, priceChanges, children }: Props) {
+export default function ResultsSection({ searchLabel, toolbar, status, notice, table, priceChanges, children }: Props) {
   const headingId = useId();
+  // The section's width is the table's, so its tier is the table's.
+  const [ref, widthTier] = useWidthTier<HTMLElement>();
+  const compact = widthTier === "narrow";
   return (
-    <Box component="section" aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", minWidth: 0 }}>
-      <Box sx={{
-        display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 1, px: { xs: 1, md: 0 },
-      }}>
-        <Typography component="h2" variant="h6" id={headingId} data-results-heading tabIndex={-1} sx={{
-          mr: "auto", minWidth: 0, overflowWrap: "anywhere", "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
+    <Box component="section" ref={ref} aria-labelledby={headingId} sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", minWidth: 0 }}>
+      <Box>
+        {/* Flex wraps by each item's full width, so the toolbar, one item, drops under the
+            heading before either wraps inside. */}
+        <Box sx={{
+          display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 1, px: { xs: 1, md: 0 },
         }}>
-          Results: {searchLabel}
-        </Typography>
-        {toolbar}
+          <Typography component="h2" variant="h6" id={headingId} data-results-heading tabIndex={-1} sx={{
+            mr: "auto", minWidth: 0, overflowWrap: "anywhere", "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
+          }}>
+            Results: {searchLabel}
+          </Typography>
+          {toolbar(compact)}
+        </Box>
+        {status?.(compact)}
       </Box>
       {notice}
       <Paper sx={{

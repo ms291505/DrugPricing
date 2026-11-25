@@ -1,19 +1,24 @@
-Below the results table, choose **Chart latest prices** or **Chart price histories** to show a
-live comparison. The cards follow the search and filters and support up to eight series.
-To chart specific results, select rows and choose **Line** or **Bar** above the table. This
-creates a snapshot in **Pinned**. Use **Pin** on a live comparison to keep a snapshot of it.
+To chart results, select their rows, then choose **Line** or **Bar** beside the results heading.
+Each turns its chart on or off. The charts follow your selection, dates and filters: check another
+row and it joins the chart, and a selected row a filter hides comes back when the filter does
+(the label counts it as hidden). They chart up to 30 series, and more than eight can be slow and
+hard to read. Unchecking every row you can see, or a new search, clears the selection and turns
+them off. Choose **Pin** on a chart to keep a copy that stays as it is. To pin every
+chart you make, turn on **Pin charts when you make them** in Settings.
 
-**Line charts** show price over time. The line moves in steps between the weekly observations. A gap at the start or end means the drug had no price in those weeks.
+**Line charts** show price over time. The line moves in steps between weekly NADAC prices. A gap at the start or end means the app has no recorded price for that series in those weeks.
 
 When a line stands for a product with several packages at different prices, it shows their
-average, and a shaded band shows their lowest to highest price that week.
+average, and a shaded band shows their lowest to highest price that week. The band is left out
+when the spread is too thin to see on the chart; **View data** and the CSV still show the
+range.
 
 **Bar charts** compare drugs side by side, sorted by price. Switch between **Latest** price and
 the **Average** over the chart's dates. Each row also shows the low-to-high range over those
 dates.
 
 **The readout** above the plot shows the date or bar under your pointer. Click or tap to lock
-that point so you can scroll the readout. Click again, press Esc, or choose **Unlock** to release it.
+that point so you can scroll the readout. Click again, press Esc while the chart has focus, or choose **Unlock** to release it.
 
 **The legend** hides and shows lines. Colors stay with their drug when you filter.
 

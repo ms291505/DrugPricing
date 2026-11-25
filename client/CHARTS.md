@@ -6,11 +6,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 
 ## Explorer items: system vs. pinned
 
-- *System* items (the results table, live comparison charts and price change lists) are derived
+- *System* items (the results table, the live charts of the selection and price change lists) are derived
   from the current search on every render and never stored.
 - *Pinned* items are snapshots held by `PinnedItemsProvider`: one per workspace tab
   (`TabProviders.tsx`), plus a shared collection for the standalone FDA/NADAC Search area
-  (`StandaloneSearchProviders.tsx`). Chart selected and Pin create them; new searches and filter changes never
+  (`StandaloneSearchProviders.tsx`). Pin, and Line or Bar with Pin charts when you make them on, create them; new searches and filter changes never
   touch them. Don't clear them on search, and don't write system charts into them. The Pinned
   section sits on the page below the results (`PinnedSection`, `memo`'d), whatever the search
   state, so pins show while a search is missing, loading, or failing.
@@ -34,8 +34,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   inclusive, a null end is open), which the card's dates chip can widen later. `UnitSplit` clips
   to the window, and `LineViz` stretches the x-axis across all of it, so a late series shows a gap.
 - There is no page-level chart dates control: the search panel's **Dates** decide which prices
-  load, and so the window of everything on the page. Auto charts show the result's dates (the
-  view's `dateWindow`: the search's, snapped to as-of dates); Chart selected and Pin start new
+  load, and so the window of everything on the page. Live charts show the result's dates (the
+  view's `dateWindow`: the search's, snapped to as-of dates); Pin starts new
   items at them, as fixed dates, with every loaded date of their series (`withLoadedDates`
   over the view's `loadedPrices`). After a narrowing that didn't fetch, more is loaded than shown;
   the item's dates chip can widen to it, and `filtered` doesn't mistake the dates for a filter. `ChartDatesControl` is the dates picker of each pinned chart and
@@ -43,12 +43,12 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - Significant package events are derived over the refined result by `derivePriceEvents` and
   `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
   tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
-  is shown only through `eventLabel` and `signedChange`, as "from $0". The live comparison controls
-  (Chart latest prices, Chart price histories) and the scan control appear directly below the
-  results table. `PriceChangesSection` follows in the shared responsive grid: Notable price changes,
+  is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in the
+  results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `PriceChangesSection`
+  follows the live charts in the shared responsive grid: Notable price changes,
   then one card per scan with matches (`usePriceChangeScans`, called once per page with the
-  section's `prices`), then the open change charts, all half width. The section is always mounted
-  and holds the open charts, the chart buttons and list headings for focus, and the Package details
+  section's `prices`), all half width. Change charts open in a dialog, not the grid (below). The
+  section is always mounted and holds the list headings for focus and the Package details
   choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
   group key, since lists at different percents share group keys). Each list card measures its own
   width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
@@ -105,7 +105,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `h3` inside Pinned and for Price changes), with a collapse toggle wired with
   `aria-expanded`/`aria-controls`.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
-  what Chart selected filters on. `setFdaResultDetailLevel` clears the selection on every level change.
+  what Line and Bar filter on (`selectedChartPrices`). `setFdaResultDetailLevel` clears the
+  selection on every level change.
 
 ## Chart data
 
@@ -115,13 +116,17 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   average and keeps the packages' min–max as `rangeKey(ndc)`.
 - `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
   chart with its unit. Unit charts share one date axis.
-- New cards contain one pricing unit (`createChartItems`); mixed-unit selections are added in
-  one update, highlighting the first. Chart selected scrolls to it and toasts what it added, and
-  focuses its heading only from the keyboard. Older mixed-unit pins still use `UnitSplit`.
-- Live comparison charts start hidden; the Chart latest prices and Chart price histories toggles
-  show/hide them, retaining their choice across searches while mounted, never in storage. They are
-  gated on total **series** count, not price rows (`shouldAutoChart`), before splitting into one
-  card per pricing unit.
+- New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
+  one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
+- The live charts (`SelectionCharts`) start off. Line and Bar in the results toolbar turn on one
+  line and one bar card per pricing unit of the selected rows that are shown, never stored. The
+  state lives in the results page (`useLiveCharts`), which resets it during render
+  (`liveChartsAfter`) when the selection empties or passes `CHART_SERIES_LIMIT` (30) **series**,
+  not price rows, counted before splitting by unit. A shown row is one series at the table's
+  level, so the label counts shown rows that way and names hidden ones. A selection the filters
+  hide entirely leaves a toggle on with no card, still enabled so it can be turned off. Crossing `CHART_SERIES_WARNING` (8) with a card on toasts a warning once per
+  crossing (`ChartControl`). Turning a toggle on scrolls to its card (`data-live-chart`) and
+  focuses the card's heading only from the keyboard; turning it off moves nothing.
 - Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
   time"), the subtitle the count and dates. The change chart dialog's title names the event date, package and unit.
 
@@ -139,7 +144,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 `palette.chart.series` has 10 color-blind-safe colors, each at least 3:1 on the card
 (`chartPalette.test.ts`). Each NDC prefers the slot of its position in the *unfiltered* result,
 so filters never move it. `useSeriesColors` resolves clashes once per page and series level
-(inside the page's `ChartSource`), so every chart on a page agrees. Chart selected and Pin store each series' `color`, since the result is gone after the next
+(inside the page's `ChartSource`), so every chart on a page agrees. Pins store each series' `color`, since the result is gone after the next
 search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
 
 ## Line charts
@@ -161,7 +166,7 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy
   `changeSpan` remains a fallback inside its dates. Pinned line charts save `showPriceChanges`
-  (absent means on); live comparisons always mark events. Bars have no event markers.
+  (absent means on); the live charts always mark events. Bars have no event markers.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown
   series can't be hidden. Hiding never recolors. Hidden series leave the axis fit

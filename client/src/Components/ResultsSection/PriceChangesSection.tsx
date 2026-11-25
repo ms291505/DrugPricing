@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type MouseEvent } from "react";
-import { Button, Grid, IconButton, Tooltip } from "@mui/material";
+import { Grid, IconButton, Tooltip } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
 import { derivePriceEvents, groupPriceEvents, type PriceEvent, type PriceEventGroup } from "../../library/priceActivity";
@@ -122,8 +123,10 @@ function PriceChangeListCard({
           <Tooltip title="Pin a copy to this tab">
             <IconButton size="small" onClick={pin} aria-label={`Pin ${title}`}><PushPinOutlinedIcon fontSize="small" /></IconButton>
           </Tooltip>
-          <Button size="small" aria-label={`Close ${title}`}
-            onClick={event => onClose(listId, event, cardRef.current)}>Close</Button>
+          <Tooltip title="Close">
+            <IconButton size="small" aria-label={`Close ${title}`}
+              onClick={event => onClose(listId, event, cardRef.current)}><CloseIcon fontSize="small" /></IconButton>
+          </Tooltip>
         </>}>
         <PriceChangeListBody groups={groups} widthTier={widthTier} detailsChoice={detailsChoice} detailsKeyPrefix={detailsKeyPrefix}
           onDetailsToggle={onDetailsToggle}

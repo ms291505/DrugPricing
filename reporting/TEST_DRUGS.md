@@ -98,7 +98,7 @@ A description search rarely mixes classes, because brand descriptions use the br
 | `sitagliptin`, `brivaracetam` | Generics first priced in 2026 (2026-08-05, 2026-05-20): gap before data in LineViz |
 | `quinidine` | +6,278% in 2025-06, then the series ends after 2026-08-12 (gap after data) |
 | `carbamazepine 200` | Noisy 2024 survey swings: many flagged changes. Set dates to 2024 |
-| `ibuprofen` (start 2025-06-01) | 22 flagged changes: more than the 9 that get charts, so the page asks to narrow |
+| `ibuprofen` (start 2025-06-01) | 22 flagged changes in seven groups: Notable price changes shows five, then Show all 7 events. Each package's Chart button opens its change in a dialog (counts through 2026-11-11, default filters) |
 | `rivaroxaban 2.5` | Staircase of monthly cuts. A multi-word search with a number |
 | Any search, start date not a Wednesday | The first week must still show (the as-of snap, PR #21) |
 

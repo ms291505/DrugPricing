@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Typography } from "@mui/material";
+import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Switch, Typography } from "@mui/material";
 import { useSettings } from "../../Context/SettingsContext";
 import type { BarStyle, ColorMode } from "../../library/settings";
 
@@ -32,6 +32,7 @@ export default function SettingsPanel() {
   const { settings, updateSettings } = useSettings();
   const barStyleId = useId();
   const colorModeId = useId();
+  const autoPinDescriptionId = useId();
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -57,6 +58,30 @@ export default function SettingsPanel() {
             />
           ))}
         </RadioGroup>
+      </FormControl>
+      <FormControl component="fieldset">
+        <FormLabel component="legend" sx={SECTION_LABEL_SX}>
+          Charts
+        </FormLabel>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={settings.autoPinCharts}
+              onChange={(e) => updateSettings({ autoPinCharts: e.target.checked })}
+              slotProps={{ input: { "aria-describedby": autoPinDescriptionId } }}
+            />
+          }
+          sx={{ alignItems: "flex-start", mt: 1 }}
+          label={
+            <Box sx={{ pt: 0.25 }}>
+              <Typography variant="body2">Pin charts when you make them</Typography>
+              <Typography id={autoPinDescriptionId} variant="caption" color="text.secondary">
+                Turning on Line or Bar above the results also pins a copy that stays as it is.
+              </Typography>
+            </Box>
+          }
+        />
       </FormControl>
       <FormControl>
         <FormLabel id={barStyleId} sx={SECTION_LABEL_SX}>
