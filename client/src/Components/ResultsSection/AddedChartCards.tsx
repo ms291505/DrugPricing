@@ -7,7 +7,7 @@ import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import { chartSubtitle, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels } from "../../library/chartTitles";
-import { countSeries, selectedChartPrices } from "../../library/chartSeries";
+import { countSeries, openPricingUnits, selectedChartPrices } from "../../library/chartSeries";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
 import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
 import type { AddedChart, AddedCharts } from "../../hooks/useAddedCharts";
@@ -41,19 +41,23 @@ function AddedChartCard({ source, chart, onClose }: {
   const groups = useMemo(() => splitByPricingUnit(prices), [prices]);
   const openGroups = groups.filter(group => !chart.closedUnits.includes(group.pricingUnit));
   const hiddenCount = chart.ndcs.length - countSeries(prices);
-  // Each unit's card closes on its own; the last open one removes the chart.
+  // Each unit's card closes on its own; the last open one removes the chart. A unit the dates or
+  // filters hide right now is still open, so closing the last card on screen keeps the chart.
+  const othersOpen = openPricingUnits(chart.pricingUnits, prices, chart.closedUnits).length > 1;
   const close = (pricingUnit: string | undefined) => (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => {
     moveFocusFromClosingCard(card, event);
-    onClose(chart.id, pricingUnit !== undefined && openGroups.length > 1 ? pricingUnit : undefined);
+    onClose(chart.id, pricingUnit !== undefined && othersOpen ? pricingUnit : undefined);
   };
 
-  // The dates or filters hide every open row: the card stays, so it can be closed, and says why it's empty.
+  // The dates or filters hide every open unit: the card stays, so it can be closed, and says why it's empty.
   if (!openGroups.length) {
     const title = chartTitle(chart.chartType, source.origin.searchLabel, chart.seriesKind, chart.labels);
     return (
       <UnitCard chart={chart} title={title} subtitle={hiddenSeriesNote(hiddenCount)} onClose={close(undefined)}>
         <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
-          The dates or filters hide this chart’s {seriesCountLabel(hiddenCount, chart.seriesKind)}.
+          The dates or filters hide {hiddenCount
+            ? <>this chart’s {seriesCountLabel(hiddenCount, chart.seriesKind)}</>
+            : "the rest of this chart"}.
         </Typography>
       </UnitCard>
     );

@@ -134,7 +134,9 @@ and the last added chart. Line and Bar add a card, as Scan does: each press adds
 rows that are shown (`selectedChartPrices`, `useAddedCharts`, `AddedChartCards`), oldest first, and
 the selection stays. A card keeps its rows (their ids) while the selection changes and redraws with
 the dates and filters; a row they hide drops out and the subtitle counts it ("2 hidden"), and a card
-whose rows are all hidden stays with a note so it can be closed. A new search, Clear search and an
+whose rows are all hidden stays with a note so it can be closed. Each pricing unit's card closes on
+its own, and closing the last one on screen keeps the chart while a unit the filters hide is still
+open (`openPricingUnits`). A new search, Clear search and an
 FDA detail level change remove every added card (`useAddedCharts`' reset keys) and clear the
 selection. The table keeps a hidden row selected (`keepNonExistentRowsSelected`), and the label
 counts shown rows and names hidden ones ("Chart 3 selected (5 hidden)"), but unchecking every shown

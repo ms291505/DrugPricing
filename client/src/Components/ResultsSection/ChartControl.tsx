@@ -66,9 +66,9 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
   const add = (chartType: ChartType) => {
     const labels = seriesLabels(chartPrices);
     const ndcs = [...new Set(chartPrices.map(price => price.ndc))];
-    const unitCount = splitByPricingUnit(chartPrices).length;
-    charts.add({ chartType, ndcs, labels, seriesKind: origin.seriesKind },
-      addedChartMessage(chartType, ndcs.length, origin.seriesKind, unitCount));
+    const pricingUnits = splitByPricingUnit(chartPrices).map(group => group.pricingUnit);
+    charts.add({ chartType, ndcs, labels, seriesKind: origin.seriesKind, pricingUnits },
+      addedChartMessage(chartType, ndcs.length, origin.seriesKind, pricingUnits.length));
     if (manySeries(seriesCount)) toast(manySeriesWarning(seriesCount));
     if (settings.autoPinCharts) pin(chartType);
   };

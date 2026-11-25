@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  chartControlLabel, countSeries, manySeries, manySeriesWarning, overSeriesLimit, selectedChartPrices,
+  chartControlLabel, countSeries, manySeries, manySeriesWarning, openPricingUnits, overSeriesLimit, selectedChartPrices,
 } from "./chartSeries";
 import type { ChartPrice } from "./types";
 
@@ -36,6 +36,24 @@ describe("selectedChartPrices", () => {
 
   it("charts nothing with no selection", () => {
     expect(selectedChartPrices(shown, new Set())).toEqual([]);
+  });
+});
+
+describe("openPricingUnits", () => {
+  const unitPrice = (ndc: string, pricingUnit: string): ChartPrice => ({ ...price(ndc, "2026-01-07"), pricingUnit });
+
+  it("keeps a unit the filters hide now", () => {
+    // Added with ML and GM; the Pricing unit filter now hides GM.
+    expect(openPricingUnits(["ML", "GM"], [unitPrice("1", "ML")], [])).toEqual(["ML", "GM"]);
+  });
+
+  it("adds a unit the shown prices have gained since", () => {
+    expect(openPricingUnits(["ML"], [unitPrice("1", "ML"), unitPrice("1", "EA")], [])).toEqual(["ML", "EA"]);
+  });
+
+  it("leaves out the units already closed", () => {
+    expect(openPricingUnits(["ML", "GM"], [], ["ML"])).toEqual(["GM"]);
+    expect(openPricingUnits(["ML", "GM"], [], ["ML", "GM"])).toEqual([]);
   });
 });
 

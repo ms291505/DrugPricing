@@ -13,6 +13,8 @@ export type AddedChart = {
   /** Each row's label when it was added, for the title while the dates or filters hide them all. */
   labels: string[],
   seriesKind: SeriesKind,
+  /** Its rows' pricing units when it was added, so a unit the filters hide later still counts as open. */
+  pricingUnits: string[],
   /** Pricing units whose card was closed while the chart's other cards stay. */
   closedUnits: string[],
 };

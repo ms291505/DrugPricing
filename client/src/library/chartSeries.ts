@@ -17,6 +17,16 @@ export function selectedChartPrices(prices: ChartPrice[], selection: ReadonlySet
   return prices.filter(price => ndcs.has(price.ndc));
 }
 
+/**
+ * The pricing units of an added chart that Close hasn't removed: those it had when added and any
+ * its shown prices have since, so a unit the dates or filters hide right now still counts, and
+ * closing the last card on screen keeps the chart while one of these remains.
+ */
+export function openPricingUnits(addedUnits: readonly string[], shownPrices: ChartPrice[], closedUnits: readonly string[]): string[] {
+  const units = new Set([...addedUnits, ...shownPrices.map(price => price.pricingUnit)]);
+  return [...units].filter(unit => !closedUnits.includes(unit));
+}
+
 /** Whether a chart of this many series is past the warning: slow and hard to read. */
 export const manySeries = (seriesCount: number) => seriesCount > CHART_SERIES_WARNING;
 
