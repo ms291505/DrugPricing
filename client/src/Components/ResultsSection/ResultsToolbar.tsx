@@ -29,20 +29,20 @@ type Props = {
  * toolbar don't fit one line, the heading takes its own line above and the toolbar keeps its
  * line; only then does the toolbar wrap, and the label stays with Line and Bar. On the narrow tier
  * the label and a "Price changes" caption sit above their buttons. The scan's report is under the
- * row (`ScanReport`).
+ * row (`ScanReport`). On the narrow tier the detail level comes first, on its own line.
  */
 export default function ResultsToolbar({ source, chartPrices, selectedCount, charts, scans, end, compact }: Props) {
   return (
     // Narrow: the captioned controls line up by their buttons, with more space between groups than
     // between a caption and its buttons.
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: compact ? "flex-end" : "center", columnGap: 2, rowGap: compact ? 1.5 : 1, minWidth: 0 }}>
+      {/* Narrow: first, on a line of its own under the heading. It changes what the table shows,
+          and the captioned actions then sit together just above the table. First in the DOM too,
+          so the focus order matches. */}
+      {compact && end && <Box sx={{ flexBasis: "100%" }}>{end}</Box>}
       <ChartControl source={source} chartPrices={chartPrices} selectedCount={selectedCount} charts={charts} compact={compact} />
       <ScanControl onScan={scans.runScan} compact={compact} />
-      {/* Narrow: a line of its own under a divider, so the captions above read as the buttons'
-          and not this control's. */}
-      {end && compact
-        ? <Box sx={{ flexBasis: "100%", borderTop: 1, borderColor: "divider", pt: 1.5 }}>{end}</Box>
-        : end}
+      {!compact && end}
     </Box>
   );
 }

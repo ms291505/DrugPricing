@@ -140,8 +140,8 @@ on with no shown selection or past 30 series (`CHART_SERIES_LIMIT`), warn once o
 selection. Turning one on scrolls to its card and focuses the heading only from the keyboard;
 with the `autoPinCharts` setting it also pins a copy. On the narrow tier the chart label is a
 caption above Line and Bar, and Scan is a short "Scan" under a "Price changes" caption, each as
-wide as its caption, so both groups fit one line on a phone, and FDA's detail level takes its own
-line under a divider; the table's count line there leaves out empty states
+wide as its caption, so both groups fit one line on a phone, and FDA's detail level comes first,
+on its own line under the heading; the table's count line there leaves out empty states
 (`activityCounts`' `omitZero`).
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
@@ -151,7 +151,8 @@ scanned. Every scan reports what it found in the control row's `role="status"` l
 package changes…", or none), and a scan with no matches makes no card. A new card neither scrolls
 nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
 keyboard, and goes once that card is closed.
-Each list groups by date, unit and direction, each with its packages' old and new prices, and can be
+Each list groups by date, unit and direction, each with its packages' old and new prices (below a
+420px list the Was column goes, so each row's Chart button fits beside its NDC on a phone), and can be
 pinned or closed. The cards are never stored; a pin stores a `PriceChangeListItem` snapshot (see
 `client/CHARTS.md`). Each package row has a chart icon button that opens that package's change in a
 dialog (`PriceChangeChartDialog`) over the shown dates, with the change marked and the readout
