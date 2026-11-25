@@ -34,9 +34,12 @@ export const seriesLimitNotice = (seriesCount: number) =>
 /**
  * The label in front of Line and Bar. It counts the selected rows that are shown, which a row's
  * series is at the table's level, and names the selected rows the dates or filters hide.
+ * `charting`: a chart is on, so a selection the filters hide entirely reads "0 shown (N hidden)".
  */
-export function chartControlLabel(shownCount: number, hiddenCount: number): string {
+export function chartControlLabel(shownCount: number, hiddenCount: number, charting = false): string {
   const hidden = hiddenCount > 0 ? ` (${hiddenCount} hidden)` : "";
+  // A chart that's on beside "Select rows to chart" reads as if nothing were selected.
+  if (shownCount === 0 && charting && hiddenCount > 0) return `0 shown${hidden}`;
   if (shownCount === 0) return `Select rows to chart${hidden}`;
   if (overSeriesLimit(shownCount)) return `${shownCount} selected${hidden} · chart up to ${CHART_SERIES_LIMIT}`;
   return `Chart ${shownCount} selected${hidden}`;

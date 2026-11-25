@@ -167,6 +167,16 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
   dialog is announced by its title and context line, the Pin status line, the scan report and the
   chart toasts are spoken, and where the cursor lands after a menu's Remove or Close tab.
   Also check that a tap on Unlock doesn't switch `useChartReadout` into announcing.
+- **Card header targets on the narrow tier** (from PR 67's review). A card header's collapse
+  toggle, Pin and a price change list's X are small `IconButton`s, about 34px, and AGENTS.md asks
+  for 44px on narrow layouts. Size them up below the card's `sm` tier (`ExplorerGridItem` and its
+  callers' actions) without crowding the title. Small.
+- **Rows hidden by the grid's own column filter count as shown** (from PR 67's review; Chart
+  selected behaved the same). `ResultTable`'s `rowIds` and the toolbar's shown count use the
+  table's `rows`, which still include rows the DataGrid's column filter hides, so such a row is
+  counted, charted and survives header uncheck-all. Either count grid-visible rows
+  (`gridExpandedSortedRowIdsSelector`) as shown, or `disableColumnFilter` on the result tables
+  (the page's own filters cover most uses). Small.
 - **Lint for unused exports.** Consider a tool such as `knip` to catch exports with no callers.
 - **Two global modals are never opened.** Nothing calls `openModal("about")` or
   `openModal("onboarding")`; About and Welcome render only as pages. Remove both entries from

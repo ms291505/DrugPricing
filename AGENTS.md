@@ -147,9 +147,9 @@ The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold 
 with up to one decimal place. Price change list cards share the responsive
 half-width grid with the live charts: Notable price changes (10%, when it has changes) and
 one card per scan with matches (`usePriceChangeScans`), oldest first, even at a percent already
-scanned. Every scan reports what it found in the control row's `role="status"` line ("Found N
-package changes…", or none), and a scan with no matches makes no card. A new card neither scrolls
-nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
+scanned. Every scan reports what it found in a `role="status"` line under the heading row
+(`ScanReport`: "Found N package changes…", or none), and a scan with no matches makes no card. A
+new card neither scrolls nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
 keyboard, and goes once that card is closed.
 Each list groups by date, unit and direction, each with its packages' old and new prices (below a
 420px list the Was column goes, so each row's Chart button fits beside its NDC on a phone), and can be

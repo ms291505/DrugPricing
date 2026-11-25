@@ -104,7 +104,7 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
       ? { display: "flex", flexDirection: "column", alignItems: "stretch", gap: 0.25 }
       : { display: "flex", alignItems: "center", gap: 1 }}>
       <Typography id={labelId} variant={compact ? "caption" : "body2"} color={cantTurnOn ? "text.secondary" : "text.primary"}>
-        {chartControlLabel(seriesCount, hiddenCount)}
+        {chartControlLabel(seriesCount, hiddenCount, on.line || on.bar)}
       </Typography>
       <ButtonGroup size="small" variant="outlined" fullWidth={compact} aria-labelledby={labelId}>
         {CHART_TYPES.map(({ type, label, Icon }) => (

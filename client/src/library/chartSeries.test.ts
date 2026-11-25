@@ -51,6 +51,9 @@ describe("series thresholds", () => {
   it("labels the control by the shown selection, naming hidden rows", () => {
     expect(chartControlLabel(0, 0)).toBe("Select rows to chart");
     expect(chartControlLabel(0, 5)).toBe("Select rows to chart (5 hidden)");
+    expect(chartControlLabel(0, 5, true)).toBe("0 shown (5 hidden)");
+    expect(chartControlLabel(0, 0, true)).toBe("Select rows to chart");
+    expect(chartControlLabel(3, 5, true)).toBe("Chart 3 selected (5 hidden)");
     expect(chartControlLabel(3, 0)).toBe("Chart 3 selected");
     expect(chartControlLabel(3, 5)).toBe("Chart 3 selected (5 hidden)");
     expect(chartControlLabel(30, 0)).toBe("Chart 30 selected");
