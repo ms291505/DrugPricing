@@ -20,16 +20,16 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I built it</Typography>
       <p>
-        I manage a retiree healthcare plan. I wanted to know whether the differences I saw in ingredient cost across
-        GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and keep track of the figures in
-        Excel. The harder question was how those differences had changed since last year. I built DrugPricing to make
-        that history easier to compare.
+        I think about drug prices a lot at work, and I wanted to know whether the differences I saw in ingredient cost
+        across GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and track the figures in
+        Excel, but seeing how those differences had changed since last year was much harder, so I built DrugPricing to
+        make that history easier to compare.
       </p>
       <p>
         Strength turned out to be worth checking too. Under the Medicare GLP-1 Bridge, all six strengths of the Zepbound
-        KwikPen share one manufacturer net price, $245 per monthly supply. I wondered whether they were priced
-        differently further up the supply chain. In NADAC they are: the three lower strengths cost about $201 per mL and
-        the three higher strengths about $282 per mL.
+        KwikPen share one manufacturer net price, $245 per monthly supply, so I wondered whether pharmacies paid the same
+        for every strength. In NADAC they don’t: the three lower strengths cost about $201 per mL and the three higher
+        strengths about $282 per mL.
       </p>
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>
@@ -41,9 +41,9 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       <ul>
         <li>My PBM report shows different ingredient costs for two drugs. Does NADAC show a similar gap, and was it there a year ago?</li>
         <li>Does this tablet have the same NADAC per tablet in every package size, or at every strength?</li>
-        <li>After insulin list prices were cut, did NADAC move when and as much as people expected?</li>
+        <li>After the Medicaid rebate cap ended, did insulin NADACs drop when and as much as the industry expected?</li>
         <li>Where did the benchmark start for a new drug?</li>
-        <li>How does what my pharmacy paid compare with the benchmark?</li>
+        <li>How does my acquisition cost compare with the benchmark?</li>
       </ul>
       <p>
         <Link component={RouterLink} to="/help/things-to-try">Things to try</Link> walks through each one.
@@ -52,7 +52,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>The two sources</Typography>
       <p>
         CMS supplies the price history. The FDA’s National Drug Code (NDC) Directory helps you identify products and
-        packages by brand or generic name, strength, dosage form, route and labeler. Each search starts from one of them.
+        packages by brand or generic name, strength, dosage form, route, and labeler. Each search starts from one of them.
       </p>
       <ul>
         <li>
@@ -75,7 +75,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         At work I write SQL for data extracts and reporting. Outside of work, I built tutorial projects to
         practice designing a database, loading data, writing an API, building a front end, and deploying a server.
         DrugPricing is the first project I’ve built to keep running in production and share with others. I used
-        official documentation, tutorials and a handful of books to build it.
+        official documentation, tutorials, and a handful of books to build it.
       </p>
       <p>
         Everything runs on a Raspberry Pi in my basement, from the PostgreSQL database to the .NET API and React site.
@@ -97,7 +97,7 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
         DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the FDA. NADAC
         estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what patients pay at the pharmacy,
         and it isn’t a retail price or a reimbursement rate. The data may be incomplete or out of date. DrugPricing does
-        not provide medical, financial or pricing advice.
+        not provide medical, financial, or pricing advice.
       </p>
 
       <Typography component="h2" variant="h6" sx={{ mt: 2 }}>Icon credits</Typography>

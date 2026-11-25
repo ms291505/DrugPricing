@@ -8,7 +8,7 @@ Both cutoffs compare percentages rounded to a tenth of a percent. A drop from $1
 counts as 10%, so it’s significant, and so is a rise from $1.00 to $1.10. A rise from $0 meets
 every threshold and appears as “from $0.”
 
-The **Notable price changes** card below the results table groups changes by date, pricing unit
+The **Notable price changes** card below the results table groups changes by date, pricing unit,
 and direction. **Package details** opens by default and shows each package’s price before and
 after, plus its change in percent and dollars per unit. In a narrow list, such as on a phone, the
 table leaves out the earlier price (**Was**). The **Change** column still shows the difference,
@@ -21,7 +21,7 @@ or enter your own **Minimum change (%)**. Use at least 5%, with up to one decima
 Choose **Scan** or press Enter from the field. A message beside the button says how many
 package changes the scan found. Each scan with matches adds a card such as **Price changes of
 25% or more**, using the search’s dates and filters, and **Show** beside the message takes you
-to it. Scan cards clear when new terms, dates or filters
+to it. Scan cards clear when new terms, dates, or filters
 change the prices.
 
 Every price change card has **Pin** and **Close**. **Notable price changes** returns when the
@@ -42,7 +42,7 @@ line chart’s menu to toggle them.
 The activity label names the largest significant step by dollar amount, with the earlier step
 winning a tie. Otherwise it describes the net movement, or a dip or spike that returned near
 the starting price. Package rows have sparklines. Each uses its own price scale. Sort
-**Price Activity** to put significant changes first, then other changes, stable prices and
+**Price Activity** to put significant changes first, then other changes, stable prices, and
 insufficient history.
 
 A flag marks a difference between observations. The cause requires other evidence. See

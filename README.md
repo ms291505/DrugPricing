@@ -4,10 +4,10 @@ DrugPricing charts the National Average Drug Acquisition Cost (NADAC), the publi
 community pharmacies pay to buy drugs. Look up a drug’s NADAC, compare products and packages, and see when the
 benchmark changed and by how much.
 
-I manage a retiree healthcare plan. I wanted to know whether the differences I saw in ingredient cost across
-GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and keep track of the figures in
-Excel. The harder question was how those differences had changed since last year. I built DrugPricing to make
-that history easier to compare.
+I think about drug prices a lot at work, and I wanted to know whether the differences I saw in ingredient cost
+across GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and track the figures in
+Excel, but seeing how those differences had changed since last year was much harder, so I built DrugPricing to
+make that history easier to compare.
 
 **Live demo:** <https://drugpricing.mikesteiner.info>
 
@@ -20,10 +20,10 @@ Mounjaro and Zepbound are two brands of tirzepatide, sold in pens that each hold
 3. Select the Mounjaro and Zepbound packages with a strength of 5 mg per 0.5 mL, then choose **Line**.
 
 The legend names each line by package NDC: `0002-1495-80` is Mounjaro and `0002-2495-80` is Zepbound.
-Both lines are NADAC per mL, so you can read the gap between them in any week. In the January 14, 2026 file,
-Mounjaro’s 5 mg pen rose 3%, from $523.05 to $538.74 per mL, and Zepbound’s didn’t. A plan comparing its own
+Both lines are NADAC per mL, so you can read the gap between them in any week. In the January 14, 2026 NADAC
+update, Mounjaro’s 5 mg pen rose 3%, from $523.05 to $538.74 per mL, and Zepbound’s didn’t. A plan comparing its own
 ingredient costs would convert them to the same unit and dates. DrugPricing supplies only the NADAC figures. It
-doesn’t import PBM reports, calculate rebates or show what a plan pays.
+doesn’t import PBM reports, calculate rebates, or show what a plan pays.
 
 More questions to try, such as whether a tablet costs the same per tablet in every package size, are in the
 app’s Help under [Things to try](https://drugpricing.mikesteiner.info/help/things-to-try).
@@ -31,7 +31,7 @@ app’s Help under [Things to try](https://drugpricing.mikesteiner.info/help/thi
 ## About the project
 
 DrugPricing is also a learning project. I built it end to end, from the database and data loads to the API,
-the React client and deployment on a Raspberry Pi. The rest of this README covers how it works and how to run it.
+the React client, and deployment on a Raspberry Pi. The rest of this README covers how it works and how to run it.
 
 ## What it does
 
@@ -42,7 +42,8 @@ the React client and deployment on a Raspberry Pi. The rest of this README cover
   average price.
 - Flags notable package price changes and lets you scan at a threshold you choose.
 - Saves pinned charts and price change lists in your browser. The standalone searches share
-  pins, and each Workspace tab has its own. Copy a search and its pins to a new tab from the
+  pins, and each Workspace tab has its own.
+- Copies a search and its pins to a new Workspace tab with Add search to workspace in the
   search panel.
 - Offers a data table and CSV download under every chart.
 - Supports keyboard navigation and a screen-reader readout of the active point.
@@ -61,7 +62,7 @@ Data flows one way: the ETL downloads and loads NADAC and FDA data into Postgres
 reads it (with in-memory caching), and the client queries the API.
 
 See [`AGENTS.md`](AGENTS.md) for the full map of the code, conventions, and known rough edges,
-and the [documentation index](docs/README.md) for plans, review notes, published Help and
+and the [documentation index](docs/README.md) for plans, review notes, published Help, and
 [future work](docs/future-work.md).
 
 ## Data sources
@@ -77,7 +78,7 @@ and the [documentation index](docs/README.md) for plans, review notes, published
 DrugPricing is an independent learning project. It isn’t affiliated with or endorsed by CMS or the
 FDA. NADAC estimates what retail community pharmacies pay to acquire drugs. It doesn’t show what patients
 pay at the pharmacy, and it isn’t a retail price or a reimbursement rate. The data may be incomplete or
-out of date. DrugPricing does not provide medical, financial or pricing advice.
+out of date. DrugPricing does not provide medical, financial, or pricing advice.
 
 ## Getting started
 

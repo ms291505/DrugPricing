@@ -1,4 +1,4 @@
-The National Average Drug Acquisition Cost (NADAC) is a public benchmark for what retail community pharmacies pay to buy drugs. The Centers for Medicare & Medicaid Services (CMS) runs a monthly survey in which pharmacies voluntarily submit their purchase invoices. CMS uses the invoices to estimate an average cost per unit, such as per tablet or per milliliter. An individual pharmacy may pay more or less.
+The National Average Drug Acquisition Cost (NADAC) is a public benchmark for what independent and chain retail community pharmacies pay to buy drugs. The Centers for Medicare & Medicaid Services (CMS) runs a monthly survey in which pharmacies voluntarily submit their purchase invoices. CMS uses the invoices to estimate an average cost per unit, such as per tablet or per milliliter. An individual pharmacy may pay more or less.
 
 CMS publishes the rates weekly. Each weekly file lists the rate in effect for every package it covers, so the same estimate can appear several weeks in a row. The app stores one price per package from each weekly file it has loaded, dated by the file’s as-of date. See [How current it is](/help/how-current-it-is).
 

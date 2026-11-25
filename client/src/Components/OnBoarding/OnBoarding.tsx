@@ -20,7 +20,7 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           </Typography>
           <Box component="ol" sx={{ typography: 'body1', pl: 3 }}>
             <li>The Centers for Medicare &amp; Medicaid Services (CMS) publishes the National Average Drug Acquisition Cost (NADAC) weekly. It estimates what retail community pharmacies pay per unit to buy drugs, from invoices pharmacies voluntarily submit to a monthly survey. CMS supplies the price history.</li>
-            <li>The FDA’s National Drug Code Directory lists products and packages. It helps you identify what you’re looking at, and FDA search shows a package’s NADAC prices when its code appears in the weekly files.</li>
+            <li>The FDA’s National Drug Code Directory lists products and packages. It helps you identify what you’re looking at, and FDA search shows a package’s NADAC prices when its code appears in the weekly NADAC updates.</li>
           </Box>
           <Typography variant="body1">
             The app’s price history goes back to 2022. For example, if your plan’s PBM report shows different ingredient costs for two drugs, chart both over the same dates to see whether NADAC shows a similar gap. NADAC doesn’t show what patients pay at the pharmacy.
@@ -39,20 +39,21 @@ export default function OnBoarding({ showHeading = true }: { showHeading?: boole
           <Typography
             variant="body1"
           >
-            A package’s National Drug Code (NDC) identifies the labeler, the <strong>product</strong> (the drug, strength and form) and the <strong>package</strong> (the container type and size).
+            A package’s National Drug Code (NDC) identifies the labeler, the <strong>product</strong> (the drug, strength, and form) and the <strong>package</strong> (the container type and size).
           </Typography>
           <Typography
             variant="body1"
           >
             The four Eliquis packages below share a brand name and labeler (0003, E.R. Squibb &amp; Sons).
-            The first two contain the same 2.5 mg tablet, product 0003-0893. Package 21 is a bottle of 60 tablets.
-            Package 31 is a carton of 10 blister packs of 10 tablets.
+            The first two contain the same 2.5 mg tablet, product 0003-0893: package 21 is a bottle of 60 tablets, and
+            package 31 is a carton of 10 blister packs of 10 tablets.
           </Typography>
           <EliquisTable />
           <Typography
             variant="body1">
             The last two rows have different strengths and different product NDCs. Read the first two parts
-            of the NDC together to identify a product. Another labeler can use the same middle digits for a different drug.
+            of the NDC together to identify a product, because another labeler can use the same middle digits for a
+            different drug.
           </Typography>
           <Typography
             variant="body1">

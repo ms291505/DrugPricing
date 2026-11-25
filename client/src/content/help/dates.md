@@ -1,4 +1,4 @@
-**NADAC price dates** sets the period for results, added charts and price changes. Choose **Last year**,
+**NADAC price dates** sets the period for results, added charts, and price changes. Choose **Last year**,
 **6 months**, **3 months**, **All**, or
 **Custom** for your own range.
 
