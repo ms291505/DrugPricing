@@ -6,6 +6,25 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "client", "run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "worktree-server",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "ASPNETCORE_ENVIRONMENT=Development",
+        "DevClientHost=http://localhost:5174",
+        "dotnet", "run", "--project", "server", "--no-launch-profile", "--urls", "http://localhost:5251"
+      ],
+      "port": 5251
+    },
+    {
+      "name": "worktree-client",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "VITE_API_URL=http://localhost:5251/api",
+        "npm", "--prefix", "client", "run", "dev", "--", "--port", "5174", "--strictPort"
+      ],
+      "port": 5174
     }
   ]
 }

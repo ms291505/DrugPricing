@@ -407,6 +407,35 @@ restarts the `drugpricing` service. The client builds with the `.env.production`
 Feature branches open PRs against `dev`; `dev` is merged
 into `main` to ship. Never target `main` from a feature branch.
 
+### Running a worktree beside the main checkout
+
+The author's own servers use the default ports (client 5173, API 5250), and the API's CORS
+allows only `DevClientHost`. A worktree under `.claude/worktrees/` runs a second pair on 5174
+and 5251, with nothing in the tracked config changed:
+
+1. Base the worktree on `dev` (`git worktree add -b <branch> .claude/worktrees/<name> dev`);
+   `EnterWorktree` with a `name` branches from `origin/main`.
+2. Copy the gitignored server settings without reading them, `cp -n
+   <main>/server/appsettings.Development.json server/`, and run `npm ci` in `client/`.
+3. Start `worktree-server` and `worktree-client` from `.claude/launch.json`. The server
+   overrides `DevClientHost` with an environment variable (it beats the JSON file) and listens
+   on 5251; the client gets `VITE_API_URL=http://localhost:5251/api` the same way and fails
+   rather than moves if 5174 is taken (`--strictPort`). If neither starts (no output, no port
+   after a minute), the desktop app is waiting on a macOS permission prompt for its launcher:
+   ask the author to approve it, or run the same two commands in the background meanwhile.
+
+Both servers share the `drug_dev` database: the worktree API's `Database.Migrate()` applies
+the branch's migrations to it, so warn the author before running one that adds a migration.
+Port 5174 is its own origin, so its `localStorage` workspace and settings are separate from
+5173's.
+
+**Shut both servers down as soon as the browser checks are done**, not at the end of the
+session: they hold the ports, a database connection and a build watcher, and the next worktree
+needs 5174 and 5251 free. Use `preview_stop` with each server's id, or `kill $(lsof -tiTCP:5174
+-sTCP:LISTEN) $(lsof -tiTCP:5251 -sTCP:LISTEN)` for ones started from the shell, and check that
+both ports are free. Start them again if a later change needs another look. Never leave them
+running for the author: say they're stopped and how to start them.
+
 ## Conventions
 
 - Keep the NADAC types aligned: `server/Models/NadacPrice.cs`, `etl/library/models.py`,
