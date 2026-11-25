@@ -139,7 +139,7 @@ function AppShell() {
             <Route path="/search" element={<Navigate to={`/search/${lastSource ?? "fda"}`} replace />} />
             <Route path="/fda-search" element={<Navigate to="/search/fda" replace />} />
             <Route path="/nadac-search" element={<Navigate to="/search/nadac" replace />} />
-            <Route path="*" element={<Navigate to={lastSource ? `/search/${lastSource}` : "/welcome"} replace />} />
+            <Route path="*" element={<Navigate to="/welcome" replace />} />
           </Routes>}
         </Box>}
       </Box>
