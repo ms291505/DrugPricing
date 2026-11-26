@@ -1,7 +1,6 @@
 import sys
 
 import pandas as pd
-
 from config import get_env
 from library.db import get_connection, test_connection
 from library.parsing import NADAC_DATE_FORMAT
@@ -14,6 +13,9 @@ from nadac.update_drug_package import update_drug_package
 
 
 def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
+
+    retrieved: int | None = None
+    inserted: int | None = None
     env = get_env()
 
     if not report_mm_dd_yyyy:
@@ -44,6 +46,7 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
         if not filter_before_insert:
             with timed("NADAC parse"):
                 nadac_prices = parse_nadac(nadac_data)
+                retrieved = len(nadac_prices)
 
         else:
             with timed("NADAC filter loaded as-of dates"):
@@ -67,11 +70,13 @@ def update_nadac(report_mm_dd_yyyy: str, filter_before_insert: bool = True):
                 nadac_prices = parse_nadac(fresh_nadac_data)
 
         with timed("NADAC load"):
-            load_nadac(conn, nadac_prices)
+            inserted = load_nadac(conn, nadac_prices)
         with timed("NADAC update drug packages"):
             update_drug_package(conn)
         with timed("NADAC commit"):
             conn.commit()
+
+        return retrieved, inserted
 
 
 def update_nadac_for_dates(file_dates):

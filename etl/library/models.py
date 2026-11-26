@@ -2,8 +2,6 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, SecretStr
-
 from library.parsing import (
     FDA_DATE_FORMAT,
     NADAC_DATE_FORMAT,
@@ -13,6 +11,7 @@ from library.parsing import (
     str_or_empty,
     str_or_none,
 )
+from pydantic import BaseModel, SecretStr
 
 
 class Environment(BaseModel):
@@ -88,10 +87,13 @@ class NadacPrice(BaseModel):
 
 
 class NadacImport(BaseModel):
-    as_of_date: date
-    source_url: str
-    record_count: int
-    loaded_at: datetime
+    as_of_date: date | None = None
+    source_url: str | None = None
+    record_count: int | None = None
+    inserted_count: int | None = None
+    log_path: str | None = None
+    errors: list[str] = []
+    loaded_at: datetime | None = None
 
 
 class NdcExcludeFlag(str, Enum):
