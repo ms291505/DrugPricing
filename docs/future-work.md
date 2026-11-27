@@ -17,6 +17,23 @@ Matching runs in the client, which has the unit tests and keeps typed text in th
 
 Size: medium. Two PRs (the filters, client only; then the labeler search, after the result cap).
 
+Left out of the plan, to revisit once it ships:
+
+- **"Search this labeler" from a results row**, which turns Help's "Finding a company's
+  products" steps into one click. It needs the row's labeler codes (the product NDC's first
+  segment) and a name for the chip; decide where it lives with the row details drawer idea.
+- **Group the More filters "Labeler in results" list by labeler group**, so Dr. Reddy's is one
+  entry, not one per spelling. The client would need each product's group.
+- **Labeler suggestions narrowed by the other terms** (only the labelers that make Eliquis).
+- **Parent-company aliases** ("Bristol-Myers Squibb" → E.R. Squibb & Sons): the data doesn't
+  hold them, and a hand-kept table would go stale.
+- **Keyboard reach of the Labeler notes' "Learn more".** The link sits in the combo box's popup,
+  which closes when focus leaves the input, so only a pointer can use it. The Help section is
+  still in Help's index.
+- **Response compression.** `fda-products/labelers` is about 720 KB of JSON, 100 KB gzipped,
+  and the server doesn't compress. Unchecked whether the Cloudflare tunnel compresses it; if
+  not, add `AddResponseCompression` (and decide whether search responses should be too).
+
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
@@ -146,9 +163,10 @@ results so stale-price indicators use the correct publication date.
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
   incompatible)`). Move the context and its hook out of the provider's module, as
   `Context/workspaceContexts.ts` does for the workspace, with a null default. Dev-only, small.
-- **`fda-products/advanced-search` could take over the `/search` name** with plain query params
-  instead of `jsonString`. The old `/api/fda-products/search` was deleted with the search result
-  cap, so the name is free.
+- **`fda-products/advanced-search` could take over the `/search` name.** The old
+  `/api/fda-products/search` was deleted with the search result cap, so the name is free. Keep it
+  a POST with a JSON body: search terms stay out of URLs (see "Never record a search term" in
+  AGENTS.md).
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
@@ -292,8 +310,10 @@ workspace tab (see **Linkable search results**). Two consequences for current st
   compares in tenths of a percent (`library/flagNadacPriceChange.ts`); the default
   `NOTABLE_PRICE_CHANGE_PERCENT` of 10 (`library/constants.ts`); and a change from $0, which
   meets every threshold and reads "from $0" (`fromZero` in `library/priceActivity.ts`).
-- **"Popular searches" needs search counts,** which nothing records today. That is a server
-  addition, and a privacy decision about what gets logged.
+- **"Popular searches" needs search counts,** which nothing records today. The server never
+  records a search term (the rule under the server gotchas in AGENTS.md, from
+  [Search privacy](plans/search-privacy.md)), so this needs its own decision: counts only,
+  without the requester's IP.
 
 ### Linkable search results
 

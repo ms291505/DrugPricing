@@ -5,8 +5,8 @@
 Which self-hosted observability options fit this codebase. What's there today:
 
 - **Server** (.NET 10 minimal API, EF Core + Npgsql, `IMemoryCache`): default ASP.NET console
-  logging only, which systemd sends to journald. Two `Console.WriteLine` calls in
-  `server/Endpoints/FdaProductEndpoints.cs:45,49`. `/api/up` returns a constant and never touches
+  logging only, which systemd sends to journald. The server writes nothing about a request to
+  stdout (see "Never record a search term" in `AGENTS.md`). `/api/up` returns a constant and never touches
   the DB. No metrics, no traces, no cache hit rate.
 - **ETL** (Python, weekly cron): `timed()` in `etl/library/timing.py` prints `[timing]` lines to
   the cron log, and `ExitCode` (`etl/library/exit_codes.py`) has meaningful exit codes. Nothing
@@ -57,7 +57,10 @@ In `server/Program.cs`:
   `/api/health`. Leave `/api/up` alone.
 - Optional: a `Meter("DrugPricing.Cache")` counter for hits and misses in the repositories (keys
   are in `Constants/`). It would show that NADAC searches are never cached, a known rough edge.
-- Replace the two `Console.WriteLine` calls with `ILogger`. This removes one known rough edge.
+- **Never record a search term** (AGENTS.md, server gotchas). Set the ASP.NET instrumentation to
+  redact `url.query` explicitly (recent versions do by default), and check that Npgsql spans
+  don't record parameter values. Search terms are in POST bodies, which the instrumentation
+  doesn't record unless asked; don't ask it to.
 
 ### Step 2 — ETL alerting (small code change)
 
@@ -91,8 +94,8 @@ roughly 1–1.5 GB. The weekly ETL peak hasn't been measured.
 3. **Moving it later:** to put the stack on a second Pi, move the compose project and change
    `OTEL_EXPORTER_OTLP_ENDPOINT`. Keep a single Alloy on the app Pi for host metrics and logs.
    A second box also keeps monitoring up when the app Pi is down.
-4. Optional later: GlitchTip for client and server exceptions. Browser error reporting needs the
-   same privacy decision `docs/future-work.md` raises for logging searches.
+4. Optional later: GlitchTip for client and server exceptions. It must strip request bodies and
+   breadcrumbs that carry search criteria, since the server never records a search term.
 
 ### Local dev
 
@@ -110,6 +113,9 @@ Add an optional `otel-lgtm` service (`grafana/otel-lgtm`, ports 3000/4317/4318) 
    - Tempo has a trace per request with an Npgsql child span showing the SQL.
    - Prometheus has `http.server.request.duration` and runtime metrics.
    - Loki has the API logs.
+   - The `nadac-prices/search` and `fda-products/advanced-search` spans and their Loki lines
+     carry no search term: no `url.query`, no request body, and no parameter values in
+     `db.statement`.
 4. `curl :5250/api/health` returns Healthy. With Postgres stopped it returns Unhealthy (503).
 5. Start the server without `OTEL_EXPORTER_OTLP_ENDPOINT` and confirm it starts and serves
    normally, with no exporter errors.

@@ -31,12 +31,16 @@ runs `Database.Migrate()`. Layering: `Endpoints/` → `Services/` → `Data/Repo
 `Data/Configurations/`, entities in `Models/`.
 
 API (`/api`): `up`, `app-init` (NADAC date range; the client uses only that, not the name
-lists), `nadac-prices/{id}`, `nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`,
-`nadac-prices/advanced-search` (stub), `fda-products/advanced-search?jsonString=` (JSON
-`AdvancedFdaSearchRequest` in the query; the FDA page's only search).
+lists), `nadac-prices/{id}`, POST `nadac-prices/search` (JSON `NadacSearchRequest`:
+`ndcDescription`, `ndc`, `minDate`, `maxDate`), `nadac-prices/advanced-search` (stub), POST
+`fda-products/advanced-search` (JSON `AdvancedFdaSearchRequest`; the FDA page's only search),
+`fda-products/labelers` (every labeler group, for the client's Labeler field).
 
 Gotchas:
 
+- **Never record a search term on the server:** not in stdout, logs, traces, or error reports.
+  A drug search can reveal a health condition. Searches are POSTs so their terms stay out of
+  URLs, which proxies, access logs, and tracing record by default; keep new searches that way.
 - **Every search counts its rows first and refuses past `SearchLimits.MaxRows`** with a 422
   `too-many-rows` (`Endpoints/SearchErrors.cs`), before loading anything. The repository runs a
   bounded count (`Take(limit + 1).CountAsync()`) and the load in one `REPEATABLE READ`
@@ -60,6 +64,17 @@ Gotchas:
 - **`DelistedAt` is a soft delete**: the FDA load stamps the rows it touches and delists the
   rest (`etl/fda/tombstone_fda.py`); a row that comes back is un-delisted. Every FDA query must
   filter `DelistedAt == null`.
+- **Labelers are groups, matched in the client.** FDA spells one company many ways (Dr. Reddy's:
+  43 spellings on 4 labeler codes). `ListLabelerRowsAsync` reads one row per spelling and code
+  (cached for `CacheDuration.Reference`); `Services/LabelerGroups.cs` joins rows whose names
+  normalize alike or that share a code (5,128 groups, 2026-11), and `fda-products/labelers`
+  sends them all. The client matches typed text against them in memory (`library/labelers.ts`),
+  so nothing typed leaves the browser. **`LabelerGroups.Normalize` and the client's
+  `normalizeLabeler` mirror each other; change both.** A labeler search sends the picks' codes
+  (`LabelerCodes`, 4 to 6 digits), which the repository matches as `ProductNdc LIKE ANY
+  ('code-%', ...)` in the product query, so the result cap's count includes it. A labeler is
+  the NDC's registrant, not always the parent company: Help's "Finding a company's products"
+  explains it, and no alias table is kept.
 - `NdcExcludeFlag` and `Services/FdaPackageSearchResult.cs` are unused, not gaps to close.
 - Dev needs `server/appsettings.Development.json` (gitignored; copy the `example.` file) with
   `DevClientHost` set. Production reads the `PG*` env vars, and its CORS origins are hardcoded.
@@ -147,15 +162,18 @@ only that explicit handoff changes NADAC's draft and runs the copied terms.
 
 Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
 `PinnedItemsProvider` around just the two `/search` sources, with one `PinnedSection` below
-the active source. Their shared snapshots live in
-`drugpricing.v<VERSION>.search-pins`; `loadSearchPins` merges legacy standalone pins, and
+the active source. Their criteria and shared snapshots live in `sessionStorage` (the
+shared ones under `drugpricing.v<VERSION>.search-pins`), moved there from `localStorage` once by
+`migrateStandaloneSearchState`; `loadSearchPins` merges legacy standalone pins, and
 `saveSearchPins` clears the old copies only after a successful shared save. Workspace
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
 Standalone Search's Add search to workspace action is a borderless button at the right of the
 More filters and Clear filters row, once a search has been run; narrow panels give it its own
-wrapped row. It renders
+wrapped row. A right-aligned caption before it in the same row says Search state is saved for
+this browser tab only; it shows with a search, or alone with pins-only wording after Clear
+search keeps pins, and wraps above the button when the row is narrow. The action renders
 inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
 shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
 dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
@@ -187,9 +205,9 @@ depend on write availability read it. The action checks storage's read-only flag
   (heading, description, full-height fields) and `compact` below (no heading, small fields).
   In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force
   `compact` (`panelLayout`). A new arrangement is a new `SearchPanelLayout`, not a prop that
-  changes wording. *Load* fields (text terms, Dates) go to the server; *refine* fields narrow
+  changes wording. *Load* fields (text terms, FDA's Labeler picks, Dates) go to the server; *refine* fields narrow
   the loaded result in the client, never fetching. **The user never has to know which is
-  which:** only the text terms wait for Search, and every other field, Dates included, applies
+  which:** only the terms (text and Labeler picks) wait for Search, and every other field, Dates included, applies
   at once (typed dates after a short pause).
   Search is disabled while the terms are the search on screen (unless it failed), so it lighting
   up is the hint to press it. **Clear search**, beside it, puts every field back to a new tab's
@@ -273,7 +291,9 @@ depend on write availability read it. The action checks storage's read-only flag
 - **Help** is a catalog (`library/help.ts`; topic IDs are URLs, never rename one) and one
   Markdown article per topic in `src/content/help/`, shown in the modal and at `/help/:topic`.
   A direct `/help` load avoids workspace storage providers. Same-tab Help navigation keeps
-  the existing app and search pages mounted.
+  the existing app and search pages mounted. `openHelp(topic, { section })` opens a topic at one
+  of its `##` headings, whose id is `helpSectionId(heading)`; renaming such a heading breaks
+  the links to it.
 - **Settings** (`library/settings.ts`, `SettingsContext`) hold app-wide preferences most people
   never change (`barStyle`, `colorMode`, `autoPinCharts`), plus per-table column visibility overrides
   (`columnOverrides`) edited from the results footer. They are saved once under
@@ -296,6 +316,9 @@ aren't saved.
   others. Failed writes warn once with a toast.
 - Tab providers load once on mount and save on every change. Blank tabs save nothing. Closing a
   tab or changing its type removes its state. Standalone pages use `STANDALONE_TAB_IDS`.
+- **The workspace is the only search state kept between visits.** Standalone Search state (criteria
+  and shared pins) is in `sessionStorage`, kept until the browser tab closes; Settings and the
+  last Search source stay in `localStorage` because they reveal nothing about a search.
 - **Several windows:** when another window writes a value this one didn't, `watchOtherWindows`
   makes this one read-only and asks for a reload, or pruning would delete the other's tabs.
 - Anything that resets state when data loads undoes a restore. Store restorable state so it
@@ -404,7 +427,9 @@ them running for the author: say they're stopped and how to start them.
 - Keep the NADAC types aligned: `server/Models/NadacPrice.cs`, `etl/library/models.py`,
   `client/src/library/types.ts` + `src/api/types.ts`.
 - Minimum search lengths are duplicated: server `NadacService`/`FdaProductService`, client
-  `library/constants.ts`. Change both.
+  `library/constants.ts`. Change both. So is the labeler code limit: `SearchLimits.MaxLabelerCodes`
+  and `MAX_LABELER_CODES`. An FDA search is valid with a name of the minimum length or at least
+  one labeler, on both sides (`FdaProductEndpoints`, `isValidFdaSearch`).
 - New server logic goes in `Services/`, data access in `Data/Repositories/`, not in endpoints.
 - A repository method that calls `TryGetValue` must also `_cache.Set` through `SetList`
   (`Data/CacheExtensions.cs`), with its own `CacheKeys` key (a shared key serves one list as
@@ -419,9 +444,7 @@ them running for the author: say they're stopped and how to start them.
 Planned work is in [docs/future-work.md](docs/future-work.md). Don't flag its items as new findings; add
 to it rather than fixing them inside unrelated work.
 
-- `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
-  FDA equivalent passes JSON in a query string.
-- Debug logging: `Console.WriteLine` in `FdaProductEndpoints`, `console.log` in `api.ts`.
+- `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET.
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
 - No server tests; client tests cover `library/` only; ETL fetch, load and tombstone are untested.
