@@ -53,6 +53,8 @@ for chart and card design rules.
 - [Browser usability cleanup](plans/browser-usability-cleanup.md) for the remaining
   refactoring and bug fixes from the November 19 review.
 - [Observability](plans/observability.md) for proposed self-hosted monitoring.
+- [Search privacy](plans/search-privacy.md) for keeping Search pages to the session, telling
+  users what the workspace saves, and keeping search terms out of server logs and URLs.
 
 ## Reviews and analysis
 
