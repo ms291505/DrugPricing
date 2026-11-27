@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CONSTANT, SEARCH_QUERY_KEYS } from "../library/constants";
 import { FULL_WINDOW, toDateInput, type DateWindow } from "../library/dates";
 import {
-  fdaFilterOptions, fdaHiddenCounts, fdaShownDates, refineFda, widenToAsOfDates,
+  fdaFilterOptions, fdaHiddenCounts, fdaShownDates, narrowToLabelers, refineFda, widenToAsOfDates,
   type FdaListKey, type HiddenCounts,
 } from "../library/searchCriteria";
 import { fdaProductsToNadacPrices } from "../library/fdaDataToNadacPrices";
@@ -75,7 +75,8 @@ export function useRefinedFdaSearch(): FdaResultView {
     return {
       result, refined,
       products: refined.products,
-      dateWindow: fdaShownDates(result, dates),
+      // Snapped over the products the picks narrow to, as `refineFda` snaps.
+      dateWindow: fdaShownDates(narrowToLabelers(result, criteria.labelers), dates),
       options: fdaFilterOptions(result, criteria, dates),
       loadedPrices: (level: FdaResultDetailLevel) =>
         // Price activity judges packages over the shown dates, so this keeps the page's packages.

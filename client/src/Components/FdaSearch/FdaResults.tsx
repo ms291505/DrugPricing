@@ -71,7 +71,8 @@ export default memo(function FdaResults({ view }: Props) {
         status={compact => <ResultsReport scans={scans} charts={charts} compact={compact} />}
         notice={
           <>
-            <NadacHandoffNotice result={isSuccess ? narrowedData : undefined} dateWindow={dateWindow} loaded={loaded} />
+            <NadacHandoffNotice result={isSuccess ? narrowedData : undefined} dateWindow={dateWindow} loaded={loaded}
+              labelersPicked={criteria.labelers.length > 0} />
             {isTooManyRows(error) && <TooManyRowsNotice message={error.message} />}
             {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
           </>

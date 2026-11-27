@@ -494,9 +494,10 @@ export const fdaShownDates = (result: FdaProductSearchResult, dates: DateWindow)
   snapToAsOfDates(dates, fdaPrices(result));
 
 /**
- * An FDA result as the page shows it: each package's prices clipped to the dates (snapped,
- * `fdaShownDates`), then narrowed
- * by the refine fields. "Without prices" means without prices in these dates. A product whose
+ * An FDA result as the page shows it: narrowed to the Labeler picks first (`narrowToLabelers`),
+ * as a fetch with those picks would have loaded it, then each package's prices clipped to the
+ * dates (snapped, `fdaShownDates`, over the narrowed products, so a reused broad load snaps as a
+ * narrowed fetch does), then narrowed by the refine fields. "Without prices" means without prices in these dates. A product whose
  * packages are all hidden is hidden too.
  *
  * @param dates - the dates the applied criteria asked for (the requested load's)
@@ -507,24 +508,22 @@ export const fdaShownDates = (result: FdaProductSearchResult, dates: DateWindow)
 export function refineFda(
   result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow, activityDates: DateWindow = dates,
 ): FdaProductSearchResult {
-  const shownDates = fdaShownDates(result, dates);
-  const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(result, activityDates);
+  const narrowed = narrowToLabelers(result, criteria.labelers);
+  const shownDates = fdaShownDates(narrowed, dates);
+  const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(narrowed, activityDates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const excludedActivities = new Set(criteria.excludedActivities);
-  const codes = labelerCodes(criteria.labelers);
   const showsProduct = (p: FdaProductDetail) =>
     !criteria.excludedProductNdcs.includes(p.productNdc)
     && !criteria.excludedDosageForms.includes(p.dosageFormName)
     && (criteria.excludedStrengths.length === 0 || !criteria.excludedStrengths.includes(strengthLabel(p)))
-    // The picks, as the server narrows a load by them, for a load that holds more.
-    && matchesLabelerCodes(p.productNdc, codes)
     // A product shows while any of its routes is still included.
     && (p.routeName.length === 0 || p.routeName.some(r => !criteria.excludedRoutes.includes(r)))
     && !criteria.excludedLabelers.includes(p.labelerName)
     && (criteria.includeOtc || !isFdaProductOtc(p.productTypeName));
 
   const products: FdaProductDetail[] = [];
-  for (const product of result.products) {
+  for (const product of narrowed.products) {
     if (!showsProduct(product)) continue;
     const packages = product.fdaPackageDetails
       .map(pkg => refinePackage(pkg, criteria, shownDates, shownActivityDates, excludedUnits, excludedActivities))

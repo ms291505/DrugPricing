@@ -13,19 +13,23 @@ type Props = {
   dateWindow: DateWindow,
   /** The search on screen: its terms become the NADAC search. */
   loaded: FdaLoad,
+  /** Labeler picks narrow the search, so no matches means none from those labelers. */
+  labelersPicked: boolean,
 };
 
 /**
  * Offers standalone NADAC search when no FDA result has prices in the shown dates. Only standalone
  * Search provides `TryNadacContext`, so workspace tabs never show it.
  */
-export default function NadacHandoffNotice({ result, dateWindow, loaded }: Props) {
+export default function NadacHandoffNotice({ result, dateWindow, loaded, labelersPicked }: Props) {
   const onTryNadac = useContext(TryNadacContext);
   if (!onTryNadac || !result || fdaHasPricesInWindow(result, dateWindow)) return null;
   return (
     <Alert severity="info"
       action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
-      {result.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
+      {result.products.length === 0
+        ? labelersPicked ? "No FDA matches for the selected labelers." : "No FDA matches found."
+        : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
     </Alert>
   );
 }

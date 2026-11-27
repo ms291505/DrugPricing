@@ -621,6 +621,20 @@ describe("FDA name searches", () => {
       expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: [{ name: "P", codes: ["0013"] }] }, last)).toBeNull();
     });
 
+    it("snaps the dates over the picked labelers only, as a narrowed fetch does", () => {
+      // The picked labeler's price before the start is two days earlier than the other's.
+      const picked = product("0013-1001", [fdaPackage("0013-1001-01",
+        [nadacPrice("13100101", "2026-01-12"), nadacPrice("13100101", "2026-01-19")])]);
+      const other = product("0025-3000", [fdaPackage("0025-3000-01",
+        [nadacPrice("25300001", "2026-01-14"), nadacPrice("25300001", "2026-01-21")])]);
+      const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: [{ name: "P", codes: ["0013"] }] };
+      const dates = { start: day("2026-01-14"), end: null };
+      const shown = (r: { products: FdaProductDetail[] }) => refineFda(r, criteria, dates).products
+        .flatMap(p => p.fdaPackageDetails.flatMap(pkg => pkg.nadacPrices.map(price => price.asOfDate.toISOString().slice(0, 10))));
+      expect(shown({ products: [picked, other] })).toEqual(shown({ products: [picked] }));
+      expect(shown({ products: [picked] })).toEqual(["2026-01-12", "2026-01-19"]);
+    });
+
     it("shows the same rows filtering a name-only load as the server's narrowed load", () => {
       const result = {
         products: [

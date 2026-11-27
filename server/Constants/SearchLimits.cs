@@ -10,8 +10,9 @@ public static class SearchLimits
   public const int MaxRows = 200_000;
 
   /// <summary>
-  /// The most distinct labeler codes one FDA search may send: ten of the largest labeler groups
-  /// (83 codes, 2026-11). The client mirrors it as <c>MAX_LABELER_CODES</c>.
+  /// The most labeler codes one FDA search may send, duplicates included: ten of the largest
+  /// labeler groups (83 codes, 2026-11). The client mirrors it as <c>MAX_LABELER_CODES</c>,
+  /// counting the distinct codes of its picks, which it sends without duplicates.
   /// </summary>
   public const int MaxLabelerCodes = 100;
 }
