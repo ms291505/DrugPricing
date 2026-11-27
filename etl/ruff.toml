@@ -1,0 +1,3 @@
+# Ruff (run on save by the author's editor). `src` is relative to this file, so the ETL's own
+# packages (library, nadac, fda, config) sort as first-party wherever the editor was opened.
+src = ["."]

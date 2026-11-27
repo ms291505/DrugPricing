@@ -1,5 +1,5 @@
 import HelpButton from "../Help/HelpButton";
-import { cloneElement, useId, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useId, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Box, Typography } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { type ChartPrice, } from "../../library/types.ts";
@@ -133,8 +133,9 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
   const { rows: vizData, rangeNdcs, packageCounts } = useMemo(() => createLineVizData(nadacPrices), [nadacPrices]);
 
   const visiblePrices = useMemo(() => nadacPrices.filter(p => shownNdcs.includes(p.ndc)), [nadacPrices, shownNdcs]);
-  const callouts = useMemo(() => showPriceChanges ? lineChangeCallouts(visiblePrices, seriesKind) : [], [visiblePrices, seriesKind, showPriceChanges]);
-  const eventGroups = useMemo(() => groupPriceEvents(derivePriceEvents(visiblePrices, seriesKind)), [visiblePrices, seriesKind]);
+  const events = useMemo(() => derivePriceEvents(visiblePrices, seriesKind), [visiblePrices, seriesKind]);
+  const callouts = useMemo(() => showPriceChanges ? lineChangeCallouts(visiblePrices, seriesKind, events) : [], [visiblePrices, seriesKind, events, showPriceChanges]);
+  const eventGroups = useMemo(() => groupPriceEvents(events), [events]);
   const descriptionFor = (ndc: string) => nadacPrices.find((price) => price.ndc === ndc)?.ndcDescription ?? "";
 
   const unit = pricingUnitLabel(pricingUnit);
@@ -257,20 +258,21 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
             ? <ReferenceLine x={lock.locked} stroke={chartTheme.textSecondary} strokeDasharray="3 3" />
             : null}
           {showPriceChanges && legacySpanVisible && !callouts.some(c => c.date === changeSpan.end)
-            ? changeCallout(changeSpan, changeColor, xDomain, chartTheme) : null}
+            ? changeCallout(changeSpan, changeColor, xDomain, chartTheme, "legacy", { label: legacyCalloutLabel(changeSpan) })
+            : null}
           {callouts.flatMap(callout => {
             const color = callout.events.every(e => e.change.percentage < 0) ? chartTheme.drop
               : callout.events.every(e => e.change.percentage > 0) ? chartTheme.rise : chartTheme.textSecondary;
             const refs = callout.spans.flatMap((span, i) => changeCallout(span,
               span.direction === "drop" ? chartTheme.drop : chartTheme.rise, xDomain, chartTheme,
-              i === 0 ? callout.label : null).map(ref => cloneElement(ref, { key: `${callout.date}:${i}:${ref.key}` })));
+              `${callout.date}:${i}`, i === 0 ? { label: callout.label } : { hideLabel: true }));
             const markers = callout.markers.map(marker => (
               <ReferenceDot key={`${callout.date}:${marker.ndc}`}
                 x={callout.date} y={marker.price} r={5} fill={color} stroke={chartTheme.paper} />
             ));
             const first = callout.markers[0];
-            return [...refs, ...markers, ...(first ? [cloneElement(changePill(callout.label, callout.date,
-              first.price, color, xDomain, chartTheme), { key: `${callout.date}:product-label` })] : [])];
+            return [...refs, ...markers, ...(first ? [changePill(callout.label, callout.date,
+              first.price, color, xDomain, chartTheme, `${callout.date}:product-label`)] : [])];
           })}
           {bandNdcs.map((ndc) => (
             <Area
@@ -420,6 +422,10 @@ function LineReadout({ date, unit, rows, status, restLabel, onUnlock, colorFor, 
   );
 }
 
+function legacyCalloutLabel({ from, to, label }: ChartChangeSpan): string {
+  return from === undefined || to === undefined ? label : `${formatPriceLabel(from)} → ${formatPriceLabel(to)}`;
+}
+
 /**
  * Calls out a price change on the line: dots at the old and new price, the old price continued
  * as a dashed line, and a "$9.69 → $5.52" pill. An array, since recharts needs reference elements
@@ -430,41 +436,40 @@ function changeCallout(
   color: string,
   xDomain: [number, number],
   chartTheme: ReturnType<typeof useChartTheme>,
-  label?: string | null,
+  keyPrefix: string,
+  options: { label: string } | { hideLabel: true },
 ) {
   const { from, to } = span;
   // Pinned before the prices were stored: mark the date and label the percent.
   if (from === undefined || to === undefined) {
     return [
       <ReferenceLine
-        key="change"
+        key={`${keyPrefix}:change`}
         x={span.end}
         stroke={color}
         strokeDasharray="4 4"
-        label={{ value: span.label, position: "insideTopRight", fill: chartTheme.textPrimary, fontSize: chartTheme.fontSize }}
+        label={"label" in options ? { value: options.label, position: "insideTopRight", fill: chartTheme.textPrimary, fontSize: chartTheme.fontSize } : undefined}
       />,
     ];
   }
 
-  const text = label ?? `${formatPriceLabel(from)} → ${formatPriceLabel(to)}`;
-  const pill = changePill(text, span.end, (from + to) / 2, color, xDomain, chartTheme);
-
+  const label = "label" in options ? options.label : null;
   return [
     <ReferenceLine
-      key="old-price"
+      key={`${keyPrefix}:old-price`}
       segment={[{ x: span.end, y: from }, { x: xDomain[1], y: from }]}
       stroke={chartTheme.textSecondary}
       strokeDasharray="4 4"
     />,
-    <ReferenceDot key="from" x={span.end} y={from} r={4} fill={chartTheme.paper} stroke={chartTheme.textSecondary} strokeWidth={2} />,
-    <ReferenceDot key="to" x={span.end} y={to} r={5} fill={color} stroke={chartTheme.paper} strokeWidth={2} />,
-    ...(label === null ? [] : [pill]),
+    <ReferenceDot key={`${keyPrefix}:from`} x={span.end} y={from} r={4} fill={chartTheme.paper} stroke={chartTheme.textSecondary} strokeWidth={2} />,
+    <ReferenceDot key={`${keyPrefix}:to`} x={span.end} y={to} r={5} fill={color} stroke={chartTheme.paper} strokeWidth={2} />,
+    ...(label !== null ? [changePill(label, span.end, (from + to) / 2, color, xDomain, chartTheme, `${keyPrefix}:callout`)] : []),
   ];
 }
 
 /** A shared per-date label for package spans and product package-event markers. */
 function changePill(text: string, date: number, price: number, color: string,
-  xDomain: [number, number], chartTheme: ReturnType<typeof useChartTheme>) {
+  xDomain: [number, number], chartTheme: ReturnType<typeof useChartTheme>, key: string) {
   // Beside the step on the side with more room, halfway between the two prices.
   const placeLeft = (date - xDomain[0]) / (xDomain[1] - xDomain[0] || 1) > 0.5;
   const pillWidth = text.length * 7 + 16;
@@ -472,7 +477,7 @@ function changePill(text: string, date: number, price: number, color: string,
 
   return (
     <ReferenceDot
-      key="callout"
+      key={key}
       x={date}
       y={price}
       r={0}

@@ -1,6 +1,6 @@
 import { formatDate } from "./dates";
 import { fittedPriceAxis, formatPrice } from "./chartScale";
-import { flagPriceChanges, type PackagePrices } from "./flagNadacPriceChange";
+import { flagPackagePriceChanges, type PackagePrices } from "./flagNadacPriceChange";
 import { pricingUnitLabel, seriesByDate, splitByPricingUnit } from "./prices";
 import { NOTABLE_PRICE_CHANGE_PERCENT, PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import type { ChartPrice, NadacPriceChange } from "./types";
@@ -10,7 +10,7 @@ export const PRICE_ACTIVITY_BAND = 0.05;
 export const PRICE_CHANGE_GROUP_LIMIT = 5;
 /** Package rows a group's listing shows before Show all: one product can have dozens of packages. */
 export const PRICE_CHANGE_PACKAGE_LIMIT = 8;
-const WEEK = 7 * 24 * 60 * 60 * 1000;
+export const WEEK = 7 * 24 * 60 * 60 * 1000;
 const percent = (value: number) => `${Number((Math.abs(value) * 100).toFixed(1))}%`;
 const inBand = (value: number) => Math.round(Math.abs(value) * 1000) / 1000 < PRICE_ACTIVITY_BAND;
 
@@ -43,9 +43,9 @@ export function derivePriceEvents(prices: ChartPrice[], kind: SeriesKind, thresh
       pkg = { seriesNdc: price.ndc, packageNdc, prices: [] };
       packages.set(key, pkg);
     }
-    pkg.prices.push({ ...price, ndc: packageNdc });
+    pkg.prices.push(price);
   }
-  return [...packages.values()].flatMap(pkg => flagPriceChanges([pkg], thresholdPercent).map(({ priceChange }) => ({
+  return [...packages.values()].flatMap(pkg => flagPackagePriceChanges(pkg.prices, pkg.packageNdc, thresholdPercent).map(priceChange => ({
     seriesNdc: pkg.seriesNdc, packageNdc: pkg.packageNdc,
     pricingUnit: pkg.prices[0].pricingUnit, change: priceChange,
   })));
@@ -65,10 +65,8 @@ export function groupPriceEvents(events: PriceEvent[]): PriceEventGroup[] {
   return [...groups.values()].sort((a, b) => b.date - a.date || a.key.localeCompare(b.key));
 }
 
-export function eventDates(change: NadacPriceChange): string {
-  return change.endDate.getTime() - change.startDate.getTime() > WEEK
-    ? `between ${formatDate(change.startDate.getTime())} and ${formatDate(change.endDate.getTime())}`
-    : `on ${formatDate(change.endDate.getTime())}`;
+function eventDates(start: number, end: number): string {
+  return end - start > WEEK ? `between ${formatDate(start)} and ${formatDate(end)}` : `on ${formatDate(end)}`;
 }
 
 /** A change from $0, which has no percent: it is always a rise and meets every threshold. */
@@ -82,15 +80,15 @@ export function priceEventGroupLabel(group: PriceEventGroup): string {
   const percentText = !percentages.length ? "from $0"
     : Math.round(min) === Math.round(max) ? `about ${Math.round(max)}%` : `${min.toFixed(1)}–${max.toFixed(1)}%`;
   const start = Math.min(...group.events.map(e => e.change.startDate.getTime()));
-  const dates = group.date - start > WEEK
-    ? `between ${formatDate(start)} and ${formatDate(group.date)}` : `on ${formatDate(group.date)}`;
+  const dates = eventDates(start, group.date);
   return `${count} ${count === 1 ? "package" : "packages"} ${group.direction === "drop" ? "dropped" : "rose"} ${percentText} ${dates} · per ${pricingUnitLabel(group.pricingUnit)}`;
 }
 
 export function eventLabel(change: NadacPriceChange): string {
-  if (fromZero(change)) return `Rose from $0 to ${formatPrice(change.newPrice)} ${eventDates(change)}`;
+  const dates = eventDates(change.startDate.getTime(), change.endDate.getTime());
+  if (fromZero(change)) return `Rose from $0 to ${formatPrice(change.newPrice)} ${dates}`;
   const delta = Math.abs(change.newPrice - change.oldPrice);
-  return `${change.percentage < 0 ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${eventDates(change)}`;
+  return `${change.percentage < 0 ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${dates}`;
 }
 
 /** A package's change as signed figures for a group's package listing: "−43%", "−$4.17". */
@@ -148,7 +146,7 @@ export function packageActivity(prices: ChartPrice[]): PriceActivity {
     magnitude: Math.abs(events[0].change.newPrice - events[0].change.oldPrice),
     label: eventLabel(events[0].change) + (events.length > 1 ? ` · ${events.length - 1} more` : "") };
   const first = points[0], last = points.at(-1)!;
-  const net = first.price === 0 ? Infinity : (last.price - first.price) / first.price;
+  const net = (last.price - first.price) / first.price;
   if (!inBand(net)) return { ...base, state: "changed", magnitude: range,
     label: `${net < 0 ? "Down" : "Up"} ${percent(net)} (${formatPrice(Math.abs(last.price - first.price))}) over ${Math.max(1, Math.round((last.asOfDate - first.asOfDate) / WEEK))} weeks` };
   const dip = first.price - min, spike = max - first.price;
@@ -209,4 +207,10 @@ export function activitySparklinePath(points: PriceActivity["points"]): string {
     const y = 22 - (p.price - lo) / (hi - lo || 1) * 20;
     return i ? `H${x} V${y}` : `M${x} ${y}`;
   }).join(" ");
+}
+
+/** One change, the same in every list that shows it. Holds no whitespace. */
+export function eventKey(group: PriceEventGroup, event: PriceEvent) {
+  const { startDate, endDate, oldPrice, newPrice } = event.change;
+  return `${group.key}:${event.seriesNdc}:${event.packageNdc}:${startDate.getTime()}:${endDate.getTime()}:${oldPrice}:${newPrice}`;
 }

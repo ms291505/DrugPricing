@@ -23,7 +23,8 @@ const COLUMNS: GridColDef<NadacRow>[] = [
     headerName: "Description",
   },
   activityColumn<NadacRow>(),
-  ...PRICE_COLUMNS.history,
+  PRICE_COLUMNS.latestDate,
+  ...PRICE_COLUMNS.range,
 ];
 
 const getRowId = (row: NadacRow) => row.ndc;
@@ -31,7 +32,7 @@ const getRowId = (row: NadacRow) => row.ndc;
 type Props = {
   nadacPrices: NadacPrice[],
   loading: boolean,
-  dateWindow?: DateWindow,
+  dateWindow: DateWindow,
 }
 
 /** The NADAC search's results: one row per NDC. */

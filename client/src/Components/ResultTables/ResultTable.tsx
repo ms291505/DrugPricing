@@ -1,5 +1,5 @@
 import { useGridApiRef, GridFooter, GridFooterContainer, ColumnsPanelTrigger, Toolbar, ToolbarButton, DataGrid, GRID_CHECKBOX_SELECTION_COL_DEF, GridCellCheckboxRenderer, type GridColDef, type GridInitialState, type GridRenderCellParams, type GridRowId, type GridRowParams, type GridRowSelectionModel } from "@mui/x-data-grid";
-import { Button, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { DATA_GRID_PAGE_SIZES, DEFAULT_DATA_GRID_PAGE_SIZE } from "../../library/constants";
 import AutosizeColumns from "./AutosizeColumns";
@@ -28,7 +28,7 @@ type Props<R extends PricedRow> = {
   /** What a row is, for the checkbox tooltip of a row without prices: "product", "package". */
   rowNoun: string,
   loading: boolean,
-  dateWindow?: DateWindow,
+  dateWindow: DateWindow,
   /** The rows picked for Line and Bar. */
   selection: GridRowSelectionModel,
   onSelectionChange: (selection: GridRowSelectionModel) => void,
@@ -163,7 +163,9 @@ function ResultFooter({ resultTableType, compact }: { resultTableType: ResultTab
   const canReset = Object.keys(columnOverridesFromModel(defaults, visibility)).length > 0;
   return (
     <GridFooterContainer sx={{ minHeight: 44 }}>
-      <Toolbar aria-label="Results columns" style={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, padding: "0 4px", gap: 8 }}>
+      <Toolbar aria-label="Results columns" render={(
+        <Box sx={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, px: 0.5, gap: 1 }} />
+      )}>
         <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary", ...(compact && { minWidth: 0, px: 0.5 }) }} startIcon={<ViewColumnIcon />} />} />}>
           Columns
         </ColumnsPanelTrigger>

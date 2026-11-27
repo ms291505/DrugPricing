@@ -82,7 +82,7 @@ type Props = {
   /** The search's products after the page filter. */
   products: FdaProductDetail[],
   loading: boolean,
-  dateWindow?: DateWindow,
+  dateWindow: DateWindow,
 }
 
 /** The FDA search's results at package level: one row per package. */

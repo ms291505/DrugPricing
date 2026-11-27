@@ -7,6 +7,7 @@ import { fromChartSeries, itemTitle, type ChartItem } from "../../library/explor
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import useNearViewport from "../../hooks/useNearViewport";
 import { barReadoutHeight, lineReadoutHeight } from "../../library/chartReadout";
+import { inWindow } from "../../library/dates";
 import useMobile from "../../hooks/useMobile";
 import LineViz from "../Charts/LineViz";
 import BarViz from "../Charts/BarViz";
@@ -32,11 +33,18 @@ export default memo(function ChartItemBody({ item, priceRanges }: Props) {
   const isMobile = useMobile();
 
   if (!near) {
-    // The readout above the plot reserves its height up front, so it can be counted here. Known
-    // gap: a pinned bar of an averaged product draws a taller dock (its "Average of N packages"
-    // line, 24 px more) than this counts, since the snapshot doesn't say so without a scan.
+    const averagesPackages = item.chartType === "bar" && !isMobile &&
+      item.series.some(({ points }) => {
+        const seen = new Set<number>();
+        for (const [date] of points) {
+          if (!inWindow(date, item.dateWindow)) continue;
+          if (seen.has(date)) return true;
+          seen.add(date);
+        }
+        return false;
+      });
     const readout = item.chartType === "bar"
-      ? barReadoutHeight(isMobile, false)
+      ? barReadoutHeight(isMobile, averagesPackages)
       : lineReadoutHeight(new Set(item.series.map(series => series.ndc)).size, isMobile);
     return (
       // About a drawn line chart's height, so the page shifts little as charts draw: its readout,

@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { Box, Button, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
@@ -18,33 +17,26 @@ import { isStorageReadOnly, type PersistedSearchTab } from "../../library/persis
  * The action is rendered in its standalone source's search panel, inside the source providers.
  * Nothing renders before a search has been run, or while the page is hidden.
  */
-function AddSearchToWorkspace({ state, dates, title, ready, started }: {
-  state: PersistedSearchTab, dates: DateWindow | undefined, title: string, ready: boolean, started: boolean,
+function AddSearchToWorkspace({ state, dates, title, status }: {
+  state: PersistedSearchTab, dates: DateWindow | undefined, title: string, status: "idle" | "pending" | "ready",
 }) {
   const { addSearchTab } = useWorkspaceActions();
   const readOnly = useWorkspaceReadOnly();
   const visible = usePageVisible();
   const navigate = useNavigate();
-  const adding = useRef(false);
-  // Returning to the search permits a deliberate second copy. Two clicks before leaving don't.
-  useEffect(() => { if (visible) adding.current = false; }, [visible]);
   const reason = readOnly ? "Reload to use the workspace changed in another window."
-    : !ready ? "Load a search successfully before adding it to Workspace." : "";
-  if (!visible || !started) return null;
+    : status !== "ready" ? "Load a search successfully before adding it to Workspace." : "";
+  if (!visible || status === "idle") return null;
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
       <Tooltip title={reason || "Copies this search and all pinned charts into a new workspace tab."}>
         <span>
-          <Button type="button" color="inherit" size="small" disabled={!ready || readOnly}
+          <Button type="button" color="inherit" size="small" disabled={status !== "ready" || readOnly}
             onClick={event => {
-              if (adding.current || event.detail > 1 || !dates) return;
-              adding.current = true;
+              if (event.detail > 1 || !dates || isStorageReadOnly()) return;
               const id = addSearchTab(copySearchToWorkspace(state, dates), title);
               if (id) void navigate("/workspace");
-              else {
-                adding.current = false;
-                if (!isStorageReadOnly()) toast.error("Couldn't add the search: browser storage is full or unavailable.");
-              }
+              else toast.error("Couldn't add the search: browser storage is full or unavailable.");
             }}>
             Add search to workspace
           </Button>
@@ -60,7 +52,7 @@ export function AddFdaSearchToWorkspace() {
   const pinnedItems = usePinnedItems();
   return (
     <AddSearchToWorkspace state={{ type: "fda", criteria, detailLevel: fdaResultDetailLevel, pinnedItems }}
-      dates={requested?.dates} title={fdaTabTitle(criteria)} ready={loaded !== null && isSuccess} started={loaded !== null} />
+      dates={requested?.dates} title={fdaTabTitle(criteria)} status={loaded === null ? "idle" : isSuccess ? "ready" : "pending"} />
   );
 }
 
@@ -70,6 +62,6 @@ export function AddNadacSearchToWorkspace() {
   const pinnedItems = usePinnedItems();
   return (
     <AddSearchToWorkspace state={{ type: "nadac", criteria, pinnedItems }}
-      dates={requested?.dates} title={nadacSearchLabel(criteria).toUpperCase()} ready={loaded !== null && isSuccess} started={loaded !== null} />
+      dates={requested?.dates} title={nadacSearchLabel(criteria).toUpperCase()} status={loaded === null ? "idle" : isSuccess ? "ready" : "pending"} />
   );
 }

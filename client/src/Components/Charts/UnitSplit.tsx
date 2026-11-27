@@ -29,7 +29,7 @@ export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, rende
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {isMixed
         ? <Chip
           size="small"

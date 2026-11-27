@@ -30,7 +30,6 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
   const dataBounds = chartDataBounds(item);
   const label = formatWindow(item.dateWindow, dataBounds);
 
-
   return (
     <>
       {label
