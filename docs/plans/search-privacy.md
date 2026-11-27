@@ -139,8 +139,12 @@ Draft the copy in `docs/content/` first and follow the writing style guide. Prop
   learns what the workspace keeps before they rely on it, and the two ways not to keep it:
   "This workspace saves your tabs, searches, and pinned charts in this browser so they're here
   when you come back. Anyone who uses this browser can see them. To start over, use **Clear
-  workspace** in the workspace menu. To keep nothing after you're done, open the app in a
-  private window." Link "Learn more" to the `tabs-and-your-saved-workspace` Help topic.
+  workspace** in the workspace menu. If you use a private window, your browser clears your saved
+  workspace when you close all private windows." Link "Learn more" to the
+  `tabs-and-your-saved-workspace` Help topic. The last sentence says what happens to the
+  workspace instead of telling the user what to do. It's accurate across browsers: Chrome and
+  Firefox share storage between private windows until the last one closes, and Safari clears
+  each private tab as it closes.
   - **Fresh** means the workspace is a single blank tab: a first visit, cleared site data,
     after **Clear workspace**, or after closing every tab. It's derived from the tab list, so
     nothing new is stored. The note goes once a search runs or the tab changes type, and comes
@@ -170,8 +174,9 @@ Draft the copy in `docs/content/` first and follow the writing style guide. Prop
 - **Help, "Tabs and your saved workspace"**: rewrite the storage paragraph to say what's saved
   (search terms, dates, filters, and pinned charts and their prices), where (this browser on
   this device), who can see it (anyone using this browser profile), and how to delete it (close
-  a tab, **Clear workspace**, or clear this site's data). Add that a private window keeps a
-  workspace only until the window closes, for anyone who wants that. In a separate paragraph,
+  a tab, **Clear workspace**, or clear this site's data). Use the same private-window sentence
+  as the fresh-workspace note: "If you use a private window, your browser clears your saved
+  workspace when you close all private windows." In a separate paragraph,
   say what the server gets: each search sends its terms, dates and filters to the server, which
   uses them to find prices and doesn't keep them. Replace the last line about Search pages with
   the session rule. Keep the topic ID.
