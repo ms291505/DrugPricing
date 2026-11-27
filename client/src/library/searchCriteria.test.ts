@@ -379,7 +379,8 @@ describe("the Price activity filter", () => {
   describe("over dates narrower than the load", () => {
     // Over every loaded date the largest change is the rise; over the last two weeks, the drop.
     const narrowing = { products: [product("6", [fdaPackage("6-1", weekly("61", [10, 20, 20, 18]))])] };
-    const lastTwoWeeks = { start: day("2026-01-21"), end: null };
+    // Mid-week: snaps back to the Jan 21 as-of date.
+    const lastTwoWeeks = { start: day("2026-01-24"), end: null };
     const droppedOnly = { ...createFdaCriteria(), excludedActivities: only("dropped") };
     const codes = (refined: { products: FdaProductDetail[] }) =>
       refined.products.flatMap(p => p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode));

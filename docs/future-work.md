@@ -325,6 +325,15 @@ list. Something like `/workspace?new=fda&name=eliquis` or
   creating two.
 - Following the same link twice could focus the existing tab instead of adding a duplicate.
 
+### FDA charts' loaded dates can include packages the table hides
+
+When the dates narrow without a fetch, `loadedPrices` refines over every loaded date, and
+`refinePackage` decides "without prices" and excluded units over that window too. So it keeps a
+package with no prices in the shown dates (Results without prices off), or one whose shown
+prices are all in an excluded unit, when it has other prices elsewhere in the load. At product
+level a pinned chart's dates outside the window then average those packages in. Decide those
+two rules over the shown dates as well, as Price activity already does (`activityDates`).
+
 ### Search results on phones
 
 Consider a row details drawer to show the fields for a single result without horizontal
