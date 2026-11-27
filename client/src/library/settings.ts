@@ -20,7 +20,11 @@ export type TableColumnOverrides = Record<ResultTableType, ColumnVisibilityOverr
 
 // MUI's GRID_CHECKBOX_SELECTION_COL_DEF.field; selection is always visible, never a saved choice.
 export const RESULT_SELECTION_FIELD = "__check__";
-export const DEFAULT_COLUMN_OVERRIDES: TableColumnOverrides = { fdaProduct: {}, fdaPackage: {}, nadac: {} };
+export const DEFAULT_COLUMN_OVERRIDES: TableColumnOverrides = Object.freeze({
+  fdaProduct: Object.freeze({}),
+  fdaPackage: Object.freeze({}),
+  nadac: Object.freeze({}),
+});
 
 // Latest Price Date is hidden: a stale latest price carries a marker with its date instead.
 export const DEFAULT_HIDDEN_COLUMNS: Record<ResultTableType, string[]> = {

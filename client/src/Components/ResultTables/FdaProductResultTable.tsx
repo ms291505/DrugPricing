@@ -36,7 +36,8 @@ const COLUMNS: GridColDef<FdaProductRow>[] = [
     headerName: "Form",
     valueGetter: (_, product) => (product.dosageFormName.replace(", ", ": "))
   },
-  ...PRICE_COLUMNS.history,
+  PRICE_COLUMNS.latestDate,
+  ...PRICE_COLUMNS.range,
   {
     field: "nonProprietaryName",
     headerName: "Generic Name",
@@ -74,7 +75,7 @@ type Props = {
   /** The search's products after the page filter. */
   products: FdaProductDetail[],
   loading: boolean,
-  dateWindow?: DateWindow,
+  dateWindow: DateWindow,
 }
 
 /** The FDA search's results at product level: one row per product. */

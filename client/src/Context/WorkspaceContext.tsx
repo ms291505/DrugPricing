@@ -96,7 +96,6 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
   }, []);
 
   const addSearchTab = useCallback((state: PersistedSearchTab, title: string) => {
-    if (isStorageReadOnly()) return null;
     const tab: WorkspaceTab = { id: crypto.randomUUID(), type: state.type, title };
     // Providers read once on mount: a failed save must never open an empty tab.
     if (!saveTabState(tab.id, state)) return null;

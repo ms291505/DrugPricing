@@ -1,8 +1,9 @@
+import type { SearchSource } from "./types";
 import toast from "react-hot-toast";
 import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel, type LayoutMode } from "./types";
 import { type TabType, type WorkspaceTab } from "./tabType";
 import type {
-  BarValue, ChartChangeSpan, ChartItem, ChartSearchSource, ChartSeriesSnapshot, ExplorerItem, PriceChangeListItem, SeriesKind,
+  BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, PriceChangeListItem, SeriesKind,
 } from "./explorerItems";
 import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
@@ -102,7 +103,7 @@ const isTabType = oneOf<TabType>(["fda", "nadac", "new", "collection"]);
 const isLayoutMode = oneOf<LayoutMode>(["single", "split-2", "split-4"]);
 const isDetailLevel = oneOf<FdaResultDetailLevel>(["product", "package"]);
 const isSeriesKind = oneOf<SeriesKind>(["product", "package", "ndc"]);
-const isChartSearchSource = oneOf<ChartSearchSource>(["fda", "nadac"]);
+const isSearchSource = oneOf<SearchSource>(["fda", "nadac"]);
 
 const isWorkspaceTab = (x: unknown): x is WorkspaceTab =>
   isObject(x) && isString(x.id) && isString(x.title) && isTabType(x.type);
@@ -172,15 +173,11 @@ const validItems = (x: unknown): ExplorerItem[] => Array.isArray(x)
     isStoredExplorerItem(item) || isStoredPriceChangeList(item)).map((item): ExplorerItem => {
     // This field was added after pins existed. Drop only an invalid value; keep the pin and every
     // other field, and leave a missing value unknown rather than inferring it from other state.
-    const source = { ...(item.source as unknown as Record<string, unknown>) };
-    const searchSource = source.searchSource;
-    delete source.searchSource;
-    if (isChartSearchSource(searchSource)) source.searchSource = searchSource;
-    return item.kind === "chart" ? {
-      ...item,
-      source: source as ChartItem["source"],
-      dateWindow: item.dateWindow ?? FULL_WINDOW,
-    } : { ...item, source: source as PriceChangeListItem["source"] };
+    const { searchSource, ...metadata } = item.source;
+    const source = { ...metadata, ...(isSearchSource(searchSource) && { searchSource }) };
+    return item.kind === "chart"
+      ? { ...item, source, dateWindow: item.dateWindow ?? FULL_WINDOW }
+      : { ...item, source };
   })
   : [];
 
@@ -339,10 +336,10 @@ export function watchOtherWindows(onConflict: () => void): () => void {
   return () => window.removeEventListener("storage", handleStorage);
 }
 
-export type SearchSource = "fda" | "nadac";
+export type { SearchSource } from "./types";
 
 export function loadLastSearchSource(): SearchSource | null {
-  return read(LAST_SEARCH_SOURCE_KEY, oneOf<SearchSource>(["fda", "nadac"]));
+  return read(LAST_SEARCH_SOURCE_KEY, isSearchSource);
 }
 
 export function saveLastSearchSource(source: SearchSource): void {
@@ -480,14 +477,17 @@ export function loadSearchPins(): PersistedExplorerState {
   return { pinnedItems: [...new Map(legacy.map(item => [item.id, item])).values()] };
 }
 
+const clearedLegacyPinTabs = new Set<string>();
+
 export function saveSearchPins(pinnedItems: ExplorerItem[]): void {
   // Never erase the legacy copies until the shared snapshots have been saved successfully.
   if (!write(SEARCH_PINS_KEY, { pinnedItems })) return;
   for (const tabId of Object.values(STANDALONE_TAB_IDS)) {
+    if (clearedLegacyPinTabs.has(tabId)) continue;
     const raw = read(tabKey(tabId), isObject);
-    if (raw && Array.isArray(raw.pinnedItems) && raw.pinnedItems.length > 0) {
-      write(tabKey(tabId), { ...raw, pinnedItems: [] });
-    }
+    if (raw && Array.isArray(raw.pinnedItems) && raw.pinnedItems.length > 0 &&
+      !write(tabKey(tabId), { ...raw, pinnedItems: [] })) continue;
+    clearedLegacyPinTabs.add(tabId);
   }
 }
 

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { NadacOfferContext } from "../../Context/searchNavigation";
 import { useNadacSearchContext } from "../../Context/NadacSearchContext.tsx";
 import { useNadacSearch, type NadacResultView } from "../../hooks/useNadacSearch.ts";
@@ -38,23 +38,23 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
   const renameAfterSearch = useRenameAfterSearch();
   const restoreTitleAfterClear = useRestoreTitleAfterClear();
 
-  // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
   const offer = useContext(NadacOfferContext);
-  const [received, setReceived] = useState(offer);
-  const [draft, setDraft] = useState(() => offer
-    ? { ndcDescription: offer.description, ndc: "" }
-    : { ndcDescription: criteria.ndcDescription, ndc: criteria.ndc });
-  if (offer !== received) {
-    setReceived(offer);
-    if (offer) setDraft({ ndcDescription: offer.description, ndc: "" });
-  }
-  // Consume each explicit handoff once. Ordinary source switches don't touch drafts or searches.
+  // A restored tab shows the search it re-ran. Its NDC is the stored (converted) form.
+  const [draft, setDraft] = useState(() => ({
+    ndcDescription: criteria.ndcDescription,
+    ndc: criteria.ndc,
+  }));
   const appliedOffer = useRef<typeof offer>(null);
+  const applyHandoff = useEffectEvent((description: string) => {
+    setDraft({ ndcDescription: description, ndc: "" });
+    if (isValidNadacSearch(description, "")) search({ ndcDescription: description, ndc: "" });
+  });
+  // Only an explicit handoff replaces the draft and runs a search.
   useEffect(() => {
     if (!offer || appliedOffer.current === offer) return;
     appliedOffer.current = offer;
-    if (isValidNadacSearch(offer.description, "")) search({ ndcDescription: offer.description, ndc: "" });
-  }, [offer, search]);
+    applyHandoff(offer.description);
+  }, [offer]);
   const { ndcDescription, ndc } = draft;
   const setNdcDescription = (ndcDescription: string) => setDraft(prev => ({ ...prev, ndcDescription }));
   const setNdc = (ndc: string) => setDraft(prev => ({ ...prev, ndc }));

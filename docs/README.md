@@ -50,8 +50,6 @@ for chart and card design rules.
 
 - [Backlog](future-work.md) for decisions, cleanups, and ideas.
 - [Search autocomplete](plans/autocomplete.md) for name suggestions and spelling corrections.
-- [Browser usability cleanup](plans/browser-usability-cleanup.md) for the remaining
-  refactoring and bug fixes from the November 19 review.
 - [Observability](plans/observability.md) for proposed self-hosted monitoring.
 
 ## Reviews and analysis

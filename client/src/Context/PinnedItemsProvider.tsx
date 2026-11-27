@@ -28,9 +28,6 @@ export const PinnedItemsProvider = ({ children, initial }: ProviderProps) => {
     highlightTimer.current = setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
   }, []);
 
-  const addItem = useCallback((item: ExplorerItem) => {
-    addItems([item]);
-  }, [addItems]);
 
   const updateItem = useCallback((id: string, update: (item: ExplorerItem) => ExplorerItem) => {
     setPinnedItems(prev => prev.map(item => item.id === id ? update(item) : item));
@@ -55,8 +52,8 @@ export const PinnedItemsProvider = ({ children, initial }: ProviderProps) => {
     setPinnedItems(prev => prev.map(item => item.collapsed === collapsed ? item : { ...item, collapsed }));
   }, []);
 
-  const actions = useMemo(() => ({ addItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed }),
-    [addItems, addItem, updateItem, removeItem, moveItem, setAllCollapsed]);
+  const actions = useMemo(() => ({ addItems, updateItem, removeItem, moveItem, setAllCollapsed }),
+    [addItems, updateItem, removeItem, moveItem, setAllCollapsed]);
 
   return (
     <PinActionsContext.Provider value={actions}>

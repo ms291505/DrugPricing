@@ -16,10 +16,9 @@ On a pinned chart you can do the following.
   “2 of 7”. It adds “filtered” when the page’s filters had removed some prices from a charted
   series.
 
-For a pinned **product** chart with saved package identities, select its **Products** chip to see
-the stored package price lines. Select the **Packages** chip to return to product averages. This
-switch changes only the chart view; it keeps the same dates and snapshot. Older product pins may
-not have package identities and can't be switched.
+Select **Show packages** on a pinned product chart to see the stored package price lines.
+**Show product averages** returns to product averages. Both views use the same dates and snapshot.
+The buttons appear when the pin has saved package identities.
 
 A pinned **price change list** keeps the listed packages’ prices and the dates it showed. Use
 its menu to move it, change its width, or remove it. **Chart this change** opens that

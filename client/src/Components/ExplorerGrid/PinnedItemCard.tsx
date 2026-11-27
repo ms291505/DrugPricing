@@ -1,5 +1,5 @@
 import { memo, useId, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
+import { Button, Chip, Grid, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
@@ -77,7 +77,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   const visibleItem = packageView ?? item;
   const title = itemTitle(visibleItem);
   const source = sourceBadge(item.source);
-  const canSwitchLevel = item.kind === "chart" && item.source.seriesKind === "product" && canDrillDownToPackages(item);
+  const canSwitchLevel = item.kind === "chart" && canDrillDownToPackages(item);
 
   const isLineChart = item.kind === "chart" && item.chartType === "line";
   const matched = isScaleMatched(item);
@@ -149,19 +149,10 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
           <Tooltip title={source.detail}>
             <Chip size="small" variant="outlined" label={source.label} />
           </Tooltip>
-          {canSwitchLevel
-            ? <Tooltip title={showPackages ? "Return to product averages" : "Show the stored package price lines"}>
-              <Chip
-                size="small"
-                variant="outlined"
-                clickable
-                component="button"
-                label={formatItemSource(visibleItem.source)}
-                onClick={() => setShowPackages(value => !value)}
-              />
-            </Tooltip>
-            : <Chip size="small" variant="outlined" label={formatItemSource(item.source)} />
-          }
+          <Chip size="small" variant="outlined" label={formatItemSource(visibleItem.source)} />
+          {canSwitchLevel && <Button size="small" sx={{ minHeight: { xs: 44, sm: 24 } }} onClick={() => setShowPackages(value => !value)}>
+            {showPackages ? "Show product averages" : "Show packages"}
+          </Button>}
           {item.kind === "chart"
             ? <PinnedChartDates
               item={item}

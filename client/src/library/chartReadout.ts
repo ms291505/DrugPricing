@@ -50,9 +50,8 @@ export const READOUT_MAX_HEIGHT = { wide: 200, compact: 132 };
 const DOCK_FRAME = 12 + 2;
 const HEADER = 24;
 const GAP = 4;
-const LINE = 20;
+export const READOUT_LINE_HEIGHT_PX = 20;
 /** The height of one text line in a readout, px. */
-export const READOUT_LINE_HEIGHT = LINE;
 
 /**
  * The height a line chart's docked readout reserves for its series, so moving between dates (some
@@ -64,8 +63,8 @@ export const READOUT_LINE_HEIGHT = LINE;
  */
 export function lineReadoutHeight(seriesCount: number, compact: boolean, rangeCount = 0): number {
   const rows = Math.max(seriesCount, 1);
-  const row = compact ? 22 : 2 * LINE;
-  const ranges = compact ? 0 : Math.min(rangeCount, rows) * LINE;
+  const row = compact ? 22 : 2 * READOUT_LINE_HEIGHT_PX;
+  const ranges = compact ? 0 : Math.min(rangeCount, rows) * READOUT_LINE_HEIGHT_PX;
   const max = compact ? READOUT_MAX_HEIGHT.compact : READOUT_MAX_HEIGHT.wide;
   return Math.min(max, DOCK_FRAME + HEADER + GAP + rows * row + (rows - 1) * GAP + ranges);
 }
@@ -85,7 +84,7 @@ export function barReadoutHeight(compact: boolean, averagesPackages: boolean): n
   // Elements stacked under the header (gaps go between them) and their total text lines.
   const elements = compact ? 2 : averagesPackages ? 3 : 2;
   const lines = compact ? 2 : BAR_DESCRIPTION_LINES + (averagesPackages ? 2 : 1);
-  return DOCK_FRAME + HEADER + GAP + lines * LINE + (elements - 1) * GAP;
+  return DOCK_FRAME + HEADER + GAP + lines * READOUT_LINE_HEIGHT_PX + (elements - 1) * GAP;
 }
 
 /** The data row recharts reports as active (`activeTooltipIndex`, a number or numeric string). */

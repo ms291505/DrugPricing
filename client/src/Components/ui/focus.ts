@@ -30,6 +30,16 @@ export const fromKeyboard = (event: { detail: number }) => event.detail === 0;
 export const holdsFocus = (container: Element | null | undefined) =>
   !!container?.contains(document.activeElement);
 
+// Older Safari does not implement checkVisibility. Hidden kept pages can still have rects.
+function isVisible(element: HTMLElement): boolean {
+  if (typeof element.checkVisibility === "function") return element.checkVisibility();
+  if (!element.getClientRects().length) return false;
+  for (let ancestor: HTMLElement | null = element; ancestor; ancestor = ancestor.parentElement) {
+    if (getComputedStyle(ancestor).getPropertyValue("content-visibility") === "hidden") return false;
+  }
+  return true;
+}
+
 /**
  * The first element matching `selector` that is shown, searching outward from `from`: the
  * nearest ancestor that holds one. Hidden pages and tabs (`content-visibility: hidden`) don't
@@ -37,7 +47,7 @@ export const holdsFocus = (container: Element | null | undefined) =>
  */
 export function nearestVisible(from: Element, selector: string): HTMLElement | null {
   for (let scope = from.parentElement; scope; scope = scope.parentElement) {
-    const found = [...scope.querySelectorAll<HTMLElement>(selector)].find(element => element.checkVisibility());
+    const found = [...scope.querySelectorAll<HTMLElement>(selector)].find(isVisible);
     if (found) return found;
   }
   return null;

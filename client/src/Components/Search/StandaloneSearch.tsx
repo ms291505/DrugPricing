@@ -1,14 +1,16 @@
 import { memo } from "react";
 import { StandaloneFdaProvider, StandaloneNadacProvider } from "../../Context/StandaloneSearchProviders";
 import { NadacOfferContext, type NadacOffer } from "../../Context/searchNavigation";
-import { type SearchSource } from "../../library/persist";
 import FdaSearch from "../FdaSearch";
 import NadacSearch from "../NadacSearch";
 import { AddFdaSearchToWorkspace, AddNadacSearchToWorkspace } from "./AddSearchToWorkspace";
 import SearchSourceTabs from "./SearchSourceTabs";
 
 export default memo(function StandaloneSearch({ source, offer }: {
-  source: SearchSource,
+  source: "fda",
+  offer?: never,
+} | {
+  source: "nadac",
   offer: NadacOffer | null,
 }) {
   if (source === "fda") return (
