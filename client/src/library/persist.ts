@@ -145,7 +145,8 @@ let migrated = false;
  * Moves standalone Search state saved in localStorage before it moved to sessionStorage, one
  * key at a time, into this browser tab's session. Runs once per page load, before the first
  * read of that state and before pruning. A legacy key is deleted only once this tab holds a
- * readable session copy, so a failed write leaves it for a later load to retry. Nothing else
+ * readable session copy, so a failed write leaves it for a later load to retry. A legacy value
+ * that can't be read is deleted without a copy: it could never be restored anyway. Nothing else
  * deletes these keys: `pruneStoredState` keeps them.
  *
  * Only the first browser tab to load after the update gets the old Search state; others start
@@ -160,7 +161,9 @@ export function migrateStandaloneSearchState(): void {
       if (legacy === null) continue;
       const session = SESSION.storage();
       // A copy this tab already holds is newer than the legacy value; one it can't read isn't.
-      if (parse(session.getItem(key), isObject) === null) session.setItem(key, legacy);
+      if (parse(legacy, isObject) !== null && parse(session.getItem(key), isObject) === null) {
+        session.setItem(key, legacy);
+      }
       remove(key);
     } catch {
       // Storage is unavailable or full: keep the legacy value for a later load.

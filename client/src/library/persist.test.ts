@@ -620,6 +620,14 @@ describe("standalone Search in this browser tab only", () => {
     expect(appKeys(localStorage)).toEqual([]);
   });
 
+  it("deletes a legacy value it can't read without copying it", () => {
+    localStorage.setItem(legacyKeys()[2], "not JSON");
+    localStorage.setItem(legacyKeys()[0], envelope(["not an object"]));
+    persist.pruneStoredState([]);
+    expect(appKeys(localStorage)).toEqual([]);
+    expect(appKeys(sessionStorage)).toEqual([]);
+  });
+
   it("replaces a session value it can't read with the legacy one", () => {
     sessionStorage.setItem(legacyKeys()[2], "not JSON");
     const legacy = plantLegacy();

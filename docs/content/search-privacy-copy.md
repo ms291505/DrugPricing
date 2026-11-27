@@ -4,6 +4,9 @@ Draft copy for [Search privacy](../plans/search-privacy.md), change 3. It tells 
 app saves, where, who can see it, and how to delete it, at the places they act. Help only
 expands on it. Follows the [writing style guide](../README.md#writing-style).
 
+"Saved for this browser tab only", not "until you close this browser tab": a browser that restores
+a closed tab can restore its session state too, so the copy doesn't promise deletion.
+
 Search terms reach the server with their dates; refine filters apply in the browser, so the copy
 says "terms" (drawer) or "terms and dates" (Help, About), never "filters".
 
@@ -38,12 +41,12 @@ change.
 
 Shown once a search has run:
 
-> This search and its pins last until you close this browser tab unless you add the search to
+> This search and its pins are saved for this browser tab only, unless you add the search to
 > your workspace.
 
 After Clear search, which keeps pins and hides the button, while there are pins:
 
-> These pins last until you close this browser tab.
+> These pins are saved for this browser tab only.
 
 ## Help, "Tabs and your saved workspace"
 
@@ -60,18 +63,18 @@ comes before the list about closing tabs and other windows, and the server parag
 > Each search sends its terms and dates to the server, which uses them to find prices and
 > doesn't keep them.
 >
-> The FDA and NADAC pages under **Search** keep their search and shared pins only until you
-> close the browser tab. To keep a search longer, add it to the workspace.
+> The FDA and NADAC pages under **Search** save their search and shared pins for this browser
+> tab only. To keep a search longer, add it to the workspace.
 
 ## Help, "Searching"
 
-> - The FDA and NADAC pages under **Search** keep your search and its pins until you close the
->   browser tab, unless you choose **Add search to workspace**.
+> - The FDA and NADAC pages under **Search** save your search and its pins for this browser tab
+>   only, unless you choose **Add search to workspace**.
 
 ## About, "Privacy"
 
 > DrugPricing has no accounts. Your workspace, with its tabs, searches, and pinned charts, is
 > saved in this browser on this device, along with your settings, while a search on the FDA or
-> NADAC page under Search lasts only until you close the browser tab. Each search sends its
+> NADAC page under Search is saved for this browser tab only. Each search sends its
 > terms and dates to the server only to find prices, and the server doesn't keep them.
 > [Tabs and your saved workspace] explains what's saved and how to delete it.

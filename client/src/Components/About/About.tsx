@@ -90,8 +90,8 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Privacy</Typography>
       <p>
         DrugPricing has no accounts. Your workspace, with its tabs, searches, and pinned charts, is saved in this
-        browser on this device, along with your settings, while a search on the FDA or NADAC page under Search lasts
-        only until you close the browser tab. Each search sends its terms and dates to the server only to find prices,
+        browser on this device, along with your settings, while a search on the FDA or NADAC page under Search is saved
+        for this browser tab only. Each search sends its terms and dates to the server only to find prices,
         and the server doesn’t keep them.{" "}
         <Link component={RouterLink} to="/help/tabs-and-your-saved-workspace">Tabs and your saved workspace</Link>{" "}
         explains what’s saved and how to delete it.

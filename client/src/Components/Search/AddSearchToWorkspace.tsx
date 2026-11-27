@@ -39,8 +39,8 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: 1, minWidth: 0 }}>
       <Typography variant="caption" color="text.secondary" sx={{ flex: "1 1 16em", minWidth: 0, textAlign: "right" }}>
         {status === "idle"
-          ? "These pins last until you close this browser tab."
-          : "This search and its pins last until you close this browser tab unless you add the search to your workspace."}
+          ? "These pins are saved for this browser tab only."
+          : "This search and its pins are saved for this browser tab only, unless you add the search to your workspace."}
       </Typography>
       {/* `hidden` text is still read through aria-describedby, and only there. The tooltip
           describes its wrapper only while open (`describeChild`), so nothing is read twice. */}

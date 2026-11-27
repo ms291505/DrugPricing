@@ -159,8 +159,8 @@ the workspace.
 
 Standalone Search's Add search to workspace action is a borderless button at the right of the
 More filters and Clear filters row, once a search has been run; narrow panels give it its own
-wrapped row. A right-aligned caption before it in the same row says Search state lasts only
-until the browser tab closes; it shows with a search, or alone with pins-only wording after Clear
+wrapped row. A right-aligned caption before it in the same row says Search state is saved for
+this browser tab only; it shows with a search, or alone with pins-only wording after Clear
 search keeps pins, and wraps above the button when the row is narrow. The action renders
 inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
 shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
