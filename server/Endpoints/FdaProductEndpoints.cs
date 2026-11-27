@@ -42,11 +42,7 @@ public static class FdaProductEndpoints
     [FromServices] FdaProductService fdaProductService
   )
   {
-    Console.WriteLine(jsonString);
-
     var request = JsonSerializer.Deserialize<AdvancedFdaSearchRequest>(jsonString, WebJsonOptions);
-
-    Console.WriteLine(request);
 
     if (request is null)
       return TypedResults.BadRequest(new { message = BadAdvancedSearchRequestJson });

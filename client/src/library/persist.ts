@@ -19,6 +19,12 @@ import { readColumnOverrides, DEFAULT_SETTINGS, type AppSettings, type BarStyle,
  * Restored search tabs re-run their search (system items regenerate from fresh data); pinned
  * items come back from their stored snapshots.
  *
+ * The standalone Search pages' criteria and shared pins go to sessionStorage instead: a search
+ * there lasts until the browser tab closes, and the workspace is the only thing kept between
+ * visits. A search term can reveal a health condition, so it isn't kept for the next person who
+ * uses this browser unless the user chose to keep it. Settings and the last Search source stay
+ * in localStorage: they reveal nothing about what anyone searched for.
+ *
  * Everything here is best effort: storage can be unavailable (private windows, blocked site
  * data) or full. Reads fall back to defaults, writes report once and carry on. Every key and
  * payload carries VERSION; bump it when a stored shape changes incompatibly. Old data is then
@@ -41,21 +47,52 @@ export const tabKey = (tabId: string) => TAB_KEY_PREFIX + tabId;
 
 /** Tab ids for the standalone /search/fda and /search/nadac pages, which are not workspace tabs. */
 export const STANDALONE_TAB_IDS = { fda: "page-fda", nadac: "page-nadac" } as const;
+const STANDALONE_IDS: readonly string[] = Object.values(STANDALONE_TAB_IDS);
+
+/** The keys whose values live in sessionStorage. They were in localStorage before 2026-11. */
+const SESSION_KEYS: readonly string[] = [...STANDALONE_IDS.map(tabKey), SEARCH_PINS_KEY];
 
 /** How every stored value is wrapped. */
 export type Envelope<T> = { version: number, data: T };
 
-let warnedWriteFailure = false;
+/**
+ * Where a value is stored. `storage` is a getter because reading `localStorage` or
+ * `sessionStorage` itself throws when site data is blocked; it is only called inside a `try`.
+ * Any `Storage` will do, so a later choice of storage per workspace needs no new plumbing.
+ */
+export type StorageArea = {
+  storage: () => Storage,
+  /** Other windows share it, so their changes conflict with this window's (`watchOtherWindows`). */
+  shared: boolean,
+  /** Shown once per area when a write fails. */
+  writeFailure: string,
+};
 
-// What this window last wrote per key, to tell another window's writes from our own.
+const LOCAL: StorageArea = {
+  storage: () => localStorage,
+  shared: true,
+  writeFailure: "Couldn't save your workspace: browser storage is full or unavailable.",
+};
+
+// One browser tab's own storage: another window can neither see nor change it.
+const SESSION: StorageArea = {
+  storage: () => sessionStorage,
+  shared: false,
+  writeFailure: "Couldn't save this search in this tab: browser storage is full or unavailable.",
+};
+
+const warnedWriteFailure = new Set<StorageArea>();
+
+// What this window last wrote per localStorage key, to tell another window's writes from our own.
 const lastWritten = new Map<string, string | null>();
-// Set once another window has changed stored data: from then on this window only reads.
+// Set once another window has changed stored data: from then on this window only writes to
+// storage no other window shares.
 let readOnly = false;
 
-function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
+/** Whether `raw` is a stored envelope of this version whose data passes `isValid`. */
+function parse<T>(raw: string | null, isValid: (data: unknown) => data is T): T | null {
+  if (raw === null) return null;
   try {
-    const raw = localStorage.getItem(key);
-    if (raw === null) return null;
     const envelope = JSON.parse(raw) as Envelope<unknown>;
     if (envelope?.version !== VERSION || !isValid(envelope.data)) return null;
     return envelope.data;
@@ -64,30 +101,70 @@ function read<T>(key: string, isValid: (data: unknown) => data is T): T | null {
   }
 }
 
-function write<T>(key: string, data: T): boolean {
-  if (readOnly) return false;
+function read<T>(key: string, isValid: (data: unknown) => data is T, area = LOCAL): T | null {
+  try {
+    return parse(area.storage().getItem(key), isValid);
+  } catch {
+    return null;
+  }
+}
+
+function write<T>(key: string, data: T, area = LOCAL): boolean {
+  if (readOnly && area.shared) return false;
   try {
     const value = JSON.stringify({ version: VERSION, data } satisfies Envelope<T>);
-    localStorage.setItem(key, value);
-    lastWritten.set(key, value);
+    area.storage().setItem(key, value);
+    if (area.shared) lastWritten.set(key, value);
     return true;
   } catch (error) {
-    console.warn("Could not save to localStorage:", error);
-    if (!warnedWriteFailure) {
-      warnedWriteFailure = true;
-      toast.error("Couldn't save your workspace: browser storage is full or unavailable.");
+    console.warn("Could not save to browser storage:", error);
+    if (!warnedWriteFailure.has(area)) {
+      warnedWriteFailure.add(area);
+      toast.error(area.writeFailure);
     }
     return false;
   }
 }
 
-function remove(key: string): void {
-  if (readOnly) return;
+function remove(key: string, area = LOCAL): void {
+  if (readOnly && area.shared) return;
   try {
-    localStorage.removeItem(key);
-    lastWritten.set(key, null);
+    area.storage().removeItem(key);
+    if (area.shared) lastWritten.set(key, null);
   } catch {
     // Nothing to do: storage is unavailable.
+  }
+}
+
+/** Standalone Search state is kept for this browser tab only; everything else is kept here. */
+const areaForTab = (tabId: string) => STANDALONE_IDS.includes(tabId) ? SESSION : LOCAL;
+
+let migrated = false;
+
+/**
+ * Moves standalone Search state saved in localStorage before it moved to sessionStorage, one
+ * key at a time, into this browser tab's session. Runs once per page load, before the first
+ * read of that state and before pruning. A legacy key is deleted only once this tab holds a
+ * readable session copy, so a failed write leaves it for a later load to retry. Nothing else
+ * deletes these keys: `pruneStoredState` keeps them.
+ *
+ * Only the first browser tab to load after the update gets the old Search state; others start
+ * empty, like any new browser tab.
+ */
+export function migrateStandaloneSearchState(): void {
+  if (migrated) return;
+  migrated = true;
+  for (const key of SESSION_KEYS) {
+    try {
+      const legacy = LOCAL.storage().getItem(key);
+      if (legacy === null) continue;
+      const session = SESSION.storage();
+      // A copy this tab already holds is newer than the legacy value; one it can't read isn't.
+      if (parse(session.getItem(key), isObject) === null) session.setItem(key, legacy);
+      remove(key);
+    } catch {
+      // Storage is unavailable or full: keep the legacy value for a later load.
+    }
   }
 }
 
@@ -303,12 +380,14 @@ export function saveWorkspace(workspace: PersistedWorkspace): void {
  * workspace, and anything stored under an older VERSION's prefix.
  */
 export function pruneStoredState(keepTabIds: string[]): void {
-  const keep = new Set([...keepTabIds, ...Object.values(STANDALONE_TAB_IDS)].map(tabKey));
+  migrateStandaloneSearchState();
+  // Legacy standalone keys are kept: only the migration deletes them, once it has moved them.
+  const keep = new Set([...keepTabIds, ...STANDALONE_IDS].map(tabKey));
   try {
     const stale = Object.keys(localStorage).filter(key =>
       key.startsWith(APP_PREFIX)
       && (!key.startsWith(PREFIX + ".") || (key.startsWith(TAB_KEY_PREFIX) && !keep.has(key))));
-    stale.forEach(remove);
+    stale.forEach(key => remove(key));
   } catch {
     // Nothing to do: storage is unavailable.
   }
@@ -328,6 +407,9 @@ export function watchOtherWindows(onConflict: () => void): () => void {
     if (event.key !== null && !event.key.startsWith(PREFIX + ".")) return;
     // Settings and the last navigation source can be shared without endangering tab state.
     if (event.key === SETTINGS_KEY || event.key === LAST_SEARCH_SOURCE_KEY) return;
+    // This window keeps standalone Search state in sessionStorage, so another window migrating
+    // its legacy copy (or an older version writing it) changes nothing this window holds.
+    if (event.key !== null && SESSION_KEYS.includes(event.key)) return;
     if (event.key !== null && lastWritten.has(event.key) && lastWritten.get(event.key) === event.newValue) return;
     readOnly = true;
     onConflict();
@@ -426,7 +508,7 @@ function loadExplorerState(raw: Record<string, unknown>): PersistedExplorerState
 }
 
 function readTab(tabId: string, type: PersistedTab["type"]): Record<string, unknown> | null {
-  const raw = read(tabKey(tabId), isObject);
+  const raw = readTabRaw(tabId);
   return raw && raw.type === type ? raw : null;
 }
 
@@ -460,17 +542,27 @@ export function loadCollectionTabState(tabId: string): PersistedCollectionTab | 
   };
 }
 
+/** A tab's stored payload, unvalidated, from wherever that tab's state is kept. */
+function readTabRaw(tabId: string): Record<string, unknown> | null {
+  const area = areaForTab(tabId);
+  if (area === SESSION) migrateStandaloneSearchState();
+  return read(tabKey(tabId), isObject, area);
+}
+
+const writeTab = (tabId: string, data: unknown) => write(tabKey(tabId), data, areaForTab(tabId));
+
 export function saveTabState(tabId: string, state: PersistedTab): boolean {
-  return write(tabKey(tabId), state);
+  return writeTab(tabId, state);
 }
 
 export function removeTabState(tabId: string): void {
-  remove(tabKey(tabId));
+  remove(tabKey(tabId), areaForTab(tabId));
 }
 
 /** Standalone searches share pins; workspace tabs continue to own theirs individually. */
 export function loadSearchPins(): PersistedExplorerState {
-  const shared = read(SEARCH_PINS_KEY, isObject);
+  migrateStandaloneSearchState();
+  const shared = read(SEARCH_PINS_KEY, isObject, SESSION);
   if (shared && Array.isArray(shared.pinnedItems)) return loadExplorerState(shared);
   const legacy = [loadFdaTabState(STANDALONE_TAB_IDS.fda), loadNadacTabState(STANDALONE_TAB_IDS.nadac)]
     .flatMap(state => state?.pinnedItems ?? []);
@@ -481,12 +573,12 @@ const clearedLegacyPinTabs = new Set<string>();
 
 export function saveSearchPins(pinnedItems: ExplorerItem[]): void {
   // Never erase the legacy copies until the shared snapshots have been saved successfully.
-  if (!write(SEARCH_PINS_KEY, { pinnedItems })) return;
-  for (const tabId of Object.values(STANDALONE_TAB_IDS)) {
+  if (!write(SEARCH_PINS_KEY, { pinnedItems }, SESSION)) return;
+  for (const tabId of STANDALONE_IDS) {
     if (clearedLegacyPinTabs.has(tabId)) continue;
-    const raw = read(tabKey(tabId), isObject);
+    const raw = readTabRaw(tabId);
     if (raw && Array.isArray(raw.pinnedItems) && raw.pinnedItems.length > 0 &&
-      !write(tabKey(tabId), { ...raw, pinnedItems: [] })) continue;
+      !writeTab(tabId, { ...raw, pinnedItems: [] })) continue;
     clearedLegacyPinTabs.add(tabId);
   }
 }
@@ -494,7 +586,7 @@ export function saveSearchPins(pinnedItems: ExplorerItem[]): void {
 /** Save criteria without copying the shared pins back into a source's legacy storage slot. */
 export function saveStandaloneSearch(state: Omit<PersistedFdaTab, "pinnedItems"> | Omit<PersistedNadacTab, "pinnedItems">): void {
   const tabId = STANDALONE_TAB_IDS[state.type];
-  const raw = read(tabKey(tabId), isObject);
+  const raw = readTabRaw(tabId);
   // Preserve any unmigrated snapshots if the shared save failed (e.g. browser storage is full).
-  write(tabKey(tabId), { ...state, pinnedItems: validItems(raw?.pinnedItems) });
+  writeTab(tabId, { ...state, pinnedItems: validItems(raw?.pinnedItems) });
 }

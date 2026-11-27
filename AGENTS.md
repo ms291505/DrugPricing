@@ -139,15 +139,18 @@ only that explicit handoff changes NADAC's draft and runs the copied terms.
 
 Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
 `PinnedItemsProvider` around just the two `/search` sources, with one `PinnedSection` below
-the active source. Their shared snapshots live in
-`drugpricing.v<VERSION>.search-pins`; `loadSearchPins` merges legacy standalone pins, and
+the active source. Their criteria and shared snapshots live in `sessionStorage` (the
+shared ones under `drugpricing.v<VERSION>.search-pins`), moved there from `localStorage` once by
+`migrateStandaloneSearchState`; `loadSearchPins` merges legacy standalone pins, and
 `saveSearchPins` clears the old copies only after a successful shared save. Workspace
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
 Standalone Search's Add search to workspace action is a borderless button at the right of the
 More filters and Clear filters row, once a search has been run; narrow panels give it its own
-wrapped row. It renders
+wrapped row. A right-aligned caption before it in the same row says Search state lasts only
+until the browser tab closes; it shows with a search, or alone with pins-only wording after Clear
+search keeps pins, and wraps above the button when the row is narrow. The action renders
 inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
 shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
 dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
@@ -402,7 +405,7 @@ to it rather than fixing them inside unrelated work.
 
 - `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
   FDA equivalent passes JSON in a query string.
-- Debug logging: `Console.WriteLine` in `FdaProductEndpoints`, `console.log` in `api.ts`.
+- Debug logging: `console.log` in `api.ts`.
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
 - `NadacService.ValidateNdc` is never called: `ndc=1` returns 47,072 rows for one week.
