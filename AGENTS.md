@@ -400,22 +400,35 @@ with its own pair of ports, set in `.claude/launch.json` without changing tracke
 | `worktree2` | 5175 | 5252 |
 | `worktree3` | 5176 | 5253 |
 
+`preview_start` reads the main checkout's `launch.json` and runs each config from the main
+checkout, even after the session's working directory moves into a worktree. So a slot's
+configs set `cwd` to `.claude/slots/worktree<N>`, a gitignored symlink in the main checkout to
+the worktree that holds the slot. Without the link they fail with `ENOENT`; before the link
+existed, they started cleanly on the main checkout's code and looked like success.
+
 1. Base the worktree on `dev` (`git worktree add -b <branch> .claude/worktrees/<name> dev`);
    `EnterWorktree` with a `name` branches from `origin/main`.
 2. Copy the gitignored server settings without reading them, `cp -n
    <main>/server/appsettings.Development.json server/`, and run `npm ci` in `client/`.
 3. Pick the first slot whose client and API ports are both free (`lsof -nP -iTCP:<port>
-   -sTCP:LISTEN` prints nothing), and use that slot's two configs only: `worktree<N>-server`
-   and `worktree<N>-client`. The server gets its `DevClientHost` (the slot's client origin)
-   from an environment variable, which beats the JSON file; the client gets its
-   `VITE_API_URL` the same way and fails rather than moves if its port is taken
-   (`--strictPort`). If a server fails to bind because another agent took the slot first,
-   stop what you started and use the next slot. Past three worktrees, add a slot to
-   `launch.json` in the same pattern.
-4. If neither server starts (no output and no port after a minute), one possible cause is a
+   -sTCP:LISTEN` prints nothing) and claim it from the worktree's root: `mkdir -p
+   <main>/.claude/slots && ln -s "$PWD" <main>/.claude/slots/worktree<N>`.
+   The `ln -s` fails if the link exists: another agent holds the slot, so try the next one. A
+   link whose ports are both free is left over; replace it with `ln -sfn`. Then use that
+   slot's two configs only: `worktree<N>-server` and `worktree<N>-client`. The server gets its
+   `DevClientHost` (the slot's client origin) from an environment variable, which beats the
+   JSON file; the client gets its `VITE_API_URL` the same way and fails rather than moves if
+   its port is taken (`--strictPort`). If a server fails to bind because another agent took
+   the slot first, stop what you started and use the next slot. Past three worktrees, add a
+   slot to `launch.json` in the same pattern.
+4. **Check that each server runs your worktree's code** before trusting a result: `lsof -a -p
+   <pid> -d cwd`, with the pid from `lsof -nP -iTCP:<port> -sTCP:LISTEN -t`, prints
+   `.claude/worktrees/<name>/client` or `.../server`. For the client, a line only your branch
+   has also shows in the served source: `fetch("/src/<file>").then(r => r.text())` in the page.
+5. If neither server starts (no output and no port after a minute), one possible cause is a
    macOS permission prompt for the desktop app's launcher: ask the author to check. Otherwise,
-   or meanwhile, run the same two commands in the background from the shell and read their
-   output.
+   or meanwhile, run the same two commands in the background from the shell, from the
+   worktree's root, and read their output.
 
 Routine checks share the `drug_dev` database. The worktree API runs `Database.Migrate()` on
 start, so a branch that adds a migration needs its own database: ask the author for one and
@@ -428,7 +441,8 @@ session: they hold the slot's ports, a database connection and a build watcher, 
 worktree may need the slot. Stop only what this session started: `preview_stop` with the ids
 `preview_start` returned, or the background shell jobs you ran. Never kill by port: a
 listener on your slot may be another worktree's healthy server. Then check with `lsof` that
-the slot's ports are free. Start them again if a later change needs another look. Never leave
+the slot's ports are free. Start them again if a later change needs another look, and remove
+your slot link (`rm <main>/.claude/slots/worktree<N>`) once you're done with the slot. Never leave
 them running for the author: say they're stopped and how to start them.
 
 ## Conventions
