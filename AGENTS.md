@@ -403,8 +403,8 @@ with its own pair of ports, set in `.claude/launch.json` without changing tracke
 `preview_start` reads the main checkout's `launch.json` and runs each config from the main
 checkout, even after the session's working directory moves into a worktree. So a slot's
 configs set `cwd` to `.claude/slots/worktree<N>`, a gitignored symlink in the main checkout to
-the worktree that holds the slot. Without the link they fail with `ENOENT`; before the link
-existed, they started cleanly on the main checkout's code and looked like success.
+the worktree that holds the slot. Without the link they fail with `ENOENT`; before these configs set
+`cwd`, they started cleanly on the main checkout's code and looked like success.
 
 1. Base the worktree on `dev` (`git worktree add -b <branch> .claude/worktrees/<name> dev`);
    `EnterWorktree` with a `name` branches from `origin/main`.
@@ -412,9 +412,13 @@ existed, they started cleanly on the main checkout's code and looked like succes
    <main>/server/appsettings.Development.json server/`, and run `npm ci` in `client/`.
 3. Pick the first slot whose client and API ports are both free (`lsof -nP -iTCP:<port>
    -sTCP:LISTEN` prints nothing) and claim it from the worktree's root: `mkdir -p
-   <main>/.claude/slots && ln -s "$PWD" <main>/.claude/slots/worktree<N>`.
-   The `ln -s` fails if the link exists: another agent holds the slot, so try the next one. A
-   link whose ports are both free is left over; replace it with `ln -sfn`. Then use that
+   <main>/.claude/slots && ln -sn "$PWD" <main>/.claude/slots/worktree<N>`. Keep the `-n`:
+   without it, `ln` follows an existing link into the other worktree, leaves a stray link
+   there and succeeds, while the slot still points at the other worktree. With it, the claim
+   fails if the link exists: another agent holds the slot, so try the next one. Free ports
+   don't make a link stale (its owner may be starting or restarting its servers), so never
+   replace another worktree's link. Remove it only when its target is gone (`test -d
+   "$(readlink <link>)"` fails); if all three slots are held, ask the author. Then use that
    slot's two configs only: `worktree<N>-server` and `worktree<N>-client`. The server gets its
    `DevClientHost` (the slot's client origin) from an environment variable, which beats the
    JSON file; the client gets its `VITE_API_URL` the same way and fails rather than moves if
