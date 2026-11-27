@@ -177,10 +177,18 @@ function sameTerms<T extends { dates: DateWindow }>(a: T, b: T): boolean {
 /**
  * The "narrowing doesn't fetch" rule: keeps what is loaded when the terms are the same and its
  * dates cover the requested ones, so the client clips to the new dates instead of fetching.
- * Anything else (new terms, or dates reaching outside what is loaded) is a new load.
+ * Anything else (new terms, or dates reaching outside what is loaded) is a new load, and so is
+ * any request after the server refused `loaded` as too large (`loadedRefused`, `isTooManyRows`):
+ * shortening the Dates is the fix its notice suggests.
  */
-export function nextLoad<T extends { dates: DateWindow }>(loaded: T | null, requested: T | null): T | null {
+export function nextLoad<T extends { dates: DateWindow }>(
+  loaded: T | null,
+  requested: T | null,
+  loadedRefused = false,
+): T | null {
   if (loaded === null || requested === null) return requested;
+  // A load the server refused as too large holds nothing, so shorter Dates must fetch.
+  if (loadedRefused) return requested;
   return sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates) ? loaded : requested;
 }
 

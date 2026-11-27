@@ -10,7 +10,7 @@ public static class NadacPriceEndpoints
   private const double TrigramsSimilarityThreshold = 0.3;
   private const string NoSearchParamsErrorMessage = "No search parameters were provided.";
   private const string InvalidNdcErrorMessage =
-    "An NDC search needs at least 5 digits, not counting leading zeros.";
+    "An NDC search needs 5 to 11 digits, not counting leading zeros.";
 
   public static RouteGroupBuilder MapNadacEndpoints(this RouteGroupBuilder api)
   {

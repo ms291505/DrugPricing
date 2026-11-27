@@ -45,8 +45,9 @@ What's true today:
 
 The limit is a server constant, `SearchLimits.MaxRows` in `server/Constants/`, set to 200,000
 rows: about 100 MB of JSON. It's set high on purpose, as a starting value. The 30 ms count
-below measures only the refusal, so before the cap ships, near-limit searches on the Pi and a
-real phone decide whether 200,000 stays (see "Near-limit check" under Verification). The server
+below measures only the refusal, so near-limit searches on the Pi and a real phone, run on
+production right after the deploy, decide whether 200,000 stays (see "Near-limit check" under
+Verification). The server
 sends the number in its refusal, so the client doesn't copy it.
 
 A row is a NADAC price row. An FDA search also counts each package as a row, since packages
@@ -95,7 +96,7 @@ The server answers `422 Unprocessable Content` with:
 ```json
 {
   "code": "too-many-rows",
-  "message": "This search matches more than 200,000 prices, too many to show. Make the search terms more specific or shorten the Dates.",
+  "message": "This search matches more than 200,000 results, too many to show. Make the search terms more specific or shorten the Dates.",
   "limit": 200000
 }
 ```
@@ -137,7 +138,7 @@ is docs.
 - `NadacService.ValidateNdc` checks the normalized value: 5 to 11 ASCII digits (11 is the
   longest an NDC can be).
 - `GetWithSearch`: an `ndc` that's given but invalid returns 400 with a readable `message`
-  ("An NDC search needs at least 5 digits, not counting leading zeros."), and isn't dropped. A
+  ("An NDC search needs 5 to 11 digits, not counting leading zeros."), and isn't dropped. A
   valid one is searched in its normalized form, so `00003089321` finds `3089321`.
   The description keeps today's behavior; the backlog item "Block searches for generic terms
   like "tablet"" changes it to match.
@@ -244,9 +245,8 @@ Against the local API on a worktree slot, using `drug_dev`:
 
 ### Near-limit check
 
-This sets the starting cap, and it has to pass before the cap ships to `main`. Today's
-production API has no cap, so these searches already run there in full, and the check needs no
-deploy. It can run before or during implementation.
+This sets the starting cap. There's no test environment a real phone can reach, so Mike runs it
+on production right after the cap ships to `main`.
 
 - **Searches:** NADAC "capsule" with the default dates (the last 12 months, 169,380 rows in
   `drug_dev`) and the FDA generic name "acetaminophen" with All dates (about 120,000 rows).
@@ -259,8 +259,8 @@ deploy. It can run before or during implementation.
 - **On a real phone:** run each search on the production site. It passes if the results table
   pages and sorts, the Line chart draws, and the page doesn't reload or stop responding. The
   Simulator doesn't count here, because it runs with the Mac's memory.
-- **If either fails:** lower `SearchLimits.MaxRows` to a size that passes, with the same
-  checks, and update the plan's table and the Help copy to the new number. 100,000 is the next
+- **If either fails:** lower `SearchLimits.MaxRows`, update the Help copy to the new number,
+  and redeploy, then run the same checks again. 100,000 is the next
   value to try: it still allows NADAC "metformin" and "acetaminophen" over all dates.
 
 ## Not in this plan

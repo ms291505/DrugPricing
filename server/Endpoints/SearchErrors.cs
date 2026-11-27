@@ -19,7 +19,7 @@ public static class SearchErrors
         code = TooManyRowsCode,
         message = string.Create(
           CultureInfo.InvariantCulture,
-          $"This search matches more than {SearchLimits.MaxRows:N0} prices, too many to show. Make the search terms more specific or shorten the Dates."
+          $"This search matches more than {SearchLimits.MaxRows:N0} results, too many to show. Make the search terms more specific or shorten the Dates."
         ),
         limit = SearchLimits.MaxRows,
       }
