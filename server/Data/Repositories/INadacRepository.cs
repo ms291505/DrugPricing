@@ -10,13 +10,15 @@ public interface INadacRepository
   Task<List<DateOnly>> ListAsOfDatesAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Returns all NADAC prices within specified date range matching a search term.
+  /// Returns all NADAC prices within specified date range matching a search term, or
+  /// "too many rows" without loading any when more than <paramref name="limit"/> match.
   /// </summary>
-  Task<List<NadacPrice>> ListSearchResultsAsync(
+  Task<LimitedRows<List<NadacPrice>>> ListSearchResultsAsync(
     string ndcDescription,
     string ndc,
     DateOnly minDate,
     DateOnly maxDate,
+    int limit,
     CancellationToken cancellationToken = default
   );
 

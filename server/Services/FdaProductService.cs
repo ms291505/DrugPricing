@@ -1,4 +1,5 @@
-using System.Threading.Tasks;
+using DrugPricing.Constants;
+using DrugPricing.Data;
 using DrugPricing.Data.Repositories;
 using DrugPricing.Endpoints;
 
@@ -33,23 +34,17 @@ public class FdaProductService
     return (routeNames);
   }
 
-  public async Task<FdaProductSearchResult> ListSearchResultsAsync(string proprietaryName)
-  {
-    var data = await _fdaProductRepo.ListSearchResultsAsync(proprietaryName);
-
-    var result = new FdaProductSearchResult { Data = data };
-
-    return result;
-  }
-
-  public async Task<FdaProductSearchResult> ListAdvancedSearchResultsAsync(
-    AdvancedFdaSearchRequest request
+  public async Task<LimitedRows<FdaProductSearchResult>> ListAdvancedSearchResultsAsync(
+    AdvancedFdaSearchRequest request,
+    CancellationToken cancellationToken = default
   )
   {
-    var data = await _fdaProductRepo.ListAdvancedSearchResultsAsync(request);
+    var rows = await _fdaProductRepo.ListAdvancedSearchResultsAsync(
+      request,
+      SearchLimits.MaxRows,
+      cancellationToken
+    );
 
-    var result = new FdaProductSearchResult { Data = data };
-
-    return result;
+    return rows.Map(data => new FdaProductSearchResult { Data = data });
   }
 }

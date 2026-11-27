@@ -6,6 +6,7 @@ import {
   type FdaCriteria, type FdaLoad, type FdaTerms,
 } from "../library/searchCriteria";
 import useSearchLoad from "../hooks/useSearchLoad";
+import { SEARCH_QUERY_KEYS } from "../library/constants";
 
 export type FdaSearchContextType = {
   /** The applied criteria. Every field applies at once but the text terms, which change through `search`. */
@@ -62,7 +63,7 @@ type ProviderProps = {
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const { criteria, setCriteria, search: load, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
-    initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch);
+    initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch, SEARCH_QUERY_KEYS.fda);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? DEFAULT_FDA_DETAIL_LEVEL);
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });

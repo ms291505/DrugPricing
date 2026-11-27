@@ -41,7 +41,9 @@ builder.Services.AddCors(options =>
 
 // Memory Cache
 
-builder.Services.AddMemoryCache();
+// Sized in rows: every entry sets its Size through CacheExtensions.SetList (a Set without one
+// throws). About 250 MB at roughly 500 bytes per cached NadacPrice.
+builder.Services.AddMemoryCache(options => options.SizeLimit = 500_000);
 
 // Database Context
 

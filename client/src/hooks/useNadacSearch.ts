@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useNadacSearchContext } from "../Context/NadacSearchContext";
 import { useQuery } from "@tanstack/react-query";
 import { getNadacSearchResults } from "../api/nadacEndpoints";
-import { CONSTANT } from "../library/constants";
+import { CONSTANT, SEARCH_QUERY_KEYS } from "../library/constants";
 import { FULL_WINDOW, type DateWindow } from "../library/dates";
 import {
   nadacFilterOptions, nadacHiddenCounts, refineNadac, snapToAsOfDates,
@@ -36,8 +36,9 @@ export type NadacResultView = {
 export function useNadacSearch() {
   const { loaded, searchEnabled } = useNadacSearchContext();
   return useQuery({
-    queryKey: ["nadacSearch", loaded],
-    queryFn: async () => getNadacSearchResults(loaded!),
+    queryKey: [SEARCH_QUERY_KEYS.nadac, loaded],
+    // The signal aborts a search a new one replaces (React Query drops the old query).
+    queryFn: async ({ signal }) => getNadacSearchResults(loaded!, signal),
     enabled: loaded !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,
   });

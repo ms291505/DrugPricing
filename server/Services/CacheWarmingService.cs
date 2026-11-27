@@ -1,6 +1,6 @@
 using DrugPricing.Constants;
+using DrugPricing.Data;
 using DrugPricing.Data.Repositories;
-using DrugPricing.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace DrugPricing.Services;
@@ -60,8 +60,16 @@ public class CacheWarmingService : IHostedService
     foreach (var searchTerm in searchTerms)
     {
       var cacheKey = CacheKeys.NadacSearch(searchTerm, "", minDate, maxDate);
-      var prices = await nadacRepo.ListSearchResultsAsync(searchTerm, "", minDate, maxDate);
-      cache.Set<List<NadacPrice>>(cacheKey, prices, CacheDuration.Default);
+      var rows = await nadacRepo.ListSearchResultsAsync(
+        searchTerm,
+        "",
+        minDate,
+        maxDate,
+        SearchLimits.MaxRows,
+        cancellationToken
+      );
+      if (rows.TryGetRows(out var prices))
+        cache.SetList(cacheKey, prices, CacheDuration.Default);
     }
   }
 

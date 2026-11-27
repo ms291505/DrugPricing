@@ -12,7 +12,8 @@ import { selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar } from "../ResultsSection";
+import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
+import { isTooManyRows } from "../../library/apiErrors";
 import DetailLevelSelect from "./DetailLevelSelect";
 import NadacHandoffNotice from "./NadacHandoffNotice";
 
@@ -32,7 +33,7 @@ type Props = {
  * prop is memoized) so the search panel's keystrokes don't re-render it.
  */
 export default memo(function FdaResults({ view }: Props) {
-  const { isLoading, isSuccess, data } = useFdaSearch();
+  const { isLoading, isSuccess, data, error } = useFdaSearch();
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { products, dateWindow, hidden } = view;
@@ -69,6 +70,7 @@ export default memo(function FdaResults({ view }: Props) {
         notice={
           <>
             <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
+            {isTooManyRows(error) && <TooManyRowsNotice message={error.message} />}
             {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
           </>
         }

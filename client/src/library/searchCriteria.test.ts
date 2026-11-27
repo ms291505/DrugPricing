@@ -89,6 +89,13 @@ describe("nextLoad", () => {
     expect(nextLoad(null, loaded)).toBe(loaded);
     expect(nextLoad(loaded, null)).toBeNull();
   });
+  it("loads the narrower dates after the server refused what's loaded as too large", () => {
+    const narrower = load(day("2026-08-04"), day("2026-11-04"));
+    expect(nextLoad(loaded, narrower, true)).toBe(narrower);
+    const all = load(null, null);
+    expect(nextLoad(all, loaded, true)).toBe(loaded);
+    expect(nextLoad(all, loaded, false)).toBe(all);
+  });
 });
 
 describe("applying a search", () => {

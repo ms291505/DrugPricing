@@ -1,3 +1,5 @@
+using DrugPricing.Constants;
+using DrugPricing.Data;
 using DrugPricing.Data.Repositories;
 
 namespace DrugPricing.Services;
@@ -7,6 +9,7 @@ public class NadacService
   private readonly INadacRepository _nadacRepo;
   private const int MIN_NDC_DESCRIPTION_LENGTH = 5;
   private const int MIN_NDC_LENGTH = 5;
+  private const int MAX_NDC_LENGTH = 11;
 
   public NadacService(INadacRepository nadacRepo)
   {
@@ -51,12 +54,24 @@ public class NadacService
     return (ndcDescription.Length >= MIN_NDC_DESCRIPTION_LENGTH);
   }
 
-  public bool ValidateNdc(string ndc)
+  /// <summary>
+  /// The stored form of an NDC search without dashes, as the client's <c>toStoredNadacNdc</c>
+  /// makes it: trimmed, without leading zeros. NADAC stores NDCs that way.
+  /// </summary>
+  public string NormalizeNdc(string ndc)
   {
-    return (ndc.Length >= MIN_NDC_LENGTH);
+    return ndc.Trim().TrimStart('0');
   }
 
-  public async Task<NadacSearchResult> ListSearchResultsAsync(
+  /// <summary>Checks a normalized NDC (<see cref="NormalizeNdc"/>): 5 to 11 ASCII digits.</summary>
+  public bool ValidateNdc(string normalizedNdc)
+  {
+    return normalizedNdc.Length >= MIN_NDC_LENGTH
+      && normalizedNdc.Length <= MAX_NDC_LENGTH
+      && normalizedNdc.All(char.IsAsciiDigit);
+  }
+
+  public async Task<LimitedRows<NadacSearchResult>> ListSearchResultsAsync(
     string ndcDescription,
     string ndc,
     DateOnly minDate,
@@ -111,20 +126,20 @@ public class NadacService
       }
     );
 
-    var data = await _nadacRepo.ListSearchResultsAsync(
+    var rows = await _nadacRepo.ListSearchResultsAsync(
       ndcDescription,
       ndc,
       certainMinDate,
-      certainMaxDate
+      certainMaxDate,
+      SearchLimits.MaxRows,
+      cancellationToken
     );
 
-    var result = new NadacSearchResult
+    return rows.Map(data => new NadacSearchResult
     {
       Notices = notices,
       Predicates = predicates,
       Data = data,
-    };
-
-    return result;
+    });
   }
 }

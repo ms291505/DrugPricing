@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { getAdvancedFdaSearchReqults, } from "../api/fdaEndpoints";
 import { useFdaSearchContext } from "../Context/FdaSearchContext";
 import { useQuery } from "@tanstack/react-query";
-import { CONSTANT } from "../library/constants";
+import { CONSTANT, SEARCH_QUERY_KEYS } from "../library/constants";
 import { FULL_WINDOW, toDateInput, type DateWindow } from "../library/dates";
 import {
   fdaFilterOptions, fdaHiddenCounts, fdaShownDates, refineFda, widenToAsOfDates,
@@ -16,8 +16,9 @@ export default function useFdaSearch() {
   const { loaded, searchEnabled } = useFdaSearchContext();
 
   return useQuery({
-    queryKey: ["fdaSearch", loaded],
-    queryFn: () => {
+    queryKey: [SEARCH_QUERY_KEYS.fda, loaded],
+    // The signal aborts a search a new one replaces (React Query drops the old query).
+    queryFn: ({ signal }) => {
       // The server keeps prices strictly inside the dates; widened, the result holds the as-of
       // dates the client snaps to (`refineFda`), as NADAC's server snaps them.
       const dates = widenToAsOfDates(loaded!.dates);
@@ -30,7 +31,7 @@ export default function useFdaSearch() {
         includeResultsWNoPrices: true,
         priceAsOfDateStart: dates.start === null ? undefined : toDateInput(dates.start),
         priceAsOfDateEnd: dates.end === null ? undefined : toDateInput(dates.end),
-      });
+      }, signal);
     },
     enabled: loaded !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,

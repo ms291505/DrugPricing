@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Box } from "@mui/material";
 import useFdaSearch, { useRefinedFdaSearch } from "../../hooks/useFdaSearch";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
+import { isTooManyRows } from "../../library/apiErrors";
 import QueryErrorToast from "../ui/QueryErrorToast";
 import FdaSearchPanel from "./FdaSearchPanel";
 import FdaResults from "./FdaResults";
@@ -24,7 +25,8 @@ export default function FdaSearch({ panelLayout, searchNavigation, standaloneAct
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, minHeight: 0, width: "100%" }}>
-      <QueryErrorToast error={error} />
+      {/* A too-large search explains itself above the results (`TooManyRowsNotice`). */}
+      <QueryErrorToast error={isTooManyRows(error) ? null : error} />
       <FdaSearchPanel view={view} layout={panelLayout} navigation={searchNavigation} standaloneAction={standaloneAction} />
       <FdaResults view={view} />
       {/* Pinned items render from their snapshots, so they show even when the tab's search is
