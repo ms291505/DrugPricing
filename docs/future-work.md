@@ -5,6 +5,18 @@ it ships. The code and pull request preserve the implementation history.
 
 ## Decided
 
+### FDA strength and price activity filters, and a labeler search (2026-11-27)
+
+Plan: [docs/plans/fda-strength-activity-labeler.md](plans/fda-strength-activity-labeler.md).
+Strength and Price activity (Dropped, Rose, Dipped or spiked, Stable, Insufficient history) are
+new FDA refine filters. Labeler is a new load field, a combo box, and a labeler alone is
+enough to search. The server groups the 7,821 labeler spellings into about 5,100 labelers by
+normalized name and labeler code and caches the list. The client matches typed text against it
+in memory, misspellings included ("pfeizer" → Pfizer), and the search sends labeler codes.
+Matching runs in the client, which has the unit tests and keeps typed text in the browser.
+
+Size: medium. Two PRs (the filters, client only; then the labeler search, after the result cap).
+
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
@@ -12,8 +24,8 @@ Description, FDA Brand name and FDA Generic name fields, including likely correc
 misspellings ("eliqus" → ELIQUIS) under "Did you mean". Picking one fills the field; Search
 still runs the search, and suggestions follow the page's Include boxes (OTC, results without
 prices). Built on pg_trgm: one materialized view of NADAC descriptions and FDA brand and
-generic names (refreshed by both ETL paths), served by one `suggestions` endpoint. Labeler,
-dosage form and route fields are out of scope.
+generic names (refreshed by both ETL paths), served by one `suggestions` endpoint. Dosage
+form and route fields are out of scope; the labeler search has its own plan (above).
 
 Size: medium. One PR, or two (database + server, then client).
 
