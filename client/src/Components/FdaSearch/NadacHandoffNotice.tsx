@@ -22,9 +22,12 @@ type Props = {
 export default function NadacHandoffNotice({ result, dateWindow, loaded }: Props) {
   const onTryNadac = useContext(TryNadacContext);
   if (!onTryNadac || !result || fdaHasPricesInWindow(result, dateWindow)) return null;
+  // A labeler-only search has no name to search NADAC for.
+  const term = nadacHandoffTerm(loaded);
+  if (term === "") return null;
   return (
     <Alert severity="info"
-      action={<Button color="inherit" onClick={() => onTryNadac(nadacHandoffTerm(loaded))}>Search NADAC</Button>}>
+      action={<Button color="inherit" onClick={() => onTryNadac(term)}>Search NADAC</Button>}>
       {result.products.length === 0 ? "No FDA matches found." : "No FDA results have prices in these dates."} NADAC has prices for packages FDA search can’t match. Try searching the full NADAC data.
     </Alert>
   );

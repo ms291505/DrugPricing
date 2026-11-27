@@ -48,6 +48,38 @@ public class FdaProductRepository : IFdaProductRepository
     return _cache.SetList(cacheKey, routeNames, CacheDuration.Default);
   }
 
+  public async Task<List<LabelerRow>> ListLabelerRowsAsync(
+    CancellationToken cancellationToken = default
+  )
+  {
+    if (_cache.TryGetValue(CacheKeys.FdaLabelers, out List<LabelerRow>? cachedRows))
+      return cachedRows!;
+
+    // One row per labeler spelling and code over active products and their active packages.
+    // Priced means a package's NDC is in DrugPackages (every NDC NADAC has priced), as the
+    // autocomplete plan defines it; OTC as the client's isFdaProductOtc.
+    var rows = await _db
+      .Database.SqlQuery<LabelerRow>(
+        $"""
+        SELECT
+          p."LabelerName" AS "LabelerName",
+          split_part(p."ProductNdc", '-', 1) AS "LabelerCode",
+          count(DISTINCT p."Id")::int AS "ProductCount",
+          bool_or(lower(p."ProductTypeName") <> 'human otc drug') AS "HasRx",
+          bool_or(d."Ndc" IS NOT NULL) AS "HasPrices",
+          bool_or(lower(p."ProductTypeName") <> 'human otc drug' AND d."Ndc" IS NOT NULL) AS "HasRxPrices"
+        FROM "FdaProducts" p
+        LEFT JOIN "FdaPackages" k ON k."ProductNdc" = p."ProductNdc" AND k."DelistedAt" IS NULL
+        LEFT JOIN "DrugPackages" d ON d."Ndc" = k."NdcPackageCodeStripped"
+        WHERE p."DelistedAt" IS NULL
+        GROUP BY p."LabelerName", split_part(p."ProductNdc", '-', 1)
+        """
+      )
+      .ToListAsync(cancellationToken);
+
+    return _cache.SetList(CacheKeys.FdaLabelers, rows, CacheDuration.Reference);
+  }
+
   public async Task<LimitedRows<List<FdaProductDetail>>> ListAdvancedSearchResultsAsync(
     AdvancedFdaSearchRequest request,
     int limit,
@@ -174,11 +206,13 @@ public class FdaProductRepository : IFdaProductRepository
       productQuery = productQuery.Where(p => p.RouteName.Any(r => request.RouteNames.Contains(r)));
     }
 
-    if (!string.IsNullOrWhiteSpace(request.LabelerName))
+    if (request.LabelerCodes?.Count > 0)
     {
-      var pattern = LikePattern.Contains(request.LabelerName);
+      // Codes are digits only (FdaProductService.ValidateLabelerCodes), so they need no
+      // LikePattern escaping. Npgsql sends the patterns as one array: LIKE ANY.
+      var patterns = request.LabelerCodes.Select(code => code + "-%").ToArray();
       productQuery = productQuery.Where(p =>
-        EF.Functions.ILike(p.LabelerName, pattern, LikePattern.EscapeCharacter)
+        patterns.Any(pattern => EF.Functions.Like(p.ProductNdc, pattern))
       );
     }
 

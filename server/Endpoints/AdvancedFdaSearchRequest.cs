@@ -7,7 +7,11 @@ public record AdvancedFdaSearchRequest
   public string? NonProprietaryName { get; init; }
   public ICollection<string> DosageFormNames { get; init; } = [];
   public ICollection<string> RouteNames { get; init; } = [];
-  public string? LabelerName { get; init; }
+  /// <summary>
+  /// Labeler codes (the first segment of a product NDC, 4 to 6 digits); a product matches when
+  /// its NDC starts with one. Enough to search on alone.
+  /// </summary>
+  public ICollection<string> LabelerCodes { get; init; } = [];
   public string? ProductNdc { get; init; }
 
   // FDA Package

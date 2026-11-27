@@ -15,16 +15,22 @@ export type ModalOptions = {
   returnFocus?: HTMLElement | null,
 };
 
+export type HelpOptions = ModalOptions & {
+  /** A section of the topic to open at: its heading's id (`helpSectionId`). */
+  section?: string,
+};
+
 export type OpenGlobalModal = ModalOptions & {
   modal: GlobalModal,
   /** The Help topic to open on; the index when unset. */
   helpTopic?: HelpTopicId,
+  helpSection?: string,
 };
 
 /** Never change identity, so reading them doesn't re-render a component. */
 export type GlobalModalActions = {
   openModal: (modal: GlobalModal, options?: ModalOptions) => void,
-  openHelp: (topic?: HelpTopicId, options?: ModalOptions) => void,
+  openHelp: (topic?: HelpTopicId, options?: HelpOptions) => void,
   closeModal: () => void,
 };
 

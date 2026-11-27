@@ -6,7 +6,9 @@ namespace DrugPricing.Endpoints;
 
 public static class FdaProductEndpoints
 {
-  private const string AdvancedSearchRequiresAName = "No valid brand or generic name was provided.";
+  private const string AdvancedSearchRequiresTerms =
+    "No valid brand name, generic name, or labeler was provided.";
+  private const string BadLabelerCodes = "The labelers sent can't be searched.";
   private const string BadAdvancedSearchRequestJson =
     "Something went wrong sending the advanced search parameters.";
 
@@ -17,6 +19,7 @@ public static class FdaProductEndpoints
     var fdaProductGroup = api.MapGroup("/fda-products");
 
     fdaProductGroup.MapGet("/advanced-search", GetWithAdvancedSearch);
+    fdaProductGroup.MapGet("/labelers", GetLabelers);
 
     return fdaProductGroup;
   }
@@ -36,11 +39,15 @@ public static class FdaProductEndpoints
     if (request is null)
       return TypedResults.BadRequest(new { message = BadAdvancedSearchRequestJson });
 
+    if (!fdaProductService.ValidateLabelerCodes(request.LabelerCodes))
+      return TypedResults.BadRequest(new { message = BadLabelerCodes });
+
     if (
       !fdaProductService.ValidateNameSearch(request.ProprietaryName)
       && !fdaProductService.ValidateNameSearch(request.NonProprietaryName)
+      && !(request.LabelerCodes?.Count > 0)
     )
-      return TypedResults.BadRequest(new { message = AdvancedSearchRequiresAName });
+      return TypedResults.BadRequest(new { message = AdvancedSearchRequiresTerms });
 
     var result = await fdaProductService.ListAdvancedSearchResultsAsync(request, cancellationToken);
 
@@ -48,5 +55,15 @@ public static class FdaProductEndpoints
       return SearchErrors.TooManyRows();
 
     return TypedResults.Ok(searchResult);
+  }
+
+  /// <summary>Every labeler group, for the client's Labeler field to match against.</summary>
+  private static async Task<IResult> GetLabelers(
+    [FromServices] FdaProductService fdaProductService,
+    CancellationToken cancellationToken
+  )
+  {
+    var groups = await fdaProductService.ListLabelerGroupsAsync(cancellationToken);
+    return TypedResults.Ok(new { data = groups });
   }
 }

@@ -4,7 +4,7 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
   exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  fdaResultsLabel, fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  fdaResultsLabel, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type NadacCriteria, type NadacLoad,
@@ -118,7 +118,7 @@ describe("applying a search", () => {
       excludedStrengths: ["5 mg/1"], excludedActivities: ["stable"],
     };
     // Price activity is a fixed refine field: its values don't come from the result.
-    expect(applyFdaSearch(fda, { proprietaryName: "humira", nonProprietaryName: "" }))
+    expect(applyFdaSearch(fda, { proprietaryName: "humira", nonProprietaryName: "", labelers: [] }))
       .toEqual({ ...fda, proprietaryName: "humira", excludedRoutes: [], excludedStrengths: [] });
   });
 });
@@ -534,13 +534,13 @@ describe("FDA name searches", () => {
   const last = day("2026-11-04");
 
   it("accepts either name at the minimum length, including a short narrowing term", () => {
-    expect(isValidFdaSearch("", "  atorvastatin  ")).toBe(true);
-    expect(isValidFdaSearch("Lipitor", "")).toBe(true);
-    expect(isValidFdaSearch("Li", "atorvastatin")).toBe(true);
-    expect(isValidFdaSearch("  Li  ", "  at  ")).toBe(false);
-    expect(isValidFdaSearch("", "")).toBe(false);
+    expect(isValidFdaSearch("", "  atorvastatin  ", [])).toBe(true);
+    expect(isValidFdaSearch("Lipitor", "", [])).toBe(true);
+    expect(isValidFdaSearch("Li", "atorvastatin", [])).toBe(true);
+    expect(isValidFdaSearch("  Li  ", "  at  ", [])).toBe(false);
+    expect(isValidFdaSearch("", "", [])).toBe(false);
     expect(fdaLoadRequest(generic, last)).toEqual({
-      proprietaryName: "", nonProprietaryName: "atorvastatin",
+      proprietaryName: "", nonProprietaryName: "atorvastatin", labelerCodes: [],
       dates: { start: day("2025-11-04"), end: last },
     });
   });
@@ -554,23 +554,48 @@ describe("FDA name searches", () => {
 
   it("clears result exclusions for a new generic term and preserves include choices", () => {
     const applied = { ...generic, includeOtc: true, excludedRoutes: ["ORAL"] };
-    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "atorvastatin" })).toEqual(applied);
-    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "apixaban" }))
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "atorvastatin", labelers: [] })).toEqual(applied);
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "apixaban", labelers: [] }))
       .toEqual({ ...applied, nonProprietaryName: "apixaban", excludedRoutes: [] });
     expect(clearFdaRefine(applied)).toEqual(generic);
   });
 
   it("labels generic-only and combined searches for results and chart provenance", () => {
     expect(fdaSearchLabel(generic)).toBe("atorvastatin");
-    expect(fdaSearchLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
+    expect(fdaSearchLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin ", labelers: [] }))
       .toBe("Lipitor / atorvastatin");
-    expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "" })).toBe("Lipitor");
+    expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "", labelers: [] })).toBe("Lipitor");
+  });
+
+  it("adds the first labeler and how many more", () => {
+    const teva = { name: "Teva Pharmaceuticals USA, Inc.", codes: ["0093"] };
+    const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013"] };
+    expect(fdaTabTitle({ proprietaryName: "eliquis", nonProprietaryName: "", labelers: [teva, pfizer] }))
+      .toBe("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1");
+    expect(fdaSearchLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("Pfizer Laboratories Div Pfizer Inc");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "apixaban", labelers: [teva, pfizer, teva] }))
+      .toBe("\u201capixaban\u201d / Teva Pharmaceuticals USA, Inc. +2");
+  });
+
+  it("searches on a labeler alone, sending its codes sorted", () => {
+    const picks = [{ name: "B", codes: ["0025", "0013"] }, { name: "A", codes: ["0008"] }];
+    expect(isValidFdaSearch("", "", picks)).toBe(true);
+    const criteria = { ...createFdaCriteria(), labelers: picks };
+    expect(fdaLoadRequest(criteria, last)?.labelerCodes).toEqual(["0008", "0013", "0025"]);
+    // Picked in another order: the same load, so narrowing the dates still doesn't fetch.
+    const loaded = fdaLoadRequest(criteria, last)!;
+    const reordered = fdaLoadRequest({ ...criteria, labelers: [...picks].reverse() }, last)!;
+    expect(nextLoad(loaded, reordered)).toBe(loaded);
+    // A new pick is a new search, which clears the exclusion lists.
+    const applied = { ...criteria, excludedRoutes: ["ORAL"] };
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "", labelers: [picks[0]] }).excludedRoutes).toEqual([]);
+    expect(clearFdaRefine(applied).labelers).toEqual(picks);
   });
 
   it("quotes the typed terms in the results heading, and nothing else", () => {
-    expect(fdaResultsLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
+    expect(fdaResultsLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin ", labelers: [] }))
       .toBe("\u201cLipitor\u201d / \u201catorvastatin\u201d");
-    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "" })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [] })).toBe("search");
     expect(nadacSearchLabel({ ndcDescription: "lipitor", ndc: "3089321" })).toBe("lipitor");
     expect(nadacResultsLabel({ ndcDescription: "lipitor", ndc: "3089321" })).toBe("\u201clipitor\u201d");
     expect(nadacResultsLabel({ ndcDescription: "", ndc: "3089321" })).toBe("NDC 3089321");
@@ -589,6 +614,10 @@ describe("FDA to NADAC handoff", () => {
     ["", " at ", "at"],
   ])("carries one applied term (%s, %s → %s)", (proprietaryName, nonProprietaryName, expected) => {
     expect(nadacHandoffTerm({ proprietaryName, nonProprietaryName })).toBe(expected);
+  });
+
+  it("has nothing to hand off for a labeler-only search", () => {
+    expect(nadacHandoffTerm({ proprietaryName: "", nonProprietaryName: "" })).toBe("");
   });
 
   it("recognizes loaded prices even when OTC, sample and other exclusions hide them", () => {

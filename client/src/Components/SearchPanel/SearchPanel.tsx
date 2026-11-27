@@ -5,6 +5,8 @@ import useWidthTier from "../../hooks/useWidthTier";
 import type { ChartDates } from "../../library/dates";
 import { fromKeyboard } from "../ui/focus";
 import DatesField from "./DatesField";
+import LabelerField from "./LabelerField";
+import type { LabelerChoice } from "../../library/labelers";
 import IncludeCheckbox from "./IncludeCheckbox";
 
 /**
@@ -14,17 +16,25 @@ import IncludeCheckbox from "./IncludeCheckbox";
  */
 export type SearchPanelLayout = "desktop" | "compact";
 
-/** A text term: a draft that waits for Search. */
+/** A term: a draft that waits for Search. A text field, or the Labeler combo box. */
 export type TermField = {
   /** The input's id and name. */
   id: string,
   label: string,
   placeholder?: string,
-  value: string,
-  onChange: (value: string) => void,
   /** Its share of the row beside the other terms (default 1). */
   flex?: number,
-};
+} & (
+  | { kind?: "text", value: string, onChange: (value: string) => void }
+  | {
+    kind: "labelers",
+    value: LabelerChoice[],
+    onChange: (value: LabelerChoice[]) => void,
+    /** The page's Include boxes, which decide the labelers offered. */
+    includeOtc: boolean,
+    includeWithoutPrices: boolean,
+  }
+);
 
 /** An Include box. */
 export type IncludeField = {
@@ -130,8 +140,31 @@ export default function SearchPanel({
         <Typography variant="h6" component="h1">{heading}</Typography>
         {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
       </Box>}
-      <Box sx={{ display: "flex", flexDirection: stacked ? "column" : "row", gap: 1, alignItems: stacked ? "stretch" : "center" }}>
-        {terms.map((term, index) => (
+      <Box sx={{
+        display: "flex", flexDirection: stacked ? "column" : "row", flexWrap: desktop ? "nowrap" : "wrap", gap: 1,
+        alignItems: stacked ? "stretch" : "center",
+      }}>
+        {terms.map((term, index) => term.kind === "labelers" ? (
+          // Its chips need width: compact gives it a row of its own, under the names and Search.
+          <Box key={term.id} sx={{
+            flex: stacked ? "none" : desktop ? term.flex ?? 1 : "1 1 100%",
+            order: desktop || stacked ? undefined : 1,
+            minWidth: 0,
+            alignSelf: stacked ? "stretch" : "flex-start",
+          }}>
+            <LabelerField
+              id={term.id}
+              label={term.label}
+              placeholder={term.placeholder}
+              value={term.value}
+              onChange={term.onChange}
+              includeOtc={term.includeOtc}
+              includeWithoutPrices={term.includeWithoutPrices}
+              size={desktop ? "medium" : "small"}
+              limitTags={desktop ? undefined : 2}
+            />
+          </Box>
+        ) : (
           <TextField
             key={term.id}
             inputRef={index === 0 ? firstTermRef : undefined}

@@ -187,7 +187,8 @@ export type AdvancedFdaSearchRequest = {
   nonProprietaryName?: string,
   dosageFormNames?: string[],
   routeNames?: string[],
-  labelerName?: string,
+  /** Labeler codes (`labelerCodes`); a product matches when its NDC starts with one. */
+  labelerCodes?: string[],
   productNdc?: string,
 
   // FDA Package

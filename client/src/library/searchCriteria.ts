@@ -3,6 +3,7 @@ import { clipToWindow, windowEndingAt, type ChartDates, type DateWindow } from "
 import { isValidNadacSearch } from "./nadacSearch";
 import { ACTIVITY_CATEGORIES, packageActivity, type ActivityCategory } from "./priceActivity";
 import { compareStrength, strengthLabel } from "./strength";
+import { labelerCodes, type LabelerChoice } from "./labelers";
 import {
   isFdaProductOtc,
   type FdaPackageDetail, type FdaProductDetail, type FdaProductSearchResult, type FdaResultDetailLevel,
@@ -47,6 +48,8 @@ export type FdaCriteria = {
   // Load
   proprietaryName: string,
   nonProprietaryName: string,
+  /** Picked from the Labeler field; the search sends their codes (`labelerCodes`). */
+  labelers: LabelerChoice[],
   dates: ChartDates,
   // Refine
   includeOtc: boolean,
@@ -67,7 +70,7 @@ export type FdaCriteria = {
 
 /** The text terms: the fields the Search button applies. */
 export type NadacTerms = Pick<NadacCriteria, "ndcDescription" | "ndc">;
-export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName">;
+export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName" | "labelers">;
 
 /** An exclusion-list field: a multi-select whose options come from the loaded result. */
 export type NadacExclusionKey = "excludedNdcDescriptions" | "excludedUnits";
@@ -92,6 +95,7 @@ export const createNadacCriteria = (): NadacCriteria => ({
 export const createFdaCriteria = (): FdaCriteria => ({
   proprietaryName: "",
   nonProprietaryName: "",
+  labelers: [],
   dates: DEFAULT_SEARCH_DATES,
   includeOtc: false,
   includeSamplePackages: false,
@@ -117,7 +121,8 @@ export type IncludeKey = "includeOtc" | "includeSamplePackages" | "includeResult
 
 /** What a search asks the server for. Its dates are fixed (presets resolved); a null end is open. */
 export type NadacLoad = { ndcDescription: string, ndc: string, dates: DateWindow };
-export type FdaLoad = FdaTerms & { dates: DateWindow };
+/** An FDA load sends the picks' codes, sorted, so the order they were picked in doesn't matter. */
+export type FdaLoad = { proprietaryName: string, nonProprietaryName: string, labelerCodes: string[], dates: DateWindow };
 
 /**
  * The dates a setting means for a search: presets count back from the last loaded as-of date
@@ -137,15 +142,24 @@ export function nadacLoadRequest(criteria: NadacCriteria, lastAsOfDate: number):
   };
 }
 
-/** Either name can supply the minimum length; both supplied names narrow the match. */
-export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string) =>
-  [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
+/**
+ * Either name can supply the minimum length, or a labeler alone is enough; every supplied term
+ * narrows the match. Mirrors the server's check in `FdaProductEndpoints`.
+ */
+export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string, labelers: LabelerChoice[]) =>
+  labelers.length > 0
+  || [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
 
 /** The names searched on, trimmed, brand first. */
 const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean);
 
+/** The picked labelers in a label: the first one's name, and "+2" for two more. */
+const labelerLabel = (labelers: LabelerChoice[]) =>
+  labelers.length === 0 ? null : labelers[0].name + (labelers.length > 1 ? ` +${labelers.length - 1}` : "");
+
 /** Shared wording for chart provenance and a new tab's title. */
-export const fdaSearchLabel = (terms: FdaTerms) => fdaNames(terms).join(" / ") || "search";
+export const fdaSearchLabel = (terms: FdaTerms) =>
+  [...fdaNames(terms), labelerLabel(terms.labelers)].filter(Boolean).join(" / ") || "search";
 
 /** The title a search gives its tab (`useRenameAfterSearch`) and a workspace copy of it. */
 export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCase();
@@ -153,8 +167,9 @@ export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCas
 /** Text in quotes, to mark it as what the user typed and not the app's wording. */
 export const quoted = (text: string) => `\u201c${text}\u201d`;
 
-/** The results heading's wording: `fdaSearchLabel` with each name in quotes. */
-export const fdaResultsLabel = (terms: FdaTerms) => fdaNames(terms).map(quoted).join(" / ") || "search";
+/** The results heading's wording: `fdaSearchLabel` with each typed name in quotes; a labeler was picked, not typed. */
+export const fdaResultsLabel = (terms: FdaTerms) =>
+  [...fdaNames(terms).map(quoted), labelerLabel(terms.labelers)].filter(Boolean).join(" / ") || "search";
 
 /** Shared wording for chart provenance: the description, or else the NDC (in its stored form). */
 export const nadacSearchLabel = (terms: NadacTerms) =>
@@ -166,10 +181,11 @@ export const nadacResultsLabel = (terms: NadacTerms) =>
 
 /** The FDA request the criteria ask for, or null when its terms aren't enough to search on. */
 export function fdaLoadRequest(criteria: FdaCriteria, lastAsOfDate: number): FdaLoad | null {
-  if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName)) return null;
+  if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName, criteria.labelers)) return null;
   return {
     proprietaryName: criteria.proprietaryName,
     nonProprietaryName: criteria.nonProprietaryName,
+    labelerCodes: labelerCodes(criteria.labelers),
     dates: resolveSearchDates(criteria.dates, lastAsOfDate),
   };
 }
@@ -216,9 +232,14 @@ export function applyNadacSearch(applied: NadacCriteria, fields: NadacTerms): Na
   return { ...next, ...clearedExclusions(NADAC_EXCLUSION_KEYS) };
 }
 
+/** Whether two sets of FDA terms are the same search: the same names and the same picks, in order. */
+export const sameFdaTerms = (a: FdaTerms, b: FdaTerms) =>
+  a.proprietaryName === b.proprietaryName && a.nonProprietaryName === b.nonProprietaryName
+  && JSON.stringify(a.labelers) === JSON.stringify(b.labelers);
+
 export function applyFdaSearch(applied: FdaCriteria, fields: FdaTerms): FdaCriteria {
   const next = { ...applied, ...fields };
-  if (fields.proprietaryName === applied.proprietaryName && fields.nonProprietaryName === applied.nonProprietaryName) return next;
+  if (sameFdaTerms(fields, applied)) return next;
   return { ...next, ...clearedExclusions(FDA_EXCLUSION_KEYS) };
 }
 
@@ -573,6 +594,7 @@ export const clearFdaRefine = (criteria: FdaCriteria): FdaCriteria => ({
   ...createFdaCriteria(),
   proprietaryName: criteria.proprietaryName,
   nonProprietaryName: criteria.nonProprietaryName,
+  labelers: criteria.labelers,
   dates: criteria.dates,
 });
 

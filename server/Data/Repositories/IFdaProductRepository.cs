@@ -15,6 +15,12 @@ public interface IFdaProductRepository
     CancellationToken cancellationToken = default
   );
 
+  /// <summary>
+  /// Each labeler spelling on each labeler code over active products, with its product count and
+  /// flags. Cached for <see cref="Constants.CacheDuration.Reference"/>.
+  /// </summary>
+  Task<List<LabelerRow>> ListLabelerRowsAsync(CancellationToken cancellationToken = default);
+
   Task<List<string>> ListUniqueDosageFormNamesAsync();
 
   Task<List<string>> ListUniqueRouteNamesAsync();

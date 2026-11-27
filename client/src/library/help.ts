@@ -56,3 +56,7 @@ const matching = <T extends HelpIndexEntry>(entries: readonly T[], query: string
 
 export const filterHelpTopics = (query: string) => matching(HELP_TOPICS, query);
 export const filterHelpPageLinks = (query: string) => matching(HELP_PAGE_LINKS, query);
+
+/** A Help section's id, from its heading: "Finding a company's products" → "finding-a-companys-products". */
+export const helpSectionId = (heading: string) =>
+  heading.toLowerCase().replace(/['\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
