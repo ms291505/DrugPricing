@@ -148,20 +148,44 @@ caption read it, so a change doesn't re-render tabs.
 **Changing it** moves the data, in an order that's safe to reload at any point. Startup finds a
 workspace only through its record, so the destination record is what makes the move take effect:
 
+0. Write a move marker to this tab's `sessionStorage` (`workspace-move`), recording:
+   - the direction;
+   - the ids of the tabs being moved;
+   - a fingerprint of each source key, meaning the workspace record and each tab key (a short
+     synchronous hash of its stored string);
+   - the fingerprint of the destination record this move will write.
+
+   Both directions involve this tab's `sessionStorage`, so the marker always has somewhere to go
+   that no other tab writes to. If the marker can't be written, the move doesn't start.
 1. Write each of the workspace's tab keys to the destination.
 2. Write the destination workspace record, only once every tab write has succeeded.
-3. Delete the source workspace record first, then the source tab keys.
+3. Delete the source workspace record first, then the source tab keys, then the marker. When the
+   source is the device workspace, delete only the keys whose fingerprints still match the
+   marker's. If the device record itself has changed, another window has worked on it since:
+   leave the record and every tab key it lists.
 
 If step 1 or 2 fails, remove the destination tab keys this move wrote (never keys that were
-there before it), leave the source untouched, keep the current mode, and warn with the
-failed-write toast. A reload then finds the source record as before. Leftover destination tab
-keys from a move cut short (a closed tab, a crash) aren't in any record, so that storage's next
-prune deletes them. A crash between steps 2 and 3 leaves the same tabs in both storages, and the
-session-first rule picks the session copy. Moving from device to session, that's the
-destination, and the next device-mode load anywhere finds the old device record still there
-(the user can clear it from that window). Moving from session to device, the tab comes back in
-session mode with an unchecked box, and checking it again redoes the move. The merge below skips
-tabs the device workspace already lists, so the second move adds no duplicates.
+there before it), leave the source untouched, keep the current mode, delete the marker, and warn
+with the failed-write toast.
+
+**Finishing an interrupted move on reload.** A move can stop at any step: the tab closes, the
+browser crashes, or storage fails. Startup checks for a marker before applying the
+session-first rule, and decides from it whether the destination record was published:
+
+- **Device to session:** published if this tab's session record exists, because only this tab
+  writes it.
+- **Session to device:** published if the device record lists every moved tab id. A device
+  record changed by another window afterwards still counts.
+
+If it was published, startup finishes step 3 under the same fingerprint rule. A different or
+later-changed device workspace is never deleted. If it wasn't, startup rolls back: it deletes the
+moved tab keys from the destination where no destination record lists them, and keeps the
+source. Either way, startup then deletes the marker and applies the startup rule.
+
+So the checkbox and the storage always agree after a reload. An unchecked box means no device copy
+of this workspace remains, unless another window changed that copy, in which case that window's
+work is kept. Leftover destination tab keys with no marker (from an older bug, or cleared
+`sessionStorage`) aren't in any record, so that storage's next prune deletes them.
 
 Unchecking deletes the device copy at once, and checking again moves it back, so neither
 direction needs a confirmation.
@@ -181,8 +205,12 @@ merge goes away.
   the reload it starts fresh. That's correct, and it's rare.
 - **Add search to workspace** writes the new tab's state to whichever storage the workspace uses.
   A failed save still opens no tab.
-- **Clear workspace** deletes the workspace from both storages and resets the mode to `"device"`,
-  so the checkbox shows checked again on the fresh workspace.
+- **Clear workspace** deletes only the workspace on screen: its record and tab keys, in the
+  storage it uses. A separate device workspace saved by another browser tab survives the clearing
+  of a session workspace. The fresh workspace that replaces it starts as `"device"` (box
+  checked), with one exception: when it was a session workspace and a device workspace exists,
+  it stays `"session"` (box unchecked). A fresh device-mode workspace would save over the other
+  tab's device workspace. Checking the box then merges, as above.
 
 **Where it's asked.**
 
@@ -213,9 +241,14 @@ Tests: the startup rule for each combination of stored keys, including a session
 this tab and a different device workspace, where session wins and both survive startup and
 pruning; a mode change moving every key and deleting the old copies only after a complete write;
 a write that fails after some tab keys have been written, followed by a reload, which finds the
-source workspace whole and the partial destination keys gone; a crash between steps 2 and 3;
-checking the box with an existing device workspace, which merges and loses no tab; Clear
-workspace clearing both storages and resetting the mode; `watchOtherWindows` ignoring workspace
+source workspace whole and the partial destination keys gone; a reload after each step of a
+move in both directions, which finishes or rolls back and leaves the checkbox matching the
+storage; a reload after an interrupted device-to-session move where another window changed the
+device workspace in between, which keeps that workspace; checking the box with an existing
+device workspace, which merges and loses no tab; Clear workspace on a device workspace, which
+deletes it and resets the mode; Clear workspace on a session workspace while a separate device
+workspace exists, which leaves the device workspace and its tabs intact and stays in session
+mode; `watchOtherWindows` ignoring workspace
 keys in `"session"` mode; `pruneStoredState` working against the storage in use.
 
 **Leave room for multiple workspaces.** The app may later hold several workspaces. This plan
@@ -273,8 +306,7 @@ Draft the copy in `docs/content/` first and follow the writing style guide. Prop
   `fda-products/advanced-search` (the `AdvancedFdaSearchRequest` as the body, which removes
   `jsonString` and the hand-rolled `JsonSerializer.Deserialize`). Keep the routes and validation
   the same otherwise.
-- Coordinate with the search result cap plan (`docs/plans/search-result-cap.md`, not on `dev`
-  yet), which changes the same endpoints. Land whichever is first and rebase the other; the
+- Coordinate with [Search result cap](search-result-cap.md), which changes the same endpoints. Land whichever is first and rebase the other; the
   POST change is mechanical.
 - **No compatibility window.** The GET forms go in the same change. During the cutover a search
   can fail briefly, and a browser tab already open on the old client fails until it's refreshed.
