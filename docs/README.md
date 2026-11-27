@@ -51,6 +51,10 @@ for chart and card design rules.
 - [Backlog](future-work.md) for decisions, cleanups, and ideas.
 - [Search autocomplete](plans/autocomplete.md) for name suggestions and spelling corrections.
 - [Observability](plans/observability.md) for proposed self-hosted monitoring.
+- [Search privacy](plans/search-privacy.md) for keeping Search pages to the session, telling
+  users what the workspace saves, and keeping search terms out of server logs and URLs.
+- [FDA strength, price activity, and labeler](plans/fda-strength-activity-labeler.md) for two
+  new FDA filters and a labeler search that corrects misspellings.
 
 ## Reviews and analysis
 
