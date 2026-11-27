@@ -14,6 +14,7 @@ const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringi
  * @param loadRequest - the type's `*LoadRequest`; module-level, so it's stable
  * @param applySearch - the type's `apply*Search`; module-level, so it's stable
  * @param queryKey - the first element of the search's query key (`SEARCH_QUERY_KEYS`)
+ * @param holds - whether a load holds a request (`nextLoad`); module-level, so it's stable
  * @returns
  * - `criteria`, the applied criteria. Every field but the text terms is written with
  *   `setCriteria` and applies at once, Dates included; the terms change only through `search`.
@@ -35,6 +36,7 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
   loadRequest: (criteria: C, lastAsOfDate: number) => L | null,
   applySearch: (applied: C, fields: F) => C,
   queryKey: string,
+  holds?: (loaded: L, requested: L) => boolean,
 ) {
   const lastAsOfDate = useLastAsOfDate().forSearch;
   const [criteria, setCriteria] = useState(initial);
@@ -57,7 +59,7 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
     useCallback(onChange => queryCache.subscribe(onChange), [queryCache]),
     () => held !== null && isTooManyRows(queryCache.find({ queryKey: [queryKey, held], exact: true })?.state.error),
   );
-  const loaded = nextLoad(held, requested, heldRefused);
+  const loaded = nextLoad(held, requested, heldRefused, holds);
   if (loaded !== held) setHeld(loaded);
 
   if (waiting && lastAsOfDate !== null) {

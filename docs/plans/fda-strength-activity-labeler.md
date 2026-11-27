@@ -15,7 +15,14 @@ This plan adds three things to the FDA page:
    Insufficient history, the same wording the column uses.
 3. **Labeler**, a load field: a combo box beside Brand name and Generic name. You type part of
    a company name, misspelled or not ("pfeizer"), pick one or more labelers from the list, and
-   Search loads their products. A labeler alone is enough to search.
+   Search loads the named drug's products from those labelers only. **A labeler alone is not a
+   search** (decided by the author, 2026-11-27): a brand or generic name is still required,
+   and the picks narrow what it loads, so "chloride" plus one company can fit under the row cap.
+   **Picks apply at once, like Dates** (also decided 2026-11-27): only a name change waits for
+   Search. A load whose labeler codes hold the new picks is filtered in the client (a load with
+   no picks holds every labeler for its names); anything else fetches, and so does any change
+   after the cap refused the load. An always-visible "Can't find a company?" link under the
+   field opens the Help section, and on compact panels Labeler's row comes before Search.
 
 Strength and Price activity are client-only and can ship on their own. Labeler needs the
 server and the client.
@@ -49,7 +56,7 @@ server and the client.
   retailer's store brands on a shared code: "Dollar General", "DG Health", "Rexall").
 - The grouped list as JSON (display name, codes, other spellings, flags) is 517 KB, 89 KB
   gzipped. Only the priced groups would be 45 KB, 8 KB gzipped.
-- Labeler-only searches stay well under the 200,000-row cap from
+- Labeler-only searches (since ruled out, see "Labeler" above) would stay well under the 200,000-row cap from
   [search-result-cap.md](search-result-cap.md) over the default 12 months: Aurobindo Pharma
   Limited, the largest, is 2,779 packages and 55,790 price rows; Teva Pharmaceuticals USA,
   33,876. Over all dates, Aurobindo is 223,609 price rows and would be refused. So **the
@@ -214,8 +221,8 @@ tell them apart. A change from $0 is a rise.
   plc, sa, ag, gmbh) but never the first word.
 - `FdaProductService.ListLabelerGroupsAsync`, and `GET /api/fda-products/labelers` →
   `{ data: LabelerGroup[] }`. Warm it in `CacheWarmingService`. It isn't in `app-init`, which
-  every page waits for; 517 KB would slow startup for a field most visits don't use. Check that
-  responses are compressed through the tunnel, and add `AddResponseCompression` if they aren't.
+  every page waits for; 517 KB would slow startup for a field most visits don't use. Response
+  compression is not needed (decided 2026-11-27): the list is fetched once per session.
 
 ### 4. Labeler search (server)
 
@@ -231,9 +238,9 @@ tell them apart. A change from $0 is a rise.
   groups (83 codes), and a `LIKE ANY` over 100 patterns against 115K products is still cheap
   (check it in the EF log's timing). The client mirrors the constant
   (`MAX_LABELER_CODES` in `library/constants.ts`); add it to AGENTS.md's duplicated-limits
-  convention. A request is valid with a brand or generic name of at least 5 characters,
-  **or** at least one labeler code. The error message becomes "No valid brand name, generic
-  name, or labeler was provided."
+  convention. A request is valid only with a brand or generic name of at least 5 characters;
+  labeler codes narrow it and never stand alone (codes alone are a 400, decided 2026-11-27).
+  The error message stays "No valid brand or generic name was provided."
 - **Requires the result cap** ([search-result-cap.md](search-result-cap.md)). Its bounded
   count runs on the same product query, so the labeler filter must be applied before the
   count, not only to the loaded rows. Then an oversized labeler search is refused with the
@@ -277,11 +284,14 @@ tell them apart. A change from $0 is a rise.
   `useMemo` on the data. A restored tab shows its chips from the stored names without fetching.
 - `library/searchCriteria.ts`:
   - `LabelerChoice = { name: string, codes: string[] }`.
-  - `FdaCriteria.labelers: LabelerChoice[]`, a load field, and part of `FdaTerms`, so Search
-    applies it and a new selection is a new search (which clears the exclusion lists).
+  - `FdaCriteria.labelers: LabelerChoice[]`, a load field written at once like Dates (not part
+    of `FdaTerms`, 2026-11-27), so a pick change isn't a new search: exclusions stay and no
+    result toast shows. `nextLoad` takes FDA's `fdaLoadHolds` (names, covered dates, and codes
+    that hold the picks), and `refineFda` filters by the picks with the server's prefix rule.
   - `FdaLoad` carries the sorted codes, so `nextLoad`'s comparison doesn't depend on the order
     the labelers were picked in.
-  - `isValidFdaSearch` takes the labelers too, mirroring the server.
+  - `isValidFdaSearch` still needs a name; picks don't count (2026-11-27). A saved tab with
+    picks and no name restores the picks and doesn't search until a name is typed.
   - `fdaSearchLabel`, `fdaResultsLabel`, and `fdaTabTitle` add the labeler: the first name,
     plus "+2" for more ("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1").
 - `persist.ts`: read `labelers` field by field (a name string and codes of digits), default
@@ -308,7 +318,10 @@ tell them apart. A change from $0 is a rise.
   - No matches: `noOptionsText` reads "No labelers match. Products are listed under the
     company that registered the NDC, which may be a subsidiary. Search by brand name to see
     the labeler." It ends with a "Learn more" link to the Help section below
-    (`openHelp`).
+    (`openHelp`). Since 2026-11-27, the field's always-mounted `role="status"` line also says
+    the active note (visually hidden; the popup shows it), because a combo box announces only
+    its options, and an always-visible "Can't find a company?" link under the field opens the
+    same section from the keyboard's tab order (the popup's Learn more closes with the popup).
   - Matches, but none where a word starts with the term (no tier 1 or 2 match): a one-line
     hint under the last group reads "Not the company you meant? Search by brand name to see
     the labeler." Typing "shire" (now part of Takeda, with no labeler of its own) offers only
@@ -324,12 +337,15 @@ tell them apart. A change from $0 is a rise.
 - `SearchPanel`: `TermField` becomes a union of today's text field and
   `{ kind: "labelers", value, onChange, includeOtc, includeWithoutPrices }`, rendered as
   `LabelerField` in both layouts. `FdaSearchPanel` passes Brand name, Generic name, and Labeler;
-  the panel owns the arrangement (a third field on the desktop row; stacked on compact).
-- `FdaSearchPanel`: the labeler draft is local state like the names, `changed` compares it,
-  and `handleClearSearch` clears it. Enter in the combobox with the list closed submits the
-  form, as in the text fields; check that MUI doesn't swallow it.
-- NADAC handoff (`fdaNadacHandoff.ts`): a labeler has no NADAC field, so a labeler-only empty
-  result offers no handoff, and a name plus labeler hands off the name only.
+  the panel owns the arrangement (a third field on the desktop row; on compact, the names'
+  row, then Labeler with Search and Clear search beside it, so the visual order matches focus
+  order; stacked on narrow panels; 2026-11-27).
+- `FdaSearchPanel`: the picks are not a draft (2026-11-27): the field writes the applied
+  criteria at once, like Dates, so `changed` compares only the names and Search stays disabled
+  while only picks changed. Clear search clears them with the rest. `autoHighlight` makes Enter
+  pick the top match while the list is open; with it closed, Enter submits the form.
+- NADAC handoff (`fdaNadacHandoff.ts`): a labeler has no NADAC field, so a name plus labeler
+  hands off the name only.
 - **Two controls named Labeler.** The More filters list still narrows a loaded result by
   `LabelerName`. Rename it "Labeler in results" (noun "labelers") so the two have different
   accessible names. It still lists each spelling separately, which is its own follow-up.
@@ -367,8 +383,9 @@ into the feature branch. Two parts:
 1. **Strength and Price activity filters** (client only, sections 1–2). No dependencies.
 2. **Labeler search** (sections 3–5): server list and search, then the client field. It
    starts only after the [result cap](search-result-cap.md) PR has merged into `coordinated-work`
-   (the feature branch then merges `coordinated-work` in), since a
-   labeler alone can ask for more rows than the cap allows. It doesn't depend on PR 1.
+   (the feature branch then merges `coordinated-work` in), since a labeler search can ask for
+   more rows than the cap allows (planned when a labeler alone could search; the cap still
+   bounds a broad name plus a large labeler). It doesn't depend on PR 1.
 
 Docs go with the PR they describe.
 
@@ -379,16 +396,15 @@ Docs go with the PR they describe.
   codes 43598, 55111, 55741, and 75907, and Pfizer Laboratories with its 7 codes. The second
   call is served from cache (time both). Check the response size with and without
   `Accept-Encoding: gzip`.
-- curl the search with `labelerCodes: ["0013"]` and no name (Pfizer products only); with a name
+- curl the search with `labelerCodes: ["0013"]` and no name (400); with a name
   plus a labeler (both narrow it); with `"13a"` or 101 distinct codes (400), and 100 (200);
   and with no name or labeler (400). In the EF log, confirm the generated SQL uses `LIKE ANY`
   and the count query has the labeler filter.
-- curl Aurobindo's codes with no dates (all dates, 223,609 price rows): the cap's 422, with no
-  price rows loaded (the EF log shows only the bounded count). With the default 12 months, it
-  returns results.
+- curl a broad name with Aurobindo's codes and no dates: the cap's 422 when it passes the cap,
+  with no price rows loaded (the EF log shows only the bounded count).
 - Chrome on the dev workspace, desktop and about 390 px wide:
-  - Type "pfeizer" in Labeler; Pfizer labelers show under "Did you mean". Pick two, press
-    Search, and the tab title and results heading name the first plus "+1".
+  - Search a name, type "pfeizer" in Labeler; Pfizer labelers show under "Did you mean". Pick
+    two: they apply at once, and the tab title and results heading name the first plus "+1".
   - Tick "OTC drugs" and "Results without prices", and the list offers more labelers.
   - Reload, and the restored tab shows its chips and searches without fetching the labeler
     list until the field is focused.

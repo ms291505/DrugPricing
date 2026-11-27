@@ -10,7 +10,7 @@ export function GlobalModalContextProvider({ children }: { children: ReactNode }
   const [open, setOpen] = useState<OpenGlobalModal | null>(null);
   const actions = useMemo<GlobalModalActions>(() => ({
     openModal: (modal, options) => setOpen({ ...options, modal }),
-    openHelp: (helpTopic, options) => setOpen({ ...options, modal: "help", helpTopic }),
+    openHelp: (helpTopic, { section, ...options } = {}) => setOpen({ ...options, modal: "help", helpTopic, helpSection: section }),
     closeModal: () => setOpen(null),
   }), []);
   return (

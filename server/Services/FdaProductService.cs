@@ -20,6 +20,28 @@ public class FdaProductService
     return (name?.Length >= MIN_NAME_LENGTH);
   }
 
+  /// <summary>
+  /// Whether every code is 4 to 6 digits (FDA's planned 12-digit NDC gives labelers 6) and at
+  /// most <see cref="SearchLimits.MaxLabelerCodes"/> are sent. The count is of codes sent, not
+  /// distinct ones, so a body can't repeat one code millions of times into the query. Digits
+  /// only is what lets the repository build LIKE patterns from them without escaping.
+  /// </summary>
+  public bool ValidateLabelerCodes(ICollection<string>? codes)
+  {
+    if (codes is null)
+      return true;
+    return codes.Count <= SearchLimits.MaxLabelerCodes
+      // JSON can put a null in the list ({"labelerCodes":[null]}): a 400, not a 500.
+      && codes.All(code =>
+        code is not null && code.Length is >= 4 and <= 6 && code.All(char.IsAsciiDigit)
+      );
+  }
+
+  /// <summary>Every labeler group, cached by the repository.</summary>
+  public Task<List<LabelerGroup>> ListLabelerGroupsAsync(
+    CancellationToken cancellationToken = default
+  ) => _fdaProductRepo.ListLabelerGroupsAsync(cancellationToken);
+
   public async Task<List<string>> ListUniqueDosageFormNamesAsync()
   {
     var dosageFromNames = await _fdaProductRepo.ListUniqueDosageFormNamesAsync();

@@ -5,7 +5,7 @@ import { type TabType, type WorkspaceTab } from "./tabType";
 import type {
   BarValue, ChartChangeSpan, ChartItem, ChartSeriesSnapshot, ExplorerItem, PriceChangeListItem, SeriesKind,
 } from "./explorerItems";
-import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
+import { MAX_LABELER_CODES, PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
@@ -13,6 +13,7 @@ import {
 } from "./searchCriteria";
 import { isValidNadacSearch } from "./nadacSearch";
 import { isActivityCategory } from "./priceActivity";
+import { labelerCodeCount, type LabelerChoice } from "./labelers";
 import { readColumnOverrides, DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
@@ -289,16 +290,38 @@ function readNadacCriteria(raw: Record<string, unknown>): NadacCriteria {
   };
 }
 
+const isLabelerChoice = (x: unknown): x is LabelerChoice =>
+  isObject(x) && isString(x.name) && Array.isArray(x.codes) && x.codes.length > 0
+  && x.codes.every(code => isString(code) && /^\d{4,6}$/.test(code));
+
+/**
+ * Picks read one by one, in their stored order, while their distinct codes stay within
+ * `MAX_LABELER_CODES`. A pick stores its codes, so a saved tab passes unless the limit was
+ * lowered or the value edited; dropping the rest keeps the restored search valid, not a 400.
+ */
+export function readLabelers(raw: unknown): LabelerChoice[] {
+  if (!Array.isArray(raw)) return [];
+  const kept: LabelerChoice[] = [];
+  for (const choice of raw.filter(isLabelerChoice)) {
+    const next = [...kept, { name: choice.name, codes: choice.codes }];
+    if (labelerCodeCount(next) <= MAX_LABELER_CODES) kept.push(next.at(-1)!);
+  }
+  return kept;
+}
+
 function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
   const defaults = createFdaCriteria();
   const get = field(raw, defaults);
   const proprietaryName = get("proprietaryName", isString);
   const nonProprietaryName = get("nonProprietaryName", isString);
+  // Kept without a name too: the picks show, and the tab doesn't search until a name is typed.
+  const labelers = readLabelers(raw.labelers);
   const hasSearch = isValidFdaSearch(proprietaryName, nonProprietaryName);
   const exclusions = (key: FdaExclusionKey) => hasSearch ? get(key, isStringArray) : [];
   return {
     proprietaryName,
     nonProprietaryName,
+    labelers,
     dates: get("dates", isChartDates),
     includeOtc: get("includeOtc", isBoolean),
     includeSamplePackages: get("includeSamplePackages", isBoolean),

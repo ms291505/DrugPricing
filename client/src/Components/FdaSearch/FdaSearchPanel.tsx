@@ -5,8 +5,9 @@ import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch";
 import {
   clearFdaRefine, exclusionCount, FDA_INCLUDE_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaTabTitle, isValidFdaSearch,
-  type FdaCriteria, type FdaListKey,
+  type FdaCriteria, type FdaListKey, type FdaTerms,
 } from "../../library/searchCriteria";
+import type { LabelerChoice } from "../../library/labelers";
 import { activityCategoryLabel, isActivityCategory } from "../../library/priceActivity";
 import { includeLabel } from "../../library/searchToasts";
 import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
@@ -18,7 +19,8 @@ const LISTS: { key: FdaListKey, label: string, noun: string, optionLabel?: (valu
   { key: "excludedDosageForms", label: "Dosage form", noun: "dosage forms" },
   { key: "excludedStrengths", label: "Strength", noun: "strengths" },
   { key: "excludedRoutes", label: "Route", noun: "routes" },
-  { key: "excludedLabelers", label: "Labeler", noun: "labelers" },
+  // Not "Labeler": that's the search field's name, and two controls shouldn't share one.
+  { key: "excludedLabelers", label: "Labeler in results", noun: "labelers" },
   { key: "excludedUnits", label: "Pricing unit", noun: "units" },
 ];
 
@@ -39,7 +41,7 @@ type Props = {
 
 /**
  * The FDA search panel. Brand and generic names are drafts that Search applies; every other field, Dates
- * included, writes the applied criteria at once. Search is disabled while the draft is the search
+ * and Labeler picks included, writes the applied criteria at once. Search is disabled while the draft is the search
  * on screen, so it lights up when there is something to run. The tab is named after its search
  * until the user names it (`useRenameAfterSearch`).
  */
@@ -53,7 +55,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
 
   const [nonProprietaryName, setNonProprietaryName] = useState(criteria.nonProprietaryName);
-  const terms = { proprietaryName: proprietaryName.trim(), nonProprietaryName: nonProprietaryName.trim() };
+  const terms: FdaTerms = { proprietaryName: proprietaryName.trim(), nonProprietaryName: nonProprietaryName.trim() };
   const changed = terms.proprietaryName !== criteria.proprietaryName || terms.nonProprietaryName !== criteria.nonProprietaryName;
 
   // The title the search on screen gave the tab, which the next search or a clear may replace.
@@ -63,8 +65,14 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const handleSearch = () => {
     // The search on screen failed: applying the same name changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(fdaTabTitle(terms), appliedTitle);
+    renameAfterSearch(fdaTabTitle({ ...terms, labelers: criteria.labelers }), appliedTitle);
     search(terms);
+  };
+
+  // Picks apply at once, like Dates; a tab named after its search follows them.
+  const handleLabelersChange = (labelers: LabelerChoice[]) => {
+    if (applied) renameAfterSearch(fdaTabTitle({ ...criteria, labelers }), appliedTitle);
+    setCriteria(prev => ({ ...prev, labelers }));
   };
 
   const handleClearSearch = () => {
@@ -81,15 +89,20 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       navigation={navigation}
       standaloneAction={standaloneAction}
       heading="Find a drug"
-      description="Search the FDA directory by brand or generic name to see products, packages and NADAC prices."
+      description="Search the FDA directory by brand or generic name, narrowed to labelers if you like, to see products, packages and NADAC prices."
       onSearch={handleSearch}
       canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
       onClearSearch={handleClearSearch}
-      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== ""}
+      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== "" || criteria.labelers.length > 0}
       terms={[
         { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Eliquis", value: proprietaryName, onChange: setProprietaryName },
         { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. apixaban", value: nonProprietaryName, onChange: setNonProprietaryName },
+        {
+          kind: "labelers", id: "labelers", label: "Labeler", placeholder: "e.g. Pfizer",
+          value: criteria.labelers, onChange: handleLabelersChange,
+          includeOtc: criteria.includeOtc, includeWithoutPrices: criteria.includeResultsWithoutPrices,
+        },
       ]}
       dates={criteria.dates}
       onDatesChange={dates => setCriteria(prev => ({ ...prev, dates }))}

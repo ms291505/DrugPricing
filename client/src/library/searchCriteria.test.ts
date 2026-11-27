@@ -3,11 +3,11 @@ import { fdaHasPricesInWindow, nadacHandoffTerm } from "./fdaNadacHandoff";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
-  exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  fdaResultsLabel, fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaLoadHolds, labelerCodesHold, narrowToLabelers, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
+  fdaResultsLabel, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
-  type FdaCriteria, type NadacCriteria, type NadacLoad,
+  type FdaCriteria, type FdaLoad, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
 
@@ -540,7 +540,7 @@ describe("FDA name searches", () => {
     expect(isValidFdaSearch("  Li  ", "  at  ")).toBe(false);
     expect(isValidFdaSearch("", "")).toBe(false);
     expect(fdaLoadRequest(generic, last)).toEqual({
-      proprietaryName: "", nonProprietaryName: "atorvastatin",
+      proprietaryName: "", nonProprietaryName: "atorvastatin", labelerCodes: [],
       dates: { start: day("2025-11-04"), end: last },
     });
   });
@@ -567,6 +567,91 @@ describe("FDA name searches", () => {
     expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "" })).toBe("Lipitor");
   });
 
+  it("adds the first labeler and how many more", () => {
+    const teva = { name: "Teva Pharmaceuticals USA, Inc.", codes: ["0093"] };
+    const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013"] };
+    expect(fdaTabTitle({ proprietaryName: "eliquis", nonProprietaryName: "", labelers: [teva, pfizer] }))
+      .toBe("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1");
+    // Picks without a name aren't a search, so they don't name one.
+    expect(fdaSearchLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "apixaban", labelers: [teva, pfizer, teva] }))
+      .toBe("\u201capixaban\u201d / Teva Pharmaceuticals USA, Inc. +2");
+  });
+
+  it("narrows a name search by labeler, sending the codes sorted, but never searches on picks alone", () => {
+    const picks = [{ name: "B", codes: ["0025", "0013"] }, { name: "A", codes: ["0008"] }];
+    expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: picks }, last)).toBeNull();
+    const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: picks };
+    expect(fdaLoadRequest(criteria, last)?.labelerCodes).toEqual(["0008", "0013", "0025"]);
+    // Picked in another order: the same load, so narrowing the dates still doesn't fetch.
+    const loaded = fdaLoadRequest(criteria, last)!;
+    const reordered = fdaLoadRequest({ ...criteria, labelers: [...picks].reverse() }, last)!;
+    expect(nextLoad(loaded, reordered)).toBe(loaded);
+    // Picks apply like Dates, not as a new search: the exclusion lists stay.
+    const applied = { ...criteria, excludedRoutes: ["ORAL"] };
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "chloride" }).excludedRoutes).toEqual(["ORAL"]);
+    expect(clearFdaRefine(applied).labelers).toEqual(picks);
+  });
+
+  describe("labeler picks apply at once", () => {
+    const load = (labelerCodes: string[], start = "2025-11-04"): FdaLoad =>
+      ({ proprietaryName: "", nonProprietaryName: "chloride", labelerCodes, dates: { start: day(start), end: last } });
+    const next = (loaded: FdaLoad, requested: FdaLoad, refused = false) =>
+      nextLoad(loaded, requested, refused, fdaLoadHolds) === loaded ? "filter" : "fetch";
+
+    it("filters a load that holds the picks, and fetches otherwise", () => {
+      // A load without picks holds every labeler for its names.
+      expect(next(load([]), load(["0013"]))).toBe("filter");
+      expect(next(load(["0013", "0025"]), load(["0013"]))).toBe("filter");
+      expect(next(load(["0013"]), load(["0013", "0069"]))).toBe("fetch");
+      expect(next(load(["0013"]), load([]))).toBe("fetch");
+      expect(labelerCodesHold([], [])).toBe(true);
+      // Dates still have to be covered, and other names are another search.
+      expect(next(load([]), load(["0013"], "2025-01-01"))).toBe("fetch");
+      expect(next(load([]), { ...load(["0013"]), nonProprietaryName: "sodium" })).toBe("fetch");
+    });
+
+    it("fetches any pick change after the server refused the load as too large", () => {
+      expect(next(load([]), load(["0013"]), true)).toBe("fetch");
+    });
+
+    it("never searches on picks alone", () => {
+      expect(isValidFdaSearch("", "")).toBe(false);
+      expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: [{ name: "P", codes: ["0013"] }] }, last)).toBeNull();
+    });
+
+    it("shows the same rows filtering a name-only load as the server's narrowed load", () => {
+      const result = {
+        products: [
+          product("0013-1001", [fdaPackage("0013-1001-01", [nadacPrice("13100101", "2026-01-14")])]),
+          // Starts with "0013" but is labeler 00131, which the dash rule keeps out.
+          product("00131-200", [fdaPackage("00131-200-01", [nadacPrice("131200001", "2026-01-14")])]),
+          product("0025-3000", [fdaPackage("0025-3000-01", [nadacPrice("25300001", "2026-01-14")])]),
+          product("0069-4000", [fdaPackage("0069-4000-01", [nadacPrice("69400001", "2026-01-14")])]),
+        ],
+      };
+      // The server's narrowing, written as its SQL reads: ProductNdc LIKE 'code-%'.
+      const like = (codes: string[]) => (ndc: string) =>
+        codes.some(code => new RegExp(`^${code}-.*$`).test(ndc));
+      for (const codes of [["0013"], ["0013", "0069"], ["0025"]]) {
+        const picks = [{ name: "Picked", codes }];
+        const narrowed = { products: result.products.filter(p => like(codes)(p.productNdc)) };
+        const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: picks };
+        const ndcs = (r: { products: FdaProductDetail[] }) => refineFda(r, criteria, FULL_WINDOW).products.map(p => p.productNdc);
+        expect(ndcs(result)).toEqual(ndcs(narrowed));
+        expect(ndcs(result).length).toBeGreaterThan(0);
+        // What the empty-result notice reads: the load's narrowing only.
+        expect(narrowToLabelers(result, picks)).toEqual(narrowed);
+        expect(fdaHasPricesInWindow(narrowToLabelers(result, picks), FULL_WINDOW))
+          .toBe(fdaHasPricesInWindow(narrowed, FULL_WINDOW));
+      }
+      // A pick with nothing in the load: the notice sees no products, as after a narrowed fetch.
+      expect(narrowToLabelers(result, [{ name: "None", codes: ["9999"] }]).products).toEqual([]);
+      expect(narrowToLabelers(result, [])).toBe(result);
+    });
+  });
+
   it("quotes the typed terms in the results heading, and nothing else", () => {
     expect(fdaResultsLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
       .toBe("\u201cLipitor\u201d / \u201catorvastatin\u201d");
@@ -590,6 +675,7 @@ describe("FDA to NADAC handoff", () => {
   ])("carries one applied term (%s, %s → %s)", (proprietaryName, nonProprietaryName, expected) => {
     expect(nadacHandoffTerm({ proprietaryName, nonProprietaryName })).toBe(expected);
   });
+
 
   it("recognizes loaded prices even when OTC, sample and other exclusions hide them", () => {
     const result = { products: [product("12345-1234", [

@@ -3,6 +3,7 @@ import { clipToWindow, windowEndingAt, type ChartDates, type DateWindow } from "
 import { isValidNadacSearch } from "./nadacSearch";
 import { ACTIVITY_CATEGORIES, packageActivity, type ActivityCategory } from "./priceActivity";
 import { compareStrength, strengthLabel } from "./strength";
+import { labelerCodes, matchesLabelerCodes, type LabelerChoice } from "./labelers";
 import {
   isFdaProductOtc,
   type FdaPackageDetail, type FdaProductDetail, type FdaProductSearchResult, type FdaResultDetailLevel,
@@ -47,6 +48,12 @@ export type FdaCriteria = {
   // Load
   proprietaryName: string,
   nonProprietaryName: string,
+  /**
+   * Picked from the Labeler field: they narrow the name search to these labelers. They apply at
+   * once, like Dates: a load that already holds them is filtered in the client (`fdaLoadHolds`),
+   * else the search sends their codes (`labelerCodes`). Without a name they don't search.
+   */
+  labelers: LabelerChoice[],
   dates: ChartDates,
   // Refine
   includeOtc: boolean,
@@ -68,6 +75,8 @@ export type FdaCriteria = {
 /** The text terms: the fields the Search button applies. */
 export type NadacTerms = Pick<NadacCriteria, "ndcDescription" | "ndc">;
 export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName">;
+/** What FDA's labels name: the names, and the picks narrowing them. */
+type FdaLabelTerms = FdaTerms & { labelers?: LabelerChoice[] };
 
 /** An exclusion-list field: a multi-select whose options come from the loaded result. */
 export type NadacExclusionKey = "excludedNdcDescriptions" | "excludedUnits";
@@ -92,6 +101,7 @@ export const createNadacCriteria = (): NadacCriteria => ({
 export const createFdaCriteria = (): FdaCriteria => ({
   proprietaryName: "",
   nonProprietaryName: "",
+  labelers: [],
   dates: DEFAULT_SEARCH_DATES,
   includeOtc: false,
   includeSamplePackages: false,
@@ -117,7 +127,8 @@ export type IncludeKey = "includeOtc" | "includeSamplePackages" | "includeResult
 
 /** What a search asks the server for. Its dates are fixed (presets resolved); a null end is open. */
 export type NadacLoad = { ndcDescription: string, ndc: string, dates: DateWindow };
-export type FdaLoad = FdaTerms & { dates: DateWindow };
+/** An FDA load sends the picks' codes, sorted, so the order they were picked in doesn't matter. */
+export type FdaLoad = { proprietaryName: string, nonProprietaryName: string, labelerCodes: string[], dates: DateWindow };
 
 /**
  * The dates a setting means for a search: presets count back from the last loaded as-of date
@@ -137,24 +148,38 @@ export function nadacLoadRequest(criteria: NadacCriteria, lastAsOfDate: number):
   };
 }
 
-/** Either name can supply the minimum length; both supplied names narrow the match. */
+/**
+ * Either name can supply the minimum length; every supplied term, Labeler picks included,
+ * narrows the match. Picks alone are not a search (decided 2026-11-27). Mirrors the server's
+ * check in `FdaProductEndpoints`.
+ */
 export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string) =>
   [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
 
 /** The names searched on, trimmed, brand first. */
 const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean);
 
-/** Shared wording for chart provenance and a new tab's title. */
-export const fdaSearchLabel = (terms: FdaTerms) => fdaNames(terms).join(" / ") || "search";
+/** The picked labelers in a label: the first one's name, and "+2" for two more. */
+const labelerLabel = (labelers: LabelerChoice[] = []) =>
+  labelers.length === 0 ? null : labelers[0].name + (labelers.length > 1 ? ` +${labelers.length - 1}` : "");
+
+/** Shared wording for chart provenance and a new tab's title. The picks follow the names they narrow. */
+export const fdaSearchLabel = (terms: FdaLabelTerms) => {
+  const names = fdaNames(terms);
+  return names.length === 0 ? "search" : [...names, labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
+};
 
 /** The title a search gives its tab (`useRenameAfterSearch`) and a workspace copy of it. */
-export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCase();
+export const fdaTabTitle = (terms: FdaLabelTerms) => fdaSearchLabel(terms).toUpperCase();
 
 /** Text in quotes, to mark it as what the user typed and not the app's wording. */
 export const quoted = (text: string) => `\u201c${text}\u201d`;
 
-/** The results heading's wording: `fdaSearchLabel` with each name in quotes. */
-export const fdaResultsLabel = (terms: FdaTerms) => fdaNames(terms).map(quoted).join(" / ") || "search";
+/** The results heading's wording: `fdaSearchLabel` with each typed name in quotes; a labeler was picked, not typed. */
+export const fdaResultsLabel = (terms: FdaLabelTerms) => {
+  const names = fdaNames(terms);
+  return names.length === 0 ? "search" : [...names.map(quoted), labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
+};
 
 /** Shared wording for chart provenance: the description, or else the NDC (in its stored form). */
 export const nadacSearchLabel = (terms: NadacTerms) =>
@@ -170,6 +195,7 @@ export function fdaLoadRequest(criteria: FdaCriteria, lastAsOfDate: number): Fda
   return {
     proprietaryName: criteria.proprietaryName,
     nonProprietaryName: criteria.nonProprietaryName,
+    labelerCodes: labelerCodes(criteria.labelers),
     dates: resolveSearchDates(criteria.dates, lastAsOfDate),
   };
 }
@@ -187,22 +213,46 @@ function sameTerms<T extends { dates: DateWindow }>(a: T, b: T): boolean {
   return JSON.stringify(termsA) === JSON.stringify(termsB);
 }
 
+/** The default `holds`: the same terms, and dates that cover the requested ones. */
+export const loadHolds = <T extends { dates: DateWindow }>(loaded: T, requested: T) =>
+  sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates);
+
 /**
- * The "narrowing doesn't fetch" rule: keeps what is loaded when the terms are the same and its
- * dates cover the requested ones, so the client clips to the new dates instead of fetching.
- * Anything else (new terms, or dates reaching outside what is loaded) is a new load, and so is
- * any request after the server refused `loaded` as too large (`loadedRefused`, `isTooManyRows`):
- * shortening the Dates is the fix its notice suggests.
+ * Whether a load's labeler codes hold the requested ones: a load without codes holds every
+ * labeler for its names, and one with codes holds any non-empty subset of them.
+ */
+export function labelerCodesHold(loaded: string[], requested: string[]): boolean {
+  if (loaded.length === 0) return true;
+  const codes = new Set(loaded);
+  return requested.length > 0 && requested.every(code => codes.has(code));
+}
+
+/**
+ * FDA's `holds`: the same names, dates that cover the requested ones, and labeler codes that
+ * hold the requested ones (`labelerCodesHold`), so picks narrowing what's loaded filter it in
+ * the client (`refineFda`) instead of fetching.
+ */
+export const fdaLoadHolds = (loaded: FdaLoad, requested: FdaLoad) =>
+  loaded.proprietaryName === requested.proprietaryName && loaded.nonProprietaryName === requested.nonProprietaryName
+  && windowCovers(loaded.dates, requested.dates) && labelerCodesHold(loaded.labelerCodes, requested.labelerCodes);
+
+/**
+ * The "narrowing doesn't fetch" rule: keeps what is loaded when it holds the request (`holds`,
+ * by default the same terms and dates that cover the requested ones), so the client clips or
+ * filters instead of fetching. Anything else (new terms, or dates reaching outside what is
+ * loaded) is a new load, and so is any request after the server refused `loaded` as too large
+ * (`loadedRefused`, `isTooManyRows`): shortening the Dates, or picking a labeler, is the fix.
  */
 export function nextLoad<T extends { dates: DateWindow }>(
   loaded: T | null,
   requested: T | null,
   loadedRefused = false,
+  holds: (loaded: T, requested: T) => boolean = loadHolds,
 ): T | null {
   if (loaded === null || requested === null) return requested;
-  // A load the server refused as too large holds nothing, so shorter Dates must fetch.
+  // A load the server refused as too large holds nothing, so any narrowing must fetch.
   if (loadedRefused) return requested;
-  return sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates) ? loaded : requested;
+  return holds(loaded, requested) ? loaded : requested;
 }
 
 /**
@@ -461,10 +511,13 @@ export function refineFda(
   const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(result, activityDates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const excludedActivities = new Set(criteria.excludedActivities);
+  const codes = labelerCodes(criteria.labelers);
   const showsProduct = (p: FdaProductDetail) =>
     !criteria.excludedProductNdcs.includes(p.productNdc)
     && !criteria.excludedDosageForms.includes(p.dosageFormName)
     && (criteria.excludedStrengths.length === 0 || !criteria.excludedStrengths.includes(strengthLabel(p)))
+    // The picks, as the server narrows a load by them, for a load that holds more.
+    && matchesLabelerCodes(p.productNdc, codes)
     // A product shows while any of its routes is still included.
     && (p.routeName.length === 0 || p.routeName.some(r => !criteria.excludedRoutes.includes(r)))
     && !criteria.excludedLabelers.includes(p.labelerName)
@@ -485,6 +538,18 @@ export function refineFda(
 
 /** Price activity's options: all five categories, in the column's order, as for the Include boxes. */
 const ACTIVITY_OPTIONS: string[] = ACTIVITY_CATEGORIES.map(category => category.key);
+
+/**
+ * The loaded result narrowed to the picks, as the server would have loaded it: the load's
+ * narrowing only, without the refine fields. What reads the loaded result to say what a search
+ * found (`NadacHandoffNotice`) reads this, so a load filtered in the client says what a
+ * narrowed fetch would. The same result without picks.
+ */
+export function narrowToLabelers(result: FdaProductSearchResult, labelers: LabelerChoice[]): FdaProductSearchResult {
+  const codes = labelerCodes(labelers);
+  if (codes.length === 0) return result;
+  return { ...result, products: result.products.filter(product => matchesLabelerCodes(product.productNdc, codes)) };
+}
 
 /**
  * The options of FDA's More filters lists, keyed by the exclusion each one sets. Price activity
@@ -573,6 +638,7 @@ export const clearFdaRefine = (criteria: FdaCriteria): FdaCriteria => ({
   ...createFdaCriteria(),
   proprietaryName: criteria.proprietaryName,
   nonProprietaryName: criteria.nonProprietaryName,
+  labelers: criteria.labelers,
   dates: criteria.dates,
 });
 

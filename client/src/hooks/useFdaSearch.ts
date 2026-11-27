@@ -25,6 +25,7 @@ export default function useFdaSearch() {
       return getAdvancedFdaSearchReqults({
         proprietaryName: loaded!.proprietaryName,
         nonProprietaryName: loaded!.nonProprietaryName,
+        labelerCodes: loaded!.labelerCodes,
         // Sample packages and packages without prices always load: the page hides them by
         // default (`refineFda`), so ticking their Include boxes doesn't fetch.
         includeSamplePackages: true,

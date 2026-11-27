@@ -24,7 +24,7 @@ export default function GlobalModal() {
     about: { label: "About", content: <About showHeading={false} /> },
     onboarding: { label: "Welcome", content: <OnBoarding showHeading={false} /> },
     settings: { label: "Settings", content: <SettingsPanel /> },
-    help: { label: "Help", content: <HelpContent initialTopic={open?.helpTopic} /> },
+    help: { label: "Help", content: <HelpContent initialTopic={open?.helpTopic} initialSection={open?.helpSection} /> },
   }
 
   // Full screen on a phone, as settings sheets are there; a centered card from `sm` up.

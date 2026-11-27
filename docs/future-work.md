@@ -9,13 +9,25 @@ it ships. The code and pull request preserve the implementation history.
 
 Plan: [docs/plans/fda-strength-activity-labeler.md](plans/fda-strength-activity-labeler.md).
 Strength and Price activity (Dropped, Rose, Dipped or spiked, Stable, Insufficient history) are
-new FDA refine filters. Labeler is a new load field, a combo box, and a labeler alone is
-enough to search. The server groups the 7,821 labeler spellings into about 5,100 labelers by
+new FDA refine filters. Labeler is a new load field, a combo box that narrows a brand or
+generic name search to the companies picked; a labeler alone isn't a search (decided
+2026-11-27). The server groups the 7,821 labeler spellings into about 5,100 labelers by
 normalized name and labeler code and caches the list. The client matches typed text against it
 in memory, misspellings included ("pfeizer" → Pfizer), and the search sends labeler codes.
 Matching runs in the client, which has the unit tests and keeps typed text in the browser.
 
 Size: medium. Two PRs (the filters, client only; then the labeler search, after the result cap).
+
+Left out of the plan, to revisit once it ships:
+
+- **"Search this labeler" from a results row**, which turns Help's "Finding a company's
+  products" steps into one click. It needs the row's labeler codes (the product NDC's first
+  segment) and a name for the chip; decide where it lives with the row details drawer idea.
+- **Group the More filters "Labeler in results" list by labeler group**, so Dr. Reddy's is one
+  entry, not one per spelling. The client would need each product's group.
+- **Labeler suggestions narrowed by the other terms** (only the labelers that make Eliquis).
+- **Parent-company aliases** ("Bristol-Myers Squibb" → E.R. Squibb & Sons): the data doesn't
+  hold them, and a hand-kept table would go stale.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
