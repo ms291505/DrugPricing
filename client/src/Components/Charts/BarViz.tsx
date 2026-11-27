@@ -11,7 +11,7 @@ import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
 import UnitSplit from "./UnitSplit";
 import { barChartSummary } from "../../library/chartSummary";
-import { BAR_DESCRIPTION_LINES, READOUT_LINE_HEIGHT, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
+import { BAR_DESCRIPTION_LINES, READOUT_LINE_HEIGHT_PX, barAnnouncement, barReadoutHeight, rowAtIndex } from "../../library/chartReadout";
 import useChartReadout from "../../hooks/useChartReadout";
 import useLockedPoint from "../../hooks/useLockedPoint";
 import { fromKeyboard, holdsFocus } from "../ui/focus";
@@ -345,7 +345,7 @@ function BarReadout({ row, barValue, unit, color, compact, status, onUnlock }: B
             lineClamp: BAR_DESCRIPTION_LINES,
             overflow: "hidden",
             overflowWrap: "anywhere",
-            lineHeight: `${READOUT_LINE_HEIGHT}px`,
+            lineHeight: `${READOUT_LINE_HEIGHT_PX}px`,
             flexShrink: 0,
           }}
         >

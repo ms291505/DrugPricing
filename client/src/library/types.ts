@@ -120,3 +120,5 @@ export const initialMobileDrawer: MobileDrawer = {
   isOpen: false,
   isClosing: false,
 }
+
+export type SearchSource = "fda" | "nadac";

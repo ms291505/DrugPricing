@@ -7,6 +7,8 @@ import { fromChartSeries, itemTitle, type ChartItem } from "../../library/explor
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import useNearViewport from "../../hooks/useNearViewport";
 import { barReadoutHeight, lineReadoutHeight } from "../../library/chartReadout";
+import { clipToWindow } from "../../library/dates";
+import { summarizePrices } from "../../library/prices";
 import useMobile from "../../hooks/useMobile";
 import LineViz from "../Charts/LineViz";
 import BarViz from "../Charts/BarViz";
@@ -32,11 +34,10 @@ export default memo(function ChartItemBody({ item, priceRanges }: Props) {
   const isMobile = useMobile();
 
   if (!near) {
-    // The readout above the plot reserves its height up front, so it can be counted here. Known
-    // gap: a pinned bar of an averaged product draws a taller dock (its "Average of N packages"
-    // line, 24 px more) than this counts, since the snapshot doesn't say so without a scan.
+    const averagesPackages = item.chartType === "bar" && !isMobile &&
+      summarizePrices(clipToWindow(fromChartSeries(item.series), item.dateWindow)).some(row => row.packages > 1);
     const readout = item.chartType === "bar"
-      ? barReadoutHeight(isMobile, false)
+      ? barReadoutHeight(isMobile, averagesPackages)
       : lineReadoutHeight(new Set(item.series.map(series => series.ndc)).size, isMobile);
     return (
       // About a drawn line chart's height, so the page shifts little as charts draw: its readout,

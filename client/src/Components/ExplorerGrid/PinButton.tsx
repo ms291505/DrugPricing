@@ -3,7 +3,7 @@ import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import toast from "react-hot-toast";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import {
-  createChartItems, withLoadedDates, type ChartChangeSpan, type ChartOrigin, type ChartType, type ExplorerItemSource,
+  createChartItem, withLoadedDates, type ChartChangeSpan, type ChartOrigin, type ChartType, type ExplorerItemSource,
 } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
 import type { DateWindow } from "../../library/dates";
@@ -38,14 +38,12 @@ export default function PinButton({ title, chartType, prices, loadedPrices, orig
   const { addItems } = usePinActions();
 
   const handlePin = () => {
-    const items = createChartItems({
+    const item = createChartItem({
       chartType, prices: withLoadedDates(prices, loadedPrices()), defaultTitle: title, origin, dateWindow, changeSpan, eventDate,
       colors, barValue, source,
     });
-    addItems(items);
-    toast.success(items.length > 1
-      ? `Added ${items.length} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`
-      : `Pinned "${title}"`);
+    addItems([item]);
+    toast.success(`Pinned "${title}"`);
     onPinned?.();
   };
 

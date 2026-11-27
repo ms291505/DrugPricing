@@ -120,6 +120,7 @@ describe("stale latest prices", () => {
 
 describe("formatStrength", () => {
   it.each([
+    { strengthNumber: ["10", "20"], strengthUnit: ["mg"], expected: "10 mg, 20" },
     { strengthNumber: [], strengthUnit: [], expected: "" },
     { strengthNumber: ["2.5"], strengthUnit: ["mg/1"], expected: "2.5 mg/1" },
     { strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/5mL"], expected: "10 mg/1, 20 mg/5mL" },

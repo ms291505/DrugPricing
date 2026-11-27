@@ -94,6 +94,12 @@ Size: medium. One PR (server, client, Help, AGENTS.md).
 
 ## Cleanups
 
+### Refresh the NADAC as-of date during long sessions
+
+If a new weekly file loads while the app is open, `currentAsOfDate` can use a cached app-init
+date until that query refreshes. Review the freshness of that metadata alongside the price
+results so stale-price indicators use the correct publication date.
+
 ### Each a small PR of its own
 
 - **Split `library/types.ts`.** It mixes NADAC types, FDA types (with helpers such as

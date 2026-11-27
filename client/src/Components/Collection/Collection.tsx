@@ -8,10 +8,10 @@ import { usePinActions } from "../../Context/pinnedItemsContexts";
 export default function Collection() {
   const { registerTab } = useWorkspaceActions();
   const { id: tabId } = useTabInstanceContext();
-  const { addItem } = usePinActions();
+  const { addItems } = usePinActions();
   useEffect(
-    () => registerTab(tabId, item => addItem(item)),
-    [tabId, registerTab, addItem]
+    () => registerTab(tabId, item => addItems([item])),
+    [tabId, registerTab, addItems]
   );
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>

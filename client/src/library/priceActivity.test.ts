@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityCounts, activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
+import { activityCounts, activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventKey, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
@@ -11,6 +11,15 @@ const series = (values: number[], ndc = "A", pricingUnit = "each", start = Date.
 const pkg = (values: number[], ndc = "A") => ({ packageNdc: ndc, prices: series(values, ndc) });
 
 describe("price activity", () => {
+  it("keeps each package event identifiable across lists", () => {
+    const prices = [...series([0, 1]), ...series([0, 1], "B")];
+    const [group] = groupPriceEvents(derivePriceEvents(prices, "package"));
+    const [sameGroup] = groupPriceEvents(derivePriceEvents(prices, "package", 20));
+    expect(eventKey(group, group.events[0])).toBe(eventKey(sameGroup, sameGroup.events[0]));
+    expect(eventKey(group, group.events[0])).not.toBe(eventKey(group, group.events[1]));
+    expect(packageActivity(series([0, 1])).label).toContain("from $0");
+  });
+
   it("classifies the cutoff rounded to 0.1%, including floating-point 5% rises", () => {
     expect(packageActivity(series([0.2, 0.21])).state).toBe("changed");
     expect(packageActivity(series([1, 1.0494]))).toMatchObject({ state: "stable", label: "Stable · within 5%" });

@@ -91,10 +91,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   origin, never inferred from the `seriesKind` or search terms. Old pins without it show "Search
   source unknown"; invalid values are dropped field by field during persistence, retaining the
   rest of the pin.
-- A product pin's provenance chip switches its transient view to package lines only when every
-  stored point has a known `packageNdc`. `packageLevelView` derives package series from that
-  snapshot, preserving dates and units; the original item and its settings stay intact so the
-  same chip switches back to product averages. Legacy or partial identities disable the switch.
+- **Show packages** switches a product pin to package lines when every stored point has a
+  known `packageNdc`. `packageLevelView` derives those series from the snapshot, preserving dates
+  and units. **Show products** returns to the original product averages and settings. Pins with
+  missing or partial package identities omit the button.
   Never fill an unknown package identity from a product NDC. In newly created snapshots,
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
 - Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
@@ -165,7 +165,9 @@ search. Pass the page's map to `LineViz`/`BarViz` as `colors`.
   Product markers come only from actual package events, never jumps in their average.
   New product snapshots retain each point's package in `ChartSeriesSnapshot.packageNdcs`;
   old product pins without this identity still draw, but cannot infer package events. A legacy
-  `changeSpan` remains a fallback inside its dates. Pinned line charts save `showPriceChanges`
+  `changeSpan` draws a fallback callout inside the shown dates when no derived callout marks
+  that date. The solid `eventDate` reference line marks the change a dialog or its pin opened on
+  independently of callout visibility. Pinned line charts save `showPriceChanges`
   (absent means on); added charts always mark events. Bars have no event markers.
 - **Legend** (`SeriesLegend`) toggles and highlights series. Toggles are view state
   (`seriesVisibility.ts`), never stored, reset when the series in the dates change; the last shown

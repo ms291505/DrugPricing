@@ -10,7 +10,6 @@ export type PinHighlight = { id: string };
 
 export type PinActions = {
   addItems: (items: ExplorerItem[]) => void;
-  addItem: (item: ExplorerItem) => void;
   updateItem: (id: string, update: (item: ExplorerItem) => ExplorerItem) => void;
   removeItem: (id: string) => void;
   /** Moves an item up (-1) or down (+1) one place. */

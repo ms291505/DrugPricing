@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
-import { GRID_CHECKBOX_SELECTION_COL_DEF, type GridApi, type GridAutosizeOptions } from "@mui/x-data-grid";
+import { GRID_CHECKBOX_SELECTION_COL_DEF, type GridApi, type GridColDef, type GridAutosizeOptions } from "@mui/x-data-grid";
 import { usePageVisible } from "../../Context/pageVisibility";
 import type { PricedRow } from "../../library/resultRows";
 
@@ -17,12 +17,12 @@ const OPTIONS: GridAutosizeOptions = {
  * page is shown; the table stays untouched. The grid measures the rows it has rendered, so the
  * widths follow the page on screen.
  */
-export default function AutosizeColumns({ apiRef, rows, visibility, columns }: {
+export default function AutosizeColumns<R extends PricedRow>({ apiRef, rows, visibility, columns }: {
   apiRef: RefObject<GridApi | null>,
   rows: PricedRow[],
   visibility: Record<string, boolean>,
   /** The table's columns: a new array (the narrow/wide order flipped, or a new tier's bounds) is measured again. */
-  columns: unknown,
+  columns: readonly GridColDef<R>[],
 }) {
   const visible = usePageVisible();
   // A new `columns` array resets the grid's widths, dragged ones too.

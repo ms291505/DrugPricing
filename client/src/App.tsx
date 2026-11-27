@@ -49,10 +49,12 @@ export default function App() {
   );
 }
 
+const isHelpPath = (pathname: string) => pathname === "/help" || pathname.startsWith("/help/");
+
 /** A direct Help visit is read-only. Once entered, the app stays mounted even on Help routes. */
 function AppContent() {
   const { pathname } = useLocation();
-  const isHelp = pathname === "/help" || pathname.startsWith("/help/");
+  const isHelp = isHelpPath(pathname);
   const [enteredApp, setEnteredApp] = useState(!isHelp);
   if (!isHelp && !enteredApp) setEnteredApp(true);
   if (!enteredApp) return (
@@ -94,14 +96,17 @@ function AppShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   useLayoutEffect(() => {
-    if (pathname === "/welcome" || pathname === "/about" || pathname === "/help" || pathname.startsWith("/help/")) window.scrollTo(0, 0);
+    if (pathname === "/welcome" || pathname === "/about" || isHelpPath(pathname)) window.scrollTo(0, 0);
   }, [pathname]);
   const matchedSource = useMatch("/search/:source")?.params.source;
   const source: SearchSource | null = matchedSource === "fda" || matchedSource === "nadac" ? matchedSource : null;
-  const [lastSource, setLastSource] = useState(loadLastSearchSource);
-  const [visited, setVisited] = useState<ReadonlySet<SearchSource>>(() => new Set(source ? [source] : []));
-  if (source && !visited.has(source)) setVisited(new Set([...visited, source]));
-  if (source && lastSource !== source) setLastSource(source);
+  const [{ lastSource, visited }, setSearchNavigation] = useState(() => ({
+    lastSource: source ?? loadLastSearchSource(),
+    visited: new Set<SearchSource>(source ? [source] : []),
+  }));
+  if (source && source !== lastSource) {
+    setSearchNavigation({ lastSource: source, visited: new Set([...visited, source]) });
+  }
   useEffect(() => { if (source) saveLastSearchSource(source); }, [source]);
 
   // Declarative router navigation changes identity by route; keep the handoff action stable.
@@ -113,7 +118,7 @@ function AppShell() {
     void navigateRef.current("/search/nadac");
   }, []);
   // Element identity is stable across route switches, as in TabInstance.
-  const fda = useMemo(() => <StandaloneSearch source="fda" offer={null} />, []);
+  const fda = useMemo(() => <StandaloneSearch source="fda" />, []);
   const nadac = useMemo(() => <StandaloneSearch source="nadac" offer={offer} />, [offer]);
   const pins = useMemo(() => <PinnedSection />, []);
   const isWorkspace = useMatch("/workspace") !== null;
@@ -133,7 +138,7 @@ function AppShell() {
           </Box>
         </StandalonePinsProvider></TryNadacContext>}
         {!source && !isWorkspace && <Box sx={{ gridArea: "1 / 1", minWidth: 0 }}>
-          {pathname === "/help" || pathname.startsWith("/help/") ? <HelpRoutes /> : <Routes>
+          {isHelpPath(pathname) ? <HelpRoutes /> : <Routes>
             <Route path="/about" element={<Container maxWidth="lg"><About /></Container>} />
             <Route path="/welcome" element={<Container maxWidth="md"><Welcome /></Container>} />
             <Route path="/search" element={<Navigate to={`/search/${lastSource ?? "fda"}`} replace />} />

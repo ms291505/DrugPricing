@@ -3,7 +3,7 @@ import { Box, Button, IconButton, Table, TableBody, TableCell, TableHead, TableR
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { visuallyHidden } from "@mui/utils";
 import {
-  previousObservationNote, priceEventGroupLabel, PRICE_CHANGE_GROUP_LIMIT, PRICE_CHANGE_PACKAGE_LIMIT, signedChange,
+  eventKey, previousObservationNote, priceEventGroupLabel, PRICE_CHANGE_GROUP_LIMIT, PRICE_CHANGE_PACKAGE_LIMIT, signedChange,
   type PriceEvent, type PriceEventGroup,
 } from "../../library/priceActivity";
 import { formatPrice } from "../../library/chartScale";
@@ -177,10 +177,4 @@ function PriceEventGroupRow({ group, compact, detailsOpen, onDetailsToggle, onCh
       </Box>
     </Box>
   );
-}
-
-/** One change, the same in every list that shows it. Holds no whitespace. */
-function eventKey(group: PriceEventGroup, event: PriceEvent) {
-  const { startDate, endDate, oldPrice, newPrice } = event.change;
-  return `${group.key}:${event.seriesNdc}:${event.packageNdc}:${startDate.getTime()}:${endDate.getTime()}:${oldPrice}:${newPrice}`;
 }

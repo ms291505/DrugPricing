@@ -1,3 +1,4 @@
+import type { SearchSource } from "./types";
 import { pricingUnitLabel, splitByPricingUnit } from "./prices";
 import type { ChartPrice } from "./types";
 import { quoted } from "./searchCriteria";
@@ -19,7 +20,6 @@ export type ExplorerItemWidth = "half" | "full";
 
 /** What one chart series is. Stored as a kind, not display text, so wording can change later. */
 export type SeriesKind = "product" | "package" | "ndc";
-export type ChartSearchSource = "nadac" | "fda";
 
 export const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: string, chip: string }> = {
   product: { singular: "product", plural: "products", chip: "Products" },
@@ -33,7 +33,7 @@ export const SERIES_KIND_LABELS: Record<SeriesKind, { singular: string, plural: 
  */
 export type ExplorerItemSource = {
   /** Search system that produced this snapshot; absent on older pins and unknown on display. */
-  searchSource?: ChartSearchSource,
+  searchSource?: SearchSource,
   /** What was searched, e.g. "humira" or "NDC 3089321". */
   searchLabel: string,
   seriesKind: SeriesKind,
@@ -50,7 +50,7 @@ export type ExplorerItemSource = {
  */
 export type ChartOrigin = {
   /** Search system the chart was created from. */
-  searchSource?: ChartSearchSource,
+  searchSource?: SearchSource,
   searchLabel: string,
   seriesKind: SeriesKind,
   resultPrices: ChartPrice[],
@@ -223,8 +223,7 @@ export function packageLevelView(item: ChartItem): ChartItem | null {
   const packageSeries = new Map<string, ChartSeriesSnapshot>();
   for (const series of item.series) {
     series.points.forEach((point, index) => {
-      const packageNdc = series.packageNdcs![index];
-      if (!packageNdc) return;
+      const packageNdc = series.packageNdcs![index]!;
       const key = `${packageNdc}|${series.unit}`;
       let target = packageSeries.get(key);
       if (!target) {

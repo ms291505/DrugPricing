@@ -42,7 +42,7 @@ type PriceColumnOptions = {
 
 /**
  * The price columns every result table shares. `latest` goes near the left so a phone shows it
- * without scrolling; `history` (`latestDate`, then the min and max `range`) sits further right.
+ * without scrolling; `latestDate` and the min and max `range` sits further right.
  * Every price carries its unit, and sorting groups rows by unit.
  *
  * A row priced in several units (a few products whose packages differ, e.g. packets per each and
@@ -67,7 +67,7 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
       return summary?.stale
         // Middle-aligned in the cell's line box, so the figure sits level with fresh rows' text.
         ? <Box component="span" sx={{ display: "inline-flex", alignItems: "center", verticalAlign: "middle", gap: `${STALE_MARKER_GAP}px` }}>
-            <StaleMarker tabIndex={tabIndex} label={`Last priced ${formatDate(summary.latestDate)}`} name={`Stale: last priced ${formatDate(summary.latestDate)}`} />
+            <StaleMarker tabIndex={tabIndex} label={`Last priced ${formatDate(summary.latestDate)}`} />
             {formattedValue as string}
           </Box>
         : formattedValue as string;
@@ -99,7 +99,7 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
     valueFormatter: unitPrice,
     getSortComparator: byUnitThenPrice,
   };
-  return { latest, latestDate, range: [minPrice, maxPrice], history: [latestDate, minPrice, maxPrice] };
+  return { latest, latestDate, range: [minPrice, maxPrice] };
 }
 
 /**
@@ -109,12 +109,11 @@ export function createPriceColumns<R extends PricedRow>({ mixedUnitsHint, averag
  * A click doesn't reach the row, so it doesn't toggle the row's selection.
  *
  * @param label - the tooltip, "Last priced Jan 14, 2026"
- * @param name - the accessible name, which also says what the colour does: "Stale: last priced …"
  */
-function StaleMarker({ label, name, tabIndex }: { label: string, name: string, tabIndex: number }) {
+function StaleMarker({ label, tabIndex }: { label: string, tabIndex: number }) {
   return (
     <Tooltip title={label} enterTouchDelay={0}>
-      <Box component="span" role="img" aria-label={name} tabIndex={tabIndex} onClick={event => event.stopPropagation()}
+      <Box component="span" role="img" aria-label={`Stale: ${label}`} tabIndex={tabIndex} onClick={event => event.stopPropagation()}
         sx={{ display: "inline-flex", color: "warning.main", borderRadius: 1, "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main" } }}>
         <WarningAmberRounded sx={{ fontSize: STALE_MARKER_SIZE }} />
       </Box>
@@ -143,7 +142,7 @@ function MixedUnits({ summaries, hint, tabIndex }: MixedUnitsProps) {
     // No gap: the button's own padding spaces it, and the column has no width to spare.
     <Box component="span" sx={{ display: "inline-flex", alignItems: "center", color: "text.secondary" }}>
       {stale.length > 0 && <Box component="span" sx={{ display: "inline-flex", mr: `${STALE_MARKER_GAP}px` }}>
-        <StaleMarker tabIndex={tabIndex} label={stale.map(unitLastPriced).join("; ")} name={`Stale: ${stale.map(unitLastPriced).join("; ")}`} />
+        <StaleMarker tabIndex={tabIndex} label={stale.map(unitLastPriced).join("; ")} />
       </Box>}
       {/* A tap opens it at once: a phone has no hover. The help button sits outside it, so a tap
           on the button opens Help without also flashing the hint. A tap doesn't select the row. */}
