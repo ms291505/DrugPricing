@@ -57,7 +57,10 @@ In `server/Program.cs`:
   `/api/health`. Leave `/api/up` alone.
 - Optional: a `Meter("DrugPricing.Cache")` counter for hits and misses in the repositories (keys
   are in `Constants/`). It would show that NADAC searches are never cached, a known rough edge.
-- Replace the two `Console.WriteLine` calls with `ILogger`. This removes one known rough edge.
+- **Never record a search term** (AGENTS.md, server gotchas). Set the ASP.NET instrumentation to
+  redact `url.query` explicitly (recent versions do by default), and check that Npgsql spans
+  don't record parameter values. Search terms are in POST bodies, which the instrumentation
+  doesn't record unless asked; don't ask it to.
 
 ### Step 2 — ETL alerting (small code change)
 
@@ -91,8 +94,8 @@ roughly 1–1.5 GB. The weekly ETL peak hasn't been measured.
 3. **Moving it later:** to put the stack on a second Pi, move the compose project and change
    `OTEL_EXPORTER_OTLP_ENDPOINT`. Keep a single Alloy on the app Pi for host metrics and logs.
    A second box also keeps monitoring up when the app Pi is down.
-4. Optional later: GlitchTip for client and server exceptions. Browser error reporting needs the
-   same privacy decision `docs/future-work.md` raises for logging searches.
+4. Optional later: GlitchTip for client and server exceptions. It must strip request bodies and
+   breadcrumbs that carry search criteria, since the server never records a search term.
 
 ### Local dev
 

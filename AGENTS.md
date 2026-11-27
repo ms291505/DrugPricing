@@ -31,12 +31,15 @@ runs `Database.Migrate()`. Layering: `Endpoints/` → `Services/` → `Data/Repo
 `Data/Configurations/`, entities in `Models/`.
 
 API (`/api`): `up`, `app-init` (NADAC date range; the client uses only that, not the name
-lists), `nadac-prices/{id}`, `nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`,
-`nadac-prices/advanced-search` (stub), `fda-products/advanced-search?jsonString=` (JSON
-`AdvancedFdaSearchRequest` in the query; the FDA page's only search).
+lists), `nadac-prices/{id}`, POST `nadac-prices/search` (JSON `NadacSearchRequest`:
+`ndcDescription`, `ndc`, `minDate`, `maxDate`), `nadac-prices/advanced-search` (stub), POST
+`fda-products/advanced-search` (JSON `AdvancedFdaSearchRequest`; the FDA page's only search).
 
 Gotchas:
 
+- **Never record a search term on the server:** not in stdout, logs, traces, or error reports.
+  A drug search can reveal a health condition. Searches are POSTs so their terms stay out of
+  URLs, which proxies, access logs and tracing record by default; keep new searches that way.
 - **Every search counts its rows first and refuses past `SearchLimits.MaxRows`** with a 422
   `too-many-rows` (`Endpoints/SearchErrors.cs`), before loading anything. The repository runs a
   bounded count (`Take(limit + 1).CountAsync()`) and the load in one `REPEATABLE READ`
@@ -289,6 +292,9 @@ aren't saved.
   others. Failed writes warn once with a toast.
 - Tab providers load once on mount and save on every change. Blank tabs save nothing. Closing a
   tab or changing its type removes its state. Standalone pages use `STANDALONE_TAB_IDS`.
+- **The workspace is the only thing kept between visits.** Standalone Search state (criteria
+  and shared pins) is in `sessionStorage`, kept until the browser tab closes; Settings and the
+  last Search source stay in `localStorage` because they reveal nothing about a search.
 - **Several windows:** when another window writes a value this one didn't, `watchOtherWindows`
   makes this one read-only and asks for a reload, or pruning would delete the other's tabs.
 - Anything that resets state when data loads undoes a restore. Store restorable state so it
@@ -412,9 +418,7 @@ them running for the author: say they're stopped and how to start them.
 Planned work is in [docs/future-work.md](docs/future-work.md). Don't flag its items as new findings; add
 to it rather than fixing them inside unrelated work.
 
-- `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
-  FDA equivalent passes JSON in a query string.
-- Debug logging: `console.log` in `api.ts`.
+- `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET.
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
 - No server tests; client tests cover `library/` only; ETL fetch, load and tombstone are untested.
