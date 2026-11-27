@@ -402,7 +402,7 @@ to it rather than fixing them inside unrelated work.
 
 - `nadac-prices/advanced-search` is a stub; its request is bound `[FromBody]` on a GET, and the
   FDA equivalent passes JSON in a query string.
-- Debug logging: `Console.WriteLine` in `FdaProductEndpoints`, `console.log` in `api.ts`.
+- Debug logging: `console.log` in `api.ts`.
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
 - `NadacService.ValidateNdc` is never called: `ndc=1` returns 47,072 rows for one week.
