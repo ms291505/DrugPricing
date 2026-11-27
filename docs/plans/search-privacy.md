@@ -41,15 +41,18 @@ as the data.
   and closing the browser tab discards them. The workspace stays in `localStorage`, because
   keeping tabs between visits is what it's for. **Add search to workspace** is how a user keeps
   a Search page's work past the browser tab, and its pins come along as they do today.
-- **The workspace says what it saves.** The user should know, before and after adding a tab,
-  that the workspace keeps search terms and pinned prices in this browser, that anyone who uses
-  this browser can see them, and how to delete them.
+- **The workspace says what it saves, on screen.** The user should know, before and after adding
+  a tab, that the workspace keeps search terms and pinned prices in this browser, that anyone who
+  uses this browser can see them, and how to delete them or avoid keeping them. Every fact a user
+  needs in order to act is shown where they act: on the new tab page, in the drawer, and on
+  Search. Help only expands on it, and a user never has to open Help to find out what's kept or
+  how to remove it.
 - **No session-only workspaces.** An earlier draft let each workspace choose between this
   device and this browser tab, with a checkbox. We dropped it: switching an existing workspace
   between storages needed an interrupt-safe move, a merge into another tab's workspace, and
   recovery on reload, all rarely run and costly to keep correct through later persistence
   changes. Session-only Search already covers a quick lookup on a shared computer. For anyone
-  who wants temporary workspace tabs, Help points to a private window, which also clears
+  who wants temporary workspace tabs, the fresh-workspace note points to a private window, which also clears
   Search, Settings, and the browser's own history, at no code cost. Revisit only if people ask
   for it, and then as a choice made once when a workspace is created, never switched later.
 - **The server never records a search term.** Not in stdout, logs, traces, or error reports. A
@@ -152,8 +155,11 @@ Draft the copy in `docs/content/` first and follow the writing style guide. Prop
   "This workspace's tabs, searches, and pinned charts are saved in this browser so they're here
   when you come back, and anyone who uses this browser can see them. Searches send their terms
   to the server to find prices, and the server doesn't keep them." Link "Learn more" to the
-  `tabs-and-your-saved-workspace` Help topic. Always shown, in `text.secondary`. On a phone,
-  check the length and shorten to the first sentence plus the link if it crowds the drawer.
+  `tabs-and-your-saved-workspace` Help topic for more detail. Always shown, in
+  `text.secondary`. If it crowds the drawer on a phone, tighten the wording, but keep all three
+  facts on screen (saved in this browser, visible to anyone using it, and what the server gets).
+  Never move one into Help to save space. **Clear workspace** sits directly under the caption,
+  so the way to delete is right there.
 - **Add search to workspace**: give the button an accessible description and a tooltip, "Saves
   this search and its pins in this browser". If it shows a confirmation after adding a tab, use
   the same wording (check what it says today).
