@@ -5,8 +5,10 @@ type Props = {
   label: string,
   /** What the options are, plural, for the closed state: "3 of 5 drugs". */
   noun: string,
-  /** From the loaded result (`*FilterOptions`); empty disables it, as before a search. */
+  /** From the loaded result (`*FilterOptions`), in the order shown; empty disables it, as before a search. */
   options: string[],
+  /** The text an option shows, when its value is a key rather than the text (default: the value). */
+  optionLabel?: (value: string) => string,
   /** The criteria's exclusion list. It may name values not in `options`; those are kept. */
   excluded: string[],
   onChange: (excluded: string[]) => void,
@@ -20,7 +22,7 @@ const SELECT_NONE = "__select_none__";
  * A from-results list: a multi-select that shows what's included and stores what's excluded, so
  * values new since it was set show. Its closed state is a count, which says when it's on.
  */
-export default function ExclusionSelect({ label, noun, options, excluded, onChange }: Props) {
+export default function ExclusionSelect({ label, noun, options, optionLabel = value => value, excluded, onChange }: Props) {
   const labelId = useId();
   const selected = options.filter(value => !excluded.includes(value));
 
@@ -56,7 +58,7 @@ export default function ExclusionSelect({ label, noun, options, excluded, onChan
         {options.map(value => (
           <MenuItem key={value} value={value}>
             <Checkbox size="small" checked={selected.includes(value)} sx={{ py: 0 }} />
-            <ListItemText primary={value} />
+            <ListItemText primary={optionLabel(value)} />
           </MenuItem>
         ))}
       </Select>

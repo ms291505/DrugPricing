@@ -4,20 +4,29 @@ import { useFdaSearchContext } from "../../Context/FdaSearchContext";
 import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch";
 import {
-  clearFdaRefine, exclusionCount, FDA_EXCLUSION_KEYS, FDA_INCLUDE_KEYS, fdaActiveFilterCount, fdaTabTitle, isValidFdaSearch,
-  type FdaExclusionKey,
+  clearFdaRefine, exclusionCount, FDA_INCLUDE_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaTabTitle, isValidFdaSearch,
+  type FdaCriteria, type FdaListKey,
 } from "../../library/searchCriteria";
+import { activityCategoryLabel, isActivityCategory } from "../../library/priceActivity";
 import { includeLabel } from "../../library/searchToasts";
 import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
 
 /** The "More filters" lists, in order. */
-const LISTS: { key: FdaExclusionKey, label: string, noun: string }[] = [
+const LISTS: { key: FdaListKey, label: string, noun: string, optionLabel?: (value: string) => string }[] = [
+  { key: "excludedActivities", label: "Price activity", noun: "activity types", optionLabel: activityCategoryLabel },
   { key: "excludedProductNdcs", label: "Product NDC", noun: "products" },
   { key: "excludedDosageForms", label: "Dosage form", noun: "dosage forms" },
+  { key: "excludedStrengths", label: "Strength", noun: "strengths" },
   { key: "excludedRoutes", label: "Route", noun: "routes" },
   { key: "excludedLabelers", label: "Labeler", noun: "labelers" },
   { key: "excludedUnits", label: "Pricing unit", noun: "units" },
 ];
+
+/** The criteria with a list's exclusions set. Price activity's values are its categories. */
+const withExcluded = (criteria: FdaCriteria, key: FdaListKey, excluded: string[]): FdaCriteria =>
+  key === "excludedActivities"
+    ? { ...criteria, excludedActivities: excluded.filter(isActivityCategory) }
+    : { ...criteria, [key]: excluded };
 
 type Props = {
   /** The result as the page shows it: the lists' options and the hidden counts. */
@@ -91,17 +100,18 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
         onChange: checked => setCriteria(prev => ({ ...prev, [key]: checked })),
         hiddenCount: view.hidden.byInclude[key] ?? 0,
       }))}
-      moreFilters={LISTS.map(({ key, label, noun }) => (
+      moreFilters={LISTS.map(({ key, label, noun, optionLabel }) => (
         <ExclusionSelect
           key={key}
           label={label}
           noun={noun}
           options={view.options[key]}
+          optionLabel={optionLabel}
           excluded={criteria[key]}
-          onChange={excluded => setCriteria(prev => ({ ...prev, [key]: excluded }))}
+          onChange={excluded => setCriteria(prev => withExcluded(prev, key, excluded))}
         />
       ))}
-      moreFilterCount={exclusionCount(criteria, FDA_EXCLUSION_KEYS)}
+      moreFilterCount={exclusionCount(criteria, FDA_LIST_KEYS)}
       canClear={fdaActiveFilterCount(criteria) > 0}
       onClear={() => setCriteria(clearFdaRefine)}
     />

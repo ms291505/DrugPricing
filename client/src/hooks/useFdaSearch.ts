@@ -6,7 +6,7 @@ import { CONSTANT } from "../library/constants";
 import { FULL_WINDOW, toDateInput, type DateWindow } from "../library/dates";
 import {
   fdaFilterOptions, fdaHiddenCounts, fdaShownDates, refineFda, widenToAsOfDates,
-  type FdaExclusionKey, type HiddenCounts,
+  type FdaListKey, type HiddenCounts,
 } from "../library/searchCriteria";
 import { fdaProductsToNadacPrices } from "../library/fdaDataToNadacPrices";
 import type { FdaProductDetail, FdaResultDetailLevel, NadacPrice } from "../library/types";
@@ -46,7 +46,7 @@ export type FdaResultView = {
   /** The dates shown (`fdaShownDates`): the added charts' window, and new charts' dates. */
   dateWindow: DateWindow,
   /** The from-results lists' options (`fdaFilterOptions`). */
-  options: Record<FdaExclusionKey, string[]>,
+  options: Record<FdaListKey, string[]>,
   /** Rows at the table's detail level that the refine fields hide (`fdaHiddenCounts`). */
   hidden: HiddenCounts,
   /**
@@ -76,7 +76,8 @@ export function useRefinedFdaSearch(): FdaResultView {
       dateWindow: fdaShownDates(result, dates),
       options: fdaFilterOptions(result, criteria, dates),
       loadedPrices: (level: FdaResultDetailLevel) =>
-        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW).products, level),
+        // Price activity judges packages over the shown dates, so this keeps the page's packages.
+        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW, dates).products, level),
     };
   }, [data, criteria, dates]);
   return useMemo(() => {

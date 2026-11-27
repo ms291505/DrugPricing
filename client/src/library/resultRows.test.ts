@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatStrength, fdaPackageRows, fdaProductRows, nadacRows } from "./resultRows";
+import { fdaPackageRows, fdaProductRows, nadacRows } from "./resultRows";
 import { FULL_WINDOW } from "./dates";
 import { createFdaCriteria, refineFda } from "./searchCriteria";
 import { type FdaPackageDetail, type FdaProductDetail, type NadacPrice } from "./types";
@@ -115,16 +115,5 @@ describe("stale latest prices", () => {
 
   it("gives a row without prices nothing to mark", () => {
     expect(fdaPackageRows([product("1-1", [fdaPackage("1-1-3", [])])], reference)[0].priceSummaries).toEqual([]);
-  });
-});
-
-describe("formatStrength", () => {
-  it.each([
-    { strengthNumber: ["10", "20"], strengthUnit: ["mg"], expected: "10 mg, 20" },
-    { strengthNumber: [], strengthUnit: [], expected: "" },
-    { strengthNumber: ["2.5"], strengthUnit: ["mg/1"], expected: "2.5 mg/1" },
-    { strengthNumber: ["10", "20"], strengthUnit: ["mg/1", "mg/5mL"], expected: "10 mg/1, 20 mg/5mL" },
-  ])("formats $expected for both FDA table levels", ({ strengthNumber, strengthUnit, expected }) => {
-    expect(formatStrength({ strengthNumber, strengthUnit })).toBe(expected);
   });
 });

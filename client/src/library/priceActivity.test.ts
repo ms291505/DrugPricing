@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityCounts, activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventKey, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
+import { ACTIVITY_CATEGORIES, activityCategoryLabel, activityCounts, activitySparklinePath, priceEventGroupLabel, comparePriceActivity, derivePriceEvents, eventKey, eventLabel, groupPriceEvents, packageActivity, parseScanThreshold, previousObservationNote, productActivity, signedChange } from "./priceActivity";
 import { lineChangeCallouts } from "./lineChanges";
 import { createChartItems, fromChartSeries } from "./explorerItems";
 import { clipToWindow, FULL_WINDOW } from "./dates";
@@ -170,5 +170,41 @@ describe("activityCounts", () => {
     expect(activityCounts(activities("mixed", "changed", "insufficient")))
       .toBe("1 with other price changes, 1 with insufficient price history, 1 with mixed pricing units");
     expect(activityCounts([])).toBe("");
+  });
+});
+
+describe("activity categories", () => {
+  const category = (values: number[]) => packageActivity(series(values)).category;
+  // Each category is the word the row's label starts with.
+  it.each([
+    { values: [8, 6], label: "Dropped", expected: "dropped" },
+    { values: [10, 9.6, 9.2, 8.8], label: "Down", expected: "dropped" },
+    { values: [6, 8], label: "Rose", expected: "rose" },
+    { values: [10, 10.4, 10.8, 11.2, 11.4], label: "Up", expected: "rose" },
+    { values: [10, 9.6, 9.2, 9.6, 10], label: "Dipped", expected: "dippedOrSpiked" },
+    { values: [10, 10.4, 10.8, 10.4, 10], label: "Spiked", expected: "dippedOrSpiked" },
+    { values: [10, 10.2], label: "Stable", expected: "stable" },
+    { values: [10], label: "1 observation", expected: "insufficient" },
+  ])("puts a row labeled $label in $expected", ({ values, label, expected }) => {
+    const activity = packageActivity(series(values));
+    expect(activity.label.startsWith(label)).toBe(true);
+    expect(activity.category).toBe(expected);
+  });
+  it("goes by the largest change, as the label does", () => {
+    const activity = packageActivity(series([8, 6, 10]));
+    expect(activity.label).toMatch(/^Rose/);
+    expect(activity.category).toBe("rose");
+  });
+  it("counts a change from $0 as a rise", () => {
+    expect(category([0, 1])).toBe("rose");
+  });
+  it("has none for mixed units or no price history", () => {
+    expect(packageActivity([]).category).toBeNull();
+    expect(packageActivity([...series([10, 10]), ...series([100, 100], "A", "gram")]).category).toBeNull();
+    expect(productActivity([pkg([8, 8]), { packageNdc: "B", prices: series([10, 10], "B", "gram") }]).category).toBeNull();
+  });
+  it("labels categories in the filter's order", () => {
+    expect(ACTIVITY_CATEGORIES.map(c => c.label)).toEqual(["Dropped", "Rose", "Dipped or spiked", "Stable", "Insufficient history"]);
+    expect(activityCategoryLabel("dippedOrSpiked")).toBe("Dipped or spiked");
   });
 });

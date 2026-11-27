@@ -9,9 +9,10 @@ import { PRICE_CHANGE_SCAN_MIN_PERCENT } from "./constants";
 import { FULL_WINDOW, fromDateInput, type ChartDates, type DateWindow } from "./dates";
 import {
   createFdaCriteria, createNadacCriteria, isValidFdaSearch,
-  type BrandGeneric, type FdaCriteria, type NadacCriteria,
+  type BrandGeneric, type FdaCriteria, type FdaExclusionKey, type NadacCriteria,
 } from "./searchCriteria";
 import { isValidNadacSearch } from "./nadacSearch";
+import { isActivityCategory } from "./priceActivity";
 import { readColumnOverrides, DEFAULT_SETTINGS, type AppSettings, type BarStyle, type ColorMode } from "./settings";
 
 /*
@@ -214,8 +215,7 @@ function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
   const proprietaryName = get("proprietaryName", isString);
   const nonProprietaryName = get("nonProprietaryName", isString);
   const hasSearch = isValidFdaSearch(proprietaryName, nonProprietaryName);
-  const exclusions = (key: "excludedProductNdcs" | "excludedDosageForms" | "excludedRoutes" | "excludedLabelers" | "excludedUnits") =>
-    hasSearch ? get(key, isStringArray) : [];
+  const exclusions = (key: FdaExclusionKey) => hasSearch ? get(key, isStringArray) : [];
   return {
     proprietaryName,
     nonProprietaryName,
@@ -223,8 +223,11 @@ function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
     includeOtc: get("includeOtc", isBoolean),
     includeSamplePackages: get("includeSamplePackages", isBoolean),
     includeResultsWithoutPrices: get("includeResultsWithoutPrices", isBoolean),
+    // A fixed refine field, kept without a search like the Include boxes; unknown values are dropped.
+    excludedActivities: Array.isArray(raw.excludedActivities) ? raw.excludedActivities.filter(isActivityCategory) : [],
     excludedProductNdcs: exclusions("excludedProductNdcs"),
     excludedDosageForms: exclusions("excludedDosageForms"),
+    excludedStrengths: exclusions("excludedStrengths"),
     excludedRoutes: exclusions("excludedRoutes"),
     excludedLabelers: exclusions("excludedLabelers"),
     excludedUnits: exclusions("excludedUnits"),
