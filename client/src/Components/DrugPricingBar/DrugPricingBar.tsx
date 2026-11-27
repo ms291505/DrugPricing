@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { WorkspaceActionsContext } from "../../Context/workspaceContexts";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { Link } from "react-router";
+import { NavLink } from "react-router";
 import HomeIcon from "@mui/icons-material/Home";
 import NavButton from "./NavButton";
 import Box from "@mui/material/Box";
@@ -43,9 +43,9 @@ export default function DrugPricingBar() {
         }}
       >
         {/*
-          One row at every width: title, links, then the Help and Settings icons. From `md` the
-          side columns are equal, so the links stay centered; on a phone the title is hidden and
-          the links take what the icons leave, so the icons never wrap to a second row.
+          One row at every width: Home, links, then Help and Settings. From `md` the
+          side columns are equal, so the links stay centered; on a phone the links take what
+          the icons leave, so the icons never wrap to a second row.
         */}
         <Toolbar sx={{
           display: "grid",
@@ -54,9 +54,32 @@ export default function DrugPricingBar() {
           px: { xs: 0.5, sm: 2 },
         }}>
           <Box>
-            <Typography component={Link} to="/welcome" onClick={closeDrawer} variant="h3" sx={{ display: { xs: "none", md: "block" }, color: "inherit", textDecoration: "none" }}>DrugPricing</Typography>
-            <Tooltip title="Home">
-              <IconButton component={Link} to="/welcome" onClick={closeDrawer} aria-label="Home" color="inherit" sx={{ display: { md: "none" } }}><HomeIcon /></IconButton>
+            <Tooltip title="DrugPricing home">
+              <IconButton
+                component={NavLink}
+                to="/welcome"
+                end
+                onClick={closeDrawer}
+                aria-label="DrugPricing home"
+                color="inherit"
+                sx={{
+                  width: 44,
+                  height: 44,
+                  "&.active": {
+                    color: "primary.main",
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      bottom: 2,
+                      width: 20,
+                      borderBottom: 2,
+                      borderColor: "primary.main",
+                    },
+                  },
+                }}
+              >
+                <HomeIcon />
+              </IconButton>
             </Tooltip>
           </Box>
           <Box sx={{ display: "flex", gridColumn: 2, justifyContent: "center", gap: { xs: 0, sm: 1 } }}>
