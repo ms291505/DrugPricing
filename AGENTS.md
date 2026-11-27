@@ -69,7 +69,9 @@ Gotchas:
   (cached for `CacheDuration.Reference`); `Services/LabelerGroups.cs` joins rows whose names
   normalize alike or that share a code (5,128 groups, 2026-11), and `fda-products/labelers`
   sends them all. The client matches typed text against them in memory (`library/labelers.ts`),
-  so nothing typed leaves the browser. **`LabelerGroups.Normalize` and the client's
+  so nothing typed leaves the browser. **Picks only narrow a name search; a labeler alone is
+  never a search** (decided 2026-11-27): codes without a name get a 400, and a saved tab with
+  only picks restores them without searching. **`LabelerGroups.Normalize` and the client's
   `normalizeLabeler` mirror each other; change both.** A labeler search sends the picks' codes
   (`LabelerCodes`, 4 to 6 digits), which the repository matches as `ProductNdc LIKE ANY
   ('code-%', ...)` in the product query, so the result cap's count includes it. A labeler is
@@ -428,8 +430,8 @@ them running for the author: say they're stopped and how to start them.
   `client/src/library/types.ts` + `src/api/types.ts`.
 - Minimum search lengths are duplicated: server `NadacService`/`FdaProductService`, client
   `library/constants.ts`. Change both. So is the labeler code limit: `SearchLimits.MaxLabelerCodes`
-  and `MAX_LABELER_CODES`. An FDA search is valid with a name of the minimum length or at least
-  one labeler, on both sides (`FdaProductEndpoints`, `isValidFdaSearch`).
+  and `MAX_LABELER_CODES`. An FDA search needs a name of the minimum length on both sides
+  (`FdaProductEndpoints`, `isValidFdaSearch`); Labeler picks don't count toward it.
 - New server logic goes in `Services/`, data access in `Data/Repositories/`, not in endpoints.
 - A repository method that calls `TryGetValue` must also `_cache.Set` through `SetList`
   (`Data/CacheExtensions.cs`), with its own `CacheKeys` key (a shared key serves one list as

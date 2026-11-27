@@ -1,6 +1,5 @@
 - Enter at least five characters in a name or description field, or at least five digits
-  in **NDC**. In FDA search, picking a **Labeler** is enough on its own. Choose **Search** or
-  press Enter.
+  in **NDC**. Choose **Search** or press Enter.
 - A search matches anywhere in the text, regardless of capitalization. For example,
   `loratadine` also matches `desloratadine`.
 - If a search returns no matches, check the spelling or try a shorter term of at least five
@@ -21,10 +20,12 @@
 
 ## Finding a company's products
 
-In FDA search, type part of a company's name in **Labeler** and pick it from the list. Spelling
-doesn't have to be exact: `pfeizer` offers Pfizer under **Did you mean**. You can pick several
-labelers, and a brand or generic name narrows them further. The list offers the labelers whose
-products the page would show, so check **OTC drugs** or **Results without prices** to see more.
+In FDA search, **Labeler** narrows a brand or generic name search to the companies you pick.
+It can't search on its own: enter a name too. For example, `chloride` matches too many products
+to show, but `chloride` with one company can fit. Type part of a company's name in **Labeler**
+and pick it from the list. Spelling doesn't have to be exact: `pfeizer` offers Pfizer under
+**Did you mean**. You can pick several labelers. The list offers the labelers whose products the
+page would show, so check **OTC drugs** or **Results without prices** to see more.
 
 A labeler is the company that registered the NDC (see the [glossary](/help/glossary)), which
 isn't always the company you know. A parent company's products may be listed under a
@@ -33,7 +34,8 @@ Sons, so typing `bristol` finds no labeler. To find the right one:
 
 1. Search the brand name, such as `eliquis`.
 2. Read the **Labeler** column in the results.
-3. Search that labeler.
+3. Search the name again with that labeler picked, or search a related name, such as the
+   generic name, with it.
 
 Typing a parent company's name also finds labelers that name it, such as Wyeth Pharmaceuticals
 LLC, a subsidiary of Pfizer Inc.

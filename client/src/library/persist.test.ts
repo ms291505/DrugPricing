@@ -251,7 +251,7 @@ describe("loading saved tab state", () => {
     expect(loaded(persist.loadFdaTabState("t6")).criteria).toMatchObject({ excludedActivities: ["stable"], excludedStrengths: [] });
   });
 
-  it("restores a labeler-only search, dropping malformed picks", () => {
+  it("keeps labeler picks on a tab without a name, which doesn't search, and drops malformed picks", () => {
     const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013", "0025"] };
     saveRaw("lab", {
       type: "fda",
@@ -260,7 +260,8 @@ describe("loading saved tab state", () => {
         labelers: [pfizer, { name: "No codes", codes: [] }, { name: "Letters", codes: ["13a"] }, { codes: ["0008"] }, "Teva"],
       },
     });
-    expect(loaded(persist.loadFdaTabState("lab")).criteria).toEqual({ ...createFdaCriteria(), labelers: [pfizer], excludedRoutes: ["ORAL"] });
+    // Exclusions go with a search, and picks alone aren't one.
+    expect(loaded(persist.loadFdaTabState("lab")).criteria).toEqual({ ...createFdaCriteria(), labelers: [pfizer] });
     saveRaw("lab2", { type: "fda", criteria: { ...fdaCriteria, labelers: "Pfizer" } });
     expect(loaded(persist.loadFdaTabState("lab2")).criteria.labelers).toEqual([]);
   });

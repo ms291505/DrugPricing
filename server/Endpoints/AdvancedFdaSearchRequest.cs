@@ -9,7 +9,7 @@ public record AdvancedFdaSearchRequest
   public ICollection<string> RouteNames { get; init; } = [];
   /// <summary>
   /// Labeler codes (the first segment of a product NDC, 4 to 6 digits); a product matches when
-  /// its NDC starts with one. Enough to search on alone.
+  /// its NDC starts with one. Narrows a name search; never a search on its own.
   /// </summary>
   public ICollection<string> LabelerCodes { get; init; } = [];
   public string? ProductNdc { get; init; }

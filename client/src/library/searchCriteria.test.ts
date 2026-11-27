@@ -534,11 +534,11 @@ describe("FDA name searches", () => {
   const last = day("2026-11-04");
 
   it("accepts either name at the minimum length, including a short narrowing term", () => {
-    expect(isValidFdaSearch("", "  atorvastatin  ", [])).toBe(true);
-    expect(isValidFdaSearch("Lipitor", "", [])).toBe(true);
-    expect(isValidFdaSearch("Li", "atorvastatin", [])).toBe(true);
-    expect(isValidFdaSearch("  Li  ", "  at  ", [])).toBe(false);
-    expect(isValidFdaSearch("", "", [])).toBe(false);
+    expect(isValidFdaSearch("", "  atorvastatin  ")).toBe(true);
+    expect(isValidFdaSearch("Lipitor", "")).toBe(true);
+    expect(isValidFdaSearch("Li", "atorvastatin")).toBe(true);
+    expect(isValidFdaSearch("  Li  ", "  at  ")).toBe(false);
+    expect(isValidFdaSearch("", "")).toBe(false);
     expect(fdaLoadRequest(generic, last)).toEqual({
       proprietaryName: "", nonProprietaryName: "atorvastatin", labelerCodes: [],
       dates: { start: day("2025-11-04"), end: last },
@@ -572,15 +572,17 @@ describe("FDA name searches", () => {
     const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013"] };
     expect(fdaTabTitle({ proprietaryName: "eliquis", nonProprietaryName: "", labelers: [teva, pfizer] }))
       .toBe("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1");
-    expect(fdaSearchLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("Pfizer Laboratories Div Pfizer Inc");
+    // Picks without a name aren't a search, so they don't name one.
+    expect(fdaSearchLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
     expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "apixaban", labelers: [teva, pfizer, teva] }))
       .toBe("\u201capixaban\u201d / Teva Pharmaceuticals USA, Inc. +2");
   });
 
-  it("searches on a labeler alone, sending its codes sorted", () => {
+  it("narrows a name search by labeler, sending the codes sorted, but never searches on picks alone", () => {
     const picks = [{ name: "B", codes: ["0025", "0013"] }, { name: "A", codes: ["0008"] }];
-    expect(isValidFdaSearch("", "", picks)).toBe(true);
-    const criteria = { ...createFdaCriteria(), labelers: picks };
+    expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: picks }, last)).toBeNull();
+    const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: picks };
     expect(fdaLoadRequest(criteria, last)?.labelerCodes).toEqual(["0008", "0013", "0025"]);
     // Picked in another order: the same load, so narrowing the dates still doesn't fetch.
     const loaded = fdaLoadRequest(criteria, last)!;
@@ -588,7 +590,7 @@ describe("FDA name searches", () => {
     expect(nextLoad(loaded, reordered)).toBe(loaded);
     // A new pick is a new search, which clears the exclusion lists.
     const applied = { ...criteria, excludedRoutes: ["ORAL"] };
-    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "", labelers: [picks[0]] }).excludedRoutes).toEqual([]);
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "chloride", labelers: [picks[0]] }).excludedRoutes).toEqual([]);
     expect(clearFdaRefine(applied).labelers).toEqual(picks);
   });
 
@@ -616,9 +618,6 @@ describe("FDA to NADAC handoff", () => {
     expect(nadacHandoffTerm({ proprietaryName, nonProprietaryName })).toBe(expected);
   });
 
-  it("has nothing to hand off for a labeler-only search", () => {
-    expect(nadacHandoffTerm({ proprietaryName: "", nonProprietaryName: "" })).toBe("");
-  });
 
   it("recognizes loaded prices even when OTC, sample and other exclusions hide them", () => {
     const result = { products: [product("12345-1234", [

@@ -314,8 +314,9 @@ function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
   const get = field(raw, defaults);
   const proprietaryName = get("proprietaryName", isString);
   const nonProprietaryName = get("nonProprietaryName", isString);
+  // Kept without a name too: the picks show, and the tab doesn't search until a name is typed.
   const labelers = readLabelers(raw.labelers);
-  const hasSearch = isValidFdaSearch(proprietaryName, nonProprietaryName, labelers);
+  const hasSearch = isValidFdaSearch(proprietaryName, nonProprietaryName);
   const exclusions = (key: FdaExclusionKey) => hasSearch ? get(key, isStringArray) : [];
   return {
     proprietaryName,

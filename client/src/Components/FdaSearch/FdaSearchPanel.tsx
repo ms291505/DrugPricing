@@ -60,7 +60,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const changed = !sameFdaTerms(terms, criteria);
 
   // The title the search on screen gave the tab, which the next search or a clear may replace.
-  const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "" || criteria.labelers.length > 0;
+  const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "";
   const appliedTitle = applied ? fdaTabTitle(criteria) : null;
 
   const handleSearch = () => {
@@ -85,12 +85,12 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       navigation={navigation}
       standaloneAction={standaloneAction}
       heading="Find a drug"
-      description="Search the FDA directory by brand name, generic name or labeler to see products, packages and NADAC prices."
+      description="Search the FDA directory by brand or generic name, narrowed to labelers if you like, to see products, packages and NADAC prices."
       onSearch={handleSearch}
-      canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName, labelers) && (changed || isError)}
+      canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
       onClearSearch={handleClearSearch}
-      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== "" || labelers.length > 0}
+      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== "" || labelers.length > 0 || criteria.labelers.length > 0}
       terms={[
         { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Eliquis", value: proprietaryName, onChange: setProprietaryName },
         { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. apixaban", value: nonProprietaryName, onChange: setNonProprietaryName },

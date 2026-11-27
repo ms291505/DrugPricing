@@ -143,12 +143,12 @@ export function nadacLoadRequest(criteria: NadacCriteria, lastAsOfDate: number):
 }
 
 /**
- * Either name can supply the minimum length, or a labeler alone is enough; every supplied term
- * narrows the match. Mirrors the server's check in `FdaProductEndpoints`.
+ * Either name can supply the minimum length; every supplied term, Labeler picks included,
+ * narrows the match. Picks alone are not a search (decided 2026-11-27). Mirrors the server's
+ * check in `FdaProductEndpoints`.
  */
-export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string, labelers: LabelerChoice[]) =>
-  labelers.length > 0
-  || [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
+export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: string) =>
+  [proprietaryName, nonProprietaryName].some(name => name.trim().length >= MIN_NDC_DESCRIPTION_LENGTH);
 
 /** The names searched on, trimmed, brand first. */
 const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean);
@@ -157,9 +157,11 @@ const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonPr
 const labelerLabel = (labelers: LabelerChoice[]) =>
   labelers.length === 0 ? null : labelers[0].name + (labelers.length > 1 ? ` +${labelers.length - 1}` : "");
 
-/** Shared wording for chart provenance and a new tab's title. */
-export const fdaSearchLabel = (terms: FdaTerms) =>
-  [...fdaNames(terms), labelerLabel(terms.labelers)].filter(Boolean).join(" / ") || "search";
+/** Shared wording for chart provenance and a new tab's title. The picks follow the names they narrow. */
+export const fdaSearchLabel = (terms: FdaTerms) => {
+  const names = fdaNames(terms);
+  return names.length === 0 ? "search" : [...names, labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
+};
 
 /** The title a search gives its tab (`useRenameAfterSearch`) and a workspace copy of it. */
 export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCase();
@@ -168,8 +170,10 @@ export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCas
 export const quoted = (text: string) => `\u201c${text}\u201d`;
 
 /** The results heading's wording: `fdaSearchLabel` with each typed name in quotes; a labeler was picked, not typed. */
-export const fdaResultsLabel = (terms: FdaTerms) =>
-  [...fdaNames(terms).map(quoted), labelerLabel(terms.labelers)].filter(Boolean).join(" / ") || "search";
+export const fdaResultsLabel = (terms: FdaTerms) => {
+  const names = fdaNames(terms);
+  return names.length === 0 ? "search" : [...names.map(quoted), labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
+};
 
 /** Shared wording for chart provenance: the description, or else the NDC (in its stored form). */
 export const nadacSearchLabel = (terms: NadacTerms) =>
@@ -181,7 +185,7 @@ export const nadacResultsLabel = (terms: NadacTerms) =>
 
 /** The FDA request the criteria ask for, or null when its terms aren't enough to search on. */
 export function fdaLoadRequest(criteria: FdaCriteria, lastAsOfDate: number): FdaLoad | null {
-  if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName, criteria.labelers)) return null;
+  if (!isValidFdaSearch(criteria.proprietaryName, criteria.nonProprietaryName)) return null;
   return {
     proprietaryName: criteria.proprietaryName,
     nonProprietaryName: criteria.nonProprietaryName,

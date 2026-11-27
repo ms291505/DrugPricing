@@ -18,7 +18,7 @@ classification.
 **More filters** has lists built from your results: Drug and Pricing unit on NADAC; Product NDC,
 Dosage form, Strength, Route, Labeler in results, and Pricing unit on FDA. Clear a value’s
 checkbox to hide it. **Labeler in results** narrows what a search found and lists each spelling
-the FDA uses; to search for a company, use **Labeler** beside the names.
+the FDA uses; to narrow a search to a company before it loads, use **Labeler** beside the names.
 Strength lists each product’s strength as the tables show it, in order of the first ingredient’s amount, with **Not listed**
 for products the FDA lists without one. A search for a different drug starts these lists over.
 

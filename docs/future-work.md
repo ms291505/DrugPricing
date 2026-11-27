@@ -9,8 +9,9 @@ it ships. The code and pull request preserve the implementation history.
 
 Plan: [docs/plans/fda-strength-activity-labeler.md](plans/fda-strength-activity-labeler.md).
 Strength and Price activity (Dropped, Rose, Dipped or spiked, Stable, Insufficient history) are
-new FDA refine filters. Labeler is a new load field, a combo box, and a labeler alone is
-enough to search. The server groups the 7,821 labeler spellings into about 5,100 labelers by
+new FDA refine filters. Labeler is a new load field, a combo box that narrows a brand or
+generic name search to the companies picked; a labeler alone isn't a search (decided
+2026-11-27). The server groups the 7,821 labeler spellings into about 5,100 labelers by
 normalized name and labeler code and caches the list. The client matches typed text against it
 in memory, misspellings included ("pfeizer" → Pfizer), and the search sends labeler codes.
 Matching runs in the client, which has the unit tests and keeps typed text in the browser.
@@ -30,9 +31,6 @@ Left out of the plan, to revisit once it ships:
 - **Keyboard reach of the Labeler notes' "Learn more".** The link sits in the combo box's popup,
   which closes when focus leaves the input, so only a pointer can use it. The Help section is
   still in Help's index.
-- **Response compression.** `fda-products/labelers` is about 720 KB of JSON, 100 KB gzipped,
-  and the server doesn't compress. Unchecked whether the Cloudflare tunnel compresses it; if
-  not, add `AddResponseCompression` (and decide whether search responses should be too).
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
