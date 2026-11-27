@@ -1,7 +1,6 @@
 import toast from "react-hot-toast";
 import { useId } from "react";
 import { Box, Button, Tooltip, Typography } from "@mui/material";
-import { visuallyHidden } from "@mui/utils";
 import { useNavigate } from "react-router";
 import { usePageVisible } from "../../Context/pageVisibility";
 import { useWorkspaceActions, useWorkspaceReadOnly } from "../../Context/workspaceContexts";
@@ -22,8 +21,8 @@ const SAVES = "Saves this search and its pins in this browser, in a new workspac
  * with a caption saying that Search state lasts only for this browser tab (it is in
  * sessionStorage), so nobody who relied on Search restoring after a restart loses work without
  * warning. The caption shows once there is something to lose: a search, or pins (which Clear
- * search keeps). The button shows once a search has been run. Nothing renders while the page is
- * hidden.
+ * search keeps, with their own wording, since there is then no search to add). The button shows
+ * once a search has been run. Nothing renders while the page is hidden.
  */
 function AddSearchToWorkspace({ state, dates, title, status }: {
   state: PersistedSearchTab, dates: DateWindow | undefined, title: string, status: "idle" | "pending" | "ready",
@@ -39,11 +38,15 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: 1, minWidth: 0 }}>
       <Typography variant="caption" color="text.secondary" sx={{ flex: "1 1 16em", minWidth: 0, textAlign: "right" }}>
-        This search and its pins last until you close this browser tab unless you add the search to your workspace.
+        {status === "idle"
+          ? "These pins last until you close this browser tab."
+          : "This search and its pins last until you close this browser tab unless you add the search to your workspace."}
       </Typography>
-      {status !== "idle" && <Tooltip title={reason || SAVES}>
+      {/* `hidden` text is still read through aria-describedby, and only there. The tooltip
+          describes its wrapper only while open (`describeChild`), so nothing is read twice. */}
+      {status !== "idle" && <span id={descriptionId} hidden>{reason || SAVES}</span>}
+      {status !== "idle" && <Tooltip title={reason || SAVES} describeChild>
         <span>
-          <Box id={descriptionId} sx={visuallyHidden}>{reason || SAVES}</Box>
           <Button type="button" color="inherit" size="small" disabled={status !== "ready" || readOnly}
             aria-describedby={descriptionId}
             onClick={event => {

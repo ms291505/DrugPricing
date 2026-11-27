@@ -26,7 +26,8 @@ Tightened from the plan's wording to fit the 240px drawer; it keeps all three fa
 
 ## Add search to workspace
 
-Tooltip and accessible description of the button:
+Tooltip and accessible description (a `hidden` span the button's `aria-describedby` names) of the
+button:
 
 > Saves this search and its pins in this browser, in a new workspace tab.
 
@@ -35,10 +36,14 @@ change.
 
 ## Search pages, beside Add search to workspace
 
-Shown once a search has run or while there are pins.
+Shown once a search has run:
 
 > This search and its pins last until you close this browser tab unless you add the search to
 > your workspace.
+
+After Clear search, which keeps pins and hides the button, while there are pins:
+
+> These pins last until you close this browser tab.
 
 ## Help, "Tabs and your saved workspace"
 
@@ -61,7 +66,7 @@ comes before the list about closing tabs and other windows, and the server parag
 ## Help, "Searching"
 
 > - The FDA and NADAC pages under **Search** keep your search and its pins until you close the
->   browser tab. To keep them, choose **Add search to workspace**.
+>   browser tab, unless you choose **Add search to workspace**.
 
 ## About, "Privacy"
 

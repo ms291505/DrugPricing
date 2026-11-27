@@ -1,6 +1,6 @@
 import { useWorkspaceActions, useWorkspacePanes, useWorkspaceTabs } from "../../Context/workspaceContexts.ts";
 import { Box, } from "@mui/material";
-import { useCallback, useEffect, useRef, } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
@@ -37,15 +37,18 @@ export default function DrawerContent({ inMobileDrawer = false }: { inMobileDraw
           minHeight: 0,
         }}
       >
-        <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} inMobileDrawer={inMobileDrawer} />
+        {/* Built here, not in the list, so a tab switch (which re-renders the list) doesn't
+            re-render it. */}
+        <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace}
+          storageNote={<WorkspaceMenuNote inMobileDrawer={inMobileDrawer} />} />
       </Box>
     </>
   )
 }
 
 // Only the tab list reads the panes, so a tab switch doesn't re-render the rest of the drawer.
-function DrawerTabList({ onAddTab, onClearWorkspace, inMobileDrawer }: {
-  onAddTab: () => void, onClearWorkspace: () => void, inMobileDrawer: boolean,
+function DrawerTabList({ onAddTab, onClearWorkspace, storageNote }: {
+  onAddTab: () => void, onClearWorkspace: () => void, storageNote: ReactNode,
 }) {
   const tabs = useWorkspaceTabs();
   const { paneAssignment } = useWorkspacePanes();
@@ -96,7 +99,7 @@ function DrawerTabList({ onAddTab, onClearWorkspace, inMobileDrawer }: {
       ))}
       <TabButton onClick={onAddTab} />
       {/* Directly above Clear workspace, so the way to delete what it describes is right there. */}
-      <WorkspaceMenuNote inMobileDrawer={inMobileDrawer} />
+      {storageNote}
       <ConfirmButton
         color="error"
         label="Clear workspace"
