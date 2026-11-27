@@ -17,7 +17,7 @@ On a pinned chart you can do the following.
   series.
 
 Select **Show packages** on a pinned product chart to see the stored package price lines.
-**Show products** returns to product averages. Both views use the same dates and snapshot.
+**Show product averages** returns to product averages. Both views use the same dates and snapshot.
 The buttons appear when the pin has saved package identities.
 
 A pinned **price change list** keeps the listed packages’ prices and the dates it showed. Use

@@ -93,7 +93,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   rest of the pin.
 - **Show packages** switches a product pin to package lines when every stored point has a
   known `packageNdc`. `packageLevelView` derives those series from the snapshot, preserving dates
-  and units. **Show products** returns to the original product averages and settings. Pins with
+  and units. **Show product averages** returns to the original product averages and settings. Pins with
   missing or partial package identities omit the button.
   Never fill an unknown package identity from a product NDC. In newly created snapshots,
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.

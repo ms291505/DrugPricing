@@ -151,7 +151,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
           </Tooltip>
           <Chip size="small" variant="outlined" label={formatItemSource(visibleItem.source)} />
           {canSwitchLevel && <Button size="small" sx={{ minHeight: { xs: 44, sm: 24 } }} onClick={() => setShowPackages(value => !value)}>
-            {showPackages ? "Show products" : "Show packages"}
+            {showPackages ? "Show product averages" : "Show packages"}
           </Button>}
           {item.kind === "chart"
             ? <PinnedChartDates

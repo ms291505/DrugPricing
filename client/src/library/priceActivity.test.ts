@@ -12,9 +12,11 @@ const pkg = (values: number[], ndc = "A") => ({ packageNdc: ndc, prices: series(
 
 describe("price activity", () => {
   it("keeps each package event identifiable across lists", () => {
-    const prices = [...series([0, 1]), ...series([0, 1], "B")];
+    const prices = [...series([0, 1]), ...series([10, 11], "B")];
     const [group] = groupPriceEvents(derivePriceEvents(prices, "package"));
     const [sameGroup] = groupPriceEvents(derivePriceEvents(prices, "package", 20));
+    expect(group.events).toHaveLength(2);
+    expect(sameGroup.events).toHaveLength(1);
     expect(eventKey(group, group.events[0])).toBe(eventKey(sameGroup, sameGroup.events[0]));
     expect(eventKey(group, group.events[0])).not.toBe(eventKey(group, group.events[1]));
     expect(packageActivity(series([0, 1])).label).toContain("from $0");
