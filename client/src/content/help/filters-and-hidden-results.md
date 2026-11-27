@@ -17,7 +17,7 @@ classification.
 
 **More filters** has lists built from your results: Drug and Pricing unit on NADAC; Product NDC,
 Dosage form, Strength, Route, Labeler, and Pricing unit on FDA. Clear a value’s checkbox to hide it.
-Strength lists each product’s strength as the tables show it, smallest first, with **Not listed**
+Strength lists each product’s strength as the tables show it, in order of the first ingredient’s amount, with **Not listed**
 for products the FDA lists without one. A search for a different drug starts these lists over.
 
 FDA’s More filters also has **Price activity**, which uses the words the Price Activity column
@@ -26,6 +26,7 @@ starts with: **Dropped** (including “Down”), **Rose** (including “Up”), 
 any of its packages is shown, and its row then describes only those packages. Packages without
 prices are left to **Results without prices**. This filter stays set when you search for another
 drug.
+
 **Clear filters** restores the default filters, including the default **Include** settings.
 
 Pinned items keep their saved data when filters change.

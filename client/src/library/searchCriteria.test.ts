@@ -370,9 +370,33 @@ describe("the Price activity filter", () => {
       .toEqual([["1", ["1-1"]], ["2", ["2-2"]], ["4", ["4-1"]]]);
   });
 
-  it("lists the categories the shown packages have, in the column's order", () => {
-    const options = fdaFilterOptions(result, { ...createFdaCriteria(), excludedActivities: ["rose"] }, FULL_WINDOW);
-    expect(options.excludedActivities).toEqual(["dropped", "rose", "stable", "insufficient"]);
+  it("always lists every category, in the column's order, so one excluded and absent stays visible", () => {
+    const options = fdaFilterOptions(result, { ...createFdaCriteria(), excludedActivities: ["dippedOrSpiked"] }, FULL_WINDOW);
+    expect(options.excludedActivities).toEqual(["dropped", "rose", "dippedOrSpiked", "stable", "insufficient"]);
+    expect(fdaFilterOptions({ products: [] }, createFdaCriteria(), FULL_WINDOW).excludedActivities).toHaveLength(5);
+  });
+
+  describe("over dates narrower than the load", () => {
+    // Over every loaded date the largest change is the rise; over the last two weeks, the drop.
+    const narrowing = { products: [product("6", [fdaPackage("6-1", weekly("61", [10, 20, 20, 18]))])] };
+    const lastTwoWeeks = { start: day("2026-01-21"), end: null };
+    const droppedOnly = { ...createFdaCriteria(), excludedActivities: only("dropped") };
+    const codes = (refined: { products: FdaProductDetail[] }) =>
+      refined.products.flatMap(p => p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode));
+
+    it("judges each window's activity on its own dates", () => {
+      expect(codes(refineFda(narrowing, droppedOnly, FULL_WINDOW))).toEqual([]);
+      expect(codes(refineFda(narrowing, droppedOnly, lastTwoWeeks))).toEqual(["6-1"]);
+      // Asked again, the first window still gets its own answer.
+      expect(codes(refineFda(narrowing, droppedOnly, FULL_WINDOW))).toEqual([]);
+    });
+
+    it("keeps the shown packages when refining over every loaded date", () => {
+      const shown = refineFda(narrowing, droppedOnly, lastTwoWeeks);
+      const loaded = refineFda(narrowing, droppedOnly, FULL_WINDOW, lastTwoWeeks);
+      expect(codes(loaded)).toEqual(codes(shown));
+      expect(loaded.products[0].fdaPackageDetails[0].nadacPrices).toHaveLength(4);
+    });
   });
 
   it("counts as a filter, and Clear filters and Show all reset it", () => {
@@ -411,7 +435,7 @@ describe("FDA filter options and hidden counts", () => {
   it("lists what the page could show, sorted, before exclusions", () => {
     const excluding = { ...createFdaCriteria(), excludedLabelers: ["A LABS"], excludedUnits: ["milliliter"] };
     expect(fdaFilterOptions(result, excluding, FULL_WINDOW)).toEqual({
-      excludedActivities: ["insufficient"],
+      excludedActivities: ["dropped", "rose", "dippedOrSpiked", "stable", "insufficient"],
       excludedProductNdcs: ["1", "4"],
       excludedDosageForms: ["TABLET"],
       excludedStrengths: ["10 mg"],

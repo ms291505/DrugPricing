@@ -76,7 +76,8 @@ export function useRefinedFdaSearch(): FdaResultView {
       dateWindow: fdaShownDates(result, dates),
       options: fdaFilterOptions(result, criteria, dates),
       loadedPrices: (level: FdaResultDetailLevel) =>
-        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW).products, level),
+        // Price activity judges packages over the shown dates, so this keeps the page's packages.
+        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW, dates).products, level),
     };
   }, [data, criteria, dates]);
   return useMemo(() => {

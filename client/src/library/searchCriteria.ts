@@ -375,13 +375,17 @@ export function hiddenResultsHint(hidden: HiddenCounts): HiddenResultsHint | nul
  * excluded units, so it's cached per loaded package under those, a few entries each.
  */
 const categoryCache = new WeakMap<FdaPackageDetail, Map<string, ActivityCategory | null>>();
-/** Each refined copy's loaded package (`refinePackage`), so a refined result finds its cache entries. */
-const loadedPackage = new WeakMap<FdaPackageDetail, FdaPackageDetail>();
 const CATEGORY_CACHE_ENTRIES = 4;
+
+/** The prices a package shows in `dates`: clipped, and without excluded units. */
+function shownPrices(pkg: FdaPackageDetail, dates: DateWindow, excludedUnits: Set<string>): NadacPrice[] {
+  const clipped = clipToWindow(pkg.nadacPrices, dates);
+  return excludedUnits.size === 0 ? clipped : clipped.filter(price => !excludedUnits.has(price.pricingUnit));
+}
 
 /**
  * @param pkg - the loaded package, the cache's key
- * @param prices - its prices clipped to `dates` and without `excludedUnits`
+ * @param prices - `shownPrices(pkg, dates, excludedUnits)`
  */
 function packageCategory(pkg: FdaPackageDetail, dates: DateWindow, excludedUnits: Set<string>, prices: NadacPrice[]) {
   const key = JSON.stringify([dates.start, dates.end, [...excludedUnits].sort()]);
@@ -397,13 +401,14 @@ function packageCategory(pkg: FdaPackageDetail, dates: DateWindow, excludedUnits
 /**
  * A package as the page shows it, or null when it's hidden: its prices clipped to the dates and
  * without excluded units. A package whose only prices were in excluded units is hidden, not
- * shown as a package without prices. A package with prices is hidden when its activity over them
- * is an excluded category, which is the activity its row shows. Packages without prices are the
- * Include box's, and a package with no category (two units) is the Pricing unit list's.
+ * shown as a package without prices. A package with prices in `activityDates` is hidden when
+ * its activity over them is an excluded category, which is the activity its row shows. Packages
+ * without prices are the Include box's, and a package with no category (two units) is the
+ * Pricing unit list's.
  */
 function refinePackage(
-  pkg: FdaPackageDetail, criteria: FdaCriteria, dates: DateWindow, excludedUnits: Set<string>,
-  excludedActivities: Set<ActivityCategory>,
+  pkg: FdaPackageDetail, criteria: FdaCriteria, dates: DateWindow, activityDates: DateWindow,
+  excludedUnits: Set<string>, excludedActivities: Set<ActivityCategory>,
 ): FdaPackageDetail | null {
   if (!criteria.includeSamplePackages && pkg.samplePackage) return null;
   const clipped = clipToWindow(pkg.nadacPrices, dates);
@@ -411,14 +416,12 @@ function refinePackage(
   if (clipped.length > 0 && nadacPrices.length === 0) return null;
   if (!criteria.includeResultsWithoutPrices && nadacPrices.length === 0) return null;
   // Activity is the costly part of refining, so it's skipped while nothing is excluded.
-  if (excludedActivities.size > 0 && nadacPrices.length > 0) {
-    const category = packageCategory(pkg, dates, excludedUnits, nadacPrices);
+  if (excludedActivities.size > 0) {
+    const activityPrices = activityDates === dates ? nadacPrices : shownPrices(pkg, activityDates, excludedUnits);
+    const category = activityPrices.length > 0 ? packageCategory(pkg, activityDates, excludedUnits, activityPrices) : null;
     if (category !== null && excludedActivities.has(category)) return null;
   }
-  if (nadacPrices === pkg.nadacPrices) return pkg;
-  const refined = { ...pkg, nadacPrices };
-  loadedPackage.set(refined, pkg);
-  return refined;
+  return nadacPrices === pkg.nadacPrices ? pkg : { ...pkg, nadacPrices };
 }
 
 const fdaPrices = (result: FdaProductSearchResult) =>
@@ -439,9 +442,15 @@ export const fdaShownDates = (result: FdaProductSearchResult, dates: DateWindow)
  * packages are all hidden is hidden too.
  *
  * @param dates - the dates the applied criteria asked for (the requested load's)
+ * @param activityDates - the dates Price activity judges packages by, when they aren't `dates`:
+ *   the page's, when this refines over every loaded date (`loadedPrices`), so that keeps the
+ *   packages the page shows
  */
-export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow): FdaProductSearchResult {
+export function refineFda(
+  result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow, activityDates: DateWindow = dates,
+): FdaProductSearchResult {
   const shownDates = fdaShownDates(result, dates);
+  const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(result, activityDates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const excludedActivities = new Set(criteria.excludedActivities);
   const showsProduct = (p: FdaProductDetail) =>
@@ -457,7 +466,7 @@ export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria,
   for (const product of result.products) {
     if (!showsProduct(product)) continue;
     const packages = product.fdaPackageDetails
-      .map(pkg => refinePackage(pkg, criteria, shownDates, excludedUnits, excludedActivities))
+      .map(pkg => refinePackage(pkg, criteria, shownDates, shownActivityDates, excludedUnits, excludedActivities))
       .filter(pkg => pkg !== null);
     // A product with no packages at all has no prices either.
     const shown = product.fdaPackageDetails.length === 0 ? criteria.includeResultsWithoutPrices : packages.length > 0;
@@ -466,19 +475,19 @@ export function refineFda(result: FdaProductSearchResult, criteria: FdaCriteria,
   return { ...result, products };
 }
 
+/** Price activity's options: all five categories, in the column's order, as for the Include boxes. */
+const ACTIVITY_OPTIONS: string[] = ACTIVITY_CATEGORIES.map(category => category.key);
+
 /**
  * The options of FDA's More filters lists, keyed by the exclusion each one sets. Price activity
- * lists the categories the shown packages have, in the column's order, and Strength sorts by
- * number (`compareStrength`); the others are alphabetical.
+ * is a fixed set kept across searches, so it always lists every category: a category absent from
+ * this result can still be excluded and seen. Strength sorts by number (`compareStrength`); the
+ * other from-results lists are alphabetical.
  */
 export function fdaFilterOptions(result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow): Record<FdaListKey, string[]> {
   const { products } = refineFda(result, { ...criteria, ...clearedExclusions(FDA_LIST_KEYS) }, dates);
-  const shownDates = fdaShownDates(result, dates);
-  const categories = new Set(products.flatMap(product => product.fdaPackageDetails
-    .filter(pkg => pkg.nadacPrices.length > 0)
-    .map(pkg => packageCategory(loadedPackage.get(pkg) ?? pkg, shownDates, new Set(), pkg.nadacPrices))));
   return {
-    excludedActivities: ACTIVITY_CATEGORIES.map(category => category.key).filter(key => categories.has(key)),
+    excludedActivities: ACTIVITY_OPTIONS,
     excludedProductNdcs: uniqueSorted(products.map(product => product.productNdc)),
     excludedDosageForms: uniqueSorted(products.map(product => product.dosageFormName)),
     excludedStrengths: [...new Set(products.map(strengthLabel))].sort(compareStrength),
