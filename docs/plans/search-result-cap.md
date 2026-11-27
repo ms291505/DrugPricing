@@ -44,8 +44,10 @@ What's true today:
 ### The limit: 200,000 rows
 
 The limit is a server constant, `SearchLimits.MaxRows` in `server/Constants/`, set to 200,000
-rows: about 100 MB of JSON. It's set high on purpose for now and is meant to come down later.
-The server sends the number in its refusal, so the client doesn't copy it.
+rows: about 100 MB of JSON. It's set high on purpose, as a starting value. The 30 ms count
+below measures only the refusal, so before the cap ships, near-limit searches on the Pi and a
+real phone decide whether 200,000 stays (see "Near-limit check" under Verification). The server
+sends the number in its refusal, so the client doesn't copy it.
 
 A row is a NADAC price row. An FDA search also counts each package as a row, since packages
 without prices still ship (the client always loads them).
@@ -77,6 +79,14 @@ rows. If the count is over the limit, the server refuses without loading anythin
 The other way, loading `MaxRows + 1` rows and checking the count, would hold about 100 MB of
 entities in memory before refusing the search. On the Pi, that's worse than running an
 extra 30 ms count before every search.
+
+The count and the load run in one `REPEATABLE READ` transaction, so they read the same snapshot.
+Under Postgres's default `READ COMMITTED`, each query sees what's committed when it starts, and
+a weekly ETL load that commits between them could push a search that passed the count past the
+limit. That would add at most one week of new rows (about 3,000 for "capsule" over the last
+year), but the transaction makes the cap exact for both endpoints at no real cost. The
+transaction only reads, so it can't fail with a serialization error. `Take` on the load can't
+do the same for FDA, because its prices are nested lists in one projection.
 
 ### The refusal: 422 with a code
 
@@ -116,10 +126,16 @@ is docs.
 
 ### 1. Validate the NDC
 
-- `NadacService.ValidateNdc`: 5 to 11 ASCII digits after trimming (the stored form has no
-  leading zeros, so 11 is the most it can have).
+- Normalize the NDC the way the client's `toStoredNadacNdc` (`library/ndc.ts`) does for input
+  without dashes: trim it, then strip leading zeros. The client always sends that form, so this
+  matters only for direct API calls, but today `ndc=00001` would pass a length check and search
+  for "00001" as a substring (90 NDCs and 15,159 price rows in `drug_dev`), while the client
+  turns the same input into "1" and refuses it.
+- `NadacService.ValidateNdc` checks the normalized value: 5 to 11 ASCII digits (11 is the
+  longest an NDC can be).
 - `GetWithSearch`: an `ndc` that's given but invalid returns 400 with a readable `message`
-  ("An NDC search needs at least 5 digits, not counting leading zeros."), and isn't dropped.
+  ("An NDC search needs at least 5 digits, not counting leading zeros."), and isn't dropped. A
+  valid one is searched in its normalized form, so `00003089321` finds `3089321`.
   The description keeps today's behavior; the backlog item "Block searches for generic terms
   like "tablet"" changes it to match.
 - Remove the `ValidateNdc` line from AGENTS.md's known rough edges and the "Wire it into
@@ -128,17 +144,21 @@ is docs.
 ### 2. Cap search rows
 
 - `server/Constants/SearchLimits.cs`: `MaxRows = 200_000`.
-- `NadacRepository`: `CountSearchRowsAsync(ndcDescription, ndc, minDate, maxDate, limit,
-  cancellationToken)`, built from the same filter as `ListSearchResultsAsync`. Move the filter
-  into one private method that both use, so the count and the load can't drift apart.
+- Each repository counts and loads in one method, because the transaction needs the
+  `DbContext`, which only repositories hold. The method opens the transaction
+  (`_db.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken)`), runs
+  the bounded count, and returns "too many rows" or loads and returns the rows. It returns a
+  small result type that says which, rather than a `null` that could be read as "no results".
+- `NadacRepository`: `ListSearchResultsAsync` gains a `limit` and does the above. Move its
+  filter into one private method that the count and the load both use, so they can't drift
+  apart.
 - `FdaProductRepository`: move `ListAdvancedSearchResultsAsync`'s three queries (products,
-  packages, prices) into one private builder. `CountAdvancedSearchRowsAsync(request, limit,
-  cancellationToken)` adds a bounded count of the matched products' packages and a bounded count
-  of those packages' prices in the dates.
-- The services (`NadacService`, `FdaProductService`) run the count and then the load. Each
-  returns a result that says either "here's the data" or "too many rows", and the endpoint maps
-  "too many rows" to the 422 above. The response body is built in one place (for example a
-  `SearchErrors.TooManyRows()` helper in `Endpoints/`) so both endpoints send the same shape.
+  packages, prices) into one private builder. Its count adds a bounded count of the matched
+  products' packages and a bounded count of those packages' prices in the dates.
+- The services (`NadacService`, `FdaProductService`) pass `SearchLimits.MaxRows` and hand the
+  result to the endpoint, which maps "too many rows" to the 422 above. The response body is built
+  in one place (for example a `SearchErrors.TooManyRows()` helper in `Endpoints/`) so both
+  endpoints send the same shape.
 - `CacheWarmingService` calls the repository directly with fixed terms and doesn't need the cap.
 
 ### 3. Delete the FDA name search endpoint
@@ -164,7 +184,7 @@ unbounded per-term cache that the review found, and an endpoint with no date lim
 ### 5. Pass cancellation through
 
 - Each search endpoint takes a `CancellationToken` (minimal APIs bind `RequestAborted`) and
-  passes it to the service, which passes it to the count and the load.
+  passes it to the service, which passes it to the repository's transaction, count and load.
 - Fix `NadacService.ListSearchResultsAsync`, which accepts a token and drops it.
 
 ### 6. Client: typed errors, no retries on 4xx, abort superseded searches
@@ -205,7 +225,8 @@ unbounded per-term cache that the review found, and an endpoint with no date lim
 
 Against the local API on a worktree slot, using `drug_dev`:
 
-- `ndc=1` returns 400 with the NDC message, and `ndc=12345` returns 200.
+- `ndc=1` and `ndc=00001` return 400 with the NDC message. `ndc=12345` returns 200, and
+  `ndc=00003089321` returns the same prices as `ndc=3089321`.
 - NADAC "tablet" over all dates returns 422 within about 100 ms. "capsule" over the last year
   returns 200, and "metformin" over all dates returns 200 with the same body as before.
 - FDA advanced search "chloride" (generic name) returns 422 and "metformin" returns 200.
@@ -218,6 +239,27 @@ Against the local API on a worktree slot, using `drug_dev`:
 - `npm run lint`, `npm test` and `npm run build` pass, and `dotnet build` shows no new
   warnings.
 
+### Near-limit check
+
+This sets the starting cap, and it has to pass before the cap ships to `main`. Today's
+production API has no cap, so these searches already run there in full, and the check needs no
+deploy. It can run before or during implementation.
+
+- **Searches:** NADAC "capsule" with the default dates (the last 12 months, 169,380 rows in
+  `drug_dev`) and the FDA generic name "acetaminophen" with All dates (about 120,000 rows).
+  Check their row counts in production first. If either is far from 200,000 there, pick a
+  production search closer to it.
+- **On the Pi:** time each search with `curl -w '%{time_total} %{size_download}'` from another
+  machine, and watch the API's resident memory (`ps -o rss` on the `drugpricing` process)
+  while it runs. It passes if each search finishes in under 15 seconds and the API's memory
+  stays under 1.5 GB (the Pi has 3.71 GB, and about 800 MB is in use with everything running).
+- **On a real phone:** run each search on the production site. It passes if the results table
+  pages and sorts, the Line chart draws, and the page doesn't reload or stop responding. The
+  Simulator doesn't count here, because it runs with the Mac's memory.
+- **If either fails:** lower `SearchLimits.MaxRows` to a size that passes, with the same
+  checks, and update the plan's table and the Help copy to the new number. 100,000 is the next
+  value to try: it still allows NADAC "metformin" and "acetaminophen" over all dates.
+
 ## Not in this plan
 
 - **Rate limiting and real client IPs**: Cloudflare limits requests on the tunnel. See "Real
@@ -227,8 +269,8 @@ Against the local API on a worktree slot, using `drug_dev`:
 - **Response compression**: JSON this repetitive usually compresses 10× or more. Cloudflare may
   already compress responses to browsers. Measure the tunnel before adding
   `AddResponseCompression`.
-- **Lowering the limit**: once the cap ships, the Pi's timing for a search near 200,000 rows
-  and a phone's memory with a 100 MB result decide the long-term number.
+- **Lowering the limit further**: the near-limit check sets the starting cap. Whether it
+  should come down for other reasons, such as a slow connection, can wait until the cap ships.
 - **Blocking generic terms** and the description validation change: the existing backlog item
   "Block searches for generic terms like "tablet"".
 
