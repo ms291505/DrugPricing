@@ -1,4 +1,4 @@
-import { createApiPath, toApiError } from "./api.ts";
+import { postJson, toApiError } from "./api.ts";
 import type { NadacLoad } from "../library/searchCriteria.ts";
 import { toDateInput } from "../library/dates.ts";
 import { mapNadacPriceResponse, type NadacSearchResponse, type NadacSearchResult } from "./types.ts";
@@ -9,17 +9,12 @@ const OPEN_MIN_DATE = "0001-01-01";
 const OPEN_MAX_DATE = "9999-12-31";
 
 export const getNadacSearchResults = async (load: NadacLoad, signal?: AbortSignal): Promise<NadacSearchResult> => {
-  const params = new URLSearchParams();
-
-  if (load.ndcDescription) params.append("ndcDescription", load.ndcDescription);
-  if (load.ndc) params.append("ndc", load.ndc);
-  params.append("minDate", load.dates.start === null ? OPEN_MIN_DATE : toDateInput(load.dates.start));
-  params.append("maxDate", load.dates.end === null ? OPEN_MAX_DATE : toDateInput(load.dates.end));
-
-  const response = await fetch(createApiPath(`nadac-prices/search?${params}`), {
-    method: "GET",
-    signal,
-  });
+  const response = await postJson("nadac-prices/search", {
+    ndcDescription: load.ndcDescription || null,
+    ndc: load.ndc || null,
+    minDate: load.dates.start === null ? OPEN_MIN_DATE : toDateInput(load.dates.start),
+    maxDate: load.dates.end === null ? OPEN_MAX_DATE : toDateInput(load.dates.end),
+  }, signal);
 
   if (!response.ok) {
     throw await toApiError(response);

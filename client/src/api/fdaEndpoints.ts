@@ -1,5 +1,5 @@
 import type { FdaProductDetail } from "../library/types";
-import { createApiPath, toApiError } from "./api";
+import { postJson, toApiError } from "./api";
 import { mapFdaProductSearchResponse, type AdvancedFdaSearchRequest, type FdaProductSearchResponse, } from "./types";
 import type { FdaProductSearchResult } from "../library/types";
 
@@ -7,12 +7,7 @@ export const getAdvancedFdaSearchReqults = async (
   request: AdvancedFdaSearchRequest,
   signal?: AbortSignal,
 ): Promise<FdaProductSearchResult> => {
-  const params = new URLSearchParams();
-  params.append("jsonString", JSON.stringify(request));
-  const response = await fetch(createApiPath(`fda-products/advanced-search?${params}`), {
-    method: "GET",
-    signal,
-  });
+  const response = await postJson("fda-products/advanced-search", request, signal);
 
   if (!response.ok) {
     throw await toApiError(response);
