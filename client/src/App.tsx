@@ -24,11 +24,13 @@ import useMobile from "./hooks/useMobile";
 import Workspace from "./Components/Workspace";
 import Welcome from "./Components/Welcome";
 import GlobalModal from "./Components/GlobalModal";
+import { shouldRetry } from "./library/apiErrors";
 
 // No refetch when the window regains focus or the network comes back: every mounted tab, hidden
-// ones included, would refetch at once, and the data only changes weekly.
+// ones included, would refetch at once, and the data only changes weekly. No retry of a 4xx,
+// which can't change (`shouldRetry`).
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false, refetchOnReconnect: false } },
+  defaultOptions: { queries: { refetchOnWindowFocus: false, refetchOnReconnect: false, retry: shouldRetry } },
 });
 
 export default function App() {

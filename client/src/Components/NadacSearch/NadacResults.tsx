@@ -11,7 +11,8 @@ import { foundMessage, type Noun } from "../../library/searchToasts";
 import { selectedChartPrices } from "../../library/chartSeries";
 import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar } from "../ResultsSection";
+import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
+import { isTooManyRows } from "../../library/apiErrors";
 
 const PACKAGES: Noun = ["package", "packages"];
 
@@ -27,7 +28,7 @@ type Props = {
  * search, don't re-render every NADAC tab's results.
  */
 export default memo(function NadacResults({ view }: Props) {
-  const { isLoading, isSuccess } = useNadacSearch();
+  const { isLoading, isSuccess, error } = useNadacSearch();
   const { criteria, loaded, lastSearch, selectedRows, setCriteria } = useNadacSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
   const { prices, dateWindow, hidden } = view;
@@ -58,7 +59,9 @@ export default memo(function NadacResults({ view }: Props) {
             compact={compact} />
         )}
         status={compact => <ResultsReport scans={scans} charts={charts} compact={compact} />}
-        notice={hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
+        notice={isTooManyRows(error)
+          ? <TooManyRowsNotice message={error.message} />
+          : hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
         priceChanges={<PriceChangesSection source={source} scans={scans} />}
         table={table}
       >

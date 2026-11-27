@@ -32,11 +32,19 @@ runs `Database.Migrate()`. Layering: `Endpoints/` → `Services/` → `Data/Repo
 
 API (`/api`): `up`, `app-init` (NADAC date range; the client uses only that, not the name
 lists), `nadac-prices/{id}`, `nadac-prices/search?ndcDescription=&ndc=&minDate=&maxDate=`,
-`nadac-prices/advanced-search` (stub), `fda-products/search?proprietaryName=`,
-`fda-products/advanced-search?jsonString=` (JSON `AdvancedFdaSearchRequest` in the query).
+`nadac-prices/advanced-search` (stub), `fda-products/advanced-search?jsonString=` (JSON
+`AdvancedFdaSearchRequest` in the query; the FDA page's only search).
 
 Gotchas:
 
+- **Every search counts its rows first and refuses past `SearchLimits.MaxRows`** with a 422
+  `too-many-rows` (`Endpoints/SearchErrors.cs`), before loading anything. The repository runs a
+  bounded count (`Take(limit + 1).CountAsync()`) and the load in one `REPEATABLE READ`
+  transaction over one shared query builder, and returns `LimitedRows<T>`, never a `null`. An
+  FDA search counts packages as rows too. The client shows the refusal as `TooManyRowsNotice`
+  above the results, not a toast. Search endpoints take a `CancellationToken` and pass it down.
+- The NADAC `ndc` is normalized (trimmed, leading zeros stripped, as `toStoredNadacNdc` does
+  for undashed input) and must be 5 to 11 digits (`NadacService.ValidateNdc`), else 400.
 - NADAC description search is an `ILIKE '%term%'` match on `DrugPackages.NdcDescriptionLower`.
   Trigram similarity is used only behind the stubbed advanced search, but a fresh DB still needs
   `CREATE EXTENSION IF NOT EXISTS pg_trgm;` for the `*_trgm_ops` indexes.
@@ -398,8 +406,9 @@ them running for the author: say they're stopped and how to start them.
 - Minimum search lengths are duplicated: server `NadacService`/`FdaProductService`, client
   `library/constants.ts`. Change both.
 - New server logic goes in `Services/`, data access in `Data/Repositories/`, not in endpoints.
-- A repository method that calls `TryGetValue` must also `_cache.Set`, with its own `CacheKeys`
-  key (a shared key serves one list as another).
+- A repository method that calls `TryGetValue` must also `_cache.Set` through `SetList`
+  (`Data/CacheExtensions.cs`), with its own `CacheKeys` key (a shared key serves one list as
+  another). The cache has a `SizeLimit` in rows, so a `Set` without a `Size` throws.
 - Markdown line length (`MD013`) is not linted.
 - Never read, echo, or commit `etl/.env*` (except `.env.example`) or
   `server/appsettings.Development.json`; they hold real credentials.
@@ -415,7 +424,6 @@ to it rather than fixing them inside unrelated work.
 - Debug logging: `Console.WriteLine` in `FdaProductEndpoints`, `console.log` in `api.ts`.
 - `NadacRepository.ListSearchResultsAsync` never calls `_cache.Set`, so NADAC searches aren't
   cached.
-- `NadacService.ValidateNdc` is never called: `ndc=1` returns 47,072 rows for one week.
 - No server tests; client tests cover `library/` only; ETL fetch, load and tombstone are untested.
 - `NadacPrice.loaded_at` defaults to `datetime.now()` at import time (harmless; nothing keys off
   it). Don't copy it: the FDA models dropped that default because tombstoning needs an explicit
