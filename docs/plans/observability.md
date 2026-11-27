@@ -5,8 +5,8 @@
 Which self-hosted observability options fit this codebase. What's there today:
 
 - **Server** (.NET 10 minimal API, EF Core + Npgsql, `IMemoryCache`): default ASP.NET console
-  logging only, which systemd sends to journald. Two `Console.WriteLine` calls in
-  `server/Endpoints/FdaProductEndpoints.cs:45,49`. `/api/up` returns a constant and never touches
+  logging only, which systemd sends to journald. The server writes nothing about a request to
+  stdout (see "Never record a search term" in `AGENTS.md`). `/api/up` returns a constant and never touches
   the DB. No metrics, no traces, no cache hit rate.
 - **ETL** (Python, weekly cron): `timed()` in `etl/library/timing.py` prints `[timing]` lines to
   the cron log, and `ExitCode` (`etl/library/exit_codes.py`) has meaningful exit codes. Nothing
@@ -113,6 +113,9 @@ Add an optional `otel-lgtm` service (`grafana/otel-lgtm`, ports 3000/4317/4318) 
    - Tempo has a trace per request with an Npgsql child span showing the SQL.
    - Prometheus has `http.server.request.duration` and runtime metrics.
    - Loki has the API logs.
+   - The `nadac-prices/search` and `fda-products/advanced-search` spans and their Loki lines
+     carry no search term: no `url.query`, no request body, and no parameter values in
+     `db.statement`.
 4. `curl :5250/api/health` returns Healthy. With Postgres stopped it returns Unhealthy (503).
 5. Start the server without `OTEL_EXPORTER_OTLP_ENDPOINT` and confirm it starts and serves
    normally, with no exporter errors.

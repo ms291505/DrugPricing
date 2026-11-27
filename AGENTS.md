@@ -39,7 +39,7 @@ Gotchas:
 
 - **Never record a search term on the server:** not in stdout, logs, traces, or error reports.
   A drug search can reveal a health condition. Searches are POSTs so their terms stay out of
-  URLs, which proxies, access logs and tracing record by default; keep new searches that way.
+  URLs, which proxies, access logs, and tracing record by default; keep new searches that way.
 - **Every search counts its rows first and refuses past `SearchLimits.MaxRows`** with a 422
   `too-many-rows` (`Endpoints/SearchErrors.cs`), before loading anything. The repository runs a
   bounded count (`Take(limit + 1).CountAsync()`) and the load in one `REPEATABLE READ`
@@ -292,7 +292,7 @@ aren't saved.
   others. Failed writes warn once with a toast.
 - Tab providers load once on mount and save on every change. Blank tabs save nothing. Closing a
   tab or changing its type removes its state. Standalone pages use `STANDALONE_TAB_IDS`.
-- **The workspace is the only thing kept between visits.** Standalone Search state (criteria
+- **The workspace is the only search state kept between visits.** Standalone Search state (criteria
   and shared pins) is in `sessionStorage`, kept until the browser tab closes; Settings and the
   last Search source stay in `localStorage` because they reveal nothing about a search.
 - **Several windows:** when another window writes a value this one didn't, `watchOtherWindows`
