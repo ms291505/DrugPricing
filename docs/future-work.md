@@ -5,16 +5,6 @@ it ships. The code and pull request preserve the implementation history.
 
 ## Decided
 
-### Search result cap and search input hardening (2026-11-27)
-
-Plan: [docs/plans/search-result-cap.md](plans/search-result-cap.md). Every search counts its
-rows first and refuses past 200,000 with a 422 that the page shows as a "narrow your search"
-notice. The server also validates the NDC (`ValidateNdc` is wired in), deletes the unused FDA
-name search endpoint, gives the memory cache a `SizeLimit`, and passes cancellation through,
-and the client stops retrying 4xx answers. Rate limiting stays with Cloudflare.
-
-Size: medium. One PR (server, client, Help, AGENTS.md).
-
 ### FDA strength and price activity filters, and a labeler search (2026-11-27)
 
 Plan: [docs/plans/fda-strength-activity-labeler.md](plans/fda-strength-activity-labeler.md).
@@ -100,9 +90,6 @@ response, and its price change list (about 4,000,000 characters) is far over
     own today (`isValidFdaSearch` reuses `MIN_NDC_DESCRIPTION_LENGTH`), so the FDA name gets its
     own value. The autocomplete follow-up above, "The 5-character search minimum blocks short
     names", decides the same values; whichever lands first updates the other.
-  - The server doesn't enforce the NDC minimum today: `NadacService.ValidateNdc` is never called
-    (AGENTS.md, known rough edges). Wire it into `GetWithSearch` in this item, so the served NDC
-    rule is one the server keeps.
   - Add a `searchRules` object to the app-init response. The client checks a term with the same
     rule as the server (split into words, ignore case and punctuation), with a test on each
     side for the same examples.
@@ -159,9 +146,9 @@ results so stale-price indicators use the correct publication date.
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
   incompatible)`). Move the context and its hook out of the provider's module, as
   `Context/workspaceContexts.ts` does for the workspace, with a null default. Dev-only, small.
-- **`/api/fda-products/search` has no client caller.** The client uses only `advanced-search`.
-  Decide whether the simple endpoint stays as public API or goes. If it goes, its name is free
-  for `advanced-search` to take over with plain query params instead of `jsonString`.
+- **`fda-products/advanced-search` could take over the `/search` name** with plain query params
+  instead of `jsonString`. The old `/api/fda-products/search` was deleted with the search result
+  cap, so the name is free.
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price

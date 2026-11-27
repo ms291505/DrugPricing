@@ -1,3 +1,4 @@
+import { ApiError } from "../library/apiErrors";
 import type { UpResponse } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -27,10 +28,13 @@ export const isApiUp = async (): Promise<UpResponse> => {
   } else { return ({ up: false } as UpResponse); }
 }
 
-export const parseErrorMessage = async (response: Response): Promise<string> => {
+/** The failed response as an `ApiError`: the server's `message` and `code`, when it sent them. */
+export const toApiError = async (response: Response): Promise<ApiError> => {
   const body = await (response.json() as Promise<unknown>).catch(() => null);
-  const message = (body as Record<string, unknown>)?.message;
-  return typeof message === "string"
-    ? message
-    : `API error: ${response.status} ${response.statusText}`;
+  const { message, code } = (body ?? {}) as Record<string, unknown>;
+  return new ApiError(
+    typeof message === "string" ? message : `API error: ${response.status} ${response.statusText}`,
+    response.status,
+    typeof code === "string" ? code : undefined,
+  );
 };

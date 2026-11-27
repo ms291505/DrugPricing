@@ -5,6 +5,7 @@ import {
   type NadacCriteria, type NadacLoad, type NadacTerms,
 } from "../library/searchCriteria";
 import useSearchLoad from "../hooks/useSearchLoad";
+import { SEARCH_QUERY_KEYS } from "../library/constants";
 
 type NadacSearchContextType = {
   /** The applied criteria. Every field applies at once but the text terms, which change through `search`. */
@@ -60,7 +61,7 @@ type ProviderProps = {
 export const NadacSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() })
   const { criteria, setCriteria, search: load, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
-    initial?.criteria ?? createNadacCriteria(), nadacLoadRequest, applyNadacSearch);
+    initial?.criteria ?? createNadacCriteria(), nadacLoadRequest, applyNadacSearch, SEARCH_QUERY_KEYS.nadac);
   // A new search clears the selection, as Clear search does: its rows are another search's. A
   // restored tab's first load and a change of dates don't come through here.
   const search = useCallback((fields: NadacTerms) => {

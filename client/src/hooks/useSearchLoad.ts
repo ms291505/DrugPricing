@@ -1,4 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { isTooManyRows } from "../library/apiErrors";
 import type { DateWindow } from "../library/dates";
 import { nextLoad } from "../library/searchCriteria";
 import { useLastAsOfDate } from "./useAppInit";
@@ -11,6 +13,7 @@ const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringi
  * @param initial - the criteria restored from storage, or a new tab's defaults
  * @param loadRequest - the type's `*LoadRequest`; module-level, so it's stable
  * @param applySearch - the type's `apply*Search`; module-level, so it's stable
+ * @param queryKey - the first element of the search's query key (`SEARCH_QUERY_KEYS`)
  * @returns
  * - `criteria`, the applied criteria. Every field but the text terms is written with
  *   `setCriteria` and applies at once, Dates included; the terms change only through `search`.
@@ -18,7 +21,8 @@ const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringi
  *   to. Null without a search, and until app-init settles (its date presets count back from the
  *   last as-of date).
  * - `loaded`, what the query fetches: `requested`, or a wider load that already holds it
- *   (`nextLoad`), so narrowing the dates doesn't fetch.
+ *   (`nextLoad`), so narrowing the dates doesn't fetch, unless the server refused that load as
+ *   too large.
  * - `lastSearch`, what the user's last Search asked for: the key for the result toasts
  *   (`useNewSearchResult`). Null until then, so a restored tab's re-run doesn't count as a new
  *   result, and neither does a change of dates.
@@ -30,6 +34,7 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
   initial: C,
   loadRequest: (criteria: C, lastAsOfDate: number) => L | null,
   applySearch: (applied: C, fields: F) => C,
+  queryKey: string,
 ) {
   const lastAsOfDate = useLastAsOfDate().forSearch;
   const [criteria, setCriteria] = useState(initial);
@@ -43,9 +48,16 @@ export default function useSearchLoad<C, F, L extends { dates: DateWindow }>(
   const [requested, setRequested] = useState(fresh);
   if (!sameValue(requested, fresh)) setRequested(fresh);
 
-  // Follows `requested`, keeping a load that already holds it.
+  // Follows `requested`, keeping a load that already holds it. A load refused as too large holds
+  // nothing; the query state is read by subscription, so shortening the Dates while it's still
+  // in flight also fetches once the refusal arrives.
   const [held, setHeld] = useState(requested);
-  const loaded = nextLoad(held, requested);
+  const queryCache = useQueryClient().getQueryCache();
+  const heldRefused = useSyncExternalStore(
+    useCallback(onChange => queryCache.subscribe(onChange), [queryCache]),
+    () => held !== null && isTooManyRows(queryCache.find({ queryKey: [queryKey, held], exact: true })?.state.error),
+  );
+  const loaded = nextLoad(held, requested, heldRefused);
   if (loaded !== held) setHeld(loaded);
 
   if (waiting && lastAsOfDate !== null) {

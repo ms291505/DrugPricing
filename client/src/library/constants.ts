@@ -46,3 +46,9 @@ export const HALF_WIDTH_GRID_SIZE = { xs: 12, md: 6 };
 export const STALE_MARKER_SIZE = 16;
 export const STALE_MARKER_GAP = 4;
 export const STALE_MARKER_WIDTH = STALE_MARKER_SIZE + STALE_MARKER_GAP;
+
+/**
+ * The first element of each search's React Query key (`[key, loaded]`). `useSearchLoad` reads the
+ * query's state by it, to tell a load the server refused as too large.
+ */
+export const SEARCH_QUERY_KEYS = { nadac: "nadacSearch", fda: "fdaSearch" } as const;

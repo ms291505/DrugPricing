@@ -1,4 +1,4 @@
-import { createApiPath, parseErrorMessage } from "./api.ts";
+import { createApiPath, toApiError } from "./api.ts";
 import type { NadacLoad } from "../library/searchCriteria.ts";
 import { toDateInput } from "../library/dates.ts";
 import { mapNadacPriceResponse, type NadacSearchResponse, type NadacSearchResult } from "./types.ts";
@@ -8,7 +8,7 @@ import { mapNadacPriceResponse, type NadacSearchResponse, type NadacSearchResult
 const OPEN_MIN_DATE = "0001-01-01";
 const OPEN_MAX_DATE = "9999-12-31";
 
-export const getNadacSearchResults = async (load: NadacLoad): Promise<NadacSearchResult> => {
+export const getNadacSearchResults = async (load: NadacLoad, signal?: AbortSignal): Promise<NadacSearchResult> => {
   const params = new URLSearchParams();
 
   if (load.ndcDescription) params.append("ndcDescription", load.ndcDescription);
@@ -18,10 +18,11 @@ export const getNadacSearchResults = async (load: NadacLoad): Promise<NadacSearc
 
   const response = await fetch(createApiPath(`nadac-prices/search?${params}`), {
     method: "GET",
+    signal,
   });
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
+    throw await toApiError(response);
   }
 
   const body = await response.json() as unknown as NadacSearchResponse;
