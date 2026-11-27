@@ -221,8 +221,8 @@ tell them apart. A change from $0 is a rise.
   plc, sa, ag, gmbh) but never the first word.
 - `FdaProductService.ListLabelerGroupsAsync`, and `GET /api/fda-products/labelers` →
   `{ data: LabelerGroup[] }`. Warm it in `CacheWarmingService`. It isn't in `app-init`, which
-  every page waits for; 517 KB would slow startup for a field most visits don't use. Check that
-  responses are compressed through the tunnel, and add `AddResponseCompression` if they aren't.
+  every page waits for; 517 KB would slow startup for a field most visits don't use. Response
+  compression is not needed (decided 2026-11-27): the list is fetched once per session.
 
 ### 4. Labeler search (server)
 
@@ -318,7 +318,10 @@ tell them apart. A change from $0 is a rise.
   - No matches: `noOptionsText` reads "No labelers match. Products are listed under the
     company that registered the NDC, which may be a subsidiary. Search by brand name to see
     the labeler." It ends with a "Learn more" link to the Help section below
-    (`openHelp`).
+    (`openHelp`). Since 2026-11-27, the field's always-mounted `role="status"` line also says
+    the active note (visually hidden; the popup shows it), because a combo box announces only
+    its options, and an always-visible "Can't find a company?" link under the field opens the
+    same section from the keyboard's tab order (the popup's Learn more closes with the popup).
   - Matches, but none where a word starts with the term (no tier 1 or 2 match): a one-line
     hint under the last group reads "Not the company you meant? Search by brand name to see
     the labeler." Typing "shire" (now part of Takeda, with no labeler of its own) offers only
@@ -334,10 +337,13 @@ tell them apart. A change from $0 is a rise.
 - `SearchPanel`: `TermField` becomes a union of today's text field and
   `{ kind: "labelers", value, onChange, includeOtc, includeWithoutPrices }`, rendered as
   `LabelerField` in both layouts. `FdaSearchPanel` passes Brand name, Generic name, and Labeler;
-  the panel owns the arrangement (a third field on the desktop row; stacked on compact).
-- `FdaSearchPanel`: the labeler draft is local state like the names, `changed` compares it,
-  and `handleClearSearch` clears it. Enter in the combobox with the list closed submits the
-  form, as in the text fields; check that MUI doesn't swallow it.
+  the panel owns the arrangement (a third field on the desktop row; on compact, the names'
+  row, then Labeler with Search and Clear search beside it, so the visual order matches focus
+  order; stacked on narrow panels; 2026-11-27).
+- `FdaSearchPanel`: the picks are not a draft (2026-11-27): the field writes the applied
+  criteria at once, like Dates, so `changed` compares only the names and Search stays disabled
+  while only picks changed. Clear search clears them with the rest. `autoHighlight` makes Enter
+  pick the top match while the list is open; with it closed, Enter submits the form.
 - NADAC handoff (`fdaNadacHandoff.ts`): a labeler has no NADAC field, so a name plus labeler
   hands off the name only.
 - **Two controls named Labeler.** The More filters list still narrows a loaded result by
@@ -397,8 +403,8 @@ Docs go with the PR they describe.
 - curl a broad name with Aurobindo's codes and no dates: the cap's 422 when it passes the cap,
   with no price rows loaded (the EF log shows only the bounded count).
 - Chrome on the dev workspace, desktop and about 390 px wide:
-  - Type "pfeizer" in Labeler; Pfizer labelers show under "Did you mean". Pick two, press
-    Search, and the tab title and results heading name the first plus "+1".
+  - Search a name, type "pfeizer" in Labeler; Pfizer labelers show under "Did you mean". Pick
+    two: they apply at once, and the tab title and results heading name the first plus "+1".
   - Tick "OTC drugs" and "Results without prices", and the list offers more labelers.
   - Reload, and the restored tab shows its chips and searches without fetching the labeler
     list until the field is focused.

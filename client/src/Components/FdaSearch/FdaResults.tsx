@@ -6,7 +6,7 @@ import useNewSearchResult from "../../hooks/useNewSearchResult";
 import usePriceChangeScans from "../../hooks/usePriceChangeScans";
 import useAddedCharts from "../../hooks/useAddedCharts";
 import { useFdaSearchContext } from "../../Context/FdaSearchContext";
-import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, revealFda } from "../../library/searchCriteria";
+import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, narrowToLabelers, revealFda } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import { selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
@@ -36,6 +36,8 @@ export default memo(function FdaResults({ view }: Props) {
   const { isLoading, isSuccess, data, error } = useFdaSearch();
   const { criteria, loaded, lastSearch, fdaResultDetailLevel, selectedRows, setCriteria } = useFdaSearchContext();
   const resultKey = useNewSearchResult(lastSearch, isSuccess);
+  // The load as a fetch narrowed to the picks would hold it, whether or not it was filtered here.
+  const narrowedData = useMemo(() => data && narrowToLabelers(data, criteria.labelers), [data, criteria.labelers]);
   const { products, dateWindow, hidden } = view;
   // The table, Line / Bar and added charts draw at the detail level; price change lists and their
   // scans list packages at every level.
@@ -69,7 +71,7 @@ export default memo(function FdaResults({ view }: Props) {
         status={compact => <ResultsReport scans={scans} charts={charts} compact={compact} />}
         notice={
           <>
-            <NadacHandoffNotice result={isSuccess ? data : undefined} dateWindow={dateWindow} loaded={loaded} />
+            <NadacHandoffNotice result={isSuccess ? narrowedData : undefined} dateWindow={dateWindow} loaded={loaded} />
             {isTooManyRows(error) && <TooManyRowsNotice message={error.message} />}
             {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
           </>

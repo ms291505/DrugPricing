@@ -68,9 +68,10 @@ Gotchas:
   43 spellings on 4 labeler codes). `ListLabelerGroupsAsync` reads one row per spelling and
   code, and `Data/LabelerGroups.cs` joins rows whose names normalize alike or that share a code
   (5,128 groups, 2026-11); the groups are cached for `CacheDuration.Reference`, and
-  `fda-products/labelers` sends them all. A search's `LabelerCodes` count is limited as sent,
-  not as distinct codes, so a body can't repeat one code into a huge `LIKE ANY`. The client matches typed text against them in memory (`library/labelers.ts`),
-  so nothing typed leaves the browser. **Picks only narrow a name search; a labeler alone is
+  `fda-products/labelers` sends them all. The client matches typed text against them in memory
+  (`library/labelers.ts`), so nothing typed leaves the browser. A search's `LabelerCodes` count
+  is limited as sent, not as distinct codes, so a body can't repeat one code into a huge
+  `LIKE ANY`. **Picks only narrow a name search; a labeler alone is
   never a search** (decided 2026-11-27): codes without a name get a 400, and a saved tab with
   only picks restores them without searching. **Picks apply at once, like Dates** (also
   2026-11-27): `fdaLoadHolds` keeps a load whose codes hold the picks (none loaded holds every

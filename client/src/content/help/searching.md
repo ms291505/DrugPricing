@@ -8,7 +8,8 @@
   of a table, because that many are too many to show. In NADAC each price counts as a result.
   In FDA each package counts too, along with its prices, so an FDA search can reach the limit
   with fewer than 200,000 prices. Use a more specific name or description, for example
-  `metformin` instead of `tablet`, or shorten the **Dates**.
+  `metformin` instead of `tablet`, or shorten the **Dates**. In FDA search you can also pick a
+  **Labeler** to narrow the name to one company's products.
 - For a brand and its unbranded version in NADAC, search each name separately. For example,
   search `humira` and `adalimumab`.
 - **Search** becomes available when you edit the terms or can retry after an error. Dates and
@@ -25,9 +26,8 @@ It can't search on its own: enter a name too. For example, `chloride` matches to
 to show, but `chloride` with one company can fit. Type part of a company's name in **Labeler**
 and pick it from the list. Spelling doesn't have to be exact: `pfeizer` offers Pfizer under
 **Did you mean**. You can pick several labelers. Like **Dates**, picks apply at once, without
-**Search**: removing one, or picking one when none were picked, narrows what's already shown,
-and other changes load the results again. If a name matches too many results to show, picking a
-labeler can bring it under the limit. The list offers the labelers whose products the page would
+**Search**. If a name matches too many results to show, picking a labeler can bring it under
+the limit. The list offers the labelers whose products the page would
 show, so check **OTC drugs** or **Results without prices** to see more. **Can't find a
 company?** under the field opens this section.
 

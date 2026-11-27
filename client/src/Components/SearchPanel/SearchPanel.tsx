@@ -77,7 +77,10 @@ type Props = {
   onClearSearch: () => void,
   /** A search has been applied or a term holds text, so Clear search has something to do. */
   canClearSearch: boolean,
-  /** The text terms, on the first row with the Search button. */
+  /**
+   * The terms: text fields and FDA's Labeler, on the first row with the Search button. A compact
+   * panel with a Labeler gives the text terms a row, then Labeler beside the buttons.
+   */
   terms: TermField[],
   /** The search's dates, which apply at once. */
   dates: ChartDates,
@@ -126,7 +129,8 @@ export default function SearchPanel({
   const labelerTerms = terms.filter(term => term.kind === "labelers");
   const textTerms = terms.filter(term => term.kind !== "labelers");
   const splitTerms = !desktop && !stacked && labelerTerms.length > 0;
-  const termRowSx = { display: "flex", flexDirection: stacked ? "column" : "row", gap: 1, alignItems: stacked ? "stretch" : "center" } as const;
+  // Tops aligned: Labeler is taller than the others, with its status line and Help link under it.
+  const termRowSx = { display: "flex", flexDirection: stacked ? "column" : "row", gap: 1, alignItems: stacked ? "stretch" : "flex-start" } as const;
 
   const renderTerm = (term: TermField) => term.kind === "labelers" ? (
     <Box key={term.id} sx={{ flex: stacked ? "none" : term.flex ?? 1, minWidth: 0, alignSelf: stacked ? "stretch" : "flex-start" }}>

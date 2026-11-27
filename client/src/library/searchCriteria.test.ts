@@ -3,7 +3,7 @@ import { fdaHasPricesInWindow, nadacHandoffTerm } from "./fdaNadacHandoff";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
-  exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaLoadHolds, labelerCodesHold, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
+  exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaLoadHolds, labelerCodesHold, narrowToLabelers, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
   fdaResultsLabel, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
@@ -606,6 +606,7 @@ describe("FDA name searches", () => {
       expect(next(load(["0013", "0025"]), load(["0013"]))).toBe("filter");
       expect(next(load(["0013"]), load(["0013", "0069"]))).toBe("fetch");
       expect(next(load(["0013"]), load([]))).toBe("fetch");
+      expect(labelerCodesHold([], [])).toBe(true);
       // Dates still have to be covered, and other names are another search.
       expect(next(load([]), load(["0013"], "2025-01-01"))).toBe("fetch");
       expect(next(load([]), { ...load(["0013"]), nonProprietaryName: "sodium" })).toBe("fetch");
@@ -616,7 +617,7 @@ describe("FDA name searches", () => {
     });
 
     it("never searches on picks alone", () => {
-      expect(labelerCodesHold([], [])).toBe(true);
+      expect(isValidFdaSearch("", "")).toBe(false);
       expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: [{ name: "P", codes: ["0013"] }] }, last)).toBeNull();
     });
 
@@ -640,7 +641,14 @@ describe("FDA name searches", () => {
         const ndcs = (r: { products: FdaProductDetail[] }) => refineFda(r, criteria, FULL_WINDOW).products.map(p => p.productNdc);
         expect(ndcs(result)).toEqual(ndcs(narrowed));
         expect(ndcs(result).length).toBeGreaterThan(0);
+        // What the empty-result notice reads: the load's narrowing only.
+        expect(narrowToLabelers(result, picks)).toEqual(narrowed);
+        expect(fdaHasPricesInWindow(narrowToLabelers(result, picks), FULL_WINDOW))
+          .toBe(fdaHasPricesInWindow(narrowed, FULL_WINDOW));
       }
+      // A pick with nothing in the load: the notice sees no products, as after a narrowed fetch.
+      expect(narrowToLabelers(result, [{ name: "None", codes: ["9999"] }]).products).toEqual([]);
+      expect(narrowToLabelers(result, [])).toBe(result);
     });
   });
 

@@ -540,6 +540,18 @@ export function refineFda(
 const ACTIVITY_OPTIONS: string[] = ACTIVITY_CATEGORIES.map(category => category.key);
 
 /**
+ * The loaded result narrowed to the picks, as the server would have loaded it: the load's
+ * narrowing only, without the refine fields. What reads the loaded result to say what a search
+ * found (`NadacHandoffNotice`) reads this, so a load filtered in the client says what a
+ * narrowed fetch would. The same result without picks.
+ */
+export function narrowToLabelers(result: FdaProductSearchResult, labelers: LabelerChoice[]): FdaProductSearchResult {
+  const codes = labelerCodes(labelers);
+  if (codes.length === 0) return result;
+  return { ...result, products: result.products.filter(product => matchesLabelerCodes(product.productNdc, codes)) };
+}
+
+/**
  * The options of FDA's More filters lists, keyed by the exclusion each one sets. Price activity
  * is a fixed set kept across searches, so it always lists every category: a category absent from
  * this result can still be excluded and seen. Strength sorts by number (`compareStrength`); the

@@ -45,7 +45,7 @@ public static class FdaProductEndpoints
     var result = await fdaProductService.ListAdvancedSearchResultsAsync(request, cancellationToken);
 
     if (!result.TryGetRows(out var searchResult))
-      return SearchErrors.TooManyRows();
+      return SearchErrors.TooManyRows(canPickLabeler: true);
 
     return TypedResults.Ok(searchResult);
   }
