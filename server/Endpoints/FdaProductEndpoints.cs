@@ -6,7 +6,6 @@ namespace DrugPricing.Endpoints;
 
 public static class FdaProductEndpoints
 {
-  private const string NoSearchParamsErrorMessage = "No search parameters were provided.";
   private const string AdvancedSearchRequiresAName = "No valid brand or generic name was provided.";
   private const string BadAdvancedSearchRequestJson =
     "Something went wrong sending the advanced search parameters.";
@@ -17,29 +16,15 @@ public static class FdaProductEndpoints
   {
     var fdaProductGroup = api.MapGroup("/fda-products");
 
-    fdaProductGroup.MapGet("/search", GetWithNameSearch);
-
     fdaProductGroup.MapGet("/advanced-search", GetWithAdvancedSearch);
 
     return fdaProductGroup;
   }
 
-  private static async Task<IResult> GetWithNameSearch(
-    [FromQuery] string proprietaryName,
-    [FromServices] FdaProductService fdaProductService
-  )
-  {
-    if (!fdaProductService.ValidateNameSearch(proprietaryName))
-      return TypedResults.BadRequest(new { message = NoSearchParamsErrorMessage });
-
-    var result = await fdaProductService.ListSearchResultsAsync(proprietaryName);
-
-    return TypedResults.Ok(result);
-  }
-
   private static async Task<IResult> GetWithAdvancedSearch(
     [FromQuery] string jsonString,
-    [FromServices] FdaProductService fdaProductService
+    [FromServices] FdaProductService fdaProductService,
+    CancellationToken cancellationToken
   )
   {
     Console.WriteLine(jsonString);
@@ -57,8 +42,11 @@ public static class FdaProductEndpoints
     )
       return TypedResults.BadRequest(new { message = AdvancedSearchRequiresAName });
 
-    var result = await fdaProductService.ListAdvancedSearchResultsAsync(request);
+    var result = await fdaProductService.ListAdvancedSearchResultsAsync(request, cancellationToken);
 
-    return TypedResults.Ok(result);
+    if (!result.TryGetRows(out var searchResult))
+      return SearchErrors.TooManyRows();
+
+    return TypedResults.Ok(searchResult);
   }
 }

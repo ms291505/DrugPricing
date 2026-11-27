@@ -20,11 +20,4 @@ public static class CacheKeys
 
     return cacheKey;
   }
-
-  public static string DrugProductSearch(string proprietaryName)
-  {
-    var cacheKey = $"drug-product-search-{proprietaryName}";
-
-    return cacheKey;
-  }
 }

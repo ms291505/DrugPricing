@@ -17,7 +17,8 @@ export default function useFdaSearch() {
 
   return useQuery({
     queryKey: ["fdaSearch", loaded],
-    queryFn: () => {
+    // The signal aborts a search a new one replaces (React Query drops the old query).
+    queryFn: ({ signal }) => {
       // The server keeps prices strictly inside the dates; widened, the result holds the as-of
       // dates the client snaps to (`refineFda`), as NADAC's server snaps them.
       const dates = widenToAsOfDates(loaded!.dates);
@@ -30,7 +31,7 @@ export default function useFdaSearch() {
         includeResultsWNoPrices: true,
         priceAsOfDateStart: dates.start === null ? undefined : toDateInput(dates.start),
         priceAsOfDateEnd: dates.end === null ? undefined : toDateInput(dates.end),
-      });
+      }, signal);
     },
     enabled: loaded !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,

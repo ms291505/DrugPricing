@@ -1,5 +1,4 @@
 using DrugPricing.Data;
-using DrugPricing.Data.Repositories;
 using DrugPricing.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,8 @@ public static class NadacPriceEndpoints
 {
   private const double TrigramsSimilarityThreshold = 0.3;
   private const string NoSearchParamsErrorMessage = "No search parameters were provided.";
+  private const string InvalidNdcErrorMessage =
+    "An NDC search needs at least 5 digits, not counting leading zeros.";
 
   public static RouteGroupBuilder MapNadacEndpoints(this RouteGroupBuilder api)
   {
@@ -41,8 +42,8 @@ public static class NadacPriceEndpoints
     [FromQuery] string? ndc,
     [FromQuery] DateOnly minDate,
     [FromQuery] DateOnly maxDate,
-    [FromServices] INadacRepository nadacRepo,
-    [FromServices] NadacService nadacService
+    [FromServices] NadacService nadacService,
+    CancellationToken cancellationToken
   )
   {
     List<NadacPriceSearchResponse.Predicate> predicates = [];
@@ -53,11 +54,15 @@ public static class NadacPriceEndpoints
       ? cleanDescriptionInput
       : "";
 
-    // Digits only. Not int.TryParse: an 11-digit NDC like 11788003760 overflows int.
-    var searchNdc =
-      string.IsNullOrWhiteSpace(ndc) ? ""
-      : ndc.All(char.IsAsciiDigit) ? ndc
-      : "";
+    // A given NDC that isn't valid is refused, not dropped. Searched in its stored form, so
+    // 00003089321 finds 3089321.
+    var searchNdc = "";
+    if (!string.IsNullOrWhiteSpace(ndc))
+    {
+      searchNdc = nadacService.NormalizeNdc(ndc);
+      if (!nadacService.ValidateNdc(searchNdc))
+        return TypedResults.BadRequest(new { message = InvalidNdcErrorMessage });
+    }
 
     if (string.IsNullOrWhiteSpace(searchDescription) && string.IsNullOrWhiteSpace(searchNdc))
       return TypedResults.BadRequest(new { message = NoSearchParamsErrorMessage });
@@ -66,10 +71,14 @@ public static class NadacPriceEndpoints
       searchDescription,
       searchNdc,
       minDate,
-      maxDate
+      maxDate,
+      cancellationToken
     );
 
-    return TypedResults.Ok(result);
+    if (!result.TryGetRows(out var searchResult))
+      return SearchErrors.TooManyRows();
+
+    return TypedResults.Ok(searchResult);
   }
 
   public static async Task<IResult> GetWithAdvancedSearch(

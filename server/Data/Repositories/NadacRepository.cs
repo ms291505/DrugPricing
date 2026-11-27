@@ -1,3 +1,4 @@
+using System.Data;
 using DrugPricing.Constants;
 using DrugPricing.Models;
 using Microsoft.EntityFrameworkCore;
@@ -31,23 +32,51 @@ public class NadacRepository : INadacRepository
       .OrderBy(p => p)
       .ToListAsync(cancellationToken);
 
-    _cache.Set(CacheKeys.NadacAsOfDates, asOfDates, CacheDuration.Default);
-    return asOfDates;
+    return _cache.SetList(CacheKeys.NadacAsOfDates, asOfDates, CacheDuration.Default);
   }
 
-  public async Task<List<NadacPrice>> ListSearchResultsAsync(
+  public async Task<LimitedRows<List<NadacPrice>>> ListSearchResultsAsync(
     string ndcDescription,
     string ndc,
     DateOnly minDate,
     DateOnly maxDate,
+    int limit,
     CancellationToken cancellationToken = default
   )
   {
     var cacheKey = CacheKeys.NadacSearch(ndcDescription, ndc, minDate, maxDate);
 
+    // Only results within the limit are ever cached.
     if (_cache.TryGetValue(cacheKey, out List<NadacPrice>? cachedResults))
-      return cachedResults!;
+      return LimitedRows<List<NadacPrice>>.Loaded(cachedResults!);
 
+    var query = SearchQuery(ndcDescription, ndc, minDate, maxDate);
+
+    // The count and the load read one snapshot, so an ETL load committing between them can't
+    // push a search that passed the count past the limit.
+    await using var transaction = await _db.Database.BeginTransactionAsync(
+      IsolationLevel.RepeatableRead,
+      cancellationToken
+    );
+
+    var count = await query.Take(limit + 1).CountAsync(cancellationToken);
+    if (count > limit)
+      return LimitedRows<List<NadacPrice>>.TooManyRows();
+
+    var nadacPrices = await query.ToListAsync(cancellationToken);
+
+    await transaction.CommitAsync(cancellationToken);
+    return LimitedRows<List<NadacPrice>>.Loaded(nadacPrices);
+  }
+
+  /// <summary>The search's price rows: what the count and the load both read.</summary>
+  private IQueryable<NadacPrice> SearchQuery(
+    string ndcDescription,
+    string ndc,
+    DateOnly minDate,
+    DateOnly maxDate
+  )
+  {
     var query = _db.DrugPackages.AsNoTracking();
 
     if (!string.IsNullOrWhiteSpace(ndcDescription))
@@ -65,12 +94,9 @@ public class NadacRepository : INadacRepository
       query = query.Where(p => EF.Functions.ILike(p.Ndc, pattern, LikePattern.EscapeCharacter));
     }
 
-    var nadacPrices = await query
+    return query
       .Join(_db.NadacPrices, drug => drug.Ndc, price => price.Ndc, (drug, price) => price)
-      .Where(p => p.AsOfDate >= minDate && p.AsOfDate <= maxDate)
-      .ToListAsync(cancellationToken);
-
-    return nadacPrices;
+      .Where(p => p.AsOfDate >= minDate && p.AsOfDate <= maxDate);
   }
 
   public async Task<List<NadacPrice>> ListAdvancedSearchResultsAsync(

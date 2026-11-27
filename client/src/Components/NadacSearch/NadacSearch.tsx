@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import { useNadacSearch, useRefinedNadacSearch } from "../../hooks/useNadacSearch.ts";
+import { isTooManyRows } from "../../library/apiErrors";
 import QueryErrorToast from "../ui/QueryErrorToast.tsx";
 import PinnedSection from "../ExplorerGrid/PinnedSection";
 import NadacSearchPanel from "./NadacSearchPanel";
@@ -24,7 +25,8 @@ export default function NadacSearch({ panelLayout, searchNavigation, standaloneA
 
   return (
     <>
-      <QueryErrorToast error={error} />
+      {/* A too-large search explains itself above the results (`TooManyRowsNotice`). */}
+      <QueryErrorToast error={isTooManyRows(error) ? null : error} />
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, width: "100%" }}>
         <NadacSearchPanel view={view} layout={panelLayout} navigation={searchNavigation} standaloneAction={standaloneAction} />
         <NadacResults view={view} />

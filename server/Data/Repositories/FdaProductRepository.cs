@@ -1,5 +1,7 @@
+using System.Data;
 using DrugPricing.Constants;
 using DrugPricing.Endpoints;
+using DrugPricing.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -26,8 +28,7 @@ public class FdaProductRepository : IFdaProductRepository
 
     var dosageFormNames = await query.Select(p => p.DosageFormName).Distinct().ToListAsync();
 
-    _cache.Set(cacheKey, dosageFormNames, CacheDuration.Default);
-    return dosageFormNames;
+    return _cache.SetList(cacheKey, dosageFormNames, CacheDuration.Default);
   }
 
   public async Task<List<string>> ListUniqueRouteNamesAsync()
@@ -44,24 +45,47 @@ public class FdaProductRepository : IFdaProductRepository
       .OrderBy(r => r)
       .ToListAsync();
 
-    _cache.Set(cacheKey, routeNames, CacheDuration.Default);
-    return routeNames;
+    return _cache.SetList(cacheKey, routeNames, CacheDuration.Default);
   }
 
-  public async Task<List<FdaProductDetail>> ListSearchResultsAsync(
-    string proprietaryName,
+  public async Task<LimitedRows<List<FdaProductDetail>>> ListAdvancedSearchResultsAsync(
+    AdvancedFdaSearchRequest request,
+    int limit,
     CancellationToken cancellationToken = default
   )
   {
-    var cacheKey = CacheKeys.DrugProductSearch(proprietaryName);
-    if (_cache.TryGetValue(cacheKey, out List<FdaProductDetail>? cachedResults))
-      return cachedResults!;
+    var (productQuery, packageQuery, priceQuery) = AdvancedSearchQuery(request);
 
-    var pattern = LikePattern.Contains(proprietaryName);
-    var products = await _db
-      .FdaProducts.AsNoTracking()
-      .Where(product => product.DelistedAt == null)
-      .Where(product => EF.Functions.ILike(product.ProprietaryName, pattern, LikePattern.EscapeCharacter))
+    // The count and the load read one snapshot, so an ETL load committing between them can't
+    // push a search that passed the count past the limit.
+    await using var transaction = await _db.Database.BeginTransactionAsync(
+      IsolationLevel.RepeatableRead,
+      cancellationToken
+    );
+
+    // A row is a package (packages without prices ship too) or one of its prices, counted the
+    // way the load nests them: each package's prices, by its stripped NDC.
+    var packages = packageQuery.Where(package =>
+      productQuery.Any(product => product.ProductNdc == package.ProductNdc)
+    );
+    var packageCount = await packages.Take(limit + 1).CountAsync(cancellationToken);
+    if (packageCount > limit)
+      return LimitedRows<List<FdaProductDetail>>.TooManyRows();
+
+    var priceLimit = limit - packageCount;
+    var priceCount = await packages
+      .Join(
+        priceQuery,
+        package => package.NdcPackageCodeStripped,
+        price => price.Ndc,
+        (package, price) => price.Id
+      )
+      .Take(priceLimit + 1)
+      .CountAsync(cancellationToken);
+    if (priceCount > priceLimit)
+      return LimitedRows<List<FdaProductDetail>>.TooManyRows();
+
+    var products = await productQuery
       .Select(product => new FdaProductDetail
       {
         Id = product.Id,
@@ -83,8 +107,8 @@ public class FdaProductRepository : IFdaProductRepository
         ListingRecordCertifiedThrough = product.ListingRecordCertifiedThrough,
         ProprietaryName = product.ProprietaryName,
 
-        FdaPackageDetails = product
-          .FdaPackages.Where(package => package.DelistedAt == null)
+        FdaPackageDetails = packageQuery
+          .Where(package => package.ProductNdc == product.ProductNdc)
           .Select(package => new FdaPackageDetail
           {
             Id = package.Id,
@@ -95,22 +119,24 @@ public class FdaProductRepository : IFdaProductRepository
             EndMarketingDate = package.EndMarketingDate,
             SamplePackage = package.SamplePackage,
 
-            NadacPrices = _db
-              .NadacPrices.Where(price => price.Ndc == package.NdcPackageCodeStripped)
+            NadacPrices = priceQuery
+              .Where(price => price.Ndc == package.NdcPackageCodeStripped)
               .ToList(),
           })
           .ToList(),
       })
-      .ToListAsync();
+      .Where(product => product.FdaPackageDetails.Count > 0)
+      .ToListAsync(cancellationToken);
 
-    _cache.Set(cacheKey, products, CacheDuration.Default);
-    return products;
+    await transaction.CommitAsync(cancellationToken);
+    return LimitedRows<List<FdaProductDetail>>.Loaded(products);
   }
 
-  public async Task<List<FdaProductDetail>> ListAdvancedSearchResultsAsync(
-    AdvancedFdaSearchRequest request,
-    CancellationToken cancellationToken = default
-  )
+  /// <summary>
+  /// The search's products, their packages and those packages' prices in the dates: what the
+  /// count and the load both read.
+  /// </summary>
+  private AdvancedSearchQueries AdvancedSearchQuery(AdvancedFdaSearchRequest request)
   {
     var productQuery = _db.FdaProducts.AsNoTracking().Where(p => p.DelistedAt == null);
 
@@ -184,49 +210,12 @@ public class FdaProductRepository : IFdaProductRepository
       );
     }
 
-    var products = await productQuery
-      .Select(product => new FdaProductDetail
-      {
-        Id = product.Id,
-        ProductNdc = product.ProductNdc,
-        ProductTypeName = product.ProductTypeName,
-        ProprietaryNameSuffix = product.ProprietaryNameSuffix,
-        NonProprietaryName = product.NonProprietaryName,
-        DosageFormName = product.DosageFormName,
-        RouteName = product.RouteName,
-        StartMarketingDate = product.StartMarketingDate,
-        EndMarketingDate = product.EndMarketingDate,
-        MarketingCategoryName = product.MarketingCategoryName,
-        LabelerName = product.LabelerName,
-        SubstanceName = product.SubstanceName,
-        StrengthNumber = product.StrengthNumber,
-        StrengthUnit = product.StrengthUnit,
-        PharmClasses = product.PharmClasses,
-        DeaSchedule = product.DeaSchedule,
-        ListingRecordCertifiedThrough = product.ListingRecordCertifiedThrough,
-        ProprietaryName = product.ProprietaryName,
-
-        FdaPackageDetails = packageQuery
-          .Where(package => package.ProductNdc == product.ProductNdc)
-          .Select(package => new FdaPackageDetail
-          {
-            Id = package.Id,
-            NdcPackageCode = package.NdcPackageCode,
-            NdcPackageCodeStripped = package.NdcPackageCodeStripped,
-            PackageDescription = package.PackageDescription,
-            StartMarketingDate = package.StartMarketingDate,
-            EndMarketingDate = package.EndMarketingDate,
-            SamplePackage = package.SamplePackage,
-
-            NadacPrices = nadacQuery
-              .Where(price => price.Ndc == package.NdcPackageCodeStripped)
-              .ToList(),
-          })
-          .ToList(),
-      })
-      .Where(product => product.FdaPackageDetails.Count > 0)
-      .ToListAsync(cancellationToken);
-
-    return products;
+    return new AdvancedSearchQueries(productQuery, packageQuery, nadacQuery);
   }
+
+  private sealed record AdvancedSearchQueries(
+    IQueryable<FdaProduct> Products,
+    IQueryable<FdaPackage> Packages,
+    IQueryable<NadacPrice> Prices
+  );
 }

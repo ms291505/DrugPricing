@@ -37,7 +37,8 @@ export function useNadacSearch() {
   const { loaded, searchEnabled } = useNadacSearchContext();
   return useQuery({
     queryKey: ["nadacSearch", loaded],
-    queryFn: async () => getNadacSearchResults(loaded!),
+    // The signal aborts a search a new one replaces (React Query drops the old query).
+    queryFn: async ({ signal }) => getNadacSearchResults(loaded!, signal),
     enabled: loaded !== null && searchEnabled,
     staleTime: CONSTANT.staleTime,
   });
