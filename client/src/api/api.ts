@@ -10,12 +10,20 @@ export const createApiPath = (segment: string = "") => {
     clean = clean.slice(1);
   }
 
-  const apiPath = `${API_URL}/${segment}`;
-
-  console.log(apiPath);
-
-  return apiPath;
+  return `${API_URL}/${clean}`;
 }
+
+/**
+ * POSTs `body` as JSON. Searches use it so their terms travel in the body, never in a URL that
+ * a proxy, access log or trace would record.
+ */
+export const postJson = (segment: string, body: unknown, signal?: AbortSignal) =>
+  fetch(createApiPath(segment), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
 
 export const isApiUp = async (): Promise<UpResponse> => {
   const response = await fetch(createApiPath("up"), {

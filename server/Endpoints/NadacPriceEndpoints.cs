@@ -18,7 +18,9 @@ public static class NadacPriceEndpoints
 
     nadacGroup.MapGet("/{nadacPriceId:int}", GetById);
 
-    nadacGroup.MapGet("/search", GetWithSearch);
+    // A POST, so the search terms travel in the body, never in a URL that a proxy, access log
+    // or trace would record.
+    nadacGroup.MapPost("/search", PostSearch);
 
     nadacGroup.MapGet("/advanced-search", GetWithAdvancedSearch);
 
@@ -37,15 +39,14 @@ public static class NadacPriceEndpoints
     return TypedResults.Ok(nadacPrice);
   }
 
-  private static async Task<IResult> GetWithSearch(
-    [FromQuery] string? ndcDescription,
-    [FromQuery] string? ndc,
-    [FromQuery] DateOnly minDate,
-    [FromQuery] DateOnly maxDate,
+  private static async Task<IResult> PostSearch(
+    [FromBody] NadacSearchRequest request,
     [FromServices] NadacService nadacService,
     CancellationToken cancellationToken
   )
   {
+    var (ndcDescription, ndc, minDate, maxDate) = request;
+
     List<NadacPriceSearchResponse.Predicate> predicates = [];
 
     var cleanDescriptionInput = ndcDescription?.ToLower().Trim() ?? "";

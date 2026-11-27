@@ -1,4 +1,3 @@
-using System.Text.Json;
 using DrugPricing.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,34 +6,27 @@ namespace DrugPricing.Endpoints;
 public static class FdaProductEndpoints
 {
   private const string AdvancedSearchRequiresAName = "No valid brand or generic name was provided.";
-  private const string BadAdvancedSearchRequestJson =
-    "Something went wrong sending the advanced search parameters.";
-
-  private static readonly JsonSerializerOptions WebJsonOptions = new(JsonSerializerDefaults.Web);
+  private const string MissingAdvancedSearchRequest = "No search parameters were provided.";
 
   public static RouteGroupBuilder MapFdaProductEndpoints(this RouteGroupBuilder api)
   {
     var fdaProductGroup = api.MapGroup("/fda-products");
 
-    fdaProductGroup.MapGet("/advanced-search", GetWithAdvancedSearch);
+    // A POST, so the search terms travel in the body, never in a URL that a proxy, access log
+    // or trace would record.
+    fdaProductGroup.MapPost("/advanced-search", PostAdvancedSearch);
 
     return fdaProductGroup;
   }
 
-  private static async Task<IResult> GetWithAdvancedSearch(
-    [FromQuery] string jsonString,
+  private static async Task<IResult> PostAdvancedSearch(
+    [FromBody] AdvancedFdaSearchRequest? request,
     [FromServices] FdaProductService fdaProductService,
     CancellationToken cancellationToken
   )
   {
-    Console.WriteLine(jsonString);
-
-    var request = JsonSerializer.Deserialize<AdvancedFdaSearchRequest>(jsonString, WebJsonOptions);
-
-    Console.WriteLine(request);
-
     if (request is null)
-      return TypedResults.BadRequest(new { message = BadAdvancedSearchRequestJson });
+      return TypedResults.BadRequest(new { message = MissingAdvancedSearchRequest });
 
     if (
       !fdaProductService.ValidateNameSearch(request.ProprietaryName)
