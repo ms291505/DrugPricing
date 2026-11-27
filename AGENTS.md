@@ -65,13 +65,18 @@ Gotchas:
   rest (`etl/fda/tombstone_fda.py`); a row that comes back is un-delisted. Every FDA query must
   filter `DelistedAt == null`.
 - **Labelers are groups, matched in the client.** FDA spells one company many ways (Dr. Reddy's:
-  43 spellings on 4 labeler codes). `ListLabelerRowsAsync` reads one row per spelling and code
-  (cached for `CacheDuration.Reference`); `Services/LabelerGroups.cs` joins rows whose names
-  normalize alike or that share a code (5,128 groups, 2026-11), and `fda-products/labelers`
-  sends them all. The client matches typed text against them in memory (`library/labelers.ts`),
+  43 spellings on 4 labeler codes). `ListLabelerGroupsAsync` reads one row per spelling and
+  code, and `Data/LabelerGroups.cs` joins rows whose names normalize alike or that share a code
+  (5,128 groups, 2026-11); the groups are cached for `CacheDuration.Reference`, and
+  `fda-products/labelers` sends them all. A search's `LabelerCodes` count is limited as sent,
+  not as distinct codes, so a body can't repeat one code into a huge `LIKE ANY`. The client matches typed text against them in memory (`library/labelers.ts`),
   so nothing typed leaves the browser. **Picks only narrow a name search; a labeler alone is
   never a search** (decided 2026-11-27): codes without a name get a 400, and a saved tab with
-  only picks restores them without searching. **`LabelerGroups.Normalize` and the client's
+  only picks restores them without searching. **Picks apply at once, like Dates** (also
+  2026-11-27): `fdaLoadHolds` keeps a load whose codes hold the picks (none loaded holds every
+  labeler) and `refineFda` filters it with `matchesLabelerCodes`, the server's
+  `LIKE 'code-%'` rule; anything else fetches, as does any change after a 422. They're not a
+  new search: exclusions stay and no result toast shows. **`LabelerGroups.Normalize` and the client's
   `normalizeLabeler` mirror each other; change both.** A labeler search sends the picks' codes
   (`LabelerCodes`, 4 to 6 digits), which the repository matches as `ProductNdc LIKE ANY
   ('code-%', ...)` in the product query, so the result cap's count includes it. A labeler is
@@ -207,9 +212,10 @@ depend on write availability read it. The action checks storage's read-only flag
   (heading, description, full-height fields) and `compact` below (no heading, small fields).
   In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force
   `compact` (`panelLayout`). A new arrangement is a new `SearchPanelLayout`, not a prop that
-  changes wording. *Load* fields (text terms, FDA's Labeler picks, Dates) go to the server; *refine* fields narrow
-  the loaded result in the client, never fetching. **The user never has to know which is
-  which:** only the terms (text and Labeler picks) wait for Search, and every other field, Dates included, applies
+  changes wording. *Load* fields (text terms, FDA's Labeler picks, Dates) go to the server
+  unless what's loaded holds them (`nextLoad`); *refine* fields narrow the loaded result in
+  the client, never fetching. **The user never has to know which is
+  which:** only the text terms wait for Search, and every other field, Dates and Labeler picks included, applies
   at once (typed dates after a short pause).
   Search is disabled while the terms are the search on screen (unless it failed), so it lighting
   up is the hint to press it. **Clear search**, beside it, puts every field back to a new tab's

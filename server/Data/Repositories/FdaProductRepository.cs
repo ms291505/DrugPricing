@@ -48,12 +48,12 @@ public class FdaProductRepository : IFdaProductRepository
     return _cache.SetList(cacheKey, routeNames, CacheDuration.Default);
   }
 
-  public async Task<List<LabelerRow>> ListLabelerRowsAsync(
+  public async Task<List<LabelerGroup>> ListLabelerGroupsAsync(
     CancellationToken cancellationToken = default
   )
   {
-    if (_cache.TryGetValue(CacheKeys.FdaLabelers, out List<LabelerRow>? cachedRows))
-      return cachedRows!;
+    if (_cache.TryGetValue(CacheKeys.FdaLabelerGroups, out List<LabelerGroup>? cachedGroups))
+      return cachedGroups!;
 
     // One row per labeler spelling and code over active products and their active packages.
     // Priced means a package's NDC is in DrugPackages (every NDC NADAC has priced), as the
@@ -77,7 +77,8 @@ public class FdaProductRepository : IFdaProductRepository
       )
       .ToListAsync(cancellationToken);
 
-    return _cache.SetList(CacheKeys.FdaLabelers, rows, CacheDuration.Reference);
+    // Grouping (regex normalization and a union-find over ~8,200 rows) is cached with the rows.
+    return _cache.SetList(CacheKeys.FdaLabelerGroups, LabelerGroups.Group(rows), CacheDuration.Reference);
   }
 
   public async Task<LimitedRows<List<FdaProductDetail>>> ListAdvancedSearchResultsAsync(
@@ -210,7 +211,7 @@ public class FdaProductRepository : IFdaProductRepository
     {
       // Codes are digits only (FdaProductService.ValidateLabelerCodes), so they need no
       // LikePattern escaping. Npgsql sends the patterns as one array: LIKE ANY.
-      var patterns = request.LabelerCodes.Select(code => code + "-%").ToArray();
+      var patterns = request.LabelerCodes.Distinct().Select(code => code + "-%").ToArray();
       productQuery = productQuery.Where(p =>
         patterns.Any(pattern => EF.Functions.Like(p.ProductNdc, pattern))
       );

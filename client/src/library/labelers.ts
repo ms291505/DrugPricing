@@ -232,7 +232,8 @@ function fuzzyMatches(index: LabelerIndex, term: string): Map<number, { cost: nu
 /** The labelers typed text matches, best first, among those the Include boxes offer. */
 export function matchLabelers(index: LabelerIndex, typed: string, flags: LabelerFlags): LabelerMatches {
   const term = normalizeLabeler(typed);
-  if (typed.trim().length < MIN_LABELER_TERM_LENGTH || term === "") return { matches: [], wordStart: false };
+  // The normalized term: "a." is one letter.
+  if (term.length < MIN_LABELER_TERM_LENGTH) return { matches: [], wordStart: false };
 
   const matches: LabelerMatch[] = [];
   const matched = new Set<number>();
@@ -278,3 +279,11 @@ export const labelerCodeCount = (choices: LabelerChoice[]): number =>
 /** The search's labeler codes: distinct and sorted, so the order of picks doesn't matter. */
 export const labelerCodes = (choices: LabelerChoice[]): string[] =>
   [...new Set(choices.flatMap(choice => choice.codes))].sort();
+
+/**
+ * Whether a product is one of the labelers' codes: its NDC starts with a code and a dash. The
+ * same rule as the server's `ProductNdc LIKE 'code-%'`, so filtering a load in the client shows
+ * what a load narrowed by the server would. No codes: every product.
+ */
+export const matchesLabelerCodes = (productNdc: string, codes: string[]): boolean =>
+  codes.length === 0 || codes.some(code => productNdc.startsWith(code + "-"));

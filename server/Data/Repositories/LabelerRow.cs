@@ -2,7 +2,7 @@ namespace DrugPricing.Data.Repositories;
 
 /// <summary>
 /// One labeler spelling on one labeler code, over active products: what
-/// <see cref="Services.LabelerGroups"/> groups into labelers.
+/// <see cref="LabelerGroups"/> groups into labelers.
 /// </summary>
 public record LabelerRow
 {

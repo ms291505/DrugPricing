@@ -22,10 +22,10 @@ public class CacheWarmingService : IHostedService
     var nadacService = scope.ServiceProvider.GetRequiredService<NadacService>();
 
     await WarmAsOfDates(nadacRepo, cancellationToken);
-    // The repository caches the labeler rows itself.
+    // The repository caches the labeler groups itself.
     await scope
       .ServiceProvider.GetRequiredService<IFdaProductRepository>()
-      .ListLabelerRowsAsync(cancellationToken);
+      .ListLabelerGroupsAsync(cancellationToken);
     await WarmDefaultSearches(nadacRepo, cache, nadacService, cancellationToken);
   }
 

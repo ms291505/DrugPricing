@@ -3,7 +3,7 @@ import { clipToWindow, windowEndingAt, type ChartDates, type DateWindow } from "
 import { isValidNadacSearch } from "./nadacSearch";
 import { ACTIVITY_CATEGORIES, packageActivity, type ActivityCategory } from "./priceActivity";
 import { compareStrength, strengthLabel } from "./strength";
-import { labelerCodes, type LabelerChoice } from "./labelers";
+import { labelerCodes, matchesLabelerCodes, type LabelerChoice } from "./labelers";
 import {
   isFdaProductOtc,
   type FdaPackageDetail, type FdaProductDetail, type FdaProductSearchResult, type FdaResultDetailLevel,
@@ -48,7 +48,11 @@ export type FdaCriteria = {
   // Load
   proprietaryName: string,
   nonProprietaryName: string,
-  /** Picked from the Labeler field; the search sends their codes (`labelerCodes`). */
+  /**
+   * Picked from the Labeler field: they narrow the name search to these labelers. They apply at
+   * once, like Dates: a load that already holds them is filtered in the client (`fdaLoadHolds`),
+   * else the search sends their codes (`labelerCodes`). Without a name they don't search.
+   */
   labelers: LabelerChoice[],
   dates: ChartDates,
   // Refine
@@ -70,7 +74,9 @@ export type FdaCriteria = {
 
 /** The text terms: the fields the Search button applies. */
 export type NadacTerms = Pick<NadacCriteria, "ndcDescription" | "ndc">;
-export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName" | "labelers">;
+export type FdaTerms = Pick<FdaCriteria, "proprietaryName" | "nonProprietaryName">;
+/** What FDA's labels name: the names, and the picks narrowing them. */
+type FdaLabelTerms = FdaTerms & { labelers?: LabelerChoice[] };
 
 /** An exclusion-list field: a multi-select whose options come from the loaded result. */
 export type NadacExclusionKey = "excludedNdcDescriptions" | "excludedUnits";
@@ -154,23 +160,23 @@ export const isValidFdaSearch = (proprietaryName: string, nonProprietaryName: st
 const fdaNames = (terms: FdaTerms) => [terms.proprietaryName.trim(), terms.nonProprietaryName.trim()].filter(Boolean);
 
 /** The picked labelers in a label: the first one's name, and "+2" for two more. */
-const labelerLabel = (labelers: LabelerChoice[]) =>
+const labelerLabel = (labelers: LabelerChoice[] = []) =>
   labelers.length === 0 ? null : labelers[0].name + (labelers.length > 1 ? ` +${labelers.length - 1}` : "");
 
 /** Shared wording for chart provenance and a new tab's title. The picks follow the names they narrow. */
-export const fdaSearchLabel = (terms: FdaTerms) => {
+export const fdaSearchLabel = (terms: FdaLabelTerms) => {
   const names = fdaNames(terms);
   return names.length === 0 ? "search" : [...names, labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
 };
 
 /** The title a search gives its tab (`useRenameAfterSearch`) and a workspace copy of it. */
-export const fdaTabTitle = (terms: FdaTerms) => fdaSearchLabel(terms).toUpperCase();
+export const fdaTabTitle = (terms: FdaLabelTerms) => fdaSearchLabel(terms).toUpperCase();
 
 /** Text in quotes, to mark it as what the user typed and not the app's wording. */
 export const quoted = (text: string) => `\u201c${text}\u201d`;
 
 /** The results heading's wording: `fdaSearchLabel` with each typed name in quotes; a labeler was picked, not typed. */
-export const fdaResultsLabel = (terms: FdaTerms) => {
+export const fdaResultsLabel = (terms: FdaLabelTerms) => {
   const names = fdaNames(terms);
   return names.length === 0 ? "search" : [...names.map(quoted), labelerLabel(terms.labelers)].filter(Boolean).join(" / ");
 };
@@ -207,22 +213,46 @@ function sameTerms<T extends { dates: DateWindow }>(a: T, b: T): boolean {
   return JSON.stringify(termsA) === JSON.stringify(termsB);
 }
 
+/** The default `holds`: the same terms, and dates that cover the requested ones. */
+export const loadHolds = <T extends { dates: DateWindow }>(loaded: T, requested: T) =>
+  sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates);
+
 /**
- * The "narrowing doesn't fetch" rule: keeps what is loaded when the terms are the same and its
- * dates cover the requested ones, so the client clips to the new dates instead of fetching.
- * Anything else (new terms, or dates reaching outside what is loaded) is a new load, and so is
- * any request after the server refused `loaded` as too large (`loadedRefused`, `isTooManyRows`):
- * shortening the Dates is the fix its notice suggests.
+ * Whether a load's labeler codes hold the requested ones: a load without codes holds every
+ * labeler for its names, and one with codes holds any non-empty subset of them.
+ */
+export function labelerCodesHold(loaded: string[], requested: string[]): boolean {
+  if (loaded.length === 0) return true;
+  const codes = new Set(loaded);
+  return requested.length > 0 && requested.every(code => codes.has(code));
+}
+
+/**
+ * FDA's `holds`: the same names, dates that cover the requested ones, and labeler codes that
+ * hold the requested ones (`labelerCodesHold`), so picks narrowing what's loaded filter it in
+ * the client (`refineFda`) instead of fetching.
+ */
+export const fdaLoadHolds = (loaded: FdaLoad, requested: FdaLoad) =>
+  loaded.proprietaryName === requested.proprietaryName && loaded.nonProprietaryName === requested.nonProprietaryName
+  && windowCovers(loaded.dates, requested.dates) && labelerCodesHold(loaded.labelerCodes, requested.labelerCodes);
+
+/**
+ * The "narrowing doesn't fetch" rule: keeps what is loaded when it holds the request (`holds`,
+ * by default the same terms and dates that cover the requested ones), so the client clips or
+ * filters instead of fetching. Anything else (new terms, or dates reaching outside what is
+ * loaded) is a new load, and so is any request after the server refused `loaded` as too large
+ * (`loadedRefused`, `isTooManyRows`): shortening the Dates, or picking a labeler, is the fix.
  */
 export function nextLoad<T extends { dates: DateWindow }>(
   loaded: T | null,
   requested: T | null,
   loadedRefused = false,
+  holds: (loaded: T, requested: T) => boolean = loadHolds,
 ): T | null {
   if (loaded === null || requested === null) return requested;
-  // A load the server refused as too large holds nothing, so shorter Dates must fetch.
+  // A load the server refused as too large holds nothing, so any narrowing must fetch.
   if (loadedRefused) return requested;
-  return sameTerms(loaded, requested) && windowCovers(loaded.dates, requested.dates) ? loaded : requested;
+  return holds(loaded, requested) ? loaded : requested;
 }
 
 /**
@@ -236,14 +266,9 @@ export function applyNadacSearch(applied: NadacCriteria, fields: NadacTerms): Na
   return { ...next, ...clearedExclusions(NADAC_EXCLUSION_KEYS) };
 }
 
-/** Whether two sets of FDA terms are the same search: the same names and the same picks, in order. */
-export const sameFdaTerms = (a: FdaTerms, b: FdaTerms) =>
-  a.proprietaryName === b.proprietaryName && a.nonProprietaryName === b.nonProprietaryName
-  && JSON.stringify(a.labelers) === JSON.stringify(b.labelers);
-
 export function applyFdaSearch(applied: FdaCriteria, fields: FdaTerms): FdaCriteria {
   const next = { ...applied, ...fields };
-  if (sameFdaTerms(fields, applied)) return next;
+  if (fields.proprietaryName === applied.proprietaryName && fields.nonProprietaryName === applied.nonProprietaryName) return next;
   return { ...next, ...clearedExclusions(FDA_EXCLUSION_KEYS) };
 }
 
@@ -486,10 +511,13 @@ export function refineFda(
   const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(result, activityDates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const excludedActivities = new Set(criteria.excludedActivities);
+  const codes = labelerCodes(criteria.labelers);
   const showsProduct = (p: FdaProductDetail) =>
     !criteria.excludedProductNdcs.includes(p.productNdc)
     && !criteria.excludedDosageForms.includes(p.dosageFormName)
     && (criteria.excludedStrengths.length === 0 || !criteria.excludedStrengths.includes(strengthLabel(p)))
+    // The picks, as the server narrows a load by them, for a load that holds more.
+    && matchesLabelerCodes(p.productNdc, codes)
     // A product shows while any of its routes is still included.
     && (p.routeName.length === 0 || p.routeName.some(r => !criteria.excludedRoutes.includes(r)))
     && !criteria.excludedLabelers.includes(p.labelerName)

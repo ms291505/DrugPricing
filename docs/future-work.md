@@ -28,9 +28,6 @@ Left out of the plan, to revisit once it ships:
 - **Labeler suggestions narrowed by the other terms** (only the labelers that make Eliquis).
 - **Parent-company aliases** ("Bristol-Myers Squibb" → E.R. Squibb & Sons): the data doesn't
   hold them, and a hand-kept table would go stale.
-- **Keyboard reach of the Labeler notes' "Learn more".** The link sits in the combo box's popup,
-  which closes when focus leaves the input, so only a pointer can use it. The Help section is
-  still in Help's index.
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 

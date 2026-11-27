@@ -18,6 +18,11 @@ This plan adds three things to the FDA page:
    Search loads the named drug's products from those labelers only. **A labeler alone is not a
    search** (decided by the author, 2026-11-27): a brand or generic name is still required,
    and the picks narrow what it loads, so "chloride" plus one company can fit under the row cap.
+   **Picks apply at once, like Dates** (also decided 2026-11-27): only a name change waits for
+   Search. A load whose labeler codes hold the new picks is filtered in the client (a load with
+   no picks holds every labeler for its names); anything else fetches, and so does any change
+   after the cap refused the load. An always-visible "Can't find a company?" link under the
+   field opens the Help section, and on compact panels Labeler's row comes before Search.
 
 Strength and Price activity are client-only and can ship on their own. Labeler needs the
 server and the client.
@@ -279,8 +284,10 @@ tell them apart. A change from $0 is a rise.
   `useMemo` on the data. A restored tab shows its chips from the stored names without fetching.
 - `library/searchCriteria.ts`:
   - `LabelerChoice = { name: string, codes: string[] }`.
-  - `FdaCriteria.labelers: LabelerChoice[]`, a load field, and part of `FdaTerms`, so Search
-    applies it and a new selection is a new search (which clears the exclusion lists).
+  - `FdaCriteria.labelers: LabelerChoice[]`, a load field written at once like Dates (not part
+    of `FdaTerms`, 2026-11-27), so a pick change isn't a new search: exclusions stay and no
+    result toast shows. `nextLoad` takes FDA's `fdaLoadHolds` (names, covered dates, and codes
+    that hold the picks), and `refineFda` filters by the picks with the server's prefix rule.
   - `FdaLoad` carries the sorted codes, so `nextLoad`'s comparison doesn't depend on the order
     the labelers were picked in.
   - `isValidFdaSearch` still needs a name; picks don't count (2026-11-27). A saved tab with

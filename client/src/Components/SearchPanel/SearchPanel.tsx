@@ -122,6 +122,71 @@ export default function SearchPanel({
   // Too narrow for Search beside the terms.
   const stacked = tier === "narrow";
 
+  // Compact, not stacked, with a Labeler: the names' row, then Labeler beside the buttons.
+  const labelerTerms = terms.filter(term => term.kind === "labelers");
+  const textTerms = terms.filter(term => term.kind !== "labelers");
+  const splitTerms = !desktop && !stacked && labelerTerms.length > 0;
+  const termRowSx = { display: "flex", flexDirection: stacked ? "column" : "row", gap: 1, alignItems: stacked ? "stretch" : "center" } as const;
+
+  const renderTerm = (term: TermField) => term.kind === "labelers" ? (
+    <Box key={term.id} sx={{ flex: stacked ? "none" : term.flex ?? 1, minWidth: 0, alignSelf: stacked ? "stretch" : "flex-start" }}>
+      <LabelerField
+        id={term.id}
+        label={term.label}
+        placeholder={term.placeholder}
+        value={term.value}
+        onChange={term.onChange}
+        includeOtc={term.includeOtc}
+        includeWithoutPrices={term.includeWithoutPrices}
+        size={desktop ? "medium" : "small"}
+        limitTags={desktop ? undefined : 2}
+        minTarget={stacked ? 44 : 24}
+      />
+    </Box>
+  ) : (
+    <TextField
+      key={term.id}
+      inputRef={term === terms[0] ? firstTermRef : undefined}
+      slotProps={term === terms[0] ? { htmlInput: { "data-first-term": true } } : undefined}
+      size={desktop ? "medium" : "small"}
+      id={term.id}
+      name={term.id}
+      label={term.label}
+      placeholder={term.placeholder}
+      value={term.value}
+      onChange={(e) => term.onChange(e.target.value)}
+      sx={{ flex: stacked ? "none" : term.flex ?? 1, minWidth: 0 }}
+    />
+  );
+
+  const actions = (
+    <>
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={!canSearch || busy}
+        // As tall as the fields beside it.
+        sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : 40, flexShrink: 0 }}
+      >
+        {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
+      </Button>
+      <Button
+        type="button"
+        disabled={!canClearSearch}
+        onClick={event => {
+          onClearSearch();
+          setClearCount(count => count + 1);
+          // The button disables itself: from the keyboard, focus goes where the next search
+          // starts. Not after a tap, where focusing a text field opens the phone keyboard.
+          if (fromKeyboard(event)) firstTermRef.current?.focus();
+        }}
+        sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
+      >
+        Clear search
+      </Button>
+    </>
+  );
+
   return (
     <Paper
       ref={ref}
@@ -140,69 +205,16 @@ export default function SearchPanel({
         <Typography variant="h6" component="h1">{heading}</Typography>
         {description && <Typography variant="body2" color="text.secondary">{description}</Typography>}
       </Box>}
-      <Box sx={{
-        display: "flex", flexDirection: stacked ? "column" : "row", flexWrap: desktop ? "nowrap" : "wrap", gap: 1,
-        alignItems: stacked ? "stretch" : "center",
-      }}>
-        {terms.map((term, index) => term.kind === "labelers" ? (
-          // Its chips need width: compact gives it a row of its own, under the names and Search.
-          <Box key={term.id} sx={{
-            flex: stacked ? "none" : desktop ? term.flex ?? 1 : "1 1 100%",
-            order: desktop || stacked ? undefined : 1,
-            minWidth: 0,
-            alignSelf: stacked ? "stretch" : "flex-start",
-          }}>
-            <LabelerField
-              id={term.id}
-              label={term.label}
-              placeholder={term.placeholder}
-              value={term.value}
-              onChange={term.onChange}
-              includeOtc={term.includeOtc}
-              includeWithoutPrices={term.includeWithoutPrices}
-              size={desktop ? "medium" : "small"}
-              limitTags={desktop ? undefined : 2}
-            />
-          </Box>
-        ) : (
-          <TextField
-            key={term.id}
-            inputRef={index === 0 ? firstTermRef : undefined}
-            slotProps={index === 0 ? { htmlInput: { "data-first-term": true } } : undefined}
-            size={desktop ? "medium" : "small"}
-            id={term.id}
-            name={term.id}
-            label={term.label}
-            placeholder={term.placeholder}
-            value={term.value}
-            onChange={(e) => term.onChange(e.target.value)}
-            sx={{ flex: stacked ? "none" : term.flex ?? 1, minWidth: 0 }}
-          />
-        ))}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={!canSearch || busy}
-          // As tall as the fields beside it.
-          sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : 40, flexShrink: 0 }}
-        >
-          {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
-        </Button>
-        <Button
-          type="button"
-          disabled={!canClearSearch}
-          onClick={event => {
-            onClearSearch();
-            setClearCount(count => count + 1);
-            // The button disables itself: from the keyboard, focus goes where the next search
-            // starts. Not after a tap, where focusing a text field opens the phone keyboard.
-            if (fromKeyboard(event)) firstTermRef.current?.focus();
-          }}
-          sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
-        >
-          Clear search
-        </Button>
-      </Box>
+      {/* The terms and their buttons, in reading order, so focus moves the way it looks. A compact
+          panel with a Labeler gives the names a row, then Labeler and the buttons the next. */}
+      {splitTerms ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>{textTerms.map(renderTerm)}</Box>
+          <Box sx={{ ...termRowSx, alignItems: "flex-start" }}>{labelerTerms.map(renderTerm)}{actions}</Box>
+        </Box>
+      ) : (
+        <Box sx={termRowSx}>{terms.map(renderTerm)}{actions}</Box>
+      )}
       {/* One row while it fits; a group that doesn't fit wraps under the others, so a phone stacks
           them. A rule divides the groups of a row: the first group's falls outside and is clipped.
           The clip is a little wider than the row, for a first checkbox's focus and hover circle. */}

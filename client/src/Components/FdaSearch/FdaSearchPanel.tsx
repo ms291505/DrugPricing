@@ -5,7 +5,7 @@ import useFdaSearch, { type FdaResultView } from "../../hooks/useFdaSearch";
 import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/useRenameAfterSearch";
 import {
   clearFdaRefine, exclusionCount, FDA_INCLUDE_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaTabTitle, isValidFdaSearch,
-  sameFdaTerms, type FdaCriteria, type FdaListKey, type FdaTerms,
+  type FdaCriteria, type FdaListKey, type FdaTerms,
 } from "../../library/searchCriteria";
 import type { LabelerChoice } from "../../library/labelers";
 import { activityCategoryLabel, isActivityCategory } from "../../library/priceActivity";
@@ -41,7 +41,7 @@ type Props = {
 
 /**
  * The FDA search panel. Brand and generic names are drafts that Search applies; every other field, Dates
- * included, writes the applied criteria at once. Search is disabled while the draft is the search
+ * and Labeler picks included, writes the applied criteria at once. Search is disabled while the draft is the search
  * on screen, so it lights up when there is something to run. The tab is named after its search
  * until the user names it (`useRenameAfterSearch`).
  */
@@ -55,9 +55,8 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const [proprietaryName, setProprietaryName] = useState(criteria.proprietaryName);
 
   const [nonProprietaryName, setNonProprietaryName] = useState(criteria.nonProprietaryName);
-  const [labelers, setLabelers] = useState<LabelerChoice[]>(criteria.labelers);
-  const terms: FdaTerms = { proprietaryName: proprietaryName.trim(), nonProprietaryName: nonProprietaryName.trim(), labelers };
-  const changed = !sameFdaTerms(terms, criteria);
+  const terms: FdaTerms = { proprietaryName: proprietaryName.trim(), nonProprietaryName: nonProprietaryName.trim() };
+  const changed = terms.proprietaryName !== criteria.proprietaryName || terms.nonProprietaryName !== criteria.nonProprietaryName;
 
   // The title the search on screen gave the tab, which the next search or a clear may replace.
   const applied = criteria.proprietaryName !== "" || criteria.nonProprietaryName !== "";
@@ -66,15 +65,20 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
   const handleSearch = () => {
     // The search on screen failed: applying the same name changes nothing, so run it again.
     if (!changed) return void refetch();
-    renameAfterSearch(fdaTabTitle(terms), appliedTitle);
+    renameAfterSearch(fdaTabTitle({ ...terms, labelers: criteria.labelers }), appliedTitle);
     search(terms);
+  };
+
+  // Picks apply at once, like Dates; a tab named after its search follows them.
+  const handleLabelersChange = (labelers: LabelerChoice[]) => {
+    if (applied) renameAfterSearch(fdaTabTitle({ ...criteria, labelers }), appliedTitle);
+    setCriteria(prev => ({ ...prev, labelers }));
   };
 
   const handleClearSearch = () => {
     restoreTitleAfterClear(appliedTitle);
     setProprietaryName("");
     setNonProprietaryName("");
-    setLabelers([]);
     clearSearch();
   };
 
@@ -90,13 +94,13 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       canSearch={isValidFdaSearch(proprietaryName, nonProprietaryName) && (changed || isError)}
       busy={isLoading || waiting}
       onClearSearch={handleClearSearch}
-      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== "" || labelers.length > 0 || criteria.labelers.length > 0}
+      canClearSearch={applied || proprietaryName !== "" || nonProprietaryName !== "" || criteria.labelers.length > 0}
       terms={[
         { id: "proprietaryName", label: "Brand name", placeholder: "e.g. Eliquis", value: proprietaryName, onChange: setProprietaryName },
         { id: "nonProprietaryName", label: "Generic name", placeholder: "e.g. apixaban", value: nonProprietaryName, onChange: setNonProprietaryName },
         {
           kind: "labelers", id: "labelers", label: "Labeler", placeholder: "e.g. Pfizer",
-          value: labelers, onChange: setLabelers,
+          value: criteria.labelers, onChange: handleLabelersChange,
           includeOtc: criteria.includeOtc, includeWithoutPrices: criteria.includeResultsWithoutPrices,
         },
       ]}

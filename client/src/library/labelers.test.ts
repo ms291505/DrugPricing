@@ -117,6 +117,7 @@ describe("matchLabelers", () => {
   it("needs two characters", () => {
     expect(names("s")).toEqual([]);
     expect(names("  ")).toEqual([]);
+    expect(names("a.")).toEqual([]);
   });
 
   it("cuts at the limit after sorting, keeping the larger labeler on a tie", () => {

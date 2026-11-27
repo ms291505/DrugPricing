@@ -16,10 +16,10 @@ public interface IFdaProductRepository
   );
 
   /// <summary>
-  /// Each labeler spelling on each labeler code over active products, with its product count and
-  /// flags. Cached for <see cref="Constants.CacheDuration.Reference"/>.
+  /// Every labeler group (<see cref="LabelerGroups"/>), from each labeler spelling on each labeler
+  /// code over active products. Cached for <see cref="Constants.CacheDuration.Reference"/>.
   /// </summary>
-  Task<List<LabelerRow>> ListLabelerRowsAsync(CancellationToken cancellationToken = default);
+  Task<List<LabelerGroup>> ListLabelerGroupsAsync(CancellationToken cancellationToken = default);
 
   Task<List<string>> ListUniqueDosageFormNamesAsync();
 

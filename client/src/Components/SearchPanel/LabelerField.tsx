@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Autocomplete, Box, Link, ListSubheader, TextField, Typography } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
 import useFdaLabelers from "../../hooks/useFdaLabelers";
 import { MAX_LABELER_CODES } from "../../library/constants";
 import { helpSectionId } from "../../library/help";
 import {
-  labelerCodeCount, matchLabelers, MIN_LABELER_TERM_LENGTH, type LabelerChoice, type LabelerMatch,
+  labelerCodeCount, matchLabelers, MIN_LABELER_TERM_LENGTH, normalizeLabeler, type LabelerChoice, type LabelerMatch,
 } from "../../library/labelers";
 
 /** The Searching article's section the field's notes point to. */
@@ -31,6 +32,8 @@ type Props = {
   size: "small" | "medium",
   /** Fewer chips while closed, on narrow layouts. */
   limitTags?: number,
+  /** The Help link's least height: 24px, 44 on narrow layouts. */
+  minTarget?: number,
 };
 
 /**
@@ -38,7 +41,7 @@ type Props = {
  * included. Only listed labelers can be picked, and the picks search by their codes. The list is
  * fetched when the field is first focused, so a restored tab shows its picks without it.
  */
-export default function LabelerField({ id, label, placeholder, value, onChange, includeOtc, includeWithoutPrices, size, limitTags }: Props) {
+export default function LabelerField({ id, label, placeholder, value, onChange, includeOtc, includeWithoutPrices, size, limitTags, minTarget = 24 }: Props) {
   const { openHelp } = useGlobalModalActions();
   const [used, setUsed] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -55,7 +58,7 @@ export default function LabelerField({ id, label, placeholder, value, onChange, 
   const pickedCodes = labelerCodeCount(value);
   const wouldPassLimit = (option: Option) =>
     !value.some(choice => sameChoice(choice, option)) && labelerCodeCount([...value, option]) > MAX_LABELER_CODES;
-  const anyBlocked = options.some(wouldPassLimit) || pickedCodes >= MAX_LABELER_CODES && inputValue.trim().length >= MIN_LABELER_TERM_LENGTH;
+  const anyBlocked = options.some(wouldPassLimit) || pickedCodes >= MAX_LABELER_CODES && normalizeLabeler(inputValue).length >= MIN_LABELER_TERM_LENGTH;
   // Matches, but none where a word starts with the term: the company may be listed under another name.
   const showHint = !!result && result.matches.length > 0 && !result.wordStart;
   const lastGroup = options.some(option => option.match!.tier === 4) ? FUZZY_GROUP : MATCHES_GROUP;
@@ -72,14 +75,27 @@ export default function LabelerField({ id, label, placeholder, value, onChange, 
     </Link>
   );
 
-  const noOptionsText = isError ? "Labelers couldn’t load. Try again later."
-    : inputValue.trim().length < MIN_LABELER_TERM_LENGTH ? "Type at least 2 letters of a company name."
-    : <>No labelers match. Products are listed under the company that registered the NDC, which may be a subsidiary. Search by brand name to see the labeler. {learnMore}</>;
+  const typedEnough = normalizeLabeler(inputValue).length >= MIN_LABELER_TERM_LENGTH;
+  const NO_MATCH = "No labelers match. Products are listed under the company that registered the NDC, which may be a subsidiary. Search by brand name to see the labeler.";
+  const HINT = "Not the company you meant? Search by brand name to see the labeler.";
+  const LOAD_FAILED = "Labelers couldn’t load. Reload the page to try again.";
+  const noOptionsText = isError ? LOAD_FAILED
+    : !typedEnough ? "Type at least 2 letters of a company name."
+    : <>{NO_MATCH} {learnMore}</>;
+  // The popup's notes aren't read out (the combo box announces options only), so the status
+  // line under the field says them too, hidden from sight since the popup shows them.
+  const spokenNote = inputValue === "" ? ""
+    : isError ? LOAD_FAILED
+    : result && typedEnough && result.matches.length === 0 ? NO_MATCH
+    : showHint ? HINT
+    : "";
 
   return (
     <Box sx={{ minWidth: 0 }}>
       <Autocomplete<Option, true, false, false>
         multiple
+        // Enter picks the top match while the list is open, and searches once it's closed.
+        autoHighlight
         id={id}
         size={size}
         limitTags={limitTags}
@@ -114,7 +130,7 @@ export default function LabelerField({ id, label, placeholder, value, onChange, 
             {/* Not an option: arrow keys move between options only, and it isn't read as one. */}
             {showHint && params.group === lastGroup && (
               <Typography role="presentation" variant="body2" color="text.secondary" sx={{ px: 2, py: 1, borderTop: 1, borderColor: "divider" }}>
-                Not the company you meant? Search by brand name to see the labeler. {learnMore}
+                {HINT} {learnMore}
               </Typography>
             )}
           </li>
@@ -131,7 +147,18 @@ export default function LabelerField({ id, label, placeholder, value, onChange, 
       {/* Always mounted, so a screen reader hears the line when it appears. */}
       <Typography role="status" variant="caption" color="text.secondary" sx={{ display: "block" }}>
         {anyBlocked ? "Too many labelers to search at once. Remove one to add another." : ""}
+        <Box component="span" sx={visuallyHidden}>{spokenNote}</Box>
       </Typography>
+      {/* In the tab order after the field, for keyboards: the popup's Learn more closes with it. */}
+      <Link
+        component="button"
+        type="button"
+        variant="caption"
+        onClick={() => openHelp("searching", { section: COMPANY_HELP_SECTION })}
+        sx={{ display: "block", textAlign: "left", minHeight: minTarget }}
+      >
+        Can’t find a company?
+      </Link>
     </Box>
   );
 }

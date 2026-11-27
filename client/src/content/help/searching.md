@@ -24,8 +24,12 @@ In FDA search, **Labeler** narrows a brand or generic name search to the compani
 It can't search on its own: enter a name too. For example, `chloride` matches too many products
 to show, but `chloride` with one company can fit. Type part of a company's name in **Labeler**
 and pick it from the list. Spelling doesn't have to be exact: `pfeizer` offers Pfizer under
-**Did you mean**. You can pick several labelers. The list offers the labelers whose products the
-page would show, so check **OTC drugs** or **Results without prices** to see more.
+**Did you mean**. You can pick several labelers. Like **Dates**, picks apply at once, without
+**Search**: removing one, or picking one when none were picked, narrows what's already shown,
+and other changes load the results again. If a name matches too many results to show, picking a
+labeler can bring it under the limit. The list offers the labelers whose products the page would
+show, so check **OTC drugs** or **Results without prices** to see more. **Can't find a
+company?** under the field opens this section.
 
 A labeler is the company that registered the NDC (see the [glossary](/help/glossary)), which
 isn't always the company you know. A parent company's products may be listed under a
@@ -34,8 +38,8 @@ Sons, so typing `bristol` finds no labeler. To find the right one:
 
 1. Search the brand name, such as `eliquis`.
 2. Read the **Labeler** column in the results.
-3. Search the name again with that labeler picked, or search a related name, such as the
-   generic name, with it.
+3. Pick that labeler: the results narrow to it at once. Search a related name, such as the
+   generic name, to see what else that labeler lists.
 
 Typing a parent company's name also finds labelers that name it, such as Wyeth Pharmaceuticals
 LLC, a subsidiary of Pfizer Inc.

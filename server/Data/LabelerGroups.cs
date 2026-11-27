@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using DrugPricing.Data.Repositories;
 
-namespace DrugPricing.Services;
+namespace DrugPricing.Data;
 
 /// <summary>
 /// A labeler: the spellings and labeler codes of one company, which FDA lists under many
