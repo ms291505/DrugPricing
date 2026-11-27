@@ -106,7 +106,9 @@ function AppShell() {
     lastSource: source ?? loadLastSearchSource(),
     visited: new Set<SearchSource>(source ? [source] : []),
   }));
-  if (source && source !== lastSource) {
+  // `lastSource` starts from storage, so a first visit can match it: check `visited` too, or the
+  // page never mounts.
+  if (source && (source !== lastSource || !visited.has(source))) {
     setSearchNavigation({ lastSource: source, visited: new Set([...visited, source]) });
   }
   useEffect(() => { if (source) saveLastSearchSource(source); }, [source]);
