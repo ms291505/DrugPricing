@@ -230,11 +230,18 @@ change 4 the URL no longer has the term, but the log is noise either way.
 
 ## Order
 
-1. Change 1 (server stdout), shipped alone to `main` as soon as possible.
+One feature branch, `feat/search-privacy`, off `coordinated-work`, with one PR into
+`coordinated-work`; it ships with the [result cap](search-result-cap.md) and
+[labeler search](fda-strength-activity-labeler.md) plans. Each step below can be a mini-PR into
+the feature branch.
+
+1. Change 1 (server stdout). It ships with the rest, not alone to `main`.
 2. Changes 2 and 3 together: moving Search to `sessionStorage` without the copy would lose
    users' work without telling them.
-3. Change 4, coordinated with the search result cap plan.
-4. Changes 5 and 6 with whichever lands last.
+3. Change 4, only after the result cap PR has merged into `coordinated-work` (the feature branch
+   then merges `coordinated-work` in). Both rewrite the search calls in `api/api.ts` and the
+   search endpoints.
+4. Changes 5 and 6 with change 4.
 
 ## Checks
 

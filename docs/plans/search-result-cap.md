@@ -121,7 +121,10 @@ Cloudflare does the rate limiting, so this waits.
 
 ## Steps
 
-One PR against `dev`. Steps 1 through 5 are server changes, 6 and 7 are client changes, and 8
+One feature branch, `feat/search-result-cap`, off `coordinated-work`, with one PR into
+`coordinated-work`; it ships with the [labeler search](fda-strength-activity-labeler.md) and
+[search privacy](search-privacy.md) plans. The labeler search and search privacy change 4 wait
+for this PR to merge, so it goes first. Steps 1 through 5 are server changes, 6 and 7 are client changes, and 8
 is docs.
 
 ### 1. Validate the NDC

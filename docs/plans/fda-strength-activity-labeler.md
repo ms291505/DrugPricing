@@ -359,11 +359,15 @@ tell them apart. A change from $0 is a rise.
 
 ## PRs
 
-Feature branches off `dev`, PRs into `dev`. Two PRs:
+This plan ships through `coordinated-work` with the [result cap](search-result-cap.md) and
+[search privacy](search-privacy.md) plans. One feature branch, `feat/fda-strength-activity-labeler`,
+off `coordinated-work`, with one PR into `coordinated-work`. The two parts below can be mini-PRs
+into the feature branch. Two parts:
 
 1. **Strength and Price activity filters** (client only, sections 1–2). No dependencies.
 2. **Labeler search** (sections 3–5): server list and search, then the client field. It
-   starts only after the [result cap](search-result-cap.md) PR has merged into `dev`, since a
+   starts only after the [result cap](search-result-cap.md) PR has merged into `coordinated-work`
+   (the feature branch then merges `coordinated-work` in), since a
    labeler alone can ask for more rows than the cap allows. It doesn't depend on PR 1.
 
 Docs go with the PR they describe.
