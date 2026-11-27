@@ -328,7 +328,8 @@ list. Something like `/workspace?new=fda&name=eliquis` or
 ### Search results on phones
 
 Consider a row details drawer to show the fields for a single result without horizontal
-scrolling. Consider an activity filter if sorting by **Price Activity** proves insufficient.
+scrolling. FDA search filters by **Price Activity**; NADAC could add the same filter from
+`PriceActivity.category` if sorting proves insufficient there.
 
 ### Chart readout cues
 

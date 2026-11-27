@@ -21,7 +21,7 @@ export function activityColumn<R extends PricedRow>(): GridColDef<R, PriceActivi
   return {
     field: "priceActivity", headerName: "Price Activity",
     filterable: false,
-    description: "Sorts significant changes first, then other changed, stable and insufficient history.",
+    description: "Dropped, rose, dipped or spiked, stable, or insufficient history. Sorts significant changes first, then other changed, stable and insufficient history.",
     sortComparator: comparePriceActivity,
     valueFormatter: (activity: PriceActivity) => activity.label,
     renderCell: ({ value }) => value ? <ActivityCell activity={value} /> : null,

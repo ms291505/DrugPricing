@@ -191,7 +191,14 @@ depend on write availability read it. The action checks storage's read-only flag
   the result down: the refined rows (`refineNadac`/`refineFda`), the dates shown, the
   from-results lists' options and the hidden counts. Chart provenance and colors read the loaded
   result. A from-results list offers what the page could show before exclusions
-  (`*FilterOptions`), so it never lists a value an Include box hides. Tabs hold criteria
+  (`*FilterOptions`), so it never lists a value an Include box hides. FDA's Strength list
+  matches `strengthLabel` ("Not listed" when a product has none) and sorts by number
+  (`compareStrength`). FDA's Price activity list is a fixed refine field, like the Include boxes:
+  a new search keeps it. It hides packages whose activity category (`PriceActivity.category`,
+  what the row's label says) is excluded, never packages without prices or in two units. It
+  skips the activity work while nothing is excluded and caches each loaded package's category
+  by shown dates and excluded units (`packageCategory`), since the page refines several times
+  per change. Tabs hold criteria
   through `useSearchLoad`. FDA always loads sample and no-price packages and hides them by
   default, and both pages hide OTC by default (Include boxes, each with a "(N hidden)" count).
   When the filters hide every result, the table says why and offers the fix
