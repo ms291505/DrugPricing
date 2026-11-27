@@ -146,9 +146,10 @@ results so stale-price indicators use the correct publication date.
   re-runs its importers (Vite logs `Could not Fast Refresh ("SettingsContext" export is
   incompatible)`). Move the context and its hook out of the provider's module, as
   `Context/workspaceContexts.ts` does for the workspace, with a null default. Dev-only, small.
-- **`fda-products/advanced-search` could take over the `/search` name** with plain query params
-  instead of `jsonString`. The old `/api/fda-products/search` was deleted with the search result
-  cap, so the name is free.
+- **`fda-products/advanced-search` could take over the `/search` name.** The old
+  `/api/fda-products/search` was deleted with the search result cap, so the name is free. Keep it
+  a POST with a JSON body: search terms stay out of URLs (see "Never record a search term" in
+  AGENTS.md).
 - **The client bundle is over 500 kB,** and `npm run build` warns about the chunk size. Split it
   (lazy routes, or a manual chunk for MUI X and recharts) once load time matters.
 - **The price columns' number filters ignore units.** A column-menu filter such as Latest Price
@@ -292,8 +293,10 @@ workspace tab (see **Linkable search results**). Two consequences for current st
   compares in tenths of a percent (`library/flagNadacPriceChange.ts`); the default
   `NOTABLE_PRICE_CHANGE_PERCENT` of 10 (`library/constants.ts`); and a change from $0, which
   meets every threshold and reads "from $0" (`fromZero` in `library/priceActivity.ts`).
-- **"Popular searches" needs search counts,** which nothing records today. That is a server
-  addition, and a privacy decision about what gets logged.
+- **"Popular searches" needs search counts,** which nothing records today. The server never
+  records a search term (the rule under the server gotchas in AGENTS.md, from
+  [Search privacy](plans/search-privacy.md)), so this needs its own decision: counts only,
+  without the requester's IP.
 
 ### Linkable search results
 

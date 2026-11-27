@@ -21,18 +21,31 @@ function memoryStorage(): Storage {
   return store as unknown as Storage;
 }
 
-// `persist.ts` keeps module state (what this window wrote, read-only after a conflict), so each
-// test gets a fresh copy of the module and of storage.
+/** A storage that reads and deletes like `storage` but throws on every write, like a full one. */
+const failingWrites = (storage: Storage): Storage => ({
+  ...storage,
+  getItem: storage.getItem.bind(storage),
+  removeItem: storage.removeItem.bind(storage),
+  setItem: () => { throw new Error("quota"); },
+});
+
+// `persist.ts` keeps module state (what this window wrote, read-only after a conflict, whether
+// it has migrated), so each test gets a fresh copy of the module and of storage.
 let persist: Persist;
-beforeEach(async () => {
+
+/** Loads the module afresh, as a new page load would, over the given storage. */
+async function loadPage(local: Storage, session: Storage) {
   vi.unstubAllGlobals();
-  vi.stubGlobal("localStorage", memoryStorage());
+  vi.stubGlobal("localStorage", local);
+  vi.stubGlobal("sessionStorage", session);
   vi.resetModules();
   persist = await import("./persist");
   // Only after the import: react-hot-toast assumes a browser when it sees `window`. The watcher
   // needs nothing but its event methods.
   vi.stubGlobal("window", new EventTarget());
-});
+}
+
+beforeEach(() => loadPage(memoryStorage(), memoryStorage()));
 
 /** Asserts a load found state, so a failing load reads as "was null" rather than a missing field. */
 function loaded<T>(state: T | null): T {
@@ -304,7 +317,6 @@ describe("pruneStoredState", () => {
     const keys = [
       `${current}.workspace`,
       persist.tabKey("kept"),
-      persist.tabKey("page-fda"),
       persist.tabKey("orphan"),
       "drugpricing.v0.workspace",
       // Shares the current prefix's first characters: must not pass for the current version.
@@ -318,7 +330,6 @@ describe("pruneStoredState", () => {
     expect(Object.keys(localStorage).sort()).toEqual([
       `${current}.workspace`,
       persist.tabKey("kept"),
-      persist.tabKey("page-fda"),
       "some-other-app.key",
     ].sort());
   });
@@ -539,27 +550,162 @@ describe("standalone search pins", () => {
     seed();
     saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [oldItem] });
     expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
-    localStorage.setItem("drugpricing.v1.search-pins", JSON.stringify({ version: 1, data: { pinnedItems: [null, oldItem, { kind: "chart" }] } }));
+    sessionStorage.setItem("drugpricing.v1.search-pins", JSON.stringify({ version: 1, data: { pinnedItems: [null, oldItem, { kind: "chart" }] } }));
     expect(persist.loadSearchPins().pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
   });
 
   it("preserves both legacy collections when saving shared snapshots fails", async () => {
     seed();
-    const storage = localStorage;
-    const getItem = storage.getItem.bind(storage);
+    // Moves the legacy keys into this tab's session.
+    expect(persist.loadSearchPins().pinnedItems).toHaveLength(2);
+    const session = sessionStorage;
+    const getItem = session.getItem.bind(session);
     const before = Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const toast = (await import("react-hot-toast")).default;
     const error = vi.spyOn(toast, "error").mockReturnValue("storage-error");
-    vi.stubGlobal("localStorage", { getItem, setItem: (key: string, value: string) => {
+    vi.stubGlobal("sessionStorage", { getItem, setItem: (key: string, value: string) => {
       if (key.endsWith(".search-pins")) throw new Error("quota");
-      storage.setItem(key, value);
+      session.setItem(key, value);
     } });
     persist.saveSearchPins(persist.loadSearchPins().pinnedItems);
     expect(Object.values(persist.STANDALONE_TAB_IDS).map(id => getItem(persist.tabKey(id)))).toEqual(before);
     persist.saveStandaloneSearch({ type: "fda", criteria: { ...fdaCriteria, proprietaryName: "humira" }, detailLevel: "product" });
     expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)?.pinnedItems.map(pin => pin.id)).toEqual(["i1"]);
     expect(error).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+    error.mockRestore();
+  });
+});
+
+describe("standalone Search in this browser tab only", () => {
+  const legacyKeys = () => [
+    persist.tabKey(persist.STANDALONE_TAB_IDS.fda),
+    persist.tabKey(persist.STANDALONE_TAB_IDS.nadac),
+    `drugpricing.v${persist.VERSION}.search-pins`,
+  ];
+  const envelope = (data: unknown) => JSON.stringify({ version: persist.VERSION, data });
+  const pin = { ...oldItem, id: "search-pin" };
+  /** Search state as an older version saved it, in localStorage. */
+  const plantLegacy = () => {
+    saveRaw(persist.STANDALONE_TAB_IDS.fda, { type: "fda", criteria: fdaCriteria, detailLevel: "package", pinnedItems: [] });
+    saveRaw(persist.STANDALONE_TAB_IDS.nadac, { type: "nadac", criteria: nadacCriteria, pinnedItems: [] });
+    localStorage.setItem(`drugpricing.v${persist.VERSION}.search-pins`, envelope({ pinnedItems: [pin] }));
+    return legacyKeys().map(key => localStorage.getItem(key));
+  };
+  const appKeys = (storage: Storage) => Object.keys(storage).filter(key => key.startsWith("drugpricing."));
+
+  it("saves Search criteria and pins to sessionStorage, never to localStorage", () => {
+    persist.saveStandaloneSearch({ type: "fda", criteria: fdaCriteria, detailLevel: "product" });
+    persist.saveStandaloneSearch({ type: "nadac", criteria: nadacCriteria });
+    persist.saveSearchPins([{ ...pin, dateWindow: FULL_WINDOW } as ExplorerItem]);
+
+    expect(appKeys(localStorage)).toEqual([]);
+    expect(appKeys(sessionStorage).sort()).toEqual(legacyKeys().sort());
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)).toMatchObject({ criteria: fdaCriteria, detailLevel: "product" });
+    expect(persist.loadNadacTabState(persist.STANDALONE_TAB_IDS.nadac)).toMatchObject({ criteria: nadacCriteria });
+    expect(persist.loadSearchPins().pinnedItems.map(item => item.id)).toEqual(["search-pin"]);
+  });
+
+  it("keeps the workspace, its tabs, Settings and the last Search source in localStorage", () => {
+    persist.saveWorkspace({ tabs: [{ id: "t1", title: "FDA", type: "fda" }], layoutMode: "single", paneAssignment: ["t1"] });
+    persist.saveTabState("t1", { type: "fda", criteria: fdaCriteria, detailLevel: "product", pinnedItems: [] });
+    persist.saveSettings(persist.loadSettings());
+    persist.saveLastSearchSource("nadac");
+    expect(appKeys(localStorage)).toHaveLength(4);
+    expect(appKeys(sessionStorage)).toEqual([]);
+  });
+
+  it("moves legacy Search state into this tab's session on load and deletes it", () => {
+    const legacy = plantLegacy();
+    persist.pruneStoredState([]);
+    expect(appKeys(localStorage)).toEqual([]);
+    expect(legacyKeys().map(key => sessionStorage.getItem(key))).toEqual(legacy);
+    expect(persist.loadSearchPins().pinnedItems.map(item => item.id)).toEqual(["search-pin"]);
+    expect(persist.loadNadacTabState(persist.STANDALONE_TAB_IDS.nadac)).toMatchObject({ criteria: nadacCriteria });
+  });
+
+  it("moves legacy state before the first read, without waiting for the workspace", () => {
+    plantLegacy();
+    expect(persist.loadFdaTabState(persist.STANDALONE_TAB_IDS.fda)).toMatchObject({ criteria: fdaCriteria });
+    expect(appKeys(localStorage)).toEqual([]);
+  });
+
+  it("keeps a valid session copy, letting the legacy key go without a write", () => {
+    const session = envelope({ pinnedItems: [] });
+    sessionStorage.setItem(legacyKeys()[2], session);
+    plantLegacy();
+    persist.pruneStoredState([]);
+    expect(sessionStorage.getItem(legacyKeys()[2])).toBe(session);
+    expect(persist.loadSearchPins().pinnedItems).toEqual([]);
+    expect(appKeys(localStorage)).toEqual([]);
+  });
+
+  it("deletes a legacy value it can't read without copying it", () => {
+    localStorage.setItem(legacyKeys()[2], "not JSON");
+    localStorage.setItem(legacyKeys()[0], envelope(["not an object"]));
+    persist.pruneStoredState([]);
+    expect(appKeys(localStorage)).toEqual([]);
+    expect(appKeys(sessionStorage)).toEqual([]);
+  });
+
+  it("replaces a session value it can't read with the legacy one", () => {
+    sessionStorage.setItem(legacyKeys()[2], "not JSON");
+    const legacy = plantLegacy();
+    persist.pruneStoredState([]);
+    expect(sessionStorage.getItem(legacyKeys()[2])).toBe(legacy[2]);
+  });
+
+  it("keeps a legacy key whose session write failed, through pruning, for a later load to move", async () => {
+    const legacy = plantLegacy();
+    const local = localStorage;
+    const session = memoryStorage();
+    await loadPage(local, failingWrites(session));
+    persist.pruneStoredState([]);
+    expect(legacyKeys().map(key => localStorage.getItem(key))).toEqual(legacy);
+
+    await loadPage(local, session);
+    persist.pruneStoredState([]);
+    expect(appKeys(localStorage)).toEqual([]);
+    expect(legacyKeys().map(key => sessionStorage.getItem(key))).toEqual(legacy);
+  });
+
+  it("goes on saving Search after another window makes the workspace read-only", () => {
+    persist.watchOtherWindows(() => {});
+    window.dispatchEvent(storageEvent(persist.tabKey("other"), "written elsewhere"));
+    expect(persist.isStorageReadOnly()).toBe(true);
+
+    persist.saveStandaloneSearch({ type: "nadac", criteria: nadacCriteria });
+    persist.saveSearchPins([]);
+    expect(persist.loadNadacTabState(persist.STANDALONE_TAB_IDS.nadac)).toMatchObject({ criteria: nadacCriteria });
+    expect(sessionStorage.getItem(legacyKeys()[2])).not.toBeNull();
+    expect(persist.saveTabState("t1", { type: "nadac", criteria: nadacCriteria, pinnedItems: [] })).toBe(false);
+  });
+
+  it("isn't made read-only by another window moving or writing legacy Search keys", () => {
+    const onConflict = vi.fn();
+    persist.watchOtherWindows(onConflict);
+    for (const key of legacyKeys()) {
+      window.dispatchEvent(storageEvent(key, null));
+      window.dispatchEvent(storageEvent(key, "written by an older version"));
+    }
+    expect(onConflict).not.toHaveBeenCalled();
+  });
+
+  it("warns once about failed Search saves, in their own words, apart from the workspace's", async () => {
+    const toast = (await import("react-hot-toast")).default;
+    const error = vi.spyOn(toast, "error").mockReturnValue("storage-error");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("sessionStorage", failingWrites(memoryStorage()));
+    vi.stubGlobal("localStorage", failingWrites(memoryStorage()));
+    persist.saveStandaloneSearch({ type: "nadac", criteria: nadacCriteria });
+    persist.saveSearchPins([]);
+    persist.saveTabState("t1", { type: "nadac", criteria: nadacCriteria, pinnedItems: [] });
+    persist.saveSettings(persist.loadSettings());
+    expect(error.mock.calls.map(call => call[0])).toEqual([
+      "Couldn't save this search in this tab: browser storage is full or unavailable.",
+      "Couldn't save your workspace: browser storage is full or unavailable.",
+    ]);
     warn.mockRestore();
     error.mockRestore();
   });
