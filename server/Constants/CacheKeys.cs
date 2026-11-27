@@ -4,6 +4,7 @@ public static class CacheKeys
 {
   public const string DosageFormNames = "dosage-form-names";
   public const string RouteNames = "route-names";
+  public const string FdaLabelerGroups = "fda-labeler-groups";
   public const string NadacAsOfDates = "nadac-as-of-dates";
   public const string NadacWeightLoss = "nadac-weight-loss";
   public const string NadacCancer = "nadac-cancer";

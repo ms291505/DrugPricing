@@ -16,7 +16,19 @@ to show it.
 classification.
 
 **More filters** has lists built from your results: Drug and Pricing unit on NADAC; Product NDC,
-Dosage form, Route, Labeler, and Pricing unit on FDA. Clear a value’s checkbox to hide it.
+Dosage form, Strength, Route, Labeler in results, and Pricing unit on FDA. Clear a value’s
+checkbox to hide it. **Labeler in results** narrows what a search found and lists each spelling
+the FDA uses; to narrow a search to a company before it loads, use **Labeler** beside the names.
+Strength lists each product’s strength as the tables show it, in order of the first ingredient’s amount, with **Not listed**
+for products the FDA lists without one. A search for a different drug starts these lists over.
+
+FDA’s More filters also has **Price activity**, which uses the words the Price Activity column
+starts with: **Dropped** (including “Down”), **Rose** (including “Up”), **Dipped or spiked**,
+**Stable**, and **Insufficient history** (one price). It hides packages, so a product stays while
+any of its packages is shown, and its row then describes only those packages. Packages without
+prices are left to **Results without prices**. This filter stays set when you search for another
+drug.
+
 **Clear filters** restores the default filters, including the default **Include** settings.
 
 Pinned items keep their saved data when filters change.

@@ -5,8 +5,9 @@ import type { FdaProductSearchResult } from "./types";
 
 /** NADAC matches one contiguous description: prefer a valid brand, then a valid generic name.
  * If neither is long enough, carry one draft term for the user to extend without running it.
+ * A labeler has no NADAC field, so a name plus a labeler hands off the name only.
  */
-export function nadacHandoffTerm(terms: FdaTerms): string {
+export function nadacHandoffTerm(terms: Pick<FdaTerms, "proprietaryName" | "nonProprietaryName">): string {
   const brand = terms.proprietaryName.trim();
   const generic = terms.nonProprietaryName.trim();
   return [brand, generic].find(term => term.length >= MIN_NDC_DESCRIPTION_LENGTH) ?? (brand || generic);

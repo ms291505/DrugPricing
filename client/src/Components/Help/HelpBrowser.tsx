@@ -4,13 +4,18 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link as RouterLink, useNavigate, useParams } from "react-router";
 import { useGlobalModalActions } from "../../Context/globalModalContexts";
-import { filterHelpPageLinks, filterHelpTopics, findHelpTopic, HELP_GROUPS, type HelpTopicId } from "../../library/help";
+import { filterHelpPageLinks, filterHelpTopics, findHelpTopic, HELP_GROUPS, helpSectionId, type HelpTopicId } from "../../library/help";
 import { holdsFocus } from "../ui/focus";
 
 const articles = import.meta.glob<string>("../../content/help/*.md", { query: "?raw", import: "default", eager: true });
 
 /** Shared reading surface; the dialog owns its sizing and scroll container. */
-export default function HelpBrowser({ initialTopic, standalone = false }: { initialTopic?: HelpTopicId, standalone?: boolean }) {
+export default function HelpBrowser({ initialTopic, initialSection, standalone = false }: {
+  initialTopic?: HelpTopicId,
+  /** A section of `initialTopic` to open at (`helpSectionId`), for a link to one part of it. */
+  initialSection?: string,
+  standalone?: boolean,
+}) {
   const params = useParams();
   const navigate = useNavigate();
   const { closeModal } = useGlobalModalActions();
@@ -22,6 +27,8 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
   const root = useRef<HTMLDivElement>(null);
   const indexPosition = useRef({ top: 0, id: undefined as HelpTopicId | undefined });
   const first = useRef(true);
+  // The section the modal was opened at, while its first topic shows (Back to it included).
+  const section = !standalone && history.length === 1 ? initialSection : undefined;
   // The navigation's link or button unmounts with the old content. Focus follows to the new
   // content only when it was in Help at the user's last click (Enter on a link or button is a
   // click too): after a tap on iOS nothing holds focus, and focusing the heading would show a
@@ -47,12 +54,19 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
     else if (standalone) window.scrollTo(0, top);
     if (first.current && !id) { first.current = false; return; }
     first.current = false;
+    const sectionHeading = section ? root.current?.querySelector<HTMLElement>(`#${CSS.escape(section)}`) : null;
+    if (sectionHeading) {
+      // A link to one section: show it, and start reading there.
+      sectionHeading.scrollIntoView({ block: "start" });
+      if (focusOnNavigate.current) sectionHeading.focus({ preventScroll: true });
+      return;
+    }
     if (!focusOnNavigate.current) return;
     const previousButton = !id && indexPosition.current.id
       ? root.current?.querySelector<HTMLElement>(`[data-help-topic="${indexPosition.current.id}"]`)
       : null;
     (previousButton ?? heading.current)?.focus({ preventScroll: true });
-  }, [id, standalone]);
+  }, [id, standalone, section]);
 
   // Standalone, a topic is a real link that navigates by itself; in the modal it opens in place.
   const topicLink = (id: HelpTopicId, title: string) => (
@@ -81,7 +95,17 @@ export default function HelpBrowser({ initialTopic, standalone = false }: { init
                 ? <Link href={href} onClick={event => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); openTopic(target.id); } }}>{children}</Link>
                 : <Link href={href} target="_blank" rel="noopener noreferrer">{children}</Link>;
             },
-            h2: ({ children }) => <Typography component={standalone ? "h2" : "h3"} variant="h6" sx={{ mt: 3 }}>{children}</Typography>,
+            h2: ({ children }) => (
+              <Typography
+                id={typeof children === "string" ? helpSectionId(children) : undefined}
+                tabIndex={-1}
+                component={standalone ? "h2" : "h3"}
+                variant="h6"
+                sx={{ mt: 3 }}
+              >
+                {children}
+              </Typography>
+            ),
             table: ({ children }) => <Box role="region" aria-label="Help reference table" tabIndex={0} sx={{ overflowX: "auto", my: 2 }}><Box component="table" sx={{ borderCollapse: "collapse", width: "100%", minWidth: 440, overflowWrap: "normal", "& th, & td": { borderBottom: 1, borderColor: "divider", p: 1, textAlign: "left", verticalAlign: "top" } }}>{children}</Box></Box>,
           }}>{articles[`../../content/help/${topic.id}.md`]}</Markdown>
         </Box>

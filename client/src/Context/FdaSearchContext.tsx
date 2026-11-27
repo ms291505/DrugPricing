@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useState, type Dispatch,
 import { DEFAULT_FDA_DETAIL_LEVEL, type FdaResultDetailLevel } from "../library/types";
 import type { GridRowSelectionModel } from "@mui/x-data-grid";
 import {
-  applyFdaSearch, createFdaCriteria, fdaLoadRequest,
+  applyFdaSearch, createFdaCriteria, fdaLoadHolds, fdaLoadRequest,
   type FdaCriteria, type FdaLoad, type FdaTerms,
 } from "../library/searchCriteria";
 import useSearchLoad from "../hooks/useSearchLoad";
@@ -63,7 +63,7 @@ type ProviderProps = {
 
 export const FdaSearchContextProvider = ({ children, initial, searchEnabled = true }: ProviderProps) => {
   const { criteria, setCriteria, search: load, clear, requested, loaded, lastSearch, waiting } = useSearchLoad(
-    initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch, SEARCH_QUERY_KEYS.fda);
+    initial?.criteria ?? createFdaCriteria(), fdaLoadRequest, applyFdaSearch, SEARCH_QUERY_KEYS.fda, fdaLoadHolds);
   const [fdaResultDetailLevel, setDetailLevelState] = useState<FdaResultDetailLevel>(initial?.detailLevel ?? DEFAULT_FDA_DETAIL_LEVEL);
 
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });

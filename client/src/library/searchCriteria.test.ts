@@ -3,11 +3,11 @@ import { fdaHasPricesInWindow, nadacHandoffTerm } from "./fdaNadacHandoff";
 import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
-  exclusionCount, FDA_EXCLUSION_KEYS, fdaActiveFilterCount, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  fdaResultsLabel, fdaSearchLabel, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaLoadHolds, labelerCodesHold, narrowToLabelers, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
+  fdaResultsLabel, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
-  type FdaCriteria, type NadacCriteria, type NadacLoad,
+  type FdaCriteria, type FdaLoad, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
 import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
 
@@ -113,9 +113,13 @@ describe("applying a search", () => {
       ...applied, ndcDescription: "humira", excludedNdcDescriptions: [], excludedUnits: [],
     });
 
-    const fda: FdaCriteria = { ...createFdaCriteria(), proprietaryName: "eliquis", includeSamplePackages: true, excludedRoutes: ["ORAL"] };
+    const fda: FdaCriteria = {
+      ...createFdaCriteria(), proprietaryName: "eliquis", includeSamplePackages: true, excludedRoutes: ["ORAL"],
+      excludedStrengths: ["5 mg/1"], excludedActivities: ["stable"],
+    };
+    // Price activity is a fixed refine field: its values don't come from the result.
     expect(applyFdaSearch(fda, { proprietaryName: "humira", nonProprietaryName: "" }))
-      .toEqual({ ...fda, proprietaryName: "humira", excludedRoutes: [] });
+      .toEqual({ ...fda, proprietaryName: "humira", excludedRoutes: [], excludedStrengths: [] });
   });
 });
 
@@ -317,6 +321,108 @@ describe("refineFda", () => {
   it("returns no products for an empty result", () => {
     expect(refineFda({ products: [] }, createFdaCriteria(), FULL_WINDOW)).toEqual({ products: [] });
   });
+
+  it("excludes strengths by their label, including Not listed", () => {
+    const strengths = {
+      products: [
+        product("1", [priced("1-1")], { strengthNumber: ["500"], strengthUnit: ["mg/1"] }),
+        product("2", [priced("2-1")], { strengthNumber: ["1000"], strengthUnit: ["mg/1"] }),
+        product("3", [priced("3-1")], { strengthNumber: [], strengthUnit: [] }),
+      ],
+    };
+    const ndcs = (criteria: FdaCriteria) => refineFda(strengths, criteria, FULL_WINDOW).products.map(p => p.productNdc);
+    expect(ndcs({ ...createFdaCriteria(), excludedStrengths: ["1000 mg/1"] })).toEqual(["1", "3"]);
+    expect(ndcs({ ...createFdaCriteria(), excludedStrengths: ["Not listed", "500 mg/1"] })).toEqual(["2"]);
+  });
+});
+
+describe("the Price activity filter", () => {
+  const weekly = (code: string, values: number[], pricingUnit = "each") =>
+    values.map((nadacPerUnit, i) => nadacPrice(code, new Date(day("2026-01-07") + i * 7 * 86400000).toISOString().slice(0, 10),
+      { nadacPerUnit, pricingUnit }));
+  const result = {
+    products: [
+      // One drop and one rise: the product shows under either, read from what's left.
+      product("1", [fdaPackage("1-1", weekly("11", [10, 5])), fdaPackage("1-2", weekly("12", [10, 20]))]),
+      product("2", [fdaPackage("2-1", weekly("21", [10, 10])), fdaPackage("2-2", [])]),
+      product("3", [fdaPackage("3-1", weekly("31", [10]))]),
+      // Two units: no category, so this filter never hides it.
+      product("4", [fdaPackage("4-1", [...weekly("41", [10, 10]), ...weekly("41", [1, 2], "milliliter")])]),
+    ],
+  };
+  const shown = (criteria: FdaCriteria) =>
+    refineFda(result, criteria, FULL_WINDOW).products.map(p => [p.productNdc, p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode)]);
+  const only = (...keep: FdaCriteria["excludedActivities"]): FdaCriteria["excludedActivities"] =>
+    (["dropped", "rose", "dippedOrSpiked", "stable", "insufficient"] as const).filter(key => !keep.includes(key));
+
+  it("hides packages whose activity is excluded, and a product once all its packages are", () => {
+    expect(shown({ ...createFdaCriteria(), excludedActivities: only("dropped") })).toEqual([["1", ["1-1"]], ["4", ["4-1"]]]);
+    expect(shown({ ...createFdaCriteria(), excludedActivities: only("rose") })).toEqual([["1", ["1-2"]], ["4", ["4-1"]]]);
+    expect(shown({ ...createFdaCriteria(), excludedActivities: ["stable", "insufficient"] }).map(([ndc]) => ndc)).toEqual(["1", "4"]);
+  });
+
+  it("reads a package's activity from the units shown, however often it's asked", () => {
+    const mixed = { products: [product("5", [fdaPackage("5-1", [...weekly("51", [10, 5]), ...weekly("51", [1, 1], "milliliter")])])] };
+    const ndcs = (criteria: FdaCriteria) => refineFda(mixed, criteria, FULL_WINDOW).products.map(p => p.productNdc);
+    const roseOnly = { ...createFdaCriteria(), excludedActivities: only("rose") };
+    expect(ndcs(roseOnly)).toEqual(["5"]);
+    expect(ndcs({ ...roseOnly, excludedUnits: ["milliliter"] })).toEqual([]);
+    expect(ndcs({ ...roseOnly, excludedUnits: ["each"] })).toEqual([]);
+    expect(ndcs({ ...createFdaCriteria(), excludedActivities: only("dropped"), excludedUnits: ["milliliter"] })).toEqual(["5"]);
+    expect(ndcs(roseOnly)).toEqual(["5"]);
+  });
+
+  it("leaves packages without prices to their Include box", () => {
+    expect(shown({ ...createFdaCriteria(), includeResultsWithoutPrices: true, excludedActivities: only("dropped") }))
+      .toEqual([["1", ["1-1"]], ["2", ["2-2"]], ["4", ["4-1"]]]);
+  });
+
+  it("always lists every category, in the column's order, so one excluded and absent stays visible", () => {
+    const options = fdaFilterOptions(result, { ...createFdaCriteria(), excludedActivities: ["dippedOrSpiked"] }, FULL_WINDOW);
+    expect(options.excludedActivities).toEqual(["dropped", "rose", "dippedOrSpiked", "stable", "insufficient"]);
+    expect(fdaFilterOptions({ products: [] }, createFdaCriteria(), FULL_WINDOW).excludedActivities).toHaveLength(5);
+  });
+
+  describe("over dates narrower than the load", () => {
+    // Over every loaded date the largest change is the rise; over the last two weeks, the drop.
+    const narrowing = { products: [product("6", [fdaPackage("6-1", weekly("61", [10, 20, 20, 18]))])] };
+    // Mid-week: snaps back to the Jan 21 as-of date.
+    const lastTwoWeeks = { start: day("2026-01-24"), end: null };
+    const droppedOnly = { ...createFdaCriteria(), excludedActivities: only("dropped") };
+    const codes = (refined: { products: FdaProductDetail[] }) =>
+      refined.products.flatMap(p => p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode));
+
+    it("judges each window's activity on its own dates", () => {
+      expect(codes(refineFda(narrowing, droppedOnly, FULL_WINDOW))).toEqual([]);
+      expect(codes(refineFda(narrowing, droppedOnly, lastTwoWeeks))).toEqual(["6-1"]);
+      // Asked again, the first window still gets its own answer.
+      expect(codes(refineFda(narrowing, droppedOnly, FULL_WINDOW))).toEqual([]);
+    });
+
+    it("keeps the shown packages when refining over every loaded date", () => {
+      const shown = refineFda(narrowing, droppedOnly, lastTwoWeeks);
+      const loaded = refineFda(narrowing, droppedOnly, FULL_WINDOW, lastTwoWeeks);
+      expect(codes(loaded)).toEqual(codes(shown));
+      expect(loaded.products[0].fdaPackageDetails[0].nadacPrices).toHaveLength(4);
+    });
+  });
+
+  it("counts as a filter, and Clear filters and Show all reset it", () => {
+    const criteria: FdaCriteria = { ...createFdaCriteria(), proprietaryName: "x", excludedActivities: ["stable"] };
+    expect(fdaActiveFilterCount(criteria)).toBe(1);
+    expect(exclusionCount(criteria, FDA_LIST_KEYS)).toBe(1);
+    expect(clearFdaRefine(criteria).excludedActivities).toEqual([]);
+    expect(showAllFda(criteria).excludedActivities).toEqual([]);
+  });
+
+  it("gets the hidden-results hint when it hides everything", () => {
+    const criteria = { ...createFdaCriteria(), excludedActivities: only() };
+    const refined = refineFda(result, criteria, FULL_WINDOW);
+    expect(refined.products.map(p => p.productNdc)).toEqual(["4"]);
+    const none = { products: result.products.slice(0, 3) };
+    const hint = hiddenResultsHint(fdaHiddenCounts(none, refineFda(none, criteria, FULL_WINDOW), criteria, FULL_WINDOW, "package"));
+    expect(hint).toEqual({ kind: "clear", count: 4 });
+  });
 });
 
 describe("FDA filter options and hidden counts", () => {
@@ -337,14 +443,25 @@ describe("FDA filter options and hidden counts", () => {
   it("lists what the page could show, sorted, before exclusions", () => {
     const excluding = { ...createFdaCriteria(), excludedLabelers: ["A LABS"], excludedUnits: ["milliliter"] };
     expect(fdaFilterOptions(result, excluding, FULL_WINDOW)).toEqual({
+      excludedActivities: ["dropped", "rose", "dippedOrSpiked", "stable", "insufficient"],
       excludedProductNdcs: ["1", "4"],
       excludedDosageForms: ["TABLET"],
+      excludedStrengths: ["10 mg"],
       excludedRoutes: ["ORAL", "TOPICAL"],
       excludedLabelers: ["A LABS", "B LABS"],
       excludedUnits: ["each", "milliliter"],
     });
     expect(fdaFilterOptions(result, showAllFda(createFdaCriteria()), FULL_WINDOW).excludedLabelers)
       .toEqual(["A LABS", "B LABS", "C LABS", "OTC LABS"]);
+  });
+
+  it("sorts strengths by number, with Not listed last", () => {
+    const strengths = {
+      products: [["1000"], ["500"], [], ["850"]].map((strengthNumber, i) =>
+        product(String(i), [priced(`${i}-1`)], { strengthNumber, strengthUnit: strengthNumber.map(() => "mg/1") })),
+    };
+    expect(fdaFilterOptions(strengths, createFdaCriteria(), FULL_WINDOW).excludedStrengths)
+      .toEqual(["500 mg/1", "850 mg/1", "1000 mg/1", "Not listed"]);
   });
 
   it("counts the rows each Include box would add, at the table's detail level", () => {
@@ -389,6 +506,7 @@ describe("filter state", () => {
     expect(nadacActiveFilterCount(createNadacCriteria())).toBe(0);
     expect(nadacActiveFilterCount({ ...createNadacCriteria(), includeOtc: true, excludedUnits: ["each"], ndcDescription: "x" })).toBe(2);
     expect(fdaActiveFilterCount({ ...createFdaCriteria(), includeSamplePackages: true, excludedRoutes: ["ORAL"], excludedLabelers: ["L"] })).toBe(3);
+    expect(fdaActiveFilterCount({ ...createFdaCriteria(), excludedStrengths: ["10 mg"], excludedActivities: ["rose"] })).toBe(2);
   });
 
   it("clears the refine fields and keeps the search", () => {
@@ -422,7 +540,7 @@ describe("FDA name searches", () => {
     expect(isValidFdaSearch("  Li  ", "  at  ")).toBe(false);
     expect(isValidFdaSearch("", "")).toBe(false);
     expect(fdaLoadRequest(generic, last)).toEqual({
-      proprietaryName: "", nonProprietaryName: "atorvastatin",
+      proprietaryName: "", nonProprietaryName: "atorvastatin", labelerCodes: [],
       dates: { start: day("2025-11-04"), end: last },
     });
   });
@@ -449,6 +567,105 @@ describe("FDA name searches", () => {
     expect(fdaSearchLabel({ proprietaryName: "Lipitor", nonProprietaryName: "" })).toBe("Lipitor");
   });
 
+  it("adds the first labeler and how many more", () => {
+    const teva = { name: "Teva Pharmaceuticals USA, Inc.", codes: ["0093"] };
+    const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013"] };
+    expect(fdaTabTitle({ proprietaryName: "eliquis", nonProprietaryName: "", labelers: [teva, pfizer] }))
+      .toBe("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1");
+    // Picks without a name aren't a search, so they don't name one.
+    expect(fdaSearchLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "", labelers: [pfizer] })).toBe("search");
+    expect(fdaResultsLabel({ proprietaryName: "", nonProprietaryName: "apixaban", labelers: [teva, pfizer, teva] }))
+      .toBe("\u201capixaban\u201d / Teva Pharmaceuticals USA, Inc. +2");
+  });
+
+  it("narrows a name search by labeler, sending the codes sorted, but never searches on picks alone", () => {
+    const picks = [{ name: "B", codes: ["0025", "0013"] }, { name: "A", codes: ["0008"] }];
+    expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: picks }, last)).toBeNull();
+    const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: picks };
+    expect(fdaLoadRequest(criteria, last)?.labelerCodes).toEqual(["0008", "0013", "0025"]);
+    // Picked in another order: the same load, so narrowing the dates still doesn't fetch.
+    const loaded = fdaLoadRequest(criteria, last)!;
+    const reordered = fdaLoadRequest({ ...criteria, labelers: [...picks].reverse() }, last)!;
+    expect(nextLoad(loaded, reordered)).toBe(loaded);
+    // Picks apply like Dates, not as a new search: the exclusion lists stay.
+    const applied = { ...criteria, excludedRoutes: ["ORAL"] };
+    expect(applyFdaSearch(applied, { proprietaryName: "", nonProprietaryName: "chloride" }).excludedRoutes).toEqual(["ORAL"]);
+    expect(clearFdaRefine(applied).labelers).toEqual(picks);
+  });
+
+  describe("labeler picks apply at once", () => {
+    const load = (labelerCodes: string[], start = "2025-11-04"): FdaLoad =>
+      ({ proprietaryName: "", nonProprietaryName: "chloride", labelerCodes, dates: { start: day(start), end: last } });
+    const next = (loaded: FdaLoad, requested: FdaLoad, refused = false) =>
+      nextLoad(loaded, requested, refused, fdaLoadHolds) === loaded ? "filter" : "fetch";
+
+    it("filters a load that holds the picks, and fetches otherwise", () => {
+      // A load without picks holds every labeler for its names.
+      expect(next(load([]), load(["0013"]))).toBe("filter");
+      expect(next(load(["0013", "0025"]), load(["0013"]))).toBe("filter");
+      expect(next(load(["0013"]), load(["0013", "0069"]))).toBe("fetch");
+      expect(next(load(["0013"]), load([]))).toBe("fetch");
+      expect(labelerCodesHold([], [])).toBe(true);
+      // Dates still have to be covered, and other names are another search.
+      expect(next(load([]), load(["0013"], "2025-01-01"))).toBe("fetch");
+      expect(next(load([]), { ...load(["0013"]), nonProprietaryName: "sodium" })).toBe("fetch");
+    });
+
+    it("fetches any pick change after the server refused the load as too large", () => {
+      expect(next(load([]), load(["0013"]), true)).toBe("fetch");
+    });
+
+    it("never searches on picks alone", () => {
+      expect(isValidFdaSearch("", "")).toBe(false);
+      expect(fdaLoadRequest({ ...createFdaCriteria(), labelers: [{ name: "P", codes: ["0013"] }] }, last)).toBeNull();
+    });
+
+    it("snaps the dates over the picked labelers only, as a narrowed fetch does", () => {
+      // The picked labeler's price before the start is two days earlier than the other's.
+      const picked = product("0013-1001", [fdaPackage("0013-1001-01",
+        [nadacPrice("13100101", "2026-01-12"), nadacPrice("13100101", "2026-01-19")])]);
+      const other = product("0025-3000", [fdaPackage("0025-3000-01",
+        [nadacPrice("25300001", "2026-01-14"), nadacPrice("25300001", "2026-01-21")])]);
+      const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: [{ name: "P", codes: ["0013"] }] };
+      const dates = { start: day("2026-01-14"), end: null };
+      const shown = (r: { products: FdaProductDetail[] }) => refineFda(r, criteria, dates).products
+        .flatMap(p => p.fdaPackageDetails.flatMap(pkg => pkg.nadacPrices.map(price => price.asOfDate.toISOString().slice(0, 10))));
+      expect(shown({ products: [picked, other] })).toEqual(shown({ products: [picked] }));
+      expect(shown({ products: [picked] })).toEqual(["2026-01-12", "2026-01-19"]);
+    });
+
+    it("shows the same rows filtering a name-only load as the server's narrowed load", () => {
+      const result = {
+        products: [
+          product("0013-1001", [fdaPackage("0013-1001-01", [nadacPrice("13100101", "2026-01-14")])]),
+          // Starts with "0013" but is labeler 00131, which the dash rule keeps out.
+          product("00131-200", [fdaPackage("00131-200-01", [nadacPrice("131200001", "2026-01-14")])]),
+          product("0025-3000", [fdaPackage("0025-3000-01", [nadacPrice("25300001", "2026-01-14")])]),
+          product("0069-4000", [fdaPackage("0069-4000-01", [nadacPrice("69400001", "2026-01-14")])]),
+        ],
+      };
+      // The server's narrowing, written as its SQL reads: ProductNdc LIKE 'code-%'.
+      const like = (codes: string[]) => (ndc: string) =>
+        codes.some(code => new RegExp(`^${code}-.*$`).test(ndc));
+      for (const codes of [["0013"], ["0013", "0069"], ["0025"]]) {
+        const picks = [{ name: "Picked", codes }];
+        const narrowed = { products: result.products.filter(p => like(codes)(p.productNdc)) };
+        const criteria = { ...createFdaCriteria(), nonProprietaryName: "chloride", labelers: picks };
+        const ndcs = (r: { products: FdaProductDetail[] }) => refineFda(r, criteria, FULL_WINDOW).products.map(p => p.productNdc);
+        expect(ndcs(result)).toEqual(ndcs(narrowed));
+        expect(ndcs(result).length).toBeGreaterThan(0);
+        // What the empty-result notice reads: the load's narrowing only.
+        expect(narrowToLabelers(result, picks)).toEqual(narrowed);
+        expect(fdaHasPricesInWindow(narrowToLabelers(result, picks), FULL_WINDOW))
+          .toBe(fdaHasPricesInWindow(narrowed, FULL_WINDOW));
+      }
+      // A pick with nothing in the load: the notice sees no products, as after a narrowed fetch.
+      expect(narrowToLabelers(result, [{ name: "None", codes: ["9999"] }]).products).toEqual([]);
+      expect(narrowToLabelers(result, [])).toBe(result);
+    });
+  });
+
   it("quotes the typed terms in the results heading, and nothing else", () => {
     expect(fdaResultsLabel({ proprietaryName: " Lipitor ", nonProprietaryName: " atorvastatin " }))
       .toBe("\u201cLipitor\u201d / \u201catorvastatin\u201d");
@@ -472,6 +689,7 @@ describe("FDA to NADAC handoff", () => {
   ])("carries one applied term (%s, %s → %s)", (proprietaryName, nonProprietaryName, expected) => {
     expect(nadacHandoffTerm({ proprietaryName, nonProprietaryName })).toBe(expected);
   });
+
 
   it("recognizes loaded prices even when OTC, sample and other exclusions hide them", () => {
     const result = { products: [product("12345-1234", [

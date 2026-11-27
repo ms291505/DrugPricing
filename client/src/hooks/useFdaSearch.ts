@@ -5,8 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { CONSTANT, SEARCH_QUERY_KEYS } from "../library/constants";
 import { FULL_WINDOW, toDateInput, type DateWindow } from "../library/dates";
 import {
-  fdaFilterOptions, fdaHiddenCounts, fdaShownDates, refineFda, widenToAsOfDates,
-  type FdaExclusionKey, type HiddenCounts,
+  fdaFilterOptions, fdaHiddenCounts, fdaShownDates, narrowToLabelers, refineFda, widenToAsOfDates,
+  type FdaListKey, type HiddenCounts,
 } from "../library/searchCriteria";
 import { fdaProductsToNadacPrices } from "../library/fdaDataToNadacPrices";
 import type { FdaProductDetail, FdaResultDetailLevel, NadacPrice } from "../library/types";
@@ -25,6 +25,7 @@ export default function useFdaSearch() {
       return getAdvancedFdaSearchReqults({
         proprietaryName: loaded!.proprietaryName,
         nonProprietaryName: loaded!.nonProprietaryName,
+        labelerCodes: loaded!.labelerCodes,
         // Sample packages and packages without prices always load: the page hides them by
         // default (`refineFda`), so ticking their Include boxes doesn't fetch.
         includeSamplePackages: true,
@@ -47,7 +48,7 @@ export type FdaResultView = {
   /** The dates shown (`fdaShownDates`): the added charts' window, and new charts' dates. */
   dateWindow: DateWindow,
   /** The from-results lists' options (`fdaFilterOptions`). */
-  options: Record<FdaExclusionKey, string[]>,
+  options: Record<FdaListKey, string[]>,
   /** Rows at the table's detail level that the refine fields hide (`fdaHiddenCounts`). */
   hidden: HiddenCounts,
   /**
@@ -74,10 +75,12 @@ export function useRefinedFdaSearch(): FdaResultView {
     return {
       result, refined,
       products: refined.products,
-      dateWindow: fdaShownDates(result, dates),
+      // Snapped over the products the picks narrow to, as `refineFda` snaps.
+      dateWindow: fdaShownDates(narrowToLabelers(result, criteria.labelers), dates),
       options: fdaFilterOptions(result, criteria, dates),
       loadedPrices: (level: FdaResultDetailLevel) =>
-        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW).products, level),
+        // Price activity judges packages over the shown dates, so this keeps the page's packages.
+        fdaProductsToNadacPrices(refineFda(result, criteria, FULL_WINDOW, dates).products, level),
     };
   }, [data, criteria, dates]);
   return useMemo(() => {

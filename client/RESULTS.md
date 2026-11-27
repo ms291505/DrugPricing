@@ -40,7 +40,13 @@ Price Activity (`library/priceActivity.ts`) classifies package histories over th
 a rounded 5% range cutoff and 10% significant steps (`NOTABLE_PRICE_CHANGE_PERCENT`). Every
 threshold compares in tenths of a percent (`meetsThreshold`), and a change from $0 meets every
 threshold and reads "from $0", never as a percent. Products use their packages' states, not an
-averaged line; only package rows have sparklines. Every way to act on the results is in one
+averaged line; only package rows have sparklines. Each package activity also has a filter
+category (`category`, set in the branch that writes its label): **the category is what the row
+says**, so "Dropped" and "Down" rows are Dropped, "Rose" and "Up" are Rose, "Dipped" and
+"Spiked" are Dipped or spiked, then Stable and Insufficient history (one observation). Mixed units
+and no price history have none. FDA's Price activity filter hides packages by it (a product shows
+while any package does, read from its shown packages), so it works the same at both detail
+levels. Every way to act on the results is in one
 toolbar in the results heading's row (`ResultsToolbar`): the chart label, Line and Bar, Scan price
 changes, then FDA's detail level. It is one flex item, so when the heading and the toolbar don't
 fit one line, the heading takes its own line first, and only then does the toolbar wrap. The

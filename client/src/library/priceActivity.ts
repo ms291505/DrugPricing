@@ -71,6 +71,7 @@ function eventDates(start: number, end: number): string {
 
 /** A change from $0, which has no percent: it is always a rise and meets every threshold. */
 const fromZero = (change: NadacPriceChange) => change.oldPrice === 0;
+const isDrop = (change: NadacPriceChange) => !fromZero(change) && change.percentage < 0;
 
 export function priceEventGroupLabel(group: PriceEventGroup): string {
   const count = new Set(group.events.map(e => e.packageNdc)).size;
@@ -88,7 +89,7 @@ export function eventLabel(change: NadacPriceChange): string {
   const dates = eventDates(change.startDate.getTime(), change.endDate.getTime());
   if (fromZero(change)) return `Rose from $0 to ${formatPrice(change.newPrice)} ${dates}`;
   const delta = Math.abs(change.newPrice - change.oldPrice);
-  return `${change.percentage < 0 ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${dates}`;
+  return `${isDrop(change) ? "Dropped" : "Rose"} ${percent(change.percentage)} (${formatPrice(delta)}) ${dates}`;
 }
 
 /** A package's change as signed figures for a group's package listing: "−43%", "−$4.17". */
@@ -120,40 +121,68 @@ export function parseScanThreshold(text: string): { percent: number } | { error:
   return Number.isFinite(percent) && percent >= PRICE_CHANGE_SCAN_MIN_PERCENT ? { percent } : { error: SCAN_THRESHOLD_ERROR };
 }
 
+/**
+ * The Price activity filter's categories, each named by the word its rows' labels start with:
+ * the category is what the row says. Significant steps and gradual net changes both count as
+ * Dropped or Rose. In the filter's order.
+ */
+export const ACTIVITY_CATEGORIES = [
+  { key: "dropped", label: "Dropped" },
+  { key: "rose", label: "Rose" },
+  { key: "dippedOrSpiked", label: "Dipped or spiked" },
+  { key: "stable", label: "Stable" },
+  { key: "insufficient", label: "Insufficient history" },
+] as const;
+
+export type ActivityCategory = typeof ACTIVITY_CATEGORIES[number]["key"];
+
+export const isActivityCategory = (value: unknown): value is ActivityCategory =>
+  ACTIVITY_CATEGORIES.some(category => category.key === value);
+
+export const activityCategoryLabel = (key: string): string =>
+  ACTIVITY_CATEGORIES.find(category => category.key === key)?.label ?? key;
+
 export type PriceActivity = {
   state: "significant" | "changed" | "stable" | "insufficient" | "mixed",
   label: string,
+  /**
+   * The filter's category, set beside the label so the two can't drift. Null for mixed units and
+   * for no price history.
+   */
+  category: ActivityCategory | null,
   magnitude: number,
   points: Array<{ asOfDate: number, price: number }>,
   events: PriceEvent[],
 };
 
 export function packageActivity(prices: ChartPrice[]): PriceActivity {
-  if (splitByPricingUnit(prices).length > 1) return { state: "mixed", label: "Mixed units", magnitude: 0, points: [], events: [] };
+  if (splitByPricingUnit(prices).length > 1) return { state: "mixed", label: "Mixed units", category: null, magnitude: 0, points: [], events: [] };
   const points = ([...seriesByDate(prices).values()][0] ?? []).map(p => ({ asOfDate: p.asOfDate, price: p.average }));
   const base = { magnitude: 0, points, events: [] as PriceEvent[] };
-  if (points.length < 2) return { ...base, state: "insufficient", label: points.length
-    ? `1 observation · ${formatDate(points[0].asOfDate)}` : "No price history" };
+  if (points.length < 2) return points.length
+    ? { ...base, state: "insufficient", category: "insufficient", label: `1 observation · ${formatDate(points[0].asOfDate)}` }
+    : { ...base, state: "insufficient", category: null, label: "No price history" };
   const values = points.map(p => p.price);
   const min = Math.min(...values), max = Math.max(...values);
   const range = min === 0 ? (max === 0 ? 0 : Infinity) : (max - min) / min;
-  if (inBand(range)) return { ...base, state: "stable", magnitude: range,
+  if (inBand(range)) return { ...base, state: "stable", category: "stable", magnitude: range,
     label: range === 0 ? "Stable · no change" : `Stable · within ${Math.ceil(range * 100)}%` };
   const events = derivePriceEvents(prices, "package").sort((a, b) =>
     Math.abs(b.change.newPrice - b.change.oldPrice) - Math.abs(a.change.newPrice - a.change.oldPrice)
     || a.change.endDate.getTime() - b.change.endDate.getTime());
   if (events.length) return { ...base, state: "significant", events,
+    category: isDrop(events[0].change) ? "dropped" : "rose",
     magnitude: Math.abs(events[0].change.newPrice - events[0].change.oldPrice),
     label: eventLabel(events[0].change) + (events.length > 1 ? ` · ${events.length - 1} more` : "") };
   const first = points[0], last = points.at(-1)!;
   const net = (last.price - first.price) / first.price;
-  if (!inBand(net)) return { ...base, state: "changed", magnitude: range,
+  if (!inBand(net)) return { ...base, state: "changed", category: net < 0 ? "dropped" : "rose", magnitude: range,
     label: `${net < 0 ? "Down" : "Up"} ${percent(net)} (${formatPrice(Math.abs(last.price - first.price))}) over ${Math.max(1, Math.round((last.asOfDate - first.asOfDate) / WEEK))} weeks` };
   const dip = first.price - min, spike = max - first.price;
   const dipped = dip >= spike;
   const extreme = points.find(p => p.price === (dipped ? min : max))!;
   const month = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(extreme.asOfDate);
-  return { ...base, state: "changed", magnitude: range,
+  return { ...base, state: "changed", category: "dippedOrSpiked", magnitude: range,
     label: `${dipped ? "Dipped" : "Spiked"} ${percent((dipped ? dip : spike) / first.price)} (${formatPrice(dipped ? dip : spike)}) in ${month}` };
 }
 
@@ -161,7 +190,7 @@ export function packageActivity(prices: ChartPrice[]): PriceActivity {
 export function productActivity(packages: PackagePrices[]): PriceActivity {
   const priced = packages.filter(pkg => pkg.prices.length);
   if (new Set(priced.flatMap(pkg => pkg.prices.map(p => p.pricingUnit))).size > 1)
-    return { state: "mixed", label: "Mixed units", magnitude: 0, points: [], events: [] };
+    return { state: "mixed", label: "Mixed units", category: null, magnitude: 0, points: [], events: [] };
   const activities = priced.map(pkg => packageActivity(pkg.prices));
   const ranked = [...activities].sort(comparePriceActivity);
   const representative = ranked[0] ?? packageActivity([]);

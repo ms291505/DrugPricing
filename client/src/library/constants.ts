@@ -7,6 +7,11 @@ export const DEFAULT_NADAC_SEARCH_MONTHS = 12;
 export const MAX_AXIS_EXAGGERATION = 4;
 export const MIN_NDC_DESCRIPTION_LENGTH = 5;
 export const MIN_NDC_LENGTH = 5;
+/**
+ * The most distinct labeler codes one FDA search may send. Mirrors the server's
+ * `SearchLimits.MaxLabelerCodes`; change both.
+ */
+export const MAX_LABELER_CODES = 100;
 export const DEFAULT_DATA_GRID_PAGE_SIZE = 5;
 export const DATA_GRID_PAGE_SIZES = [5, 10, 25];
 export const NDC_NDC_DESCRIPTION_DELIMITER = " - ";

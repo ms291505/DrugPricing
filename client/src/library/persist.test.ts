@@ -230,6 +230,50 @@ describe("loading saved tab state", () => {
     expect(loaded(persist.loadNadacTabState("t2")).criteria).toEqual(nadacCriteria);
   });
 
+  it("reads strength and price activity exclusions, keeping only known activity categories", () => {
+    saveRaw("t3", {
+      type: "fda",
+      criteria: { ...fdaCriteria, excludedStrengths: ["500 mg/1", "Not listed"], excludedActivities: ["stable", "sideways", 4, "rose"] },
+    });
+    expect(loaded(persist.loadFdaTabState("t3")).criteria).toEqual({
+      ...fdaCriteria, excludedStrengths: ["500 mg/1", "Not listed"], excludedActivities: ["stable", "rose"],
+    });
+
+    // Saved before these fields existed, or malformed.
+    const { excludedStrengths: _s, excludedActivities: _a, ...older } = fdaCriteria;
+    saveRaw("t4", { type: "fda", criteria: older });
+    expect(loaded(persist.loadFdaTabState("t4")).criteria).toEqual(fdaCriteria);
+    saveRaw("t5", { type: "fda", criteria: { ...fdaCriteria, excludedStrengths: "500", excludedActivities: "rose" } });
+    expect(loaded(persist.loadFdaTabState("t5")).criteria).toEqual(fdaCriteria);
+
+    // Price activity is a fixed refine field, kept without a search like the Include boxes.
+    saveRaw("t6", { type: "fda", criteria: { ...createFdaCriteria(), excludedActivities: ["stable"], excludedStrengths: ["5 mg"] } });
+    expect(loaded(persist.loadFdaTabState("t6")).criteria).toMatchObject({ excludedActivities: ["stable"], excludedStrengths: [] });
+  });
+
+  it("keeps labeler picks on a tab without a name, which doesn't search, and drops malformed picks", () => {
+    const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013", "0025"] };
+    saveRaw("lab", {
+      type: "fda",
+      criteria: {
+        ...createFdaCriteria(), excludedRoutes: ["ORAL"],
+        labelers: [pfizer, { name: "No codes", codes: [] }, { name: "Letters", codes: ["13a"] }, { codes: ["0008"] }, "Teva"],
+      },
+    });
+    // Exclusions go with a search, and picks alone aren't one.
+    expect(loaded(persist.loadFdaTabState("lab")).criteria).toEqual({ ...createFdaCriteria(), labelers: [pfizer] });
+    saveRaw("lab2", { type: "fda", criteria: { ...fdaCriteria, labelers: "Pfizer" } });
+    expect(loaded(persist.loadFdaTabState("lab2")).criteria.labelers).toEqual([]);
+  });
+
+  it("keeps labeler picks in order while their codes fit the limit", () => {
+    const pick = (name: string, from: number, count: number) =>
+      ({ name, codes: Array.from({ length: count }, (_, i) => String(10000 + from + i)) });
+    // 60 + 50 codes pass 100; the third pick shares the first's codes, so it adds none.
+    const picks = [pick("A", 0, 60), pick("B", 60, 50), pick("C", 0, 30), pick("D", 200, 10)];
+    expect(persist.readLabelers(picks).map(choice => choice.name)).toEqual(["A", "C", "D"]);
+  });
+
   it("restores generic-only searches and their exclusions", () => {
     const criteria = { ...createFdaCriteria(), nonProprietaryName: "atorvastatin", excludedRoutes: ["ORAL"] };
     saveRaw("generic", { type: "fda", criteria });
