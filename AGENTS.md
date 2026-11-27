@@ -139,8 +139,9 @@ only that explicit handoff changes NADAC's draft and runs the copied terms.
 
 Standalone criteria providers (`Context/StandaloneSearchProviders.tsx`) inherit a single
 `PinnedItemsProvider` around just the two `/search` sources, with one `PinnedSection` below
-the active source. Their shared snapshots live in
-`drugpricing.v<VERSION>.search-pins`; `loadSearchPins` merges legacy standalone pins, and
+the active source. Their criteria and shared snapshots live in `sessionStorage` (the
+shared ones under `drugpricing.v<VERSION>.search-pins`), moved there from `localStorage` once by
+`migrateStandaloneSearchState`; `loadSearchPins` merges legacy standalone pins, and
 `saveSearchPins` clears the old copies only after a successful shared save. Workspace
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
