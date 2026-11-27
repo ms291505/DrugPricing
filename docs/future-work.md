@@ -25,7 +25,7 @@ normalized name and labeler code and caches the list. The client matches typed t
 in memory, misspellings included ("pfeizer" → Pfizer), and the search sends labeler codes.
 Matching runs in the client, which has the unit tests and keeps typed text in the browser.
 
-Size: medium. Two PRs (the filters, client only; then the labeler search).
+Size: medium. Two PRs (the filters, client only; then the labeler search, after the result cap).
 
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 

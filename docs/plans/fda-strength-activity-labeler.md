@@ -52,7 +52,12 @@ server and the client.
 - Labeler-only searches stay well under the 200,000-row cap from
   [search-result-cap.md](search-result-cap.md) over the default 12 months: Aurobindo Pharma
   Limited, the largest, is 2,779 packages and 55,790 price rows; Teva Pharmaceuticals USA,
-  33,876. Over all dates, the largest would be refused, which is the cap working as intended.
+  33,876. Over all dates, Aurobindo is 223,609 price rows and would be refused. So **the
+  result cap must ship before the labeler search** (see PRs): without it, an all-dates
+  labeler search loads and serializes every row (about 110 MB of JSON for Aurobindo).
+- The labeler groups with the most codes: Par Health USA 13, Sun Pharmaceutical Industries
+  11, Teva Pharmaceuticals USA 10, Takeda 9, Amneal 8, Pfizer Laboratories and Allergan 7.
+  The ten largest add up to 83, so a limit on picks doesn't bound the codes a search sends.
 
 ### Fuzzy matching
 
@@ -198,6 +203,9 @@ tell them apart. A change from $0 is a rise.
   - `Name`: the spelling with the most products.
   - `Codes`: sorted.
   - `Spellings`: the other normalized spellings, for matching. Only the display name is shown.
+  - `ProductCount`: the sum of its rows' `ProductCount`. Each product has one labeler name
+    and one code, so it falls in exactly one row and the sum counts it once. The matcher
+    breaks ties on it.
   - `HasRx`, `HasPrices`, `HasRxPrices`: ORed over the group.
 - **Normalization** (written once, mirrored in the client's matcher, each with a comment
   pointing at the other): lower case; delete `'`, `’`, `` ` ``, `\u0092` and `¿` (so
@@ -218,10 +226,18 @@ tell them apart. A change from $0 is a rise.
   Codes are digits only, so they need no `LikePattern` escaping; that's why validation
   insists on digits.
 - Validation (`FdaProductService`): each code is 4 to 6 digits (FDA's planned 12-digit NDC
-  gives labelers 6), at most 50 codes. A request is valid with a brand or generic name of at
-  least 5 characters, **or** at least one labeler code. The error message becomes "No valid
-  brand name, generic name, or labeler was provided."
-- When the cap plan lands first, its row count covers labeler searches with no change.
+  gives labelers 6), and a request has at most `SearchLimits.MaxLabelerCodes` = 100 distinct
+  codes (in `server/Constants/`, beside the cap's `MaxRows`). That fits ten of the largest
+  groups (83 codes), and a `LIKE ANY` over 100 patterns against 115K products is still cheap
+  (check it in the EF log's timing). The client mirrors the constant
+  (`MAX_LABELER_CODES` in `library/constants.ts`); add it to AGENTS.md's duplicated-limits
+  convention. A request is valid with a brand or generic name of at least 5 characters,
+  **or** at least one labeler code. The error message becomes "No valid brand name, generic
+  name, or labeler was provided."
+- **Requires the result cap** ([search-result-cap.md](search-result-cap.md)). Its bounded
+  count runs on the same product query, so the labeler filter must be applied before the
+  count, not only to the loaded rows. Then an oversized labeler search is refused with the
+  cap's 422 before any price rows load.
 
 ### 5. Labeler field (client)
 
@@ -242,7 +258,8 @@ tell them apart. A change from $0 is a rise.
     more. Also in tier 4, the term with its spaces removed matches 2 or 3 adjacent words joined
     ("glaxo smith kline" → "glaxosmithkline"). A fuzzy prefix match costs half a point more
     than a whole-word one, so "merk" ranks Merck above Marketing.
-  - Within a tier: lower cost, then more products, then name. At most 20 matches.
+  - Within a tier: lower cost, then larger `productCount`, then name. At most 20 matches,
+    cut after sorting.
   - Each match says which spelling matched, so an option can show "Listed as Rexall" when
     that isn't the display name.
   - The index maps each word, and each join of 2 or 3 adjacent words, to its groups (about
@@ -252,7 +269,9 @@ tell them apart. A change from $0 is a rise.
   - Tests: the table under "Fuzzy matching" as fixtures (a trimmed list built from the real
     names), the Dr. Reddy's spellings all normalizing alike, the tier order, the flags,
     "fosun" not matching "sun" in tier 2, and the word-start flag the hint reads ("pfizer":
-    true; "shire" and "pfeizer": false).
+    true; "shire" and "pfeizer": false). A tie-break test: 21 groups in one tier at the same
+    cost, where only `productCount` separates the 20th and 21st, and the cut keeps the larger.
+    `labelerCodeCount` counts a code shared by two picks once.
 - `hooks/useFdaLabelers.ts`: `useQuery(["fdaLabelers"], getFdaLabelers)`, `enabled` only once
   the field has been focused, `staleTime: Infinity` for the session, and the index built in a
   `useMemo` on the data. A restored tab shows its chips from the stored names without fetching.
@@ -266,13 +285,22 @@ tell them apart. A change from $0 is a rise.
   - `fdaSearchLabel`, `fdaResultsLabel`, and `fdaTabTitle` add the labeler: the first name,
     plus "+2" for more ("ELIQUIS / TEVA PHARMACEUTICALS USA, INC. +1").
 - `persist.ts`: read `labelers` field by field (a name string and codes of digits), default
-  `[]`; legacy tabs get `[]`.
+  `[]`; legacy tabs get `[]`. Keep picks in their stored order while the distinct codes stay
+  within `MAX_LABELER_CODES`, and drop the rest. A pick stores its codes, so a saved tab
+  passes the limit unless the constant is lowered or the stored value was edited; dropping
+  keeps the restored search valid instead of a 400 on load. Test it in `persist.test.ts`.
 - `Components/SearchPanel/LabelerField.tsx`: MUI `Autocomplete` with `multiple`, not `freeSolo`
   (a labeler must be picked from the list), `filterOptions={x => x}` (the matcher filters),
   options grouped by match tier ("Matches" for tiers 1–3, "Did you mean" for 4, the
   autocomplete plan's wording), chips for the picks, `limitTags` on narrow layouts, and the
-  panel's own `TextField` sizes. Ten picks at most. The input clears on blur, so unpicked text
-  never waits silently. MUI provides the combobox ARIA and the chips' keyboard removal.
+  panel's own `TextField` sizes. The input clears on blur, so unpicked text never waits
+  silently. MUI provides the combobox ARIA and the chips' keyboard removal.
+- **The code limit, not a pick limit.** `labelerCodeCount(choices)` (in `labelers.ts`,
+  tested) counts the distinct codes of the picks. An option that would take the count past
+  `MAX_LABELER_CODES` is disabled (`getOptionDisabled`), and while any option is disabled
+  for that reason, a line under the field reads "Too many labelers to search at once. Remove
+  one to add another." Users never see the word "code": it isn't theirs. The line is in an
+  always-mounted `role="status"` element, so a screen reader hears it when it appears.
 - **When the company isn't found.** A labeler is the company that registered the NDC, so a
   parent company's products can be under a subsidiary's name, and the matcher can't know that
   (see "Labelers" under the facts). Two notes point to the brand-name search, which shows the
@@ -311,7 +339,8 @@ tell them apart. A change from $0 is a rise.
 - AGENTS.md: the labelers endpoint in the API list; labeler groups (normalization, union by
   code, cached list, client-side matching, the mirrored normalization); the labeler search's
   codes; the activity filter's "category is what the row says" rule, and that it filters
-  packages; the shared search-validity rule now includes labelers.
+  packages; the shared search-validity rule now includes labelers; `MaxLabelerCodes` /
+  `MAX_LABELER_CODES` in the duplicated-limits convention.
 - Help: [filters-and-hidden-results.md](../../client/src/content/help/filters-and-hidden-results.md)
   (Strength, Price activity, the renamed list),
   [the-fda-directory.md](../../client/src/content/help/the-fda-directory.md) and the Searching
@@ -330,10 +359,12 @@ tell them apart. A change from $0 is a rise.
 
 ## PRs
 
-Feature branches off `dev`, PRs into `dev`. Two PRs, which don't depend on each other:
+Feature branches off `dev`, PRs into `dev`. Two PRs:
 
-1. **Strength and Price activity filters** (client only, sections 1–2).
-2. **Labeler search** (sections 3–5): server list and search, then the client field.
+1. **Strength and Price activity filters** (client only, sections 1–2). No dependencies.
+2. **Labeler search** (sections 3–5): server list and search, then the client field. It
+   starts only after the [result cap](search-result-cap.md) PR has merged into `dev`, since a
+   labeler alone can ask for more rows than the cap allows. It doesn't depend on PR 1.
 
 Docs go with the PR they describe.
 
@@ -345,8 +376,12 @@ Docs go with the PR they describe.
   call is served from cache (time both). Check the response size with and without
   `Accept-Encoding: gzip`.
 - curl the search with `labelerCodes: ["0013"]` and no name (Pfizer products only); with a name
-  plus a labeler (both narrow it); with `"13a"` or 51 codes (400); and with no name or labeler
-  (400). In the EF log, confirm the generated SQL uses `LIKE ANY`.
+  plus a labeler (both narrow it); with `"13a"` or 101 distinct codes (400), and 100 (200);
+  and with no name or labeler (400). In the EF log, confirm the generated SQL uses `LIKE ANY`
+  and the count query has the labeler filter.
+- curl Aurobindo's codes with no dates (all dates, 223,609 price rows): the cap's 422, with no
+  price rows loaded (the EF log shows only the bounded count). With the default 12 months, it
+  returns results.
 - Chrome on the dev workspace, desktop and about 390 px wide:
   - Type "pfeizer" in Labeler; Pfizer labelers show under "Did you mean". Pick two, press
     Search, and the tab title and results heading name the first plus "+1".
@@ -354,6 +389,10 @@ Docs go with the PR they describe.
   - Reload, and the restored tab shows its chips and searches without fetching the labeler
     list until the field is focused.
   - Clear search clears the chips.
+  - Pick the labelers with the most codes (Par Health, Sun, Teva, Takeda, Amneal, and so on)
+    until the "Too many labelers" line shows: options that would pass 100 codes are disabled,
+    and removing a chip enables them again. Then edit the stored tab in DevTools to hold more
+    than 100 codes, reload, and the tab keeps the first picks that fit.
   - Strength on FDA generic "metformin" lists 500 mg/1 before 1000 mg/1. Excluding all but
     one shows only that strength. A new search clears it.
   - Price activity with only Dropped checked: every package row's activity starts with
