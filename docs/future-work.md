@@ -5,16 +5,6 @@ it ships. The code and pull request preserve the implementation history.
 
 ## Decided
 
-### Search result cap and search input hardening (2026-11-27)
-
-Plan: [docs/plans/search-result-cap.md](plans/search-result-cap.md). Every search counts its
-rows first and refuses past 200,000 with a 422 that the page shows as a "narrow your search"
-notice. The server also validates the NDC (`ValidateNdc` is wired in), deletes the unused FDA
-name search endpoint, gives the memory cache a `SizeLimit`, and passes cancellation through,
-and the client stops retrying 4xx answers. Rate limiting stays with Cloudflare.
-
-Size: medium. One PR (server, client, Help, AGENTS.md).
-
 ### Search autocomplete with misspelling suggestions (2026-11-02)
 
 Plan: [docs/plans/autocomplete.md](plans/autocomplete.md). Suggestions as the user types in the NADAC
