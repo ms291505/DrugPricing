@@ -32,7 +32,7 @@ export default function WorkspaceDrawer() {
           paper: { elevation: 0 }
         }}
       >
-        <DrawerContent />
+        <DrawerContent inMobileDrawer />
       </Drawer>
 
       {/* Desktop Version */}

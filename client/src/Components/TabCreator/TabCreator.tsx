@@ -4,6 +4,7 @@ import { useTabInstanceContext } from "../../Context/TabInstanceContext";
 import useMobile from "../../hooks/useMobile";
 import type { DescriptionCardProps } from "../TabCreator/DescriptionCard";
 import DescriptionCard from "../TabCreator/DescriptionCard";
+import { FreshWorkspaceNote } from "../StorageNotes";
 
 export default function TabCreator() {
 
@@ -70,6 +71,7 @@ export default function TabCreator() {
       >
         {question}
       </Typography>
+      <FreshWorkspaceNote sx={{ maxWidth: "36em", px: 2 }} />
       <Box
         sx={boxSx}
       >

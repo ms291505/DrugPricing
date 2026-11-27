@@ -24,6 +24,12 @@ const resolve = <T,>(value: SetStateAction<T>, prev: T) =>
  * or `fallbackId` (the new tab that replaces it) if it was the only one. The reducer gives it the
  * closed tab's pane, and the drawer moves keyboard focus to its row. Null for a missing tab.
  */
+/**
+ * A workspace that holds nothing yet: a single blank tab, as on a first visit, after Clear
+ * workspace, or after closing every tab. Derived from the tabs, so nothing more is stored.
+ */
+export const isFreshWorkspace = (tabs: readonly WorkspaceTab[]) => tabs.length === 1 && tabs[0].type === "new";
+
 export function replacementTabId(tabs: WorkspaceTab[], id: string, fallbackId: string): string | null {
   const idx = tabs.findIndex(t => t.id === id);
   if (idx < 0) return null;

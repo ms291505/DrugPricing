@@ -5,9 +5,10 @@ import DrawerTab from "./DrawerTab.tsx";
 import TabButton from "./TabButton.tsx";
 import WhiteSpaceToolBar from "../ui/WhiteSpaceToolBar.tsx";
 import ConfirmButton from "../ui/ConfirmButton.tsx";
+import { WorkspaceMenuNote } from "../StorageNotes";
 
 /** `inMobileDrawer`: rendered in the phone drawer, which closes when a modal opens. */
-export default function DrawerContent() {
+export default function DrawerContent({ inMobileDrawer = false }: { inMobileDrawer?: boolean }) {
   const { addTab, clearWorkspace, setPaneAssigment, setMobileDrawerIsOpen, } = useWorkspaceActions();
 
   const closeMobileDrawer = () => setMobileDrawerIsOpen(false);
@@ -36,14 +37,16 @@ export default function DrawerContent() {
           minHeight: 0,
         }}
       >
-        <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} />
+        <DrawerTabList onAddTab={onClick} onClearWorkspace={onClearWorkspace} inMobileDrawer={inMobileDrawer} />
       </Box>
     </>
   )
 }
 
 // Only the tab list reads the panes, so a tab switch doesn't re-render the rest of the drawer.
-function DrawerTabList({ onAddTab, onClearWorkspace }: { onAddTab: () => void, onClearWorkspace: () => void }) {
+function DrawerTabList({ onAddTab, onClearWorkspace, inMobileDrawer }: {
+  onAddTab: () => void, onClearWorkspace: () => void, inMobileDrawer: boolean,
+}) {
   const tabs = useWorkspaceTabs();
   const { paneAssignment } = useWorkspacePanes();
   const { removeTab } = useWorkspaceActions();
@@ -92,6 +95,8 @@ function DrawerTabList({ onAddTab, onClearWorkspace }: { onAddTab: () => void, o
         />
       ))}
       <TabButton onClick={onAddTab} />
+      {/* Directly above Clear workspace, so the way to delete what it describes is right there. */}
+      <WorkspaceMenuNote inMobileDrawer={inMobileDrawer} />
       <ConfirmButton
         color="error"
         label="Clear workspace"
