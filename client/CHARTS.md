@@ -114,8 +114,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   level that is the *product* NDC, so several packages share a series and can disagree on a date:
   `seriesByDate` (`library/prices.ts`) averages them per date, and `createLineVizData` draws that
   average and keeps the packages' min–max as `rangeKey(ndc)`.
-- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and prominently labels each
-  chart with its unit. Unit charts share one date axis.
+- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit`. Unit charts share
+  one date axis. A card's title gives its currency and unit ("USD per mL", below); where it
+  doesn't (older pins, mixed-unit ones among them, and titles the user chose), `UnitSplit` puts
+  that heading above each unit's chart instead (`titleNamesUnit`).
 - New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
 - Added charts (`AddedChartCards`): each press of Line or Bar in the results toolbar adds a chart
@@ -127,9 +129,11 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and names hidden ones. An add past `CHART_SERIES_WARNING` (8) toasts a warning (`ChartControl`).
   A new card neither scrolls nor takes focus: the status line reports it (`ResultsReport`), and
   its Show scrolls to the card (`data-added-chart`) and focuses its heading only from the keyboard.
-- Titles come from `chartTitles.ts`: the title names the search or individual series.
-  The subtitle gives the series count and dates. The change chart dialog names the event date
-  and package. The figure heading shows the currency and unit.
+- Titles come from `chartTitles.ts`: the title names the search, or the one series by its own
+  label, and the currency and unit ("Humira · USD per mL"), so the cards a search splits into by
+  unit differ by their headings; the subtitle gives the count and dates. Line and bar charts of
+  the same rows share a title. The change chart dialog's title names the event date, package
+  and unit. A title the user chose is kept as typed.
 
 ## Axes and labels
 
@@ -227,9 +231,9 @@ re-renders only the readout, not the chart.
 ## Accessibility
 
 - Each unit chart's SVG keeps recharts' `role="application"` (never `role="img"`, which broke its
-  name and arrow keys), with `aria-label` "<title>, USD per <unit>" and `aria-describedby` to a
-  hidden summary (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts'
-  store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts); Enter or Space also
+  name and arrow keys), with `aria-label` "<title>, USD per <unit>", or just the title when it
+  gives the unit (`unitChartLabel`), and `aria-describedby` to a hidden summary
+  (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts' store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts); Enter or Space also
   lock the readout and Esc unlocks it.
 - `useChartReadout`: a hidden `role="status"` region, present and empty from the first render,
   speaks the active point 300ms after the last key while the SVG has focus; pointer movement
@@ -243,7 +247,8 @@ re-renders only the readout, not the chart.
 dates: line rows are the drawn per-date values, bar rows the `summarizePrices` rows. The table
 shows a range only when its ends print differently. The CSV (`chartCsv.ts`) keeps every range,
 uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards text fields against
-formula injection.
+formula injection. Its file name (`csvFileName`) is the title's slug, the chart type and the
+dates, so a search's unit cards, and its line and bar charts, save under different names.
 
 ## Animations
 

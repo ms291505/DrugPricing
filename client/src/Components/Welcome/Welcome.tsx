@@ -20,6 +20,7 @@ export default function Welcome() {
             <Button variant="contained" size="large" component={RouterLink} to="/search" sx={{ px: 4 }}>Find a drug</Button>
             <Button variant="outlined" size="large" component={RouterLink} to="/workspace" sx={{ px: 4 }}>Open workspace</Button>
           </Box>
+          {/* Secondary, under the two ways in, for visitors who want to know who made this and how. */}
           <Button component={RouterLink} to="/about" sx={{ minHeight: 44 }}>About this project</Button>
         </Stack>
       </Paper>
@@ -44,6 +45,7 @@ export default function Welcome() {
         <Divider sx={{ mb: 2 }} />
         <Stack direction="row" spacing={3} useFlexGap flexWrap="wrap" sx={{ mt: 1.5, typography: "body2" }}>
           <Link component="button" onClick={() => openHelp("sources-and-disclaimer")} sx={{ typography: "body2" }}>Sources and disclaimer</Link>
+          <Link component={RouterLink} to="/about">About this project</Link>
         </Stack>
       </Box>
     </Stack>

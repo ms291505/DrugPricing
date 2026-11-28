@@ -356,13 +356,15 @@ export function fitsPinLimit(item: PriceChangeListItem): boolean {
   return JSON.stringify(item).length <= PRICE_CHANGE_LIST_PIN_LIMIT;
 }
 
-/** New cards contain one pricing unit; legacy mixed-unit snapshots still render with UnitSplit. */
-export function createChartItems(options: NewChartItem, titleForPrices?: (prices: ChartPrice[]) => string): ChartItem[] {
-  const groups = splitByPricingUnit(options.prices);
-  return groups.map(({ nadacPrices }) => createChartItem({
+/**
+ * New cards contain one pricing unit, each titled from its own prices (`chartTitle` names the
+ * unit); legacy mixed-unit snapshots still render with UnitSplit.
+ */
+export function createChartItems(options: Omit<NewChartItem, "defaultTitle">, titleForPrices: (prices: ChartPrice[]) => string): ChartItem[] {
+  return splitByPricingUnit(options.prices).map(({ nadacPrices }) => createChartItem({
     ...options,
     prices: nadacPrices,
-    defaultTitle: titleForPrices?.(nadacPrices) ?? options.defaultTitle,
+    defaultTitle: titleForPrices(nadacPrices),
   }));
 }
 

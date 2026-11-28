@@ -16,6 +16,10 @@ import { isStorageReadOnly, type PersistedSearchTab } from "../../library/persis
 
 const SAVES = "Saves this search and its pins in this browser, in a new workspace tab.";
 
+/**
+ * The action is rendered in its standalone source's search panel, inside the source providers.
+ * The button shows once a search has been run. Nothing renders while the page is hidden.
+ */
 function AddSearchToWorkspace({ state, dates, title, status }: {
   state: PersistedSearchTab, dates: DateWindow | undefined, title: string, status: "idle" | "pending" | "ready",
 }) {
@@ -24,17 +28,17 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
   const readOnly = useWorkspaceReadOnly();
   const visible = usePageVisible();
   const navigate = useNavigate();
-  const reason = readOnly ? "Reload to use the workspace changed in another window."
-    : status !== "ready" ? "Load a search successfully before adding it to Workspace." : "";
+  const reason = readOnly ? "Reload to use the workspace changed in another browser tab or window."
+    : status !== "ready" ? "Load a search successfully before adding it to your workspace." : "";
   if (!visible || status === "idle") return null;
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: 1, minWidth: 0 }}>
+    <Box sx={{ display: "flex", alignItems: "center", ml: "auto", minWidth: 0 }}>
       {/* `hidden` text is still read through aria-describedby, and only there. The tooltip
           describes its wrapper only while open (`describeChild`), so nothing is read twice. */}
       <span id={descriptionId} hidden>{reason || SAVES}</span>
       <Tooltip title={reason || SAVES} describeChild>
         <span>
-          <Button type="button" variant="outlined" size="small" sx={{ minHeight: { xs: 44, sm: 32 } }} disabled={status !== "ready" || readOnly}
+          <Button type="button" variant="outlined" size="small" disabled={status !== "ready" || readOnly}
             aria-describedby={descriptionId}
             onClick={event => {
               if (event.detail > 1 || !dates || isStorageReadOnly()) return;

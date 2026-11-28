@@ -1,10 +1,12 @@
 import { SERIES_KIND_LABELS, type ChartType, type SeriesKind } from "./explorerItems";
 import { clipToWindow, dateBounds, formatDate, formatWindow, type DateWindow } from "./dates";
+import { pricingUnitLabel } from "./prices";
 import type { ChartPrice } from "./types";
 
 /*
  * Chart titles are generated from the data: the title says what is common to the series (the
- * search or the individual series), the legend says what differs.
+ * search, and the pricing unit that sets its card apart), the subtitle how many and over which
+ * dates, and the legend what differs.
  */
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -15,10 +17,29 @@ export function seriesCountLabel(count: number, seriesKind: SeriesKind): string 
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-/** Use the series name for a single series and the search name for a comparison. */
-export function chartTitle(searchLabel: string, seriesLabels: string[]): string {
-  return seriesLabels.length === 1 ? seriesLabels[0] : capitalize(searchLabel);
+/** "USD per mL": the currency and pricing unit of a chart's prices. */
+export const unitHeading = (pricingUnit: string) => `USD per ${pricingUnitLabel(pricingUnit)}`;
+
+/**
+ * "Humira · USD per mL", for a card of one pricing unit's series, so that the cards a search
+ * splits into by unit differ by their headings. One series is named by its own label instead:
+ * "HUMIRA KIT 40 mg · USD per each". Without a unit (a card whose units are all hidden), just
+ * the name.
+ */
+export function chartTitle(searchLabel: string, seriesLabels: string[], pricingUnit?: string): string {
+  const subject = seriesLabels.length === 1 ? seriesLabels[0] : capitalize(searchLabel);
+  return pricingUnit === undefined ? subject : `${subject} · ${unitHeading(pricingUnit)}`;
 }
+
+/**
+ * Whether a chart's title already gives its currency and unit, as generated titles do. Older pins
+ * and titles the user chose may not; their charts say it themselves (`UnitSplit`).
+ */
+export const titleNamesUnit = (title: string, pricingUnit: string) => title.includes(unitHeading(pricingUnit));
+
+/** A unit chart's accessible name: its title, with the currency and unit unless the title gives them. */
+export const unitChartLabel = (title: string, pricingUnit: string) =>
+  titleNamesUnit(title, pricingUnit) ? title : `${title}, ${unitHeading(pricingUnit)}`;
 
 /** One label per series (NDC), in order of appearance. */
 export function seriesLabels(prices: ChartPrice[]): string[] {
@@ -64,6 +85,6 @@ export const hiddenSeriesNote = (hiddenCount: number) => hiddenCount > 0 ? `${hi
 export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
   `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
 
-/** "Price change · Oct 21, 2026 · 3089321": a package's Chart this change card. */
-export const eventChartTitle = (date: number, packageNdc: string) =>
-  `Price change · ${formatDate(date)} · ${packageNdc}`;
+/** "Price change · Oct 21, 2026 · 3089321 · USD per each": a package's Chart this change card. */
+export const eventChartTitle = (date: number, packageNdc: string, pricingUnit: string) =>
+  `Price change · ${formatDate(date)} · ${packageNdc} · ${unitHeading(pricingUnit)}`;

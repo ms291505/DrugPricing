@@ -74,9 +74,16 @@ describe("barDataRows / barCsv", () => {
 });
 
 describe("csvFileName", () => {
-  it("slugs the title and adds the dates", () => {
-    expect(csvFileName("-43.0% on Jan 14, 2026 · 0003-0893-21", Date.parse("2025-10-08"), Date.parse("2026-04-08")))
-      .toBe("43-0-on-jan-14-2026-0003-0893-21_2025-10-08_2026-04-08.csv");
-    expect(csvFileName("···", 0, 0)).toBe("chart_1970-01-01_1970-01-01.csv");
+  it("slugs the title and adds the chart type and the dates", () => {
+    expect(csvFileName("-43.0% on Jan 14, 2026 · 0003-0893-21", "line", Date.parse("2025-10-08"), Date.parse("2026-04-08")))
+      .toBe("43-0-on-jan-14-2026-0003-0893-21_line_2025-10-08_2026-04-08.csv");
+    expect(csvFileName("···", "bar", 0, 0)).toBe("chart_bar_1970-01-01_1970-01-01.csv");
+  });
+
+  it("names a search's unit cards and chart types apart", () => {
+    const names = ["Humira · USD per each", "Humira · USD per mL"]
+      .flatMap(title => (["line", "bar"] as const).map(chartType => csvFileName(title, chartType, 0, 0)));
+    expect(new Set(names).size).toBe(4);
+    expect(names[2]).toBe("humira-usd-per-ml_line_1970-01-01_1970-01-01.csv");
   });
 });

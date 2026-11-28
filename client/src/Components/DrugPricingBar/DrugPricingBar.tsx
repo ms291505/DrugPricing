@@ -52,6 +52,7 @@ export default function DrugPricingBar() {
           gridTemplateColumns: { xs: "auto minmax(0, 1fr) auto", md: "1fr auto 1fr" },
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
+          // The links' current page: primary and underlined. Home, an icon, is primary alone.
           "& .MuiButton-root.active": {
             color: "primary.main",
             fontWeight: "bold",

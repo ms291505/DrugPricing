@@ -6,6 +6,7 @@ import { type ChartPrice, } from "../../library/types.ts";
 import { ComposedChart, Line, Area, XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine, } from "recharts";
 import { averagedLineCaption, createLineVizData, rangeKey, visibleBandNdcs, type LineVizRow } from "../../library/createLineVizData.ts";
 import { pricingUnitLabel } from "../../library/prices.ts";
+import { unitChartLabel } from "../../library/chartTitles.ts";
 import { dateTicks, formatPrice, formatPriceLabel, linePriceAxis, priceTickFormatter } from "../../library/chartScale.ts";
 import UnitSplit from "./UnitSplit.tsx";
 import { lineChartSummary } from "../../library/chartSummary.ts";
@@ -67,6 +68,7 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <UnitSplit
         nadacPrices={nadacPrices}
+        title={title}
         dateWindow={dateWindow}
         renderChart={(unitPrices, pricingUnit) => (
           <UnitLineChart
@@ -87,7 +89,7 @@ export default function LineViz({ nadacPrices, title, colors, dateWindow = FULL_
         )}
       />
       {bounds
-        ? <ChartData title={title} bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
+        ? <ChartData title={title} chartType="line" bounds={bounds} toCsv={() => lineCsv(lineDataRows(nadacPrices, dateWindow))}>
           <LineDataTable prices={nadacPrices} dateWindow={dateWindow} bounds={bounds} />
         </ChartData>
         : null}
@@ -206,7 +208,7 @@ function UnitLineChart({ nadacPrices, pricingUnit, title, colors, hidden, onTogg
           style={{ width: "100%", aspectRatio: isMobile ? "4 / 3" : "16 / 9", minHeight: 220, maxHeight: 420 }}
           responsive
           // Recharts makes the SVG a focusable `role="application"`, which passes arrow keys through.
-          aria-label={`${title}, USD per ${unit}`}
+          aria-label={unitChartLabel(title, pricingUnit)}
           aria-describedby={descriptionId}
         >
           <XAxis

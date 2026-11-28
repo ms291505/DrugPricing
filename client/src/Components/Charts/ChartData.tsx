@@ -11,11 +11,13 @@ import { pricingUnitLabel } from "../../library/prices";
 import { distinctRange, formatPrice } from "../../library/chartScale";
 import useMobile from "../../hooks/useMobile";
 import { formatDate, type DateBounds, type DateWindow } from "../../library/dates";
-import type { BarValue } from "../../library/explorerItems";
+import type { BarValue, ChartType } from "../../library/explorerItems";
 import type { ChartPrice } from "../../library/types";
 
 type Props = {
   title: string,
+  /** In the file name, so a search's line and bar charts don't share one. */
+  chartType: ChartType,
   /** First and last date shown, for the file name. */
   bounds: DateBounds,
   toCsv: () => string,
@@ -24,7 +26,7 @@ type Props = {
 }
 
 /** "View data" and "Download CSV" under a chart. The table opens inline as a disclosure. */
-export default function ChartData({ title, bounds, toCsv, children }: Props) {
+export default function ChartData({ title, chartType, bounds, toCsv, children }: Props) {
   const [open, setOpen] = useState(false);
   const tableId = useId();
   return (
@@ -43,7 +45,7 @@ export default function ChartData({ title, bounds, toCsv, children }: Props) {
         <Button
           size="small"
           startIcon={<FileDownloadOutlinedIcon />}
-          onClick={() => downloadCsv(csvFileName(title, bounds.first, bounds.last), toCsv())}
+          onClick={() => downloadCsv(csvFileName(title, chartType, bounds.first, bounds.last), toCsv())}
         >
           Download CSV
         </Button>

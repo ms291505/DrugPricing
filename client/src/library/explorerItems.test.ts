@@ -159,12 +159,12 @@ describe("createChartItem colors and bar value", () => {
 describe("createChartItems", () => {
   it("splits units without losing colors, history, dates or provenance", () => {
     const mixed = [...packageA1, ...series("A", 20, "milliliter"), ...productB];
-    const items = createChartItems({ chartType: "line", prices: mixed, defaultTitle: "Compare",
+    const items = createChartItems({ chartType: "line", prices: mixed,
       origin: { ...origin, resultPrices: [...mixed, ...series("C", 8)] }, dateWindow: FULL_WINDOW,
-      colors: new Map([["A", "series-a"], ["B", "series-b"]]) });
+      colors: new Map([["A", "series-a"], ["B", "series-b"]]) }, prices => `Compare ${prices[0].pricingUnit}`);
     expect(items).toHaveLength(2);
     expect(items.map(item => new Set(item.series.map(s => s.unit)).size)).toEqual([1, 1]);
-    expect(items.map(item => item.defaultTitle)).toEqual(["Compare", "Compare"]);
+    expect(items.map(item => item.defaultTitle)).toEqual(["Compare each", "Compare milliliter"]);
     expect(items.map(item => item.source)).toEqual([
       { searchLabel: "humira", seriesKind: "product",
         seriesCount: 2, resultSeriesCount: 3, filtered: false },
@@ -175,22 +175,22 @@ describe("createChartItems", () => {
     expect(items[0].id).not.toBe(items[1].id);
   });
 
-  it("keeps a single-unit title and identifies genuinely filtered packages", () => {
-    const [item] = createChartItems({ chartType: "bar", prices: packageA1, defaultTitle: "Compare",
-      origin, dateWindow: FULL_WINDOW, barValue: "average" });
+  it("titles a single-unit card and identifies genuinely filtered packages", () => {
+    const [item] = createChartItems({ chartType: "bar", prices: packageA1,
+      origin, dateWindow: FULL_WINDOW, barValue: "average" }, () => "Compare");
     expect(item.defaultTitle).toBe("Compare");
     expect(item.source.filtered).toBe(true);
     expect(item.barValue).toBe("average");
   });
   it("generates titles from each unit's series rather than the whole selection", () => {
     const items = createChartItems({ chartType: "line", prices: [...productB, ...packageA1, ...series("C", 20, "milliliter"), ...series("D", 10, "milliliter"), ...series("E", 5, "milliliter")],
-      defaultTitle: "5 products", origin, dateWindow: FULL_WINDOW },
-    prices => chartTitle("test", seriesLabels(prices)));
-    expect(items.map(item => item.defaultTitle)).toEqual(["Test", "Test"]);
+      origin, dateWindow: FULL_WINDOW },
+    prices => chartTitle("test", seriesLabels(prices), prices[0].pricingUnit));
+    expect(items.map(item => item.defaultTitle)).toEqual(["Test · USD per each", "Test · USD per mL"]);
   });
 
   it("does not create empty cards", () => {
-    expect(createChartItems({ chartType: "line", prices: [], defaultTitle: "Compare", origin, dateWindow: FULL_WINDOW })).toEqual([]);
+    expect(createChartItems({ chartType: "line", prices: [], origin, dateWindow: FULL_WINDOW }, () => "Compare")).toEqual([]);
   });
 });
 

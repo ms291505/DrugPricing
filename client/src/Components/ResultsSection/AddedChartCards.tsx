@@ -65,6 +65,7 @@ function AddedChartCard({ source, chart, onClose }: {
   return openGroups.map(group => (
     <UnitChart key={group.pricingUnit} chart={chart}
       source={{ ...source, prices: group.nadacPrices }}
+      pricingUnit={group.pricingUnit}
       hiddenCount={hiddenCount}
       onClose={close(group.pricingUnit)}
     />
@@ -74,13 +75,13 @@ function AddedChartCard({ source, chart, onClose }: {
 type CloseHandler = (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => void;
 
 /** One pricing unit's card of an added chart. */
-function UnitChart({ chart, source, hiddenCount, onClose }: {
-  chart: AddedChart, source: ChartSource, hiddenCount: number, onClose: CloseHandler,
+function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
+  chart: AddedChart, source: ChartSource, pricingUnit: string, hiddenCount: number, onClose: CloseHandler,
 }) {
   const { prices, loadedPrices, origin, colors, dateWindow } = source;
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
-  const title = chartTitle(origin.searchLabel, labels);
+  const title = chartTitle(origin.searchLabel, labels, pricingUnit);
   const subtitle = [chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices), hiddenSeriesNote(hiddenCount)]
     .filter(Boolean).join(" · ");
   return (

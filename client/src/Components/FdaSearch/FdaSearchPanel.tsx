@@ -12,18 +12,28 @@ import { activityCategoryLabel, isActivityCategory } from "../../library/priceAc
 import { includeLabel } from "../../library/searchToasts";
 import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
 
-/** The "More filters" lists, in order. */
-const LISTS: { key: FdaListKey, label: string, noun: string, optionLabel?: (value: string) => string }[] = [
-  { key: "excludedProductNdcs", label: "Product NDC", noun: "products" },
-  { key: "excludedDosageForms", label: "Dosage form", noun: "dosage forms" },
-  { key: "excludedStrengths", label: "Strength", noun: "strengths" },
-  { key: "excludedRoutes", label: "Route", noun: "routes" },
-  // Not "Labeler": that's the search field's name, and two controls shouldn't share one.
-  { key: "excludedLabelers", label: "Labeler in results", noun: "labelers" },
-];
-const PRICING_LISTS: typeof LISTS = [
-  { key: "excludedActivities", label: "Price activity", noun: "activity types", optionLabel: activityCategoryLabel },
-  { key: "excludedUnits", label: "Pricing unit", noun: "units" },
+type ListField = { key: FdaListKey, label: string, noun: string, optionLabel?: (value: string) => string };
+
+/** The "More filters" groups and their from-results lists, in order. */
+const LIST_GROUPS: { label: string, lists: ListField[] }[] = [
+  {
+    label: "Drug details",
+    lists: [
+      { key: "excludedProductNdcs", label: "Product NDC", noun: "products" },
+      { key: "excludedDosageForms", label: "Dosage form", noun: "dosage forms" },
+      { key: "excludedStrengths", label: "Strength", noun: "strengths" },
+      { key: "excludedRoutes", label: "Route", noun: "routes" },
+      // Not "Labeler": that's the search field's name, and two controls shouldn't share one.
+      { key: "excludedLabelers", label: "Labeler in results", noun: "labelers" },
+    ],
+  },
+  {
+    label: "Pricing",
+    lists: [
+      { key: "excludedActivities", label: "Price activity", noun: "activity types", optionLabel: activityCategoryLabel },
+      { key: "excludedUnits", label: "Pricing unit", noun: "units" },
+    ],
+  },
 ];
 
 /** The criteria with a list's exclusions set. Price activity's values are its categories. */
@@ -115,17 +125,20 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
         onChange: checked => setCriteria(prev => ({ ...prev, [key]: checked })),
         hiddenCount: view.hidden.byInclude[key] ?? 0,
       }))}
-      moreFilters={[{ label: "Drug details", lists: LISTS }, { label: "Pricing", lists: PRICING_LISTS }].map(({ label, lists }) => ({ label, fields: lists.map(({ key, label, noun, optionLabel }) => (
-        <ExclusionSelect
-          key={key}
-          label={label}
-          noun={noun}
-          options={view.options[key]}
-          optionLabel={optionLabel}
-          excluded={criteria[key]}
-          onChange={excluded => setCriteria(prev => withExcluded(prev, key, excluded))}
-        />
-      )) }))}
+      moreFilters={LIST_GROUPS.map(group => ({
+        label: group.label,
+        fields: group.lists.map(({ key, label, noun, optionLabel }) => (
+          <ExclusionSelect
+            key={key}
+            label={label}
+            noun={noun}
+            options={view.options[key]}
+            optionLabel={optionLabel}
+            excluded={criteria[key]}
+            onChange={excluded => setCriteria(prev => withExcluded(prev, key, excluded))}
+          />
+        )),
+      }))}
       moreFilterCount={exclusionCount(criteria, FDA_LIST_KEYS)}
       canClear={fdaActiveFilterCount(criteria) > 0}
       onClear={() => setCriteria(clearFdaRefine)}

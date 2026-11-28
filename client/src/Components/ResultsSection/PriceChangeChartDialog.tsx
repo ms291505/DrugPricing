@@ -15,7 +15,7 @@ import PinButton from "../ExplorerGrid/PinButton";
 export type OpenChange = {
   /** The change's event key (`PriceChangeListBody`). */
   key: string,
-  /** `eventChartTitle`: the date and package NDC. Names the dialog. */
+  /** `eventChartTitle`: the date, package NDC and unit. Names the dialog. */
   title: string,
   /** The package's prices in one unit, which the chart draws and a pin keeps. */
   prices: ChartPrice[],
@@ -64,9 +64,12 @@ export default function PriceChangeChartDialog({ change, context, onClose }: Pro
   const dates = formatWindow(dateWindow, dateBounds(change.prices));
   return (
     <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md" aria-describedby={contextId}
-      slotProps={{ paper: { sx: theme.palette.mode === "dark"
-        ? { bgcolor: "background.default", backgroundImage: "none" }
-        : undefined } }}>
+      // The cards' surface, which the chart is drawn for, over a backdrop that keeps it apart (`chartDialog` in theme.ts).
+      slotProps={{
+        paper: { sx: { bgcolor: "chartDialog.paper", backgroundImage: "none" } },
+        backdrop: { sx: { bgcolor: "chartDialog.backdrop" } },
+      }}
+    >
       <TitleBar title={change.title} onClose={onClose} />
       <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

@@ -31,6 +31,12 @@ describe.each(Object.entries(THEMES))("%s chart palette", (_mode, theme) => {
   });
 });
 
+describe.each(Object.entries(THEMES))("%s chart dialog", (_mode, theme) => {
+  it("draws on the card background, so the chart colors' contrast holds there", () => {
+    expect(theme.palette.chartDialog.paper).toBe(theme.palette.background.paper);
+  });
+});
+
 describe.each(Object.entries(THEMES))("%s warning color", (_mode, theme) => {
   it("is at least 3:1 against the card background, for the stale price marker icon", () => {
     expect(contrast(theme.palette.warning.main, theme.palette.background.paper)).toBeGreaterThanOrEqual(3);

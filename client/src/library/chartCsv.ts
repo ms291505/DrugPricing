@@ -1,5 +1,5 @@
 import { createLineVizData, rangeKey } from "./createLineVizData";
-import type { BarValue } from "./explorerItems";
+import type { BarValue, ChartType } from "./explorerItems";
 import { clipToWindow, toDateInput, type DateWindow } from "./dates";
 import { splitByPricingUnit, summarizePrices, type PriceSummary } from "./prices";
 import type { ChartPrice } from "./types";
@@ -84,10 +84,14 @@ export function barCsv(rows: BarDataRow[]): string {
   ]);
 }
 
-/** "humira-7-products-over-time_2022-01-05_2026-10-07.csv" */
-export function csvFileName(title: string, first: number, last: number): string {
+/**
+ * "humira-usd-per-ml_line_2022-01-05_2026-10-07.csv": the title, whose unit tells a search's unit
+ * cards apart, the chart type, since a line and a bar chart of the same rows share a title, and
+ * the dates.
+ */
+export function csvFileName(title: string, chartType: ChartType, first: number, last: number): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "chart";
-  return `${slug}_${toDateInput(first)}_${toDateInput(last)}.csv`;
+  return `${slug}_${chartType}_${toDateInput(first)}_${toDateInput(last)}.csv`;
 }
 
 /** Saves text as a file through a temporary link. */

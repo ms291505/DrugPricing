@@ -56,7 +56,7 @@ export default function PriceChangeListBody({
   }
   const openChart = (group: PriceEventGroup, event: PriceEvent) => setOpen({
     key: eventKey(group, event), eventDate: group.date,
-    title: eventChartTitle(group.date, event.packageNdc),
+    title: eventChartTitle(group.date, event.packageNdc, group.pricingUnit),
     prices: chartPrices(group, event),
   });
   const closeChart = useCallback(() => setOpen(null), []);

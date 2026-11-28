@@ -6,6 +6,7 @@ import type { ChartPrice } from "../../library/types";
 import type { BarValue } from "../../library/explorerItems";
 import { fittedPriceAxis, formatPrice, formatPriceLabel, priceTickFormatter, zeroBasedAxis } from "../../library/chartScale";
 import { pricingUnitLabel, summarizePrices, type PriceSummary } from "../../library/prices";
+import { unitChartLabel } from "../../library/chartTitles";
 import { clipToWindow, dateBounds, formatDate, FULL_WINDOW, type DateWindow } from "../../library/dates";
 import useChartTheme from "../../hooks/useChartTheme";
 import useMobile from "../../hooks/useMobile";
@@ -64,13 +65,14 @@ export default function BarViz({ nadacPrices, title, colors, dateWindow = FULL_W
       </Box>
       <UnitSplit
         nadacPrices={nadacPrices}
+        title={title}
         dateWindow={dateWindow}
         renderChart={(unitPrices, pricingUnit) => (
           <UnitBarChart nadacPrices={unitPrices} pricingUnit={pricingUnit} title={title} colors={colors} barValue={value} />
         )}
       />
       {bounds
-        ? <ChartData title={title} bounds={bounds} toCsv={() => barCsv(barDataRows(nadacPrices, dateWindow, value))}>
+        ? <ChartData title={title} chartType="bar" bounds={bounds} toCsv={() => barCsv(barDataRows(nadacPrices, dateWindow, value))}>
           <BarDataTable prices={nadacPrices} dateWindow={dateWindow} barValue={value} bounds={bounds} />
         </ChartData>
         : null}
@@ -158,7 +160,7 @@ function UnitBarChart({ nadacPrices, pricingUnit, title, colors, barValue }: Uni
           margin={{ ...chartTheme.margin, right: LABEL_MARGIN }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           responsive
-          aria-label={`${title}, USD per ${unit}`}
+          aria-label={unitChartLabel(title, pricingUnit)}
           aria-describedby={descriptionId}
         >
           <XAxis
