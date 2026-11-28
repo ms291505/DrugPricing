@@ -11,18 +11,25 @@ import { pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTit
 import { HALF_WIDTH_GRID_SIZE, NOTABLE_PRICE_CHANGE_PERCENT } from "../../library/constants";
 import useWidthTier from "../../hooks/useWidthTier";
 import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
+import type { AddedCharts } from "../../hooks/useAddedCharts";
+import { latestOrder, madeCardsInOrder, NOTABLE_GONE, trackNotable } from "../../library/resultCards";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { moveFocusFromClosingCard } from "./closeCard";
 import PriceChangeListBody from "./PriceChangeListBody";
 import type { ChartContext } from "./PriceChangeChartDialog";
+import AddedChartCard from "./AddedChartCard";
 
 type Props = {
+  /** What the added charts draw: the table's level (its shown and loaded prices, origin, colors and dates). */
+  chartSource: ChartSource,
+  /** The page's added charts (`useAddedCharts`). */
+  charts: AddedCharts,
   /**
-   * The page's packages. New `prices` (new search, dates or filters) close every scan and chart;
-   * `dateWindow` is the window of a change's chart.
+   * The page's packages, which price change lists list. New `prices` (new search, dates or
+   * filters) close every scan and change chart; `dateWindow` is the window of a change's chart.
    */
-  source: ChartSource,
+  packageSource: ChartSource,
   /** The page's scans (`usePriceChangeScans`), over the same packages. */
   scans: PriceChangeScans,
 };
@@ -33,11 +40,15 @@ const AUTO_LIST = "auto";
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
 /**
- * Notable price changes and the page's scan cards. Each list opens its own change charts in a
- * dialog (`PriceChangeListBody`). Renders nothing when there is no card.
+ * The cards in the results grid under the table, in the order they appeared (`madeCardsInOrder`):
+ * Notable price changes, which opens with each result, and the cards Line, Bar and Scan price
+ * changes made. A new card, or Notable coming back after new dates or filters, goes after the
+ * cards already there, so nothing on screen moves. Each list opens its own change charts in a
+ * dialog (`PriceChangeListBody`).
  */
-export default function PriceChangesSection({ source, scans: scanState }: Props) {
-  const { prices, loadedPrices, origin, colors, dateWindow } = source;
+export default function ResultCards({ chartSource, charts: chartState, packageSource, scans: scanState }: Props) {
+  const { prices, loadedPrices, origin, colors, dateWindow } = packageSource;
+  const { charts, close: onCloseChart } = chartState;
   const { autoClosed, closeAuto: onCloseAuto, scans, closeScan: onCloseScan } = scanState;
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
@@ -57,17 +68,31 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   }, [onCloseAuto, onCloseScan]);
 
   const showAuto = groups.length > 0 && !autoClosed;
-  if (!showAuto && !scans.length) return null;
+  // Updated during render, as the hooks reset theirs, so Notable never draws a frame in the wrong place.
+  const [notable, setNotable] = useState(NOTABLE_GONE);
+  const nextNotable = trackNotable(notable, showAuto, autoClosed || (prices.length > 0 && groups.length === 0),
+    latestOrder(charts, scans));
+  if (nextNotable !== notable) setNotable(nextNotable);
 
   const listProps = { prices, origin, colors, dateWindow, detailsChoice, onDetailsToggle, chartPrices, onClose: closeList };
   return (
     <>
-      {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
-        thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" {...listProps} />}
-      {scans.map(scan => (
-        <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
-          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} {...listProps} />
-      ))}
+      {madeCardsInOrder(charts, scans, showAuto ? nextNotable : null).map(made => {
+        switch (made.kind) {
+          case "notable":
+            return (
+              <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
+                thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" {...listProps} />
+            );
+          case "chart":
+            return <AddedChartCard key={made.card.id} source={chartSource} chart={made.card} onClose={onCloseChart} />;
+          case "scan":
+            return (
+              <PriceChangeListCard key={made.card.id} listId={made.card.id} title={priceChangeListTitle(made.card.thresholdPercent)}
+                thresholdPercent={made.card.thresholdPercent} groups={made.card.groups} detailsKeyPrefix={`${made.card.id}:`} {...listProps} />
+            );
+        }
+      })}
     </>
   );
 }

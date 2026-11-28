@@ -16,17 +16,15 @@ type Props = {
   notice?: ReactNode,
   /** The results table. */
   table: ReactNode,
-  /** Half-width price change cards (Notable price changes, scans). */
-  priceChanges?: ReactNode,
-  /** The charts Line and Bar added (`AddedChartCards`), first in the grid under the table. */
+  /** The grid under the table: the page's cards (`ResultCards`). */
   children?: ReactNode,
 };
 
 /**
  * The frame of both search pages' results: a heading row with the toolbar, the table, and a shared
- * responsive grid of added charts and price change cards. Pinned items sit below it, outside.
+ * responsive grid of price change lists and added charts. Pinned items sit below it, outside.
  */
-export default function ResultsSection({ searchLabel, toolbar, status, notice, table, priceChanges, children }: Props) {
+export default function ResultsSection({ searchLabel, toolbar, status, notice, table, children }: Props) {
   const headingId = useId();
   // The section's width is the table's, so its tier is the table's.
   const [ref, widthTier] = useWidthTier<HTMLElement>();
@@ -56,7 +54,6 @@ export default function ResultsSection({ searchLabel, toolbar, status, notice, t
       </Paper>
       <Grid container spacing={2} alignItems="flex-start" sx={{ minWidth: 0 }}>
         {children}
-        {priceChanges}
       </Grid>
     </Box>
   );

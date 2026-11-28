@@ -1,1 +1,1 @@
-export { FreshWorkspaceNote, WorkspaceMenuNote } from "./StorageNotes";
+export { WorkspaceMenuNote } from "./StorageNotes";

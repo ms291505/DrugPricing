@@ -31,7 +31,7 @@ const CHART_TYPES: Array<{ type: ChartType, label: string, Icon: typeof BarChart
 
 /**
  * The results toolbar's label and Line / Bar. Each press adds a card of the selected rows that are
- * shown (`AddedChartCards`), as Scan adds a list: the card keeps those rows while the selection
+ * shown (`AddedChartCard`), as Scan adds a list: the card keeps those rows while the selection
  * changes, and the status line under the toolbar reports it (`ResultsReport`). The selection
  * stays, so Bar can chart the same rows. With Pin charts when you make them on, each add also pins
  * a copy.

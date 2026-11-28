@@ -1,31 +1,32 @@
 # Search privacy copy
 
-Draft copy for [Search privacy](../plans/search-privacy.md), change 3. It tells users what the
-app saves, where, who can see it, and how to delete it, at the places they act. Help only
-expands on it. Follows the [writing style guide](../README.md#writing-style).
+Copy for [Search privacy](../plans/search-privacy.md), change 3. It tells users what the app
+saves, where, who can see it, and how to delete it. The drawer gives a short line and links to
+Help, which explains the rest. Follows the [writing style guide](../README.md#writing-style).
 
-"Saved for this browser tab only", not "until you close this browser tab": a browser that restores
-a closed tab can restore its session state too, so the copy doesn't promise deletion.
+Standalone Search state "stays in this browser tab", not "until you close this browser tab": a
+browser that restores a closed tab can restore its session state too, so the copy doesn't
+promise deletion. Workspace copy doesn't promise storage either: Help names private windows and
+cleared site data as the ways a workspace goes away.
 
 Search terms reach the server with their dates; refine filters apply in the browser, so the copy
-says "terms" (drawer) or "terms and dates" (Help, About), never "filters".
+says "terms and dates" (Help, About), never "filters".
 
-## New tab page, while the workspace is fresh
+Say "workspace tab" or "browser tab" wherever someone could act on the wrong one: closing,
+reloading, opening Help elsewhere, and keeping a Search page's state. "Workspace" is capitalized
+only as the name of the destination (the app bar's **Workspace**, the Workspace menu).
 
-Shown in `text.secondary` above the tab choices while the workspace is a single blank tab.
-
-> This workspace saves your tabs, searches, and pinned charts in this browser so they're here
-> when you come back, and anyone who uses this browser can see them. To start over, use
-> **Clear workspace** in the Workspace menu. If you use a private window, your browser clears
-> your saved workspace when you close all private windows. [Learn more]
+Account-free use is a benefit stated plainly: no sign-up and no personal information. Don't
+write "nothing is stored"; the workspace is in the browser and searches reach the server.
 
 ## Workspace menu, above Clear workspace
 
-> This workspace's tabs, searches, and pinned charts are saved in this browser, where anyone who
-> uses it can see them. Searches send their terms to the server, which doesn't keep them.
-> [Learn more]
+Under 20 words, then a link that opens Help at "What's saved and who can see it":
 
-Tightened from the plan's wording to fit the 240px drawer; it keeps all three facts.
+> Your workspace is saved in this browser so it's here when you come back. [What's saved and
+> who can see it]
+
+The blank workspace tab's search chooser has no storage note (removed 2026-11-27).
 
 ## Add search to workspace
 
@@ -34,47 +35,35 @@ button:
 
 > Saves this search and its pins in this browser, in a new workspace tab.
 
-Adding a tab opens the workspace and shows no confirmation, so there is no other message to
-change.
+Adding a tab opens the workspace and shows no confirmation. The caption that used to sit beside
+the button, and its pins-only variant after Clear search, were removed on 2026-11-27; Help covers
+it.
 
-## Search pages, beside Add search to workspace
+## Help, "Workspace tabs and what they save"
 
-Shown once a search has run:
+Topic ID `tabs-and-your-saved-workspace`. The article in
+`client/src/content/help/tabs-and-your-saved-workspace.md` is the current copy. Its sections:
 
-> This search and its pins are saved for this browser tab only, unless you add the search to
-> your workspace.
-
-After Clear search, which keeps pins and hides the button, while there are pins:
-
-> These pins are saved for this browser tab only.
-
-## Help, "Tabs and your saved workspace"
-
-Replaces the storage paragraph and the last line about Search pages. The storage paragraph
-comes before the list about closing tabs and other windows, and the server paragraph after it.
-
-> The app saves your workspace in this browser on this device: each tab's search terms, dates,
-> and filters, and your pinned charts and their prices. Anyone who uses this browser profile can
-> see them, because the app reopens your tabs when you come back. To delete them, close a tab,
-> use **Clear workspace** in the Workspace menu, or clear this site's data in your browser. If
-> you use a private window, your browser clears your saved workspace when you close all private
-> windows.
->
-> Each search sends its terms and dates to the server, which uses them to find prices and
-> doesn't keep them.
->
-> The FDA and NADAC pages under **Search** save their search and shared pins for this browser
-> tab only. To keep a search longer, add it to the workspace.
+- **What's saved and who can see it**: no account, what the workspace holds, who can see it,
+  private windows, and that the server doesn't keep search terms and dates. The drawer links here,
+  so renaming the heading breaks that link (`helpSectionId`).
+- **Closing tabs and clearing the workspace**: "Closing a workspace tab deletes its search and
+  pins. If you close the browser tab, your workspace will still be here when you return in the
+  same browser profile, unless you used a private window or cleared this site's data in your
+  browser."
+- **Keeping a search from the Search pages**: "Under **Search**, your searches and shared pins stay in this
+  browser tab. To keep a copy between visits, choose **Add search to workspace**…"
 
 ## Help, "Searching"
 
-> - The FDA and NADAC pages under **Search** save your search and its pins for this browser tab
->   only, unless you choose **Add search to workspace**.
+> - Under **Search**, your searches and shared pins stay in this browser tab. To keep a copy
+>   between visits, choose **Add search to workspace**, which opens it in a new workspace tab.
 
 ## About, "Privacy"
 
-> DrugPricing has no accounts. Your workspace, with its tabs, searches, and pinned charts, is
-> saved in this browser on this device, along with your settings, while a search on the FDA or
-> NADAC page under Search is saved for this browser tab only. Each search sends its
-> terms and dates to the server only to find prices, and the server doesn't keep them.
-> [Tabs and your saved workspace] explains what's saved and how to delete it.
+> You can use DrugPricing without signing up or giving any personal information. Your
+> workspace, with its tabs, searches, and pinned charts, is saved in this browser on this device
+> along with your settings, while a search on the FDA or NADAC page under Search stays in this
+> browser tab. Each search sends its terms and dates to the server only to find prices, and the
+> server doesn't keep them. [Workspace tabs and what they save] explains what's saved and how to
+> delete it.

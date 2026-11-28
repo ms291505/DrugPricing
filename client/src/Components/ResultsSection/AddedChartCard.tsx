@@ -13,28 +13,20 @@ import { splitByPricingUnit } from "../../library/prices";
 import type { AddedChart, AddedCharts } from "../../hooks/useAddedCharts";
 import { moveFocusFromClosingCard } from "./closeCard";
 
-type Props = {
-  /** At the table's level: its shown and loaded prices, origin, colors and dates. */
-  source: ChartSource,
-  /** The page's added charts (`useAddedCharts`). */
-  charts: AddedCharts,
-};
-
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
 /**
- * The cards Line and Bar added, oldest first, first in the grid under the table. Each draws its
- * rows' shown prices, so it redraws with the dates and filters, one card per pricing unit. They
- * are never stored: Pin keeps a copy, and Close removes that card (the last open one removes the
- * chart). Each grid item carries
+ * A chart Line or Bar added (`useAddedCharts`), in its place among the page's cards
+ * (`ResultCards`). It draws its rows' shown prices, so it redraws with the dates and filters, as
+ * one card per pricing unit, next to each other. It is never stored: Pin keeps a copy, and Close
+ * removes that card (the last open one removes the chart). Each grid item carries
  * `data-added-chart` (the chart's id), which Show in the status line scrolls to.
  */
-export default function AddedChartCards({ source, charts: { charts, close } }: Props) {
-  return charts.map(chart => <AddedChartCard key={chart.id} source={source} chart={chart} onClose={close} />);
-}
-
-function AddedChartCard({ source, chart, onClose }: {
-  source: ChartSource, chart: AddedChart, onClose: (id: string, pricingUnit?: string) => void,
+export default function AddedChartCard({ source, chart, onClose }: {
+  /** At the table's level: its shown and loaded prices, origin, colors and dates. */
+  source: ChartSource,
+  chart: AddedChart,
+  onClose: AddedCharts["close"],
 }) {
   const ndcs = useMemo(() => new Set(chart.ndcs), [chart.ndcs]);
   const prices = useMemo(() => selectedChartPrices(source.prices, ndcs), [source.prices, ndcs]);

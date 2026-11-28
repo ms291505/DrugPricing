@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyColumnBounds, COLUMN_BOUNDS, resolveBounds } from "./columnBounds";
+import { applyColumnBounds, autosizeMaxWidths, COLUMN_BOUNDS, resolveBounds } from "./columnBounds";
 
 describe("resolveBounds", () => {
   const bounds = { min: 100, max: 300, medium: { max: 200 }, narrow: { min: 90, max: 150 } };
@@ -34,13 +34,26 @@ describe("applyColumnBounds", () => {
   const a = { field: "a", width: 999, headerName: "A" };
   const other = { field: "other", width: 77 };
 
-  it("sets min, max and the starting width from the tier, keeping the rest", () => {
-    expect(applyColumnBounds([a], "narrow", table)).toEqual([{ field: "a", headerName: "A", width: 80, minWidth: 50, maxWidth: 80 }]);
-    expect(applyColumnBounds([a], "wide", table)[0]).toMatchObject({ width: 150, minWidth: 50, maxWidth: 150 });
+  it("sets min and the starting width from the tier, keeping the rest", () => {
+    expect(applyColumnBounds([a], "narrow", table)).toEqual([{ field: "a", headerName: "A", width: 80, minWidth: 50 }]);
+    expect(applyColumnBounds([a], "wide", table)[0]).toMatchObject({ width: 150, minWidth: 50 });
+  });
+
+  it("leaves no maximum for a drag, even one a column def set", () => {
+    expect(applyColumnBounds([{ ...a, maxWidth: 100 }], "wide", table)[0]).not.toHaveProperty("maxWidth");
   });
 
   it("returns a column without bounds as it is", () => {
     expect(applyColumnBounds([a, other], "wide", table)[1]).toBe(other);
+  });
+});
+
+describe("autosizing's maximum", () => {
+  const table = { a: { min: 50, max: 150, narrow: { max: 80 } }, b: { min: 60, max: 40 } };
+
+  it("is each bounded column's tier max, by field", () => {
+    expect(autosizeMaxWidths([{ field: "a" }, { field: "b" }, { field: "other" }], "wide", table)).toEqual({ a: 150, b: 60 });
+    expect(autosizeMaxWidths([{ field: "a" }], "narrow", table)).toEqual({ a: 80 });
   });
 });
 

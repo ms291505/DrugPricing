@@ -9,9 +9,8 @@ import { useNadacSearchContext } from "../../Context/NadacSearchContext";
 import { hiddenResultsHint, nadacResultsLabel, revealNadac } from "../../library/searchCriteria";
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import { selectedChartPrices } from "../../library/chartSeries";
-import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
+import ResultsSection, { HiddenResultsNotice, ResultCards, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
 import { isTooManyRows } from "../../library/apiErrors";
 
 const PACKAGES: Noun = ["package", "packages"];
@@ -62,10 +61,9 @@ export default memo(function NadacResults({ view }: Props) {
         notice={isTooManyRows(error)
           ? <TooManyRowsNotice message={error.message} />
           : hint && <HiddenResultsNotice hint={hint} noun={PACKAGES} onShow={() => setCriteria(prev => revealNadac(prev, hint))} />}
-        priceChanges={<PriceChangesSection source={source} scans={scans} />}
         table={table}
       >
-        <AddedChartCards source={source} charts={charts} />
+        <ResultCards chartSource={source} charts={charts} packageSource={source} scans={scans} />
       </ResultsSection>
     </>
   );

@@ -132,6 +132,11 @@ doesn't build that, but nothing in it should assume there is only one:
 
 ### 3. Tell users what's saved and where
 
+> **Revised 2026-11-27.** The fresh-workspace note and the Search caption were removed, and the
+> drawer note was cut to one line that links to a section of Help, which now holds the detail.
+> The current copy is in [Search privacy copy](../content/search-privacy-copy.md); the wording
+> below is the original proposal.
+
 Draft the copy in `docs/content/` first and follow the writing style guide. Proposed wording:
 
 - **A fresh workspace explains itself.** The new tab page (`Components/TabCreator/TabCreator.tsx`)

@@ -3,7 +3,7 @@ keeps its data and dates when you change the search. Pin one drug’s chart, the
 another to compare them.
 
 The standalone **FDA search** and **NADAC search** share their Pinned collection, so you can
-compare charts from both sources. Each **Workspace tab** has its own separate pins.
+compare charts from both sources. Each **workspace tab** has its own separate pins.
 
 On a pinned chart you can do the following.
 
