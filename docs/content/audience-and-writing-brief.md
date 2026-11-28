@@ -16,7 +16,7 @@ The author thinks about drug prices a lot at work and wanted to compare NADACs f
 
 First-person passage used in the README: “I think about drug prices a lot at work, and I wanted to know whether the differences I saw in ingredient cost across GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and track the figures in Excel, but seeing how those differences had changed since last year was much harder, so I built DrugPricing to make that history easier to compare.”
 
-About uses a revised version (2026-11-27) that states the goal as a comparison instead of a question, because the passage doesn't answer it: “I wanted to compare the differences I saw in ingredient cost across GLP-1 drugs with the differences in their NADACs.” It then names Zepbound before turning to strength. Its audience line reads: “payers and benefits administrators, data analysts and researchers, or anyone at any point in the drug channel who is just curious.”
+About uses a revised version (2026-11-27) that states the goal as a comparison instead of a question, because the passage doesn't answer it: “I wanted to compare the differences I saw in ingredient cost across GLP-1 drugs with the differences in their NADACs.” It then names Zepbound before turning to strength. Its audience line reads: “DrugPricing is for payers, benefits administrators, data analysts, researchers, and anyone curious about drug prices. Questions like these come up often in drug pricing and purchasing:”
 
 ## Questions to build examples around
 

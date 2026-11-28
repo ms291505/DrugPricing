@@ -34,8 +34,8 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>
       <p>
-        DrugPricing is for payers and benefits administrators, data analysts and researchers, or anyone at any point in
-        the drug channel who is just curious. They usually arrive with a question like:
+        DrugPricing is for payers, benefits administrators, data analysts, researchers, and anyone curious about drug
+        prices. Questions like these come up often in drug pricing and purchasing:
       </p>
       <ul>
         <li>My PBM report shows different ingredient costs for two drugs. Does NADAC show a similar gap, and was it there a year ago?</li>

@@ -20,9 +20,9 @@ or cleared this site’s data in your browser.
 
 - **Clear workspace** in the Workspace menu deletes all workspace tabs and starts with a blank
   one after you confirm. Clearing this site’s data in your browser also deletes them.
-- If you open the app in a second browser tab or window and change a search, workspace tab, or
-  pin there, the first one stops saving and asks you to reload, so the two don’t overwrite each
-  other. Settings changes apply in every browser tab and window without a reload.
+- If you change the workspace in another browser tab or window, this one stops saving and asks
+  you to reload, so the two don’t overwrite each other. Settings changes apply in every browser
+  tab and window without a reload.
 
 ## Keeping a search from the Search pages
 
