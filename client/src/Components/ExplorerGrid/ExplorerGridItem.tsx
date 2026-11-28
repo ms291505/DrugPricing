@@ -187,12 +187,13 @@ export default function ExplorerGridItem({
         {compact ? null : actionsBox}
         {compact && (details || subtitle)
           ? (
-            // One smaller second row: the details, then the count, as the two rows read when not compact.
+            // One smaller second row: the details, then the count, as the two rows read when not
+            // compact. Inline text, not flex, so the spaces and the " · " between the parts are read.
             <Typography component="div" variant="body2" color="text.secondary" sx={{
-              gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 0.5, rowGap: 0.5,
+              gridColumn: "1 / -1", "& .MuiChip-root": { verticalAlign: "middle" },
             }}>
               {details}
-              {details && subtitle ? <span aria-hidden>·</span> : null}
+              {details && subtitle ? " · " : null}
               {subtitle}
             </Typography>
           )

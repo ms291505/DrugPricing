@@ -153,7 +153,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
         // As on an added chart: the bar value and the dates, here the Dates control, which a
         // chart's dates change through. The stored title, generated or the user's, stays as is.
         details={<>
-          {item.kind === "chart" && item.chartType === "bar" ? <span>{barValueLabel(item.barValue ?? "latest")}</span> : null}
+          {item.kind === "chart" && item.chartType === "bar" ? <span>{barValueLabel(item.barValue ?? "latest")} </span> : null}
           {item.kind === "chart"
             ? <PinnedChartDates
               item={item}
