@@ -66,6 +66,18 @@ export const chartDates = (dateWindow: DateWindow, prices: ChartPrice[]) =>
 /** "Latest price" or "Average price": what a bar chart's rows show, for its header. */
 export const barValueLabel = (barValue: BarValue) => barValue === "latest" ? "Latest price" : "Average price";
 
+/**
+ * "line chart", or "bar chart of latest price" (just "bar chart" without a bar value): what kind of
+ * chart a card holds, which its accessible names add to the title, since a line and a bar chart of
+ * the same rows share one. Read live, like the header's details; never stored.
+ */
+export const chartKindLabel = (chartType: ChartType, barValue?: BarValue) =>
+  chartType === "line" ? "line chart" : barValue ? `bar chart of ${barValueLabel(barValue).toLowerCase()}` : "bar chart";
+
+/** "Humira · USD per mL, bar chart of latest price": a chart card's name for its buttons' labels. */
+export const chartCardName = (title: string, chartType: ChartType, barValue?: BarValue) =>
+  `${title}, ${chartKindLabel(chartType, barValue)}`;
+
 /** "Price changes of 25% or more": a scan card's title. */
 export const priceChangeListTitle = (thresholdPercent: number) => `Price changes of ${thresholdPercent}% or more`;
 

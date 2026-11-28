@@ -42,7 +42,7 @@ export default function TabCreator() {
       tabType: "nadac",
       onClick: event => choose("nadac", event),
       header: "NADAC search",
-      body: "Look up price histories back to 2022 by drug description or NDC, including packages the FDA no longer lists.",
+      body: "Look up price histories back to 2022 by drug description or drug code (NDC), including packages the FDA no longer lists.",
       isMobile: isMobile,
     }
   ]

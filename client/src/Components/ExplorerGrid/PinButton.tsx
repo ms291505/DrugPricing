@@ -11,6 +11,8 @@ import type { BarValue } from "../../library/explorerItems";
 
 type Props = {
   title: string,
+  /** The button's name for the chart, when the title alone doesn't tell it apart (`chartCardName`). */
+  label?: string,
   chartType: ChartType,
   /** What the chart draws: the page's result as shown. */
   prices: ChartPrice[],
@@ -34,7 +36,7 @@ type Props = {
  * Pins a system (auto) chart: copies it into the tab's Pinned section as a frozen snapshot,
  * which then survives new searches and filter changes.
  */
-export default function PinButton({ title, chartType, prices, loadedPrices, origin, dateWindow, changeSpan, eventDate, colors, barValue, source, onPinned }: Props) {
+export default function PinButton({ title, label = title, chartType, prices, loadedPrices, origin, dateWindow, changeSpan, eventDate, colors, barValue, source, onPinned }: Props) {
   const { addItems } = usePinActions();
 
   const handlePin = () => {
@@ -49,7 +51,7 @@ export default function PinButton({ title, chartType, prices, loadedPrices, orig
 
   return (
     <Tooltip title="Pin a copy to this tab">
-      <IconButton size="small" onClick={handlePin} aria-label={`Pin ${title}`}>
+      <IconButton size="small" onClick={handlePin} aria-label={`Pin ${label}`}>
         <PushPinOutlinedIcon fontSize="small" />
       </IconButton>
     </Tooltip>

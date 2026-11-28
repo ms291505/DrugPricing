@@ -111,9 +111,14 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   never the card's width) every card's header is compact: the toggle and actions, at 44px, on a
   row of their own; then the title across the card on one line, its name cut with an ellipsis
   and a chart's unit end ("· USD per mL") kept in view; then one smaller row with the details
-  and the subtitle. The DOM follows that order, so reading and tab order match it. The full
-  title stays the heading's text and the truncation tooltip. Desktop cards, half width
-  included, keep the two-line title, the details line and the subtitle.
+  and the subtitle. The full title stays the heading's text and the truncation tooltip. Desktop
+  cards, half width included, keep a title of at most two lines, the details line and the
+  subtitle: a chart's unit end always shows, and when the name and the end don't fit two lines
+  together (a hidden copy of the title, measured with a ResizeObserver, says so), the name takes
+  one cut line and the end the second. Both layouts render the same elements in one DOM order
+  (toggle, actions, title, details, subtitle) and change only their placement, so crossing
+  `sm`, a rotation say, remounts nothing: a pinned chart's open Dates popover keeps its anchor.
+  The heading is out of the tab order, so Tab goes toggle, then actions, in both.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Line and Bar filter on (`selectedChartPrices`). `setFdaResultDetailLevel` clears the
   selection on every level change.
@@ -149,7 +154,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   they follow the bar value toggle and the dates, and are never stored in the title. Bar charts
   show their dates there too, since the bar value and range are over those dates. The subtitle
   gives the series count and hidden note on added cards; a pinned card's count is in its
-  provenance chip. Line and bar charts of the same rows share a title. The change chart dialog's
+  provenance chip. Line and bar charts of the same rows share a title, so their names add what
+  the title doesn't show (`chartKindLabel`: "line chart", "bar chart of latest price", live with
+  the toggle): the heading carries it as visually hidden text, and the collapse toggle, Pin,
+  Close and a pin's Actions add it to their labels. The change chart dialog's
   title names the event date, package and unit, and its context line under it gives the list and
   dates. On a phone the details move down beside the subtitle (the compact header, above), the
   bar value included: the one title line keeps what the chart is, and the second row says how

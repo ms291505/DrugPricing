@@ -13,7 +13,7 @@ import {
   canDrillDownToPackages, formatItemSource, fromChartSeries, isScaleMatched, itemTitle, packageLevelView, type ExplorerItem,
 } from "../../library/explorerItems";
 import { dateBounds, formatWindow } from "../../library/dates";
-import { barValueLabel, unitTitleEnd } from "../../library/chartTitles";
+import { barValueLabel, chartKindLabel, unitTitleEnd } from "../../library/chartTitles";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
@@ -80,6 +80,9 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   // A chart of one unit whose title ends with it (generated titles) keeps that end in view.
   const units = visibleItem.kind === "chart" ? new Set(visibleItem.series.map(series => series.unit)) : new Set<string>();
   const titleEnd = units.size === 1 ? unitTitleEnd(title, [...units][0]) : "";
+  // A line and a bar chart of the same rows share a title; their names say which is which.
+  const kind = item.kind === "chart" ? chartKindLabel(item.chartType, item.barValue ?? "latest") : "";
+  const name = kind ? `${title}, ${kind}` : title;
   const source = sourceBadge(item.source);
   const canSwitchLevel = item.kind === "chart" && canDrillDownToPackages(item);
 
@@ -91,7 +94,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
       <Tooltip title="Item actions">
         <IconButton
           size="small"
-          aria-label={`Actions for ${title}`}
+          aria-label={`Actions for ${name}`}
           aria-haspopup="menu"
           aria-controls={menuAnchor ? menuId : undefined}
           aria-expanded={menuAnchor ? true : undefined}
@@ -148,6 +151,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
       <ExplorerGridItem
         title={title}
         titleEnd={titleEnd}
+        nameSuffix={kind}
         headingLevel={3}
         highlighted={highlighted}
         // As on an added chart: the bar value and the dates, here the Dates control, which a

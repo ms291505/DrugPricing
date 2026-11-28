@@ -6,7 +6,7 @@ import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
-import { barValueLabel, chartDates, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels, unitTitleEnd } from "../../library/chartTitles";
+import { barValueLabel, chartCardName, chartDates, chartKindLabel, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels, unitTitleEnd } from "../../library/chartTitles";
 import { countSeries, openPricingUnits, selectedChartPrices } from "../../library/chartSeries";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
 import { splitByPricingUnit } from "../../library/prices";
@@ -80,9 +80,10 @@ function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
   const subtitle = [seriesCountLabel(labels.length, origin.seriesKind), hiddenSeriesNote(hiddenCount)]
     .filter(Boolean).join(" · ");
   return (
-    <UnitCard chart={chart} title={title} titleEnd={unitTitleEnd(title, pricingUnit)} details={details} subtitle={subtitle} onClose={onClose}
+    <UnitCard chart={chart} title={title} titleEnd={unitTitleEnd(title, pricingUnit)} barValue={barValue} details={details}
+      subtitle={subtitle} onClose={onClose}
       pin={<PinButton
-        title={title} chartType={chart.chartType} prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
+        title={title} label={chartCardName(title, chart.chartType, chart.chartType === "bar" ? barValue : undefined)} chartType={chart.chartType} prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
         colors={colors} barValue={chart.chartType === "bar" ? barValue : undefined}
       />}>
       {chart.chartType === "line"
@@ -94,18 +95,20 @@ function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
 }
 
 /** The grid item and card frame, with Pin (when there is something to pin) and Close. */
-function UnitCard({ chart, title, titleEnd, details, subtitle, pin, onClose, children }: {
-  chart: AddedChart, title: string, titleEnd?: string, details?: string, subtitle: string, pin?: ReactNode, onClose: CloseHandler,
-  children: ReactNode,
+function UnitCard({ chart, title, titleEnd, barValue, details, subtitle, pin, onClose, children }: {
+  chart: AddedChart, title: string, titleEnd?: string, barValue?: BarValue, details?: string, subtitle: string, pin?: ReactNode,
+  onClose: CloseHandler, children: ReactNode,
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // A line and a bar chart of the same rows share a title; their names say which is which.
+  const kind = chartKindLabel(chart.chartType, chart.chartType === "bar" ? barValue : undefined);
   return (
     <Grid ref={ref} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx} data-added-chart={chart.id}>
-      <ExplorerGridItem title={title} titleEnd={titleEnd} details={details} subtitle={subtitle} headingLevel={3}
+      <ExplorerGridItem title={title} titleEnd={titleEnd} nameSuffix={kind} details={details} subtitle={subtitle} headingLevel={3}
         actions={<>
           {pin}
           <Tooltip title="Close">
-            <IconButton size="small" aria-label={`Close ${title}`} onClick={event => onClose(event, ref.current)}>
+            <IconButton size="small" aria-label={`Close ${title}, ${kind}`} onClick={event => onClose(event, ref.current)}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Tooltip>

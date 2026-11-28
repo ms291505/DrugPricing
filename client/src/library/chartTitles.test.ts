@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addedChartMessage, barValueLabel, chartDates, chartTitle, unitTitleEnd, eventChartTitle, hiddenSeriesNote, scanReportMessage, seriesLabels, titleNamesUnit,
+  addedChartMessage, barValueLabel, chartCardName, chartDates, chartKindLabel, chartTitle, unitTitleEnd, eventChartTitle, hiddenSeriesNote, scanReportMessage, seriesLabels, titleNamesUnit,
   unitChartLabel,
 } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
@@ -42,6 +42,15 @@ describe("chart titles", () => {
   it("names a bar chart's value for the header", () => {
     expect(barValueLabel("latest")).toBe("Latest price");
     expect(barValueLabel("average")).toBe("Average price");
+  });
+
+  it("tells a line and a bar chart of the same rows apart in their names", () => {
+    expect(chartKindLabel("line")).toBe("line chart");
+    expect(chartKindLabel("bar", "latest")).toBe("bar chart of latest price");
+    expect(chartKindLabel("bar", "average")).toBe("bar chart of average price");
+    expect(chartKindLabel("bar")).toBe("bar chart");
+    expect(chartCardName("Humira · USD per mL", "bar", "latest")).toBe("Humira · USD per mL, bar chart of latest price");
+    expect(chartCardName("Humira · USD per mL", "line")).not.toBe(chartCardName("Humira · USD per mL", "bar", "latest"));
   });
 
   it("keeps the bar value and dates out of the title, which a pin stores", () => {
