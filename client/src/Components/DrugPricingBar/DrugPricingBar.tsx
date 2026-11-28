@@ -52,31 +52,22 @@ export default function DrugPricingBar() {
           gridTemplateColumns: { xs: "auto minmax(0, 1fr) auto", md: "1fr auto 1fr" },
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
+          "& .active": {
+            color: "primary.main",
+            fontWeight: "bold",
+            borderBottom: 2,
+            borderColor: "primary.main",
+          },
         }}>
           <Box>
             <Tooltip title="DrugPricing home">
               <IconButton
                 component={NavLink}
                 to="/welcome"
-                end
                 onClick={closeDrawer}
                 aria-label="DrugPricing home"
                 color="inherit"
-                sx={{
-                  width: 44,
-                  height: 44,
-                  "&.active": {
-                    color: "primary.main",
-                    "&::after": {
-                      content: '""',
-                      position: "absolute",
-                      bottom: 2,
-                      width: 20,
-                      borderBottom: 2,
-                      borderColor: "primary.main",
-                    },
-                  },
-                }}
+                sx={{ width: 44, height: 44 }}
               >
                 <HomeIcon />
               </IconButton>
@@ -88,12 +79,12 @@ export default function DrugPricingBar() {
           </Box>
           <Box sx={{ gridColumn: 3, justifySelf: "end", display: "flex" }}>
             <Tooltip title="Help">
-              <IconButton aria-label="Help" color="inherit" onClick={() => { closeDrawer(); openHelp(); }}>
+              <IconButton sx={{ width: 44, height: 44 }} aria-label="Help" color="inherit" onClick={() => { closeDrawer(); openHelp(); }}>
                 <HelpOutlineIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="Settings">
-              <IconButton aria-label="Settings" color="inherit" onClick={() => { closeDrawer(); openModal("settings"); }}>
+              <IconButton sx={{ width: 44, height: 44 }} aria-label="Settings" color="inherit" onClick={() => { closeDrawer(); openModal("settings"); }}>
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
