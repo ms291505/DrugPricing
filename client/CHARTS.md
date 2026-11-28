@@ -103,8 +103,8 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
 - Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
   Its tooltip states that every plotted price is NADAC; FDA reference data only finds and groups
-  products. The dates chip, in the header's details under the title, is the actual date window, and Match scale shares axes only by pricing
-  unit.
+  products. The dates chip, in the header's details under the title, is the actual date window,
+  and Match scale shares axes only by pricing unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned and for Price changes), with a collapse toggle wired with
   `aria-expanded`/`aria-controls`.

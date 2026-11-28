@@ -149,6 +149,8 @@ export default function ExplorerGridItem({
               >
                 {titleEnd ? title.slice(0, -titleEnd.length).trimEnd() : title}
               </Box>
+              {/* A real space, for the heading's text and the section's name; flex doesn't draw it. */}
+              {titleEnd ? " " : null}
               {titleEnd ? <Box component="span" sx={{ whiteSpace: "nowrap" }}>{titleEnd}</Box> : null}
             </Typography>
           </Tooltip>
