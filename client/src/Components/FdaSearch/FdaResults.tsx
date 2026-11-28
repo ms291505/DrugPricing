@@ -10,9 +10,8 @@ import { fdaResultsLabel, fdaRowCount, hiddenResultsHint, narrowToLabelers, reve
 import { foundMessage, type Noun } from "../../library/searchToasts";
 import { selectedChartPrices } from "../../library/chartSeries";
 import type { FdaResultDetailLevel } from "../../library/types";
-import PriceChangesSection from "../ResultsSection/PriceChangesSection";
 import SearchResultToast from "../ui/SearchResultToast";
-import ResultsSection, { AddedChartCards, HiddenResultsNotice, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
+import ResultsSection, { HiddenResultsNotice, ResultCards, ResultsReport, ResultsToolbar, TooManyRowsNotice } from "../ResultsSection";
 import { isTooManyRows } from "../../library/apiErrors";
 import DetailLevelSelect from "./DetailLevelSelect";
 import NadacHandoffNotice from "./NadacHandoffNotice";
@@ -77,10 +76,9 @@ export default memo(function FdaResults({ view }: Props) {
             {hint && <HiddenResultsNotice hint={hint} noun={noun} onShow={() => setCriteria(prev => revealFda(prev, hint))} />}
           </>
         }
-        priceChanges={<PriceChangesSection source={packageSource} scans={scans} />}
         table={table}
       >
-        <AddedChartCards source={levelSource} charts={charts} />
+        <ResultCards chartSource={levelSource} charts={charts} packageSource={packageSource} scans={scans} />
       </ResultsSection>
     </>
   );

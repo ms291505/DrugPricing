@@ -1,7 +1,10 @@
 import type { WidthTier } from "../hooks/useWidthTier";
 import { STALE_MARKER_WIDTH } from "./constants";
 
-/** A column's narrowest and widest width in px. The grid sizes it to its content between the two. */
+/**
+ * A column's narrowest and widest width in px. Autosizing sizes it to its content between the two;
+ * a drag respects only `min`, so a user can widen a column past `max` (`applyColumnBounds`).
+ */
 export type Bounds = { min: number, max: number };
 
 /** The `wide` bounds, with changes for the narrower tiers of the table's own width (not the window's). */
@@ -52,8 +55,9 @@ export function resolveBounds(bounds: ColumnBounds, tier: WidthTier): Bounds {
 type SizedColumn = { field: string, width?: number, minWidth?: number, maxWidth?: number };
 
 /**
- * The columns with their table-width tier's bounds as `minWidth` and `maxWidth` (and `width`, the
- * size before the grid measures, as the maximum). A column without bounds is returned as it is.
+ * The columns with their table-width tier's `min` as `minWidth`, and `width`, the size before the
+ * grid measures, at `max`. They get no `maxWidth`, so a drag can widen a column past `max`, which
+ * only autosizing respects (`autosizeMaxWidths`). A column without bounds is returned as it is.
  * A new array resets the grid's dragged widths, so call it only when the tier changes.
  */
 export function applyColumnBounds<C extends SizedColumn>(columns: readonly C[], tier: WidthTier, table: Readonly<Record<string, ColumnBounds>> = COLUMN_BOUNDS): C[] {
@@ -61,6 +65,12 @@ export function applyColumnBounds<C extends SizedColumn>(columns: readonly C[], 
     const bounds = table[column.field];
     if (!bounds) return column;
     const { min, max } = resolveBounds(bounds, tier);
-    return { ...column, width: max, minWidth: min, maxWidth: max };
+    const { maxWidth: _maxWidth, ...rest } = column;
+    return { ...rest, width: max, minWidth: min } as C;
   });
+}
+
+/** Each bounded column's `max` in the tier, by field: the widest autosizing makes it. */
+export function autosizeMaxWidths(columns: readonly SizedColumn[], tier: WidthTier, table: Readonly<Record<string, ColumnBounds>> = COLUMN_BOUNDS): Record<string, number> {
+  return Object.fromEntries(columns.flatMap(({ field }) => table[field] ? [[field, resolveBounds(table[field], tier).max]] : []));
 }

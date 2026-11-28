@@ -251,6 +251,19 @@ describe("loading saved tab state", () => {
     expect(loaded(persist.loadFdaTabState("t6")).criteria).toMatchObject({ excludedActivities: ["stable"], excludedStrengths: [] });
   });
 
+  it("reads FDA's brand/generic choice, defaulting a missing or unknown one, and keeps it without a search", () => {
+    saveRaw("bg1", { type: "fda", criteria: { ...fdaCriteria, brandGeneric: "generic" } });
+    expect(loaded(persist.loadFdaTabState("bg1")).criteria).toEqual({ ...fdaCriteria, brandGeneric: "generic" });
+    // Saved before the field existed, or malformed.
+    const { brandGeneric: _b, ...older } = fdaCriteria;
+    saveRaw("bg2", { type: "fda", criteria: older });
+    expect(loaded(persist.loadFdaTabState("bg2")).criteria).toEqual(fdaCriteria);
+    saveRaw("bg3", { type: "fda", criteria: { ...fdaCriteria, brandGeneric: "branded" } });
+    expect(loaded(persist.loadFdaTabState("bg3")).criteria).toEqual(fdaCriteria);
+    saveRaw("bg4", { type: "fda", criteria: { ...createFdaCriteria(), brandGeneric: "brand" } });
+    expect(loaded(persist.loadFdaTabState("bg4")).criteria.brandGeneric).toBe("brand");
+  });
+
   it("keeps labeler picks on a tab without a name, which doesn't search, and drops malformed picks", () => {
     const pfizer = { name: "Pfizer Laboratories Div Pfizer Inc", codes: ["0013", "0025"] };
     saveRaw("lab", {

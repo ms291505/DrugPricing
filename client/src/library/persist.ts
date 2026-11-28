@@ -326,6 +326,7 @@ function readFdaCriteria(raw: Record<string, unknown>): FdaCriteria {
     includeOtc: get("includeOtc", isBoolean),
     includeSamplePackages: get("includeSamplePackages", isBoolean),
     includeResultsWithoutPrices: get("includeResultsWithoutPrices", isBoolean),
+    brandGeneric: get("brandGeneric", isBrandGeneric),
     // A fixed refine field, kept without a search like the Include boxes; unknown values are dropped.
     excludedActivities: Array.isArray(raw.excludedActivities) ? raw.excludedActivities.filter(isActivityCategory) : [],
     excludedProductNdcs: exclusions("excludedProductNdcs"),

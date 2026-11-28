@@ -11,18 +11,25 @@ import { pinnedPriceChangeListTitle, priceChangeListSubtitle, priceChangeListTit
 import { HALF_WIDTH_GRID_SIZE, NOTABLE_PRICE_CHANGE_PERCENT } from "../../library/constants";
 import useWidthTier from "../../hooks/useWidthTier";
 import type { PriceChangeScans } from "../../hooks/usePriceChangeScans";
+import type { AddedCharts } from "../../hooks/useAddedCharts";
+import { madeCardsInOrder } from "../../library/resultCards";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import { usePinActions } from "../../Context/pinnedItemsContexts";
 import { moveFocusFromClosingCard } from "./closeCard";
 import PriceChangeListBody from "./PriceChangeListBody";
 import type { ChartContext } from "./PriceChangeChartDialog";
+import AddedChartCard from "./AddedChartCard";
 
 type Props = {
+  /** What the added charts draw: the table's level (its shown and loaded prices, origin, colors and dates). */
+  chartSource: ChartSource,
+  /** The page's added charts (`useAddedCharts`). */
+  charts: AddedCharts,
   /**
-   * The page's packages. New `prices` (new search, dates or filters) close every scan and chart;
-   * `dateWindow` is the window of a change's chart.
+   * The page's packages, which price change lists list. New `prices` (new search, dates or
+   * filters) close every scan and change chart; `dateWindow` is the window of a change's chart.
    */
-  source: ChartSource,
+  packageSource: ChartSource,
   /** The page's scans (`usePriceChangeScans`), over the same packages. */
   scans: PriceChangeScans,
 };
@@ -33,11 +40,14 @@ const AUTO_LIST = "auto";
 const gridItemSx = { alignSelf: "flex-start", minWidth: 0 } as const;
 
 /**
- * Notable price changes and the page's scan cards. Each list opens its own change charts in a
- * dialog (`PriceChangeListBody`). Renders nothing when there is no card.
+ * The cards in the results grid under the table: Notable price changes first, the search's own
+ * card, then the cards Line, Bar and Scan price changes made, in the order they were made
+ * (`madeCardsInOrder`), so a new one always goes after those already there. Each list opens its
+ * own change charts in a dialog (`PriceChangeListBody`).
  */
-export default function PriceChangesSection({ source, scans: scanState }: Props) {
-  const { prices, loadedPrices, origin, colors, dateWindow } = source;
+export default function ResultCards({ chartSource, charts: chartState, packageSource, scans: scanState }: Props) {
+  const { prices, loadedPrices, origin, colors, dateWindow } = packageSource;
+  const { charts, close: onCloseChart } = chartState;
   const { autoClosed, closeAuto: onCloseAuto, scans, closeScan: onCloseScan } = scanState;
   const groups = useMemo(() => groupPriceEvents(derivePriceEvents(prices, "package")), [prices]);
   // The user's own open/close of a group's package details, kept across searches (a search's
@@ -57,17 +67,18 @@ export default function PriceChangesSection({ source, scans: scanState }: Props)
   }, [onCloseAuto, onCloseScan]);
 
   const showAuto = groups.length > 0 && !autoClosed;
-  if (!showAuto && !scans.length) return null;
 
   const listProps = { prices, origin, colors, dateWindow, detailsChoice, onDetailsToggle, chartPrices, onClose: closeList };
   return (
     <>
       {showAuto && <PriceChangeListCard key={AUTO_LIST} listId={AUTO_LIST} title="Notable price changes"
         thresholdPercent={NOTABLE_PRICE_CHANGE_PERCENT} groups={groups} detailsKeyPrefix="" {...listProps} />}
-      {scans.map(scan => (
-        <PriceChangeListCard key={scan.id} listId={scan.id} title={priceChangeListTitle(scan.thresholdPercent)}
-          thresholdPercent={scan.thresholdPercent} groups={scan.groups} detailsKeyPrefix={`${scan.id}:`} {...listProps} />
-      ))}
+      {madeCardsInOrder(charts, scans).map(({ kind, card }) => kind === "chart"
+        ? <AddedChartCard key={card.id} source={chartSource} chart={card} onClose={onCloseChart} />
+        : (
+          <PriceChangeListCard key={card.id} listId={card.id} title={priceChangeListTitle(card.thresholdPercent)}
+            thresholdPercent={card.thresholdPercent} groups={card.groups} detailsKeyPrefix={`${card.id}:`} {...listProps} />
+        ))}
     </>
   );
 }

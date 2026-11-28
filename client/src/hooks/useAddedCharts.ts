@@ -17,6 +17,8 @@ export type AddedChart = {
   pricingUnits: string[],
   /** Pricing units whose card was closed while the chart's other cards stay. */
   closedUnits: string[],
+  /** When it was made (`performance.now()`): its place among the page's cards (`madeCardsInOrder`). */
+  order: number,
 };
 
 /** What the last Line or Bar press added, for the status line under the toolbar (`ResultsReport`). */
@@ -31,7 +33,7 @@ export type AddedCharts = {
   /** Oldest first. */
   charts: AddedChart[],
   /** Adds a card and reports it. */
-  add: (chart: Omit<AddedChart, "id" | "closedUnits">, message: string) => void,
+  add: (chart: Omit<AddedChart, "id" | "closedUnits" | "order">, message: string) => void,
   /** Removes the chart, or with `pricingUnit` only that unit's card. */
   close: (id: string, pricingUnit?: string) => void,
   /** What the last add made; null until the first, and again once the charts reset. */
@@ -55,10 +57,11 @@ export default function useAddedCharts(...resetKeys: unknown[]): AddedCharts {
     setReport(null);
   }
 
-  const add = useCallback((chart: Omit<AddedChart, "id" | "closedUnits">, message: string) => {
+  const add = useCallback((chart: Omit<AddedChart, "id" | "closedUnits" | "order">, message: string) => {
     const id = crypto.randomUUID();
-    setCharts(prev => [...prev, { ...chart, id, closedUnits: [] }]);
-    setReport({ message, chartId: id, order: performance.now() });
+    const order = performance.now();
+    setCharts(prev => [...prev, { ...chart, id, closedUnits: [], order }]);
+    setReport({ message, chartId: id, order });
   }, []);
   const close = useCallback((id: string, pricingUnit?: string) => setCharts(prev => pricingUnit === undefined
     ? prev.filter(chart => chart.id !== id)
