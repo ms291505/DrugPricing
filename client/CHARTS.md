@@ -43,13 +43,16 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - Significant package events are derived over the refined result by `derivePriceEvents` and
   `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
   tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
-  is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in the
-  results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `ResultCards`
-  fills the shared responsive grid: Notable price changes first, then the added charts and one
-  card per scan with matches (`usePriceChangeScans`, called once per page with the packages'
-  `prices`) in the order they were made (`madeCardsInOrder`, by each card's `order`), so a new
-  card always goes after the cards already there, all half width. Change charts open in a dialog,
-  not the grid (below). `ResultCards` is always mounted and holds the list headings for focus and the Package details
+  is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in
+  the results toolbar in the heading's row, after Line and Bar, with its report under that row.
+  Below the table, `ResultCards` fills the shared responsive grid, all half width: Notable price
+  changes, the added charts, and one card per scan with matches (`usePriceChangeScans`, called
+  once per page with the packages' `prices`), in the order they appeared (`madeCardsInOrder`, by
+  each card's `order`). So a new card always goes after the cards already there. Notable opens
+  first with each result and keeps its place while it stays open (`trackNotable`); when new
+  dates or filters bring it back after it was closed or empty, it goes after the cards already
+  there, so it never moves them. Change charts open in a dialog, not the grid (below).
+  `ResultCards` is always mounted and holds the list headings for focus and the Package details
   choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
   group key, since lists at different percents share group keys). Each list card measures its own
   width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,

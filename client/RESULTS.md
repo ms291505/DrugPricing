@@ -33,8 +33,8 @@ handles it; the grid's own, unbounded one is off with `disableAutosize`). The ru
 already floors a column at its header, so `min` is only the content floor and `max` is the widest
 real content or unsorted header (narrow may go lower and ellipsise). A tier flip makes a new
 `columns` array. The grid measures only the rows it has rendered. A column the user dragged
-(`columnResize`, published only by drag moves) keeps its width until the columns change or a
-double-click on its edge.
+(`columnResize`, published only by drag moves) keeps its width until the columns change or its edge is
+double-clicked.
 
 `AutosizeColumns` is a separate component so only its small visibility observer re-renders on a
 page/tab switch; the table does not. Hidden pages measure nothing until shown. Narrow tables use
@@ -77,10 +77,11 @@ stable prices"; `activityCounts`), then the shown dates unless they're All.
 The scan popover offers 5%, 10%, and 20% presets and accepts a custom threshold of at least 5%
 with up to one decimal place. Price change list cards share the responsive
 half-width grid with the added charts (`ResultCards`): Notable price changes (10%, when it has
-changes) comes first, then the added charts and one card per scan with matches
-(`usePriceChangeScans`, even at a percent already scanned), together in the order they were made
-(`madeCardsInOrder`), so a new card always goes after the cards already there and closing one
-moves none of the others. Every scan reports what it found in a `role="status"` line under the heading row
+changes), the added charts, and one card per scan with matches (`usePriceChangeScans`, even at a
+percent already scanned), in the order they appeared (`madeCardsInOrder`). A new card always
+goes after the cards already there, and closing one moves none of the others. Notable comes first
+with each result and keeps its place while it stays open; when new dates or filters bring it back
+after it was closed or had no changes, it goes after the cards already there (`trackNotable`). Every scan reports what it found in a `role="status"` line under the heading row
 (`ResultsReport`: "Found N package changes…", or none), and a scan with no matches makes no card. A
 new card neither scrolls nor takes focus: beside the report, Show scrolls to it and focuses its heading only from the
 keyboard, and goes once that card is closed.

@@ -16,8 +16,10 @@ const OPTIONS: GridAutosizeOptions = {
  * so a drag can widen them past it, and the grid's autosize measures without one: the cap is
  * applied in the same task, before the browser paints.
  */
-async function autosize(api: GridApi, fields: string[], maxWidths: Readonly<Record<string, number>>) {
-  await api.autosizeColumns({ ...OPTIONS, columns: fields });
+async function autosize(
+  api: GridApi, fields: string[], maxWidths: Readonly<Record<string, number>>, options: GridAutosizeOptions = OPTIONS,
+) {
+  await api.autosizeColumns({ ...options, columns: fields });
   const capped = fields.flatMap(field => {
     const column = api.getColumn(field);
     const max = maxWidths[field];
@@ -75,7 +77,11 @@ export default function AutosizeColumns<R extends PricedRow>({ apiRef, rows, vis
       api?.subscribeEvent("columnSeparatorDoubleClick", ({ field }, event) => {
         if (event.button !== 0 || field === GRID_CHECKBOX_SELECTION_COL_DEF.field) return;
         dragged.current.delete(field);
-        void autosize(api, [field], maxWidths);
+        // The double-clicked column is on screen, so the grid needn't turn column virtualization
+        // off to measure it (as its own handler does). If another autosize is running, the grid
+        // skips this one: the column then keeps its width until the next autosize, which now
+        // includes it. Rare, and harmless.
+        void autosize(api, [field], maxWidths, { ...OPTIONS, disableColumnVirtualization: false });
       }),
     ];
     return () => {
