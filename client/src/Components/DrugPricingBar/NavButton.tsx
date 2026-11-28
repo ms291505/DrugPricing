@@ -16,12 +16,7 @@ export default function NavButton({ to, children, ...props }: Props) {
         // up, 64px is MUI's own button min width, restored.
         minWidth: { xs: 0, sm: 64 },
         px: { xs: 0.75, sm: 1 },
-        "&.active": {
-          color: "primary.main",
-          fontWeight: "bold",
-          borderBottom: 2,
-          borderColor: "primary.main",
-        },
+        minHeight: { xs: 44, sm: 0 },
       }}
       {...props}
     >
