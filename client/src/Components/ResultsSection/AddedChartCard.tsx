@@ -6,7 +6,7 @@ import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
-import { chartSubtitle, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels } from "../../library/chartTitles";
+import { barValueLabel, chartDates, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels, unitTitleEnd } from "../../library/chartTitles";
 import { countSeries, openPricingUnits, selectedChartPrices } from "../../library/chartSeries";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
 import { splitByPricingUnit } from "../../library/prices";
@@ -74,10 +74,13 @@ function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
   const title = chartTitle(origin.searchLabel, labels, pricingUnit);
-  const subtitle = [chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices), hiddenSeriesNote(hiddenCount)]
+  // The header's details follow the bar value and dates as they change; the title (and a pin's) doesn't.
+  const details = [chart.chartType === "bar" ? barValueLabel(barValue) : "", chartDates(dateWindow, prices)]
+    .filter(Boolean).join(" · ");
+  const subtitle = [seriesCountLabel(labels.length, origin.seriesKind), hiddenSeriesNote(hiddenCount)]
     .filter(Boolean).join(" · ");
   return (
-    <UnitCard chart={chart} title={title} subtitle={subtitle} onClose={onClose}
+    <UnitCard chart={chart} title={title} titleEnd={unitTitleEnd(title, pricingUnit)} details={details} subtitle={subtitle} onClose={onClose}
       pin={<PinButton
         title={title} chartType={chart.chartType} prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
         colors={colors} barValue={chart.chartType === "bar" ? barValue : undefined}
@@ -91,13 +94,14 @@ function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
 }
 
 /** The grid item and card frame, with Pin (when there is something to pin) and Close. */
-function UnitCard({ chart, title, subtitle, pin, onClose, children }: {
-  chart: AddedChart, title: string, subtitle: string, pin?: ReactNode, onClose: CloseHandler, children: ReactNode,
+function UnitCard({ chart, title, titleEnd, details, subtitle, pin, onClose, children }: {
+  chart: AddedChart, title: string, titleEnd?: string, details?: string, subtitle: string, pin?: ReactNode, onClose: CloseHandler,
+  children: ReactNode,
 }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <Grid ref={ref} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx} data-added-chart={chart.id}>
-      <ExplorerGridItem title={title} subtitle={subtitle} headingLevel={3}
+      <ExplorerGridItem title={title} titleEnd={titleEnd} details={details} subtitle={subtitle} headingLevel={3}
         actions={<>
           {pin}
           <Tooltip title="Close">

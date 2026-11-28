@@ -146,6 +146,16 @@ results so stale-price indicators use the correct publication date.
   `PriceChangeChartDialog` has its close button top right, so after Pin it's hidden for about
   three seconds. Either let the dialog's own status line confirm the pin visibly and skip the toast
   there (`PinButton` always toasts), or show toasts at the bottom while a dialog is open. Small.
+- **Toasts draw above a dialog's backdrop** (found in PR 85's browser checks, 2026-11-28). The
+  toaster (`App.tsx`, z-index 9999) sits over MUI's modal layer, so a Pin toast from a card that
+  was showing when the change chart dialog opened stays bright over the dimmed page beside the
+  dialog. Decide with the Pin toast entry above: lower the toaster below the modal layer while a
+  dialog is open, or let a dialog report its own actions. Small.
+- **The change chart dialog's callout pills overlap at phone width** (found in PR 85's browser
+  checks, 2026-11-28). In the full-screen `PriceChangeChartDialog` on a 375px phone, a package
+  with several changes close together draws its price change pills (`lineChangeCallouts`) on top
+  of each other, and a span's pill runs past the plot's left edge. Lay them out against the
+  plot's width (stack, shorten, or drop the span's dates below `sm`). Small.
 - **A tap on a results-table checkbox leaves a focus outline** on the cell (MUI X DataGrid's own
   cell focus, seen in the iOS Simulator, 2026-11-22). The focus and touch cleanup kept the
   DataGrid's focus handling on purpose; decide whether the outline after a tap is worth styling

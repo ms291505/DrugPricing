@@ -103,7 +103,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
 - Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
   Its tooltip states that every plotted price is NADAC; FDA reference data only finds and groups
-  products. The dates chip is the actual date window, and Match scale shares axes only by pricing
+  products. The dates chip, in the header's details under the title, is the actual date window, and Match scale shares axes only by pricing
   unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned and for Price changes), with a collapse toggle wired with
@@ -134,11 +134,18 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and names hidden ones. An add past `CHART_SERIES_WARNING` (8) toasts a warning (`ChartControl`).
   A new card neither scrolls nor takes focus: the status line reports it (`ResultsReport`), and
   its Show scrolls to the card (`data-added-chart`) and focuses its heading only from the keyboard.
-- Titles come from `chartTitles.ts`: the title names the search, or the one series by its own
-  label, and the currency and unit ("Humira · USD per mL"), so the cards a search splits into by
-  unit differ by their headings; the subtitle gives the count and dates. Line and bar charts of
-  the same rows share a title. The change chart dialog's title names the event date, package
-  and unit. A title the user chose is kept as typed.
+- A chart card's header has three parts (`chartTitles.ts`, `ExplorerGridItem`). The title
+  names the search, or the one series by its own label, and the currency and unit ("Humira · USD
+  per mL"), so the cards a search splits into by unit differ by their headings; it is what a pin
+  stores, and a title the user chose is kept as typed. Under it, on its own line, the details:
+  a bar chart's bar value ("Latest price", `barValueLabel`) and every chart's dates
+  (`chartDates`; on a pinned card, its Dates control, the dates chip). They are read live, so
+  they follow the bar value toggle and the dates, and are never stored in the title. Bar charts
+  show their dates there too, since the bar value and range are over those dates. The subtitle
+  gives the series count and hidden note on added cards; a pinned card's count is in its
+  provenance chip. Line and bar charts of the same rows share a title. The change chart dialog's
+  title names the event date, package and unit, and its context line under it gives the list and
+  dates.
 
 ## Axes and labels
 

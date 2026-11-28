@@ -7,7 +7,7 @@ compare charts from both sources. Each **workspace tab** has its own separate pi
 
 On a pinned chart you can do the following.
 
-- Select the dates chip to change the chart’s own date window.
+- Select the dates chip under the title to change the chart’s own date window.
 - Turn on **Match scale** in the menu on each line chart you want to compare on the same
   price axis. The charts must use the same pricing unit.
 - Check the search source badge under the title to see which search found the data. All

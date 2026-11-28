@@ -64,10 +64,11 @@ export default function PriceChangeChartDialog({ change, context, onClose }: Pro
   const dates = formatWindow(dateWindow, dateBounds(change.prices));
   return (
     <Dialog open onClose={onClose} fullScreen={fullScreen} fullWidth maxWidth="md" aria-describedby={contextId}
-      // The cards' surface, which the chart is drawn for, over a backdrop that keeps it apart (`chartDialog` in theme.ts).
+      // Without the dark theme's elevation overlay, the paper is the cards' surface, which the
+      // chart is drawn for, over a backdrop that keeps it apart (`chartDialogBackdrop` in theme.ts).
       slotProps={{
-        paper: { sx: { bgcolor: "chartDialog.paper", backgroundImage: "none" } },
-        backdrop: { sx: { bgcolor: "chartDialog.backdrop" } },
+        paper: { sx: { backgroundImage: "none" } },
+        backdrop: { sx: { bgcolor: "chartDialogBackdrop" } },
       }}
     >
       <TitleBar title={change.title} onClose={onClose} />

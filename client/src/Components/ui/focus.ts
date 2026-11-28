@@ -16,8 +16,9 @@
  * Focus targets found through the DOM use data attributes, not class names or text:
  * `data-collapse-toggle` (`ExplorerGridItem`'s collapse button), `data-card-heading` (its
  * heading), `data-results-heading` (`ResultsSection`'s `h2`), `data-first-term` (the search
- * panel's first text field), `data-price-change-list` (each list card's grid item) and
- * `data-pinned-item` (each pinned card's grid item).
+ * panel's first text field), `data-price-change-list` (each list card's grid item),
+ * `data-pinned-item` (each pinned card's grid item) and `data-tab-creator` (a blank tab's search
+ * chooser).
  */
 
 /**

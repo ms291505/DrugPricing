@@ -1,12 +1,12 @@
 import { Card, CardActionArea, CardContent, Typography, type SxProps, Box } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import type { TabType } from "../../library/tabType.ts";
 import SearchTypeChip from "../ui/SearchTypeChip";
 
 export type DescriptionCardProps = {
   tabType: TabType,
-  onClick: () => void,
+  onClick: (event: MouseEvent<HTMLElement>) => void,
   header: string | ReactNode,
   body: string | ReactNode,
   isMobile?: boolean,

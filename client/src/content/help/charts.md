@@ -28,6 +28,8 @@ that point so you can scroll the readout. Click again, press Esc while the chart
 
 If selected drugs use different pricing units, such as per tablet and per milliliter, the app
 creates a card for each unit, and each card's title ends with its unit, such as **USD per mL**.
+Under the title, a line chart shows its dates, and a bar chart shows whether its bars are the
+**Latest** or **Average** price and over which dates.
 Older mixed-unit pins draw separate charts inside one card, each under its unit.
 
 The line chart can fit its price axis to the data to show small changes. The app limits how

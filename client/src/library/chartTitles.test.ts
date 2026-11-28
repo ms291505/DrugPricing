@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addedChartMessage, chartSubtitle, chartTitle, eventChartTitle, hiddenSeriesNote, scanReportMessage, seriesLabels, titleNamesUnit,
+  addedChartMessage, barValueLabel, chartDates, chartTitle, unitTitleEnd, eventChartTitle, hiddenSeriesNote, scanReportMessage, seriesLabels, titleNamesUnit,
   unitChartLabel,
 } from "./chartTitles";
 import { FULL_WINDOW } from "./dates";
@@ -32,12 +32,29 @@ describe("chart titles", () => {
     expect(eventChartTitle(Date.parse("2026-10-21"), "3089321", "milliliter")).toBe("Price change · Oct 21, 2026 · 3089321 · USD per mL");
   });
 
-  it("subtitles with the count and the dates shown", () => {
+  it("gives the dates shown for the header, open ends from the data", () => {
     const prices = [price("A", "2022-01-05"), price("B", "2026-10-07")];
     expect(seriesLabels(prices)).toEqual(["HUMIRA A", "HUMIRA B"]);
-    expect(chartSubtitle(2, "product", FULL_WINDOW, prices)).toBe("2 products · Jan 5, 2022 – Oct 7, 2026");
-    expect(chartSubtitle(2, "product", { start: Date.parse("2026-01-01"), end: null }, prices))
-      .toBe("2 products · Jan 1, 2026 – Oct 7, 2026");
+    expect(chartDates(FULL_WINDOW, prices)).toBe("Jan 5, 2022 – Oct 7, 2026");
+    expect(chartDates({ start: Date.parse("2026-01-01"), end: null }, prices)).toBe("Jan 1, 2026 – Oct 7, 2026");
+  });
+
+  it("names a bar chart's value for the header", () => {
+    expect(barValueLabel("latest")).toBe("Latest price");
+    expect(barValueLabel("average")).toBe("Average price");
+  });
+
+  it("keeps the bar value and dates out of the title, which a pin stores", () => {
+    expect(chartTitle("humira", ["a", "b"], "each")).not.toMatch(/Latest|Average|\d{4}/);
+  });
+});
+
+describe("unitTitleEnd", () => {
+  it("finds the unit at the end of a generated title, for the header to keep in view", () => {
+    expect(unitTitleEnd("HUMIRA KIT 40 mg · USD per each", "each")).toBe("USD per each");
+    expect(unitTitleEnd("HUMIRA KIT 40 mg · USD per each", "milliliter")).toBe("");
+    expect(unitTitleEnd("My insulin chart", "milliliter")).toBe("");
+    expect(unitTitleEnd("Humira · USD per mL", undefined)).toBe("");
   });
 });
 

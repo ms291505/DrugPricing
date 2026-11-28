@@ -5,6 +5,17 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 type Props = {
   title: string,
+  /**
+   * The end of `title` to keep in view when the rest is cut to two lines: a chart's currency and
+   * unit (`unitTitleEnd`), which sets a card apart from its search's other unit cards.
+   */
+  titleEnd?: string,
+  /**
+   * The rest of the header, on its own line under the title: what a chart draws and over which
+   * dates (its bar value, its dates or a pin's Dates control), read live rather than stored in
+   * the title. Its own line, so a title that takes two lines doesn't push it out of view.
+   */
+  details?: ReactNode,
   subtitle?: ReactNode,
   /** Small chips shown under the title, e.g. provenance. */
   badges?: ReactNode,
@@ -23,11 +34,13 @@ type Props = {
 /**
  * Card shell for everything in the explorer grid: the results table, added charts, and pinned
  * items. A labelled `<section>` with a real heading, a collapse toggle wired for assistive tech,
- * and slots for a subtitle, badges, and actions.
+ * and slots for the header's details, a subtitle, badges, and actions.
  */
 export default function ExplorerGridItem({
   children,
   title,
+  titleEnd = "",
+  details,
   subtitle,
   badges,
   actions,
@@ -114,7 +127,13 @@ export default function ExplorerGridItem({
               variant="subtitle1"
               onMouseEnter={checkTruncated}
               onFocus={checkTruncated}
-              sx={{ fontWeight: 600, lineHeight: 1.3, "&:focus-visible": { outline: "2px solid", outlineOffset: 2 } }}
+              sx={{
+                fontWeight: 600, lineHeight: 1.3, "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
+                // The end follows the rest on its line while it fits, else takes the next line,
+                // so cutting a long title short never cuts it. The " · " before it stays with the
+                // rest, so a wrapped end doesn't start with it.
+                ...titleEnd && { display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: "0.3em" },
+              }}
             >
               <Box
                 component="span"
@@ -125,15 +144,27 @@ export default function ExplorerGridItem({
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                   overflowWrap: "anywhere",
+                  minWidth: 0,
                 }}
               >
-                {title}
+                {titleEnd ? title.slice(0, -titleEnd.length).trimEnd() : title}
               </Box>
+              {titleEnd ? <Box component="span" sx={{ whiteSpace: "nowrap" }}>{titleEnd}</Box> : null}
             </Typography>
           </Tooltip>
         </Box>
         {actions
           ? <Box sx={{ gridColumn: 3, gridRow: 1, display: "flex", alignItems: "center", gap: 0.5 }}>{actions}</Box>
+          : null
+        }
+        {details
+          ? (
+            <Typography component="div" variant="body2" sx={{
+              gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1, rowGap: 0.5, fontWeight: 500,
+            }}>
+              {details}
+            </Typography>
+          )
           : null
         }
         {subtitle
