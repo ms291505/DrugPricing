@@ -415,10 +415,10 @@ the worktree that holds the slot. Without the link they fail with `ENOENT`; befo
    <main>/.claude/slots && ln -sn "$PWD" <main>/.claude/slots/worktree<N>`. Keep the `-n`:
    without it, `ln` follows an existing link into the other worktree, leaves a stray link
    there and succeeds, while the slot still points at the other worktree. With it, the claim
-   fails if the link exists: another agent holds the slot, so try the next one. Free ports
-   don't make a link stale (its owner may be starting or restarting its servers), so never
-   replace another worktree's link. Remove it only when its target is gone (`test -d
-   "$(readlink <link>)"` fails); if all three slots are held, ask the author. Then use that
+   fails if the link exists, so try the next slot. Skip every existing link, even one whose
+   ports are free (its owner may be starting or restarting its servers) or whose worktree is
+   gone: two agents removing the same dangling link can delete each other's fresh claim, so
+   only the author removes stale links. If all three slots are held, ask the author. Then use that
    slot's two configs only: `worktree<N>-server` and `worktree<N>-client`. The server gets its
    `DevClientHost` (the slot's client origin) from an environment variable, which beats the
    JSON file; the client gets its `VITE_API_URL` the same way and fails rather than moves if
