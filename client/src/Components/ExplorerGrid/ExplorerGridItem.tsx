@@ -183,7 +183,10 @@ export default function ExplorerGridItem({
           )
           : null}
         <Box sx={{ minWidth: 0, position: "relative", ...compact ? { gridColumn: "1 / -1", gridRow: 2 } : { gridColumn: 2, gridRow: 1, pt: 0.5 } }}>
-          <Tooltip title={titleTruncated ? title : ""} placement="top-start">
+          {/* describeChild: without it, MUI names the heading by the tooltip's title whenever the
+              title is cut off, dropping the hidden chart kind, so a line and a bar chart of the
+              same rows would share a name again. The full title only describes it while open. */}
+          <Tooltip title={titleTruncated ? title : ""} placement="top-start" describeChild>
             <Typography
               component={`h${headingLevel}`}
               id={titleId}
