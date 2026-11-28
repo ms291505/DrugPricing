@@ -20,28 +20,27 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Why I built it</Typography>
       <p>
-        I think about drug prices a lot at work, and I wanted to know whether the differences I saw in ingredient cost
-        across GLP-1 drugs also showed up in NADAC. I could look up each drug on the CMS site and track the figures in
-        Excel, but seeing how those differences had changed since last year was much harder, so I built DrugPricing to
-        make that history easier to compare.
+        I think about drug prices a lot at work, and I wanted to compare the differences I saw in ingredient cost across
+        GLP-1 drugs with the differences in their NADACs. I could look up each drug on the CMS site and track the
+        figures in Excel, but seeing how those NADACs had changed since last year was much harder, so I built
+        DrugPricing to put their histories side by side.
       </p>
       <p>
-        Strength turned out to be worth checking too. Under the Medicare GLP-1 Bridge, all six strengths of the Zepbound
-        KwikPen share one manufacturer net price, $245 per monthly supply, so I wondered whether pharmacies paid the same
-        for every strength. In NADAC they don’t: the three lower strengths cost about $201 per mL and the three higher
-        strengths about $282 per mL.
+        One of those drugs, Zepbound, raised a second question about strength. Under the Medicare GLP-1 Bridge, all six
+        strengths of the Zepbound KwikPen share one manufacturer net price, $245 per monthly supply, so I wondered
+        whether pharmacies paid the same for every strength. In NADAC they don’t: the three lower strengths cost about
+        $201 per mL and the three higher strengths about $282 per mL.
       </p>
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Who it’s for</Typography>
       <p>
-        DrugPricing is for people whose work connects them to prescription drug purchasing and who look closely at the
-        details: payers and benefits administrators, people at manufacturers, and pharmacists who manage purchasing.
-        They usually arrive with a question.
+        DrugPricing is for payers and benefits administrators, data analysts and researchers, or anyone at any point in
+        the drug channel who is just curious. They usually arrive with a question like:
       </p>
       <ul>
         <li>My PBM report shows different ingredient costs for two drugs. Does NADAC show a similar gap, and was it there a year ago?</li>
         <li>Does this tablet have the same NADAC per tablet in every package size, or at every strength?</li>
-        <li>After the Medicaid rebate cap ended, did insulin NADACs drop when and as much as the industry expected?</li>
+        <li>After the Medicaid rebate cap ended, did insulin NADACs drop as much as the industry expected?</li>
         <li>Where did the benchmark start for a new drug?</li>
         <li>How does my acquisition cost compare with the benchmark?</li>
       </ul>
@@ -51,8 +50,9 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>The two sources</Typography>
       <p>
-        CMS supplies the price history. The FDA’s National Drug Code (NDC) Directory helps you identify products and
-        packages by brand or generic name, strength, dosage form, route, and labeler. Each search starts from one of them.
+        CMS supplies the price history, and the FDA’s National Drug Code (NDC) Directory helps you identify products
+        and packages by brand or generic name, strength, dosage form, route, and labeler. Each search starts from one of
+        them:
       </p>
       <ul>
         <li>
@@ -89,11 +89,11 @@ export default function About({ showHeading = true }: { showHeading?: boolean })
 
       <Typography component="h2" variant="h5" sx={{ mt: 3 }}>Privacy</Typography>
       <p>
-        DrugPricing has no accounts. Your workspace, with its tabs, searches, and pinned charts, is saved in this
-        browser on this device, along with your settings, while a search on the FDA or NADAC page under Search is saved
-        for this browser tab only. Each search sends its terms and dates to the server only to find prices,
-        and the server doesn’t keep them.{" "}
-        <Link component={RouterLink} to="/help/tabs-and-your-saved-workspace">Tabs and your saved workspace</Link>{" "}
+        You can use DrugPricing without signing up or giving any personal information. Your workspace, with its tabs,
+        searches, and pinned charts, is saved in this browser on this device along with your settings, while a search
+        on the FDA or NADAC page under Search stays in this browser tab. Each search sends its terms and dates to the
+        server only to find prices, and the server doesn’t keep them.{" "}
+        <Link component={RouterLink} to="/help/tabs-and-your-saved-workspace">Workspace tabs and what they save</Link>{" "}
         explains what’s saved and how to delete it.
       </p>
 

@@ -47,7 +47,7 @@ export const IDEAS: { title: string, text: string, link: string, topic: HelpTopi
   },
   {
     title: "Pin a chart to keep it",
-    text: "Pin a chart to keep its data and dates when you search again. The FDA and NADAC pages under Search share their pins, and each Workspace tab keeps its own.",
+    text: "Pin a chart to keep its data and dates when you search again. The FDA and NADAC pages under Search share their pins, and each workspace tab keeps its own.",
     link: "Pinning and comparing",
     topic: "pinning-and-comparing",
     Icon: PushPinOutlined

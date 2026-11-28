@@ -18,7 +18,7 @@ const TOPICS = [
   { id: "charts", title: "Charts", group: "Using the app", keywords: "line bar shaded band range readout legend csv", related: ["the-results-table", "pinning-and-comparing", "keyboard-and-screen-readers"] },
   { id: "price-changes", title: "Price changes", group: "Using the app", keywords: "flag drop rise scan threshold", related: ["five-ways-a-price-can-mislead", "dates", "charts"] },
   { id: "pinning-and-comparing", title: "Pinning and comparing", group: "Using the app", keywords: "pin snapshot match scale", related: ["charts", "tabs-and-your-saved-workspace"] },
-  { id: "tabs-and-your-saved-workspace", title: "Tabs and your saved workspace", group: "Using the app", keywords: "storage browser clear", related: ["pinning-and-comparing", "troubleshooting"] },
+  { id: "tabs-and-your-saved-workspace", title: "Workspace tabs and what they save", group: "Using the app", keywords: "storage browser clear", related: ["pinning-and-comparing", "troubleshooting"] },
   { id: "settings", title: "Settings", group: "Using the app", keywords: "theme dark light", related: ["charts"] },
   { id: "keyboard-and-screen-readers", title: "Keyboard and screen readers", group: "Using the app", keywords: "accessibility", related: ["charts"] },
   { id: "five-ways-a-price-can-mislead", title: "What to check before comparing prices", group: "Reading prices carefully", keywords: "five ways mislead misleading compare", related: ["things-to-try", "what-the-prices-mean"] },

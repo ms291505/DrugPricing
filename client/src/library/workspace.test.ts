@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WorkspaceTab } from "./tabType.ts";
-import { isFreshWorkspace, replacementTabId, workspaceReducer, type WorkspaceState } from "./workspace";
+import { replacementTabId, workspaceReducer, type WorkspaceState } from "./workspace";
 
 const tab = (id: string, title = id): WorkspaceTab => ({ id, type: "fda", title });
 
@@ -183,16 +183,5 @@ describe("workspaceReducer", () => {
       value: prev => prev.map(p => (p === "a" ? null : p)),
     });
     expect(next.paneAssignment).toEqual([null]);
-  });
-});
-
-describe("isFreshWorkspace", () => {
-  const blank: WorkspaceTab = { id: "n", type: "new", title: "New tab" };
-
-  it("is fresh only while the workspace is a single blank tab", () => {
-    expect(isFreshWorkspace([blank])).toBe(true);
-    expect(isFreshWorkspace([tab("a")])).toBe(false);
-    expect(isFreshWorkspace([blank, { ...blank, id: "m" }])).toBe(false);
-    expect(isFreshWorkspace([blank, tab("a")])).toBe(false);
   });
 });

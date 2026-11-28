@@ -42,7 +42,7 @@ type Props = {
 }
 
 const RECENT_PRESETS = [
-  { months: 12, label: "Last year", shortLabel: "1 yr" },
+  { months: 12, label: "1 year", shortLabel: "1 yr" },
   { months: 6, label: "6 months", shortLabel: "6 mo" },
   { months: 3, label: "3 months", shortLabel: "3 mo" },
 ];

@@ -9,8 +9,8 @@
   they have no matching price. See [why a package might have no NADAC price](/help/nadac).
 - **The price looks unusual.** Check whether it is per tablet, milliliter, gram, or another
   unit, and check the selected dates.
-- **The app asks you to reload.** Another window saved changes to searches, tabs, or pins.
-  Reload this window before making more changes. Settings changes don’t need a reload.
-- **Tabs are missing.** Open the browser and profile where you saved them. Clearing this
+- **The app asks you to reload.** Another browser tab or window saved changes to searches,
+  workspace tabs, or pins. Reload the one that asks before making more changes. Settings changes don’t need a reload.
+- **Workspace tabs are missing.** Open the browser and profile where you saved them. Clearing this
   site’s data removes your workspace.
 - **A search is slow.** Try a shorter date range or more specific search terms.
