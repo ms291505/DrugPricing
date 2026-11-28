@@ -43,12 +43,16 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
 - Significant package events are derived over the refined result by `derivePriceEvents` and
   `flagPriceChanges`, at 10% (`NOTABLE_PRICE_CHANGE_PERCENT`) or a scan's percent, compared in
   tenths of a percent (`meetsThreshold`). A change from $0 has `percentage` `Infinity` in memory and
-  is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in the
-  results toolbar in the heading's row, after Line and Bar, with its report under that row. Below the table, `PriceChangesSection`
-  follows the added charts in the shared responsive grid: Notable price changes,
-  then one card per scan with matches (`usePriceChangeScans`, called once per page with the
-  section's `prices`), all half width. Change charts open in a dialog, not the grid (below). The
-  section is always mounted and holds the list headings for focus and the Package details
+  is shown only through `eventLabel` and `signedChange`, as "from $0". The scan control is in
+  the results toolbar in the heading's row, after Line and Bar, with its report under that row.
+  Below the table, `ResultCards` fills the shared responsive grid, all half width: Notable price
+  changes, the added charts, and one card per scan with matches (`usePriceChangeScans`, called
+  once per page with the packages' `prices`), in the order they appeared (`madeCardsInOrder`, by
+  each card's `order`). So a new card always goes after the cards already there. Notable opens
+  first with each result and keeps its place while it stays open (`trackNotable`); when new
+  dates or filters bring it back after it was closed or empty, it goes after the cards already
+  there, so it never moves them. Change charts open in a dialog, not the grid (below).
+  `ResultCards` is always mounted and holds the list headings for focus and the Package details
   choices (Notable price changes keyed by group key, which survives searches; scans by scan id and
   group key, since lists at different percents share group keys). Each list card measures its own
   width (`useWidthTier` on its Grid item) and has Pin and Close. Its body, `PriceChangeListBody`,
@@ -118,8 +122,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   chart with its unit. Unit charts share one date axis.
 - New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
-- Added charts (`AddedChartCards`): each press of Line or Bar in the results toolbar adds a chart
-  of the selected rows that are shown, drawn as one card per pricing unit and never stored. The
+- Added charts (`AddedChartCard`): each press of Line or Bar in the results toolbar adds a chart
+  of the selected rows that are shown, drawn as one card per pricing unit, next to each other
+  after the cards already there, and never stored. The
   page holds them (`useAddedCharts`), each with its rows' ids, and resets them during render when
   its reset keys change (a new search, Clear search, FDA's detail level). Line and Bar are
   disabled past `CHART_SERIES_LIMIT` (30) **series**, not price rows, counted before splitting by

@@ -8,7 +8,7 @@ import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { useSettings } from "../../Context/SettingsContext";
 import { columnVisibilityModel, columnOverridesFromModel, DEFAULT_HIDDEN_COLUMNS, type ResultTableType } from "../../library/settings";
 import { orderColumns } from "../../library/columnOrder";
-import { applyColumnBounds } from "../../library/columnBounds";
+import { applyColumnBounds, autosizeMaxWidths } from "../../library/columnBounds";
 import { activityCounts } from "../../library/priceActivity";
 import { formatWindow, type DateWindow } from "../../library/dates";
 import type { PricedRow } from "../../library/resultRows";
@@ -57,6 +57,7 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
   // the order) resets dragged widths, and the columns are measured again anyway.
   const narrow = narrowOrder !== undefined && widthTier === "narrow";
   const tierColumns = useMemo(() => applyColumnBounds(columns, widthTier), [columns, widthTier]);
+  const maxWidths = useMemo(() => autosizeMaxWidths(columns, widthTier), [columns, widthTier]);
   const allColumns = useMemo(
     () => [checkboxColumn<R>(rowNoun), ...(narrow && narrowOrder ? orderColumns(tierColumns, narrowOrder) : tierColumns)],
     [rowNoun, tierColumns, narrow, narrowOrder],
@@ -123,8 +124,10 @@ export default function ResultTable<R extends PricedRow>({ rows, tableType, colu
         // search clears the selection in the search context.
         keepNonExistentRowsSelected
         disableRowSelectionExcludeModel
+        // `AutosizeColumns` sizes a double-clicked column itself, within its autosize maximum.
+        disableAutosize
       />
-      <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} />
+      <AutosizeColumns apiRef={apiRef} rows={rows} visibility={visibility} columns={allColumns} maxWidths={maxWidths} />
     </>
   );
 }
@@ -164,7 +167,8 @@ function ResultFooter({ resultTableType, compact }: { resultTableType: ResultTab
   return (
     <GridFooterContainer sx={{ minHeight: 44 }}>
       <Toolbar aria-label="Results columns" render={(
-        <Box sx={{ justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, px: 0.5, gap: 1 }} />
+        // The render replaces the grid's toolbar root, flex included: centered like the pagination beside it.
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", flex: "0 0 auto", borderBottom: 0, minHeight: 44, px: 0.5, gap: 1 }} />
       )}>
         <ColumnsPanelTrigger render={<ToolbarButton render={<Button size="small" variant="outlined" color="inherit" sx={{ color: "text.secondary", ...(compact && { minWidth: 0, px: 0.5 }) }} startIcon={<ViewColumnIcon />} />} />}>
           Columns
