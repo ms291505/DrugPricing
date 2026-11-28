@@ -55,6 +55,8 @@ for chart and card design rules.
   users what the workspace saves, and keeping search terms out of server logs and URLs.
 - [FDA strength, price activity, and labeler](plans/fda-strength-activity-labeler.md) for two
   new FDA filters and a labeler search that corrects misspellings.
+- [AGENTS.md split and skills](plans/agents-split-and-skills.md) for moving client guidance to
+  `client/AGENTS.md` and turning four procedures into project skills.
 
 ## Reviews and analysis
 
