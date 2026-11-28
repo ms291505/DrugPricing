@@ -16,8 +16,8 @@
   filters apply automatically.
 - **Clear search** empties the search fields and puts the dates and filters back to their
   defaults, so you can start over. Pinned items stay.
-- The FDA and NADAC pages under **Search** save your search and its pins for this browser tab
-  only, unless you choose **Add search to workspace**.
+- Under **Search**, your searches and shared pins stay in this browser tab. To keep a copy
+  between visits, choose **Add search to workspace**, which opens it in a new workspace tab.
 
 ## Finding a company's products
 

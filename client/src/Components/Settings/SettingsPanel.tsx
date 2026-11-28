@@ -37,7 +37,7 @@ export default function SettingsPanel() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Typography variant="body2" color="text.secondary">
-        Changes apply right away, to every tab, and are saved in this browser.
+        Changes apply right away in every tab and window, and are saved in this browser.
       </Typography>
       <FormControl>
         <FormLabel id={colorModeId} sx={SECTION_LABEL_SX}>

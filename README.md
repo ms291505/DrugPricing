@@ -42,8 +42,8 @@ the React client, and deployment on a Raspberry Pi. The rest of this README cove
   average price.
 - Flags notable package price changes and lets you scan at a threshold you choose.
 - Saves pinned charts and price change lists in your browser. The standalone searches share
-  pins, and each Workspace tab has its own.
-- Copies a search and its pins to a new Workspace tab with Add search to workspace in the
+  pins, and each workspace tab has its own.
+- Copies a search and its pins to a new workspace tab with Add search to workspace in the
   search panel.
 - Offers a data table and CSV download under every chart.
 - Supports keyboard navigation and a screen-reader readout of the active point.

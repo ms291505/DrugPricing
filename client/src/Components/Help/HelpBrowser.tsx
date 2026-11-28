@@ -81,7 +81,7 @@ export default function HelpBrowser({ initialTopic, initialSection, standalone =
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 2 }}>
         {!standalone && history.length > 1 && <Button onClick={() => setHistory(previous => previous.slice(0, -1))}>Back</Button>}
         {id && <Button onClick={() => openTopic()}>All topics</Button>}
-        {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open in new tab</Link>}
+        {!standalone && <Link href={topic ? `/help/${topic.id}` : "/help"} target="_blank" rel="noopener noreferrer" sx={{ ml: "auto" }}>Open Help in a new browser tab</Link>}
       </Box>
       <Typography ref={heading} tabIndex={-1} component={standalone ? "h1" : "h2"} variant="h5" sx={{ mb: 2 }}>
         {topic?.title ?? (id ? "Topic not found" : "Help topics")}

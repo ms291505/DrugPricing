@@ -78,7 +78,7 @@ export const WorkspaceContextProvider = ({ children }: { children: React.ReactNo
     setReadOnly(true);
     toast(
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        Your workspace changed in another window. Changes here won't be saved.
+        Your workspace changed in another browser tab or window. Changes here won't be saved.
         <Button size="small" variant="outlined" onClick={() => window.location.reload()}>Reload</Button>
       </Box>,
       { id: "workspace-changed-elsewhere", duration: Infinity },
