@@ -1,13 +1,13 @@
 import { useId, useMemo, useRef, useState, type ReactNode } from "react";
-import { Box, Paper, Typography, Collapse, IconButton, Divider, Tooltip } from "@mui/material";
+import { Box, Paper, Typography, Collapse, IconButton, Divider, Tooltip, useMediaQuery } from "@mui/material";
 import { keyframes, useTheme } from "@mui/material/styles";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 type Props = {
   title: string,
   /**
-   * The end of `title` to keep in view when the rest is cut to two lines: a chart's currency and
-   * unit (`unitTitleEnd`), which sets a card apart from its search's other unit cards.
+   * The end of `title`, after its " · ", to keep in view when the rest is cut short: a chart's
+   * currency and unit (`unitTitleEnd`), which sets a card apart from its search's other unit cards.
    */
   titleEnd?: string,
   /**
@@ -68,12 +68,32 @@ export default function ExplorerGridItem({
   const titleId = `${baseId}-title`;
   const contentId = `${baseId}-content`;
 
-  // Titles wrap to two lines, then truncate; the tooltip shows the full title only when cut off.
+  // On a phone (below `sm` by window width, as for the dialogs) the header is compact: the toggle
+  // and actions on the first row, then a one-line title across the card, then one smaller row
+  // with the details and subtitle. The window decides, not the card: half-width cards on a desktop
+  // keep the two-line title and details line.
+  const compact = useMediaQuery(theme.breakpoints.down("sm"));
+  // Touch-sized on a phone (AGENTS.md: 44px on narrow layouts); the row has room for them.
+  const actionsBox = actions
+    ? (
+      <Box sx={{
+        gridColumn: 3, gridRow: 1, display: "flex", alignItems: "center", gap: 0.5,
+        ...compact && { "& .MuiIconButton-root": { width: 44, height: 44 } },
+      }}>
+        {actions}
+      </Box>
+    )
+    : null;
+  // The title without its end and the " · " before it.
+  const titleStart = titleEnd ? title.slice(0, -titleEnd.length).replace(/\s*·\s*$/, "") : title;
+
+  // Titles wrap to two lines (one in a compact header), then truncate; the tooltip shows the full
+  // title only when cut off.
   const titleTextRef = useRef<HTMLSpanElement>(null);
   const [titleTruncated, setTitleTruncated] = useState(false);
   const checkTruncated = () => {
     const el = titleTextRef.current;
-    setTitleTruncated(el ? el.scrollHeight > el.clientHeight + 1 : false);
+    setTitleTruncated(el ? el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1 : false);
   };
 
   return (
@@ -93,7 +113,9 @@ export default function ExplorerGridItem({
         }),
       }}>
       {/* A grid, so the subtitle and badges run under the actions to the card's edge instead of
-          wrapping in the title's column. */}
+          wrapping in the title's column. A compact header puts the toggle and actions on a row
+          of their own, then the title across the card. The DOM follows that order, so the reading
+          and tab order match what's seen. */}
       <Box sx={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr) auto", alignItems: "start", columnGap: 1 }}>
         <IconButton
           onClick={handleCollapse}
@@ -104,6 +126,7 @@ export default function ExplorerGridItem({
           aria-expanded={!collapsed}
           aria-controls={collapsed ? undefined : contentId}
           aria-label={title}
+          sx={compact ? { width: 44, height: 44 } : undefined}
         >
           <KeyboardArrowDownIcon
             fontSize="small"
@@ -116,7 +139,8 @@ export default function ExplorerGridItem({
             }}
           />
         </IconButton>
-        <Box sx={{ minWidth: 0, pt: 0.5 }}>
+        {compact ? actionsBox : null}
+        <Box sx={{ minWidth: 0, pt: compact ? 0 : 0.5, gridColumn: compact ? "1 / -1" : undefined }}>
           <Tooltip title={titleTruncated ? title : ""} placement="top-start">
             <Typography
               component={`h${headingLevel}`}
@@ -129,37 +153,52 @@ export default function ExplorerGridItem({
               onFocus={checkTruncated}
               sx={{
                 fontWeight: 600, lineHeight: 1.3, "&:focus-visible": { outline: "2px solid", outlineOffset: 2 },
-                // The end follows the rest on its line while it fits, else takes the next line,
-                // so cutting a long title short never cuts it. The " · " before it stays with the
-                // rest, so a wrapped end doesn't start with it.
-                ...titleEnd && { display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: "0.3em" },
+                // The end follows the rest on its line while it fits, else takes the next line (on
+                // one line when compact), so cutting a long title short never cuts it.
+                ...(titleEnd || compact) && {
+                  display: "flex", flexWrap: compact ? "nowrap" : "wrap", alignItems: "baseline", columnGap: "0.3em",
+                },
               }}
             >
               <Box
                 component="span"
                 ref={titleTextRef}
-                sx={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  overflowWrap: "anywhere",
-                  minWidth: 0,
-                }}
+                sx={compact
+                  ? { flex: "0 1 auto", minWidth: 0, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }
+                  : {
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    overflowWrap: "anywhere",
+                    minWidth: 0,
+                  }}
               >
-                {titleEnd ? title.slice(0, -titleEnd.length).trimEnd() : title}
+                {/* Two lines keep the " · " with the rest, so a wrapped end doesn't start with
+                    it; one line keeps it with the end, so the ellipsis doesn't hide it. */}
+                {titleEnd && !compact ? `${titleStart} ·` : titleStart}
               </Box>
               {/* A real space, for the heading's text and the section's name; flex doesn't draw it. */}
               {titleEnd ? " " : null}
-              {titleEnd ? <Box component="span" sx={{ whiteSpace: "nowrap" }}>{titleEnd}</Box> : null}
+              {titleEnd ? <Box component="span" sx={{ flex: "none", whiteSpace: "nowrap" }}>{compact ? `· ${titleEnd}` : titleEnd}</Box> : null}
             </Typography>
           </Tooltip>
         </Box>
-        {actions
-          ? <Box sx={{ gridColumn: 3, gridRow: 1, display: "flex", alignItems: "center", gap: 0.5 }}>{actions}</Box>
+        {compact ? null : actionsBox}
+        {compact && (details || subtitle)
+          ? (
+            // One smaller second row: the details, then the count, as the two rows read when not compact.
+            <Typography component="div" variant="body2" color="text.secondary" sx={{
+              gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 0.5, rowGap: 0.5,
+            }}>
+              {details}
+              {details && subtitle ? <span aria-hidden>·</span> : null}
+              {subtitle}
+            </Typography>
+          )
           : null
         }
-        {details
+        {details && !compact
           ? (
             <Typography component="div" variant="body2" sx={{
               gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 1, rowGap: 0.5, fontWeight: 500,
@@ -169,12 +208,12 @@ export default function ExplorerGridItem({
           )
           : null
         }
-        {subtitle
+        {subtitle && !compact
           ? <Typography variant="body2" color="text.secondary" sx={{ gridColumn: "2 / -1" }}>{subtitle}</Typography>
           : null
         }
         {badges
-          ? <Box sx={{ gridColumn: "2 / -1", display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{badges}</Box>
+          ? <Box sx={{ gridColumn: compact ? "1 / -1" : "2 / -1", display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{badges}</Box>
           : null
         }
       </Box>

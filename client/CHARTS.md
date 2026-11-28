@@ -107,7 +107,13 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and Match scale shares axes only by pricing unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned and for Price changes), with a collapse toggle wired with
-  `aria-expanded`/`aria-controls`.
+  `aria-expanded`/`aria-controls`. On a phone (below `sm` by window width, as for the dialogs,
+  never the card's width) every card's header is compact: the toggle and actions, at 44px, on a
+  row of their own; then the title across the card on one line, its name cut with an ellipsis
+  and a chart's unit end ("· USD per mL") kept in view; then one smaller row with the details
+  and the subtitle. The DOM follows that order, so reading and tab order match it. The full
+  title stays the heading's text and the truncation tooltip. Desktop cards, half width
+  included, keep the two-line title, the details line and the subtitle.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Line and Bar filter on (`selectedChartPrices`). `setFdaResultDetailLevel` clears the
   selection on every level change.
@@ -145,7 +151,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   gives the series count and hidden note on added cards; a pinned card's count is in its
   provenance chip. Line and bar charts of the same rows share a title. The change chart dialog's
   title names the event date, package and unit, and its context line under it gives the list and
-  dates.
+  dates. On a phone the details move down beside the subtitle (the compact header, above), the
+  bar value included: the one title line keeps what the chart is, and the second row says how
+  it's drawn.
 
 ## Axes and labels
 

@@ -207,8 +207,9 @@ results so stale-price indicators use the correct publication date.
   Also check that a tap on Unlock doesn't switch `useChartReadout` into announcing.
 - **Card header targets on the narrow tier** (from PR 67's review). A card header's collapse
   toggle, Pin and a price change list's X are small `IconButton`s, about 34px, and AGENTS.md asks
-  for 44px on narrow layouts. Size them up below the card's `sm` tier (`ExplorerGridItem` and its
-  callers' actions) without crowding the title. Small.
+  for 44px on narrow layouts. On a phone the compact header (PR 85) makes them 44px; a card that
+  is narrow on a wider window (a workspace pane beside the drawer) still has the small ones.
+  Small.
 - **Rows hidden by the grid's own column filter count as shown** (from PR 67's review; Chart
   selected behaved the same). `ResultTable`'s `rowIds` and the toolbar's shown count use the
   table's `rows`, which still include rows the DataGrid's column filter hides, so such a row is
