@@ -10,7 +10,7 @@ import {
 import type { LabelerChoice } from "../../library/labelers";
 import { activityCategoryLabel, isActivityCategory } from "../../library/priceActivity";
 import { includeLabel } from "../../library/searchToasts";
-import SearchPanel, { BrandGenericField, ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
+import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
 
 /** The "More filters" lists, in order. */
 const LISTS: { key: FdaListKey, label: string, noun: string, optionLabel?: (value: string) => string }[] = [
@@ -106,9 +106,6 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
       ]}
       dates={criteria.dates}
       onDatesChange={dates => setCriteria(prev => ({ ...prev, dates }))}
-      refine={
-        <BrandGenericField value={criteria.brandGeneric} onChange={brandGeneric => setCriteria(prev => ({ ...prev, brandGeneric }))} />
-      }
       includes={FDA_INCLUDE_KEYS.map(key => ({
         key,
         label: includeLabel(key),

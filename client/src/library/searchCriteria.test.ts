@@ -4,13 +4,12 @@ import { FULL_WINDOW, type DateWindow } from "./dates";
 import {
   applyFdaSearch, applyNadacSearch, clearFdaRefine, clearNadacRefine, createFdaCriteria, createNadacCriteria,
   exclusionCount, FDA_EXCLUSION_KEYS, FDA_LIST_KEYS, fdaActiveFilterCount, fdaLoadHolds, labelerCodesHold, narrowToLabelers, fdaFilterOptions, fdaHiddenCounts, fdaLoadRequest,
-  fdaResultsLabel, fdaRowCount, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, matchesBrandGeneric, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
+  fdaResultsLabel, fdaSearchLabel, fdaTabTitle, isValidFdaSearch, hiddenResultsHint, nadacActiveFilterCount, nadacFilterOptions, nadacHiddenCounts,
   nadacLoadRequest, nadacResultsLabel, nadacSearchLabel, nextLoad, refineFda, refineNadac,
   resolveSearchDates, revealFda, revealNadac, showAllFda, showAllNadac, snapToAsOfDates, widenToAsOfDates,
   type FdaCriteria, type FdaLoad, type NadacCriteria, type NadacLoad,
 } from "./searchCriteria";
-import { fdaProductsToNadacPrices } from "./fdaDataToNadacPrices";
-import type { FdaPackageDetail, FdaProductDetail, FdaResultDetailLevel, NadacClassification, NadacPrice } from "./types";
+import type { FdaPackageDetail, FdaProductDetail, NadacClassification, NadacPrice } from "./types";
 
 const day = (iso: string) => Date.parse(iso);
 
@@ -423,136 +422,6 @@ describe("the Price activity filter", () => {
     const none = { products: result.products.slice(0, 3) };
     const hint = hiddenResultsHint(fdaHiddenCounts(none, refineFda(none, criteria, FULL_WINDOW), criteria, FULL_WINDOW, "package"));
     expect(hint).toEqual({ kind: "clear", count: 4 });
-  });
-});
-
-describe("FDA's Brand / generic filter", () => {
-  const classed = (code: string, iso: string, classificationForRateSetting: NadacClassification, options: Partial<NadacPrice> = {}) =>
-    nadacPrice(code, iso, { classificationForRateSetting, ...options });
-  const result = {
-    products: [
-      // A brand product with a generic one beside it: each package goes by its own class.
-      product("1", [
-        fdaPackage("1-1", [classed("11", "2026-01-14", "B")]),
-        fdaPackage("1-2", [classed("12", "2026-01-14", "G")]),
-      ]),
-      // Every B class is brand.
-      product("2", [fdaPackage("2-1", [classed("21", "2026-01-14", "B_ANDA")]), fdaPackage("2-2", [classed("22", "2026-01-14", "B_BIO")])]),
-      // Became generic on Jan 14: its latest price in the dates decides, and it goes whole.
-      product("3", [fdaPackage("3-1", [classed("31", "2026-01-07", "B"), classed("31", "2026-01-14", "G")])]),
-      // No prices: Results without prices decides.
-      product("4", [fdaPackage("4-1", [])]),
-      // A class the client doesn't know passes only All.
-      product("5", [fdaPackage("5-1", [classed("51", "2026-01-14", "unknown")])]),
-    ],
-  };
-  const shown = (criteria: FdaCriteria, dates: DateWindow = FULL_WINDOW) =>
-    refineFda(result, criteria, dates).products.map(p => [p.productNdc, p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode)]);
-  const brand = { ...createFdaCriteria(), brandGeneric: "brand" as const };
-  const generic = { ...createFdaCriteria(), brandGeneric: "generic" as const };
-
-  it("shows everything priced by default", () => {
-    expect(createFdaCriteria().brandGeneric).toBe("all");
-    expect(shown(createFdaCriteria()).map(([ndc]) => ndc)).toEqual(["1", "2", "3", "5"]);
-  });
-
-  it("hides packages by their NADAC class, and a product once all its packages are", () => {
-    expect(shown(brand)).toEqual([["1", ["1-1"]], ["2", ["2-1", "2-2"]]]);
-    expect(shown(generic)).toEqual([["1", ["1-2"]], ["3", ["3-1"]]]);
-  });
-
-  it("classifies a package by its latest price in the shown dates, keeping or hiding all its prices", () => {
-    const generics = refineFda(result, generic, FULL_WINDOW).products.find(p => p.productNdc === "3")!;
-    expect(generics.fdaPackageDetails[0].nadacPrices.map(price => price.classificationForRateSetting)).toEqual(["B", "G"]);
-    expect(shown(brand).map(([ndc]) => ndc)).not.toContain("3");
-    // Up to Jan 7 it was still brand.
-    const toJan7 = { start: null, end: day("2026-01-07") };
-    expect(shown(brand, toJan7)).toContainEqual(["3", ["3-1"]]);
-    expect(shown(generic, toJan7)).not.toContainEqual(["3", ["3-1"]]);
-  });
-
-  it("judges by the shown dates when refining over every loaded date, so charts get the table's packages", () => {
-    const toJan7 = { start: null, end: day("2026-01-07") };
-    const loaded = refineFda(result, brand, FULL_WINDOW, toJan7);
-    const page = refineFda(result, brand, toJan7);
-    const codes = (r: typeof page) => r.products.flatMap(p => p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode));
-    expect(codes(loaded)).toEqual(codes(page));
-    expect(loaded.products.find(p => p.productNdc === "3")!.fdaPackageDetails[0].nadacPrices).toHaveLength(2);
-  });
-
-  it("drops a package priced only outside the shown dates from every loaded date, as the table does", () => {
-    const toJan7 = { start: null, end: day("2026-01-07") };
-    const codes = (r: { products: FdaProductDetail[] }) => r.products.flatMap(p => p.fdaPackageDetails.map(pkg => pkg.ndcPackageCode));
-    for (const criteria of [createFdaCriteria(), { ...createFdaCriteria(), includeResultsWithoutPrices: true }]) {
-      expect(codes(refineFda(result, criteria, FULL_WINDOW, toJan7))).toEqual(codes(refineFda(result, criteria, toJan7)));
-    }
-  });
-
-  it("reads the latest price in any unit, as NADAC reads an NDC's", () => {
-    const mixed = { products: [product("6", [fdaPackage("6-1", [
-      classed("61", "2026-01-07", "B", { pricingUnit: "milliliter" }),
-      classed("61", "2026-01-14", "G"),
-    ])])] };
-    const codes = (criteria: FdaCriteria) => refineFda(mixed, criteria, FULL_WINDOW).products.map(p => p.productNdc);
-    expect(codes(generic)).toEqual(["6"]);
-    expect(codes({ ...generic, excludedUnits: ["each"] })).toEqual(["6"]);
-    expect(codes(brand)).toEqual([]);
-  });
-
-  it("leaves packages without prices to their Include box", () => {
-    const withoutPrices = (criteria: FdaCriteria) => shown({ ...criteria, includeResultsWithoutPrices: true });
-    expect(withoutPrices(brand)).toContainEqual(["4", ["4-1"]]);
-    expect(withoutPrices(generic)).toContainEqual(["4", ["4-1"]]);
-    expect(shown(brand)).not.toContainEqual(["4", ["4-1"]]);
-    // A package it hides is gone, not shown as a package without prices.
-    expect(withoutPrices(brand).map(([ndc]) => ndc)).not.toContain("3");
-  });
-
-  it("gives products and packages the same packages, so both detail levels agree", () => {
-    for (const criteria of [brand, generic]) {
-      const refined = refineFda(result, criteria, FULL_WINDOW);
-      const productNdcs = new Set(fdaProductsToNadacPrices(refined.products, "product").flatMap(p => p.packageNdc ?? []));
-      const packageNdcs = new Set(fdaProductsToNadacPrices(refined.products, "package").map(p => p.ndc));
-      expect(fdaRowCount(refined, "package")).toBe(packageNdcs.size);
-      expect([...productNdcs].sort()).toEqual([...packageNdcs].sort());
-    }
-  });
-
-  it("narrows the from-results lists and counts what it hides at each level", () => {
-    expect(fdaFilterOptions(result, brand, FULL_WINDOW).excludedProductNdcs).toEqual(["1", "2"]);
-    const hidden = (level: FdaResultDetailLevel) =>
-      fdaHiddenCounts(result, refineFda(result, brand, FULL_WINDOW), brand, FULL_WINDOW, level);
-    // Products 3 and 5 are hidden; on packages also 1-2.
-    expect(hidden("product").byClearing).toBe(2);
-    expect(hidden("package").byClearing).toBe(3);
-    // Results without prices adds 4-1 whatever the choice.
-    expect(hidden("package").byInclude.includeResultsWithoutPrices).toBe(1);
-  });
-
-  it("is a fixed refine field: a filter to count and clear, kept by a new search", () => {
-    const criteria: FdaCriteria = { ...brand, proprietaryName: "eliquis", excludedRoutes: ["ORAL"] };
-    expect(fdaActiveFilterCount(criteria)).toBe(2);
-    expect(exclusionCount(criteria, FDA_LIST_KEYS)).toBe(1);
-    expect(clearFdaRefine(criteria).brandGeneric).toBe("all");
-    expect(showAllFda(criteria).brandGeneric).toBe("all");
-    const next = applyFdaSearch(criteria, { proprietaryName: "xarelto", nonProprietaryName: "" });
-    expect(next.brandGeneric).toBe("brand");
-    expect(next.excludedRoutes).toEqual([]);
-  });
-
-  it("offers Clear filters when it hides every result", () => {
-    const brandOnly = { products: result.products.slice(2, 3) };
-    const hint = hiddenResultsHint(fdaHiddenCounts(brandOnly, refineFda(brandOnly, brand, FULL_WINDOW), brand, FULL_WINDOW, "product"));
-    expect(hint).toEqual({ kind: "clear", count: 1 });
-  });
-});
-
-describe("matchesBrandGeneric", () => {
-  it("counts every B class as brand and only G as generic", () => {
-    const classes: NadacClassification[] = ["G", "B", "B_ANDA", "B_BIO", "unknown"];
-    expect(classes.filter(c => matchesBrandGeneric(c, "brand"))).toEqual(["B", "B_ANDA", "B_BIO"]);
-    expect(classes.filter(c => matchesBrandGeneric(c, "generic"))).toEqual(["G"]);
-    expect(classes.filter(c => matchesBrandGeneric(c, "all"))).toEqual(classes);
   });
 });
 

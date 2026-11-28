@@ -6,10 +6,16 @@ import useRenameAfterSearch, { useRestoreTitleAfterClear } from "../../hooks/use
 import { toStoredNadacNdc } from "../../library/ndc.ts";
 import { isValidNadacSearch, nadacTabTitle } from "../../library/nadacSearch.ts";
 import {
-  clearNadacRefine, exclusionCount, nadacActiveFilterCount, NADAC_EXCLUSION_KEYS,
+  clearNadacRefine, exclusionCount, nadacActiveFilterCount, NADAC_EXCLUSION_KEYS, type BrandGeneric,
 } from "../../library/searchCriteria.ts";
 import { includeLabel } from "../../library/searchToasts.ts";
-import SearchPanel, { BrandGenericField, ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
+import SearchPanel, { ChoiceField, ExclusionSelect, type SearchPanelLayout } from "../SearchPanel";
+
+const BRAND_GENERIC_OPTIONS: { value: BrandGeneric, label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "brand", label: "Brand" },
+  { value: "generic", label: "Generic" },
+];
 
 type Props = {
   /** The result as the page shows it: the lists' options and the hidden counts. */
@@ -108,7 +114,13 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
         hiddenCount: view.hidden.byInclude.includeOtc ?? 0,
       }]}
       refine={
-        <BrandGenericField value={criteria.brandGeneric} onChange={brandGeneric => setCriteria(prev => ({ ...prev, brandGeneric }))} />
+        <ChoiceField
+          stacked
+          label="Brand / generic"
+          value={criteria.brandGeneric}
+          options={BRAND_GENERIC_OPTIONS}
+          onChange={brandGeneric => setCriteria(prev => ({ ...prev, brandGeneric }))}
+        />
       }
       moreFilters={<>
         <ExclusionSelect

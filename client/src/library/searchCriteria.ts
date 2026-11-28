@@ -28,10 +28,7 @@ import {
  * new since the filter was set show, and nothing needs resetting when results arrive.
  */
 
-/**
- * The brand/generic choice on both pages: NADAC's `classificationForRateSetting` decides which an
- * NDC is (`matchesBrandGeneric`), read from its latest price in the shown dates.
- */
+/** NADAC's brand/generic choice; `classificationForRateSetting` decides which an NDC is. */
 export type BrandGeneric = "all" | "brand" | "generic";
 
 export type NadacCriteria = {
@@ -62,11 +59,6 @@ export type FdaCriteria = {
   includeOtc: boolean,
   includeSamplePackages: boolean,
   includeResultsWithoutPrices: boolean,
-  /**
-   * NADAC's class of each package's latest price in the shown dates, as on NADAC search. A fixed
-   * refine field: a new search keeps it. Packages without prices are left to their Include box.
-   */
-  brandGeneric: BrandGeneric,
   /**
    * Price activity categories to hide (`PriceActivity.category`). A fixed refine field, like the
    * Include boxes: its values don't come from a result, so a new search keeps it.
@@ -114,7 +106,6 @@ export const createFdaCriteria = (): FdaCriteria => ({
   includeOtc: false,
   includeSamplePackages: false,
   includeResultsWithoutPrices: false,
-  brandGeneric: "all",
   excludedActivities: [],
   excludedProductNdcs: [],
   excludedDosageForms: [],
@@ -267,7 +258,7 @@ export function nextLoad<T extends { dates: DateWindow }>(
 /**
  * The applied criteria after Search: the terms from the form, and every other field kept.
  * A search for new terms clears the exclusion lists, which name values from the old result; the
- * fixed refine fields (the Include checkboxes, brand/generic, FDA's Price activity) carry over.
+ * fixed refine fields (the Include checkboxes, brand/generic) carry over.
  */
 export function applyNadacSearch(applied: NadacCriteria, fields: NadacTerms): NadacCriteria {
   const next = { ...applied, ...fields };
@@ -287,24 +278,7 @@ const clearedExclusions = <K extends string>(keys: readonly K[]) =>
 // --- Refine -------------------------------------------------------------------------------
 
 const BRAND_CLASSIFICATIONS: ReadonlySet<NadacClassification> = new Set(["B", "B_ANDA", "B_BIO"]);
-
-/**
- * Whether a price's NADAC class passes the brand/generic choice: `B`, `B_ANDA` and `B_BIO` are
- * brand, `G` is generic, and a class the client doesn't know passes only "all".
- */
-export function matchesBrandGeneric(classification: NadacClassification, choice: BrandGeneric): boolean {
-  if (choice === "all") return true;
-  return choice === "brand" ? BRAND_CLASSIFICATIONS.has(classification) : classification === "G";
-}
-
-/** The latest of these prices (by as-of date), or undefined when there are none. */
-function latestPrice(prices: NadacPrice[]): NadacPrice | undefined {
-  let latest: NadacPrice | undefined;
-  for (const price of prices) {
-    if (!latest || price.asOfDate.getTime() > latest.asOfDate.getTime()) latest = price;
-  }
-  return latest;
-}
+const isBrand = (price: NadacPrice) => BRAND_CLASSIFICATIONS.has(price.classificationForRateSetting);
 
 /** Each NDC's latest price: what its OTC flag and brand/generic class are read from. */
 function latestByNdc(prices: NadacPrice[]): Map<string, NadacPrice> {
@@ -375,7 +349,8 @@ export function refineNadac(prices: NadacPrice[], criteria: NadacCriteria, dates
   const hiddenNdcs = new Set([...latest.values()]
     .filter(price =>
       (!criteria.includeOtc && price.isOtc)
-      || !matchesBrandGeneric(price.classificationForRateSetting, criteria.brandGeneric))
+      || (criteria.brandGeneric === "brand" && !isBrand(price))
+      || (criteria.brandGeneric === "generic" && price.classificationForRateSetting !== "G"))
     .map(price => price.ndc));
   if (hiddenNdcs.size === 0 && excludedDescriptions.size === 0 && excludedUnits.size === 0) return clipped;
   return clipped.filter(price =>
@@ -484,31 +459,24 @@ function packageCategory(pkg: FdaPackageDetail, dates: DateWindow, excludedUnits
 /**
  * A package as the page shows it, or null when it's hidden: its prices clipped to the dates and
  * without excluded units. A package whose only prices were in excluded units is hidden, not
- * shown as a package without prices. The rest is judged by its prices in `judgeDates` (the shown
- * dates, which `dates` may be wider than): without any, it's the Include box's. With some, it's
- * hidden when its activity over them is an excluded category, which is the activity its row
- * shows, or when its latest price in them (any unit, as NADAC reads an NDC's) has a NADAC class
- * the brand/generic choice hides, so the whole package goes, older prices of another class
- * included. A package with no category (two units) is the Pricing unit list's.
+ * shown as a package without prices. A package with prices in `activityDates` is hidden when
+ * its activity over them is an excluded category, which is the activity its row shows. Packages
+ * without prices are the Include box's, and a package with no category (two units) is the
+ * Pricing unit list's.
  */
 function refinePackage(
-  pkg: FdaPackageDetail, criteria: FdaCriteria, dates: DateWindow, judgeDates: DateWindow,
+  pkg: FdaPackageDetail, criteria: FdaCriteria, dates: DateWindow, activityDates: DateWindow,
   excludedUnits: Set<string>, excludedActivities: Set<ActivityCategory>,
 ): FdaPackageDetail | null {
   if (!criteria.includeSamplePackages && pkg.samplePackage) return null;
   const clipped = clipToWindow(pkg.nadacPrices, dates);
   const nadacPrices = excludedUnits.size === 0 ? clipped : clipped.filter(price => !excludedUnits.has(price.pricingUnit));
   if (clipped.length > 0 && nadacPrices.length === 0) return null;
-  const sameDates = judgeDates === dates;
-  const judgedPrices = sameDates ? nadacPrices : shownPrices(pkg, judgeDates, excludedUnits);
-  if (!criteria.includeResultsWithoutPrices && judgedPrices.length === 0) return null;
-  if (criteria.brandGeneric !== "all") {
-    const latest = latestPrice(sameDates ? clipped : clipToWindow(pkg.nadacPrices, judgeDates));
-    if (latest && !matchesBrandGeneric(latest.classificationForRateSetting, criteria.brandGeneric)) return null;
-  }
+  if (!criteria.includeResultsWithoutPrices && nadacPrices.length === 0) return null;
   // Activity is the costly part of refining, so it's skipped while nothing is excluded.
   if (excludedActivities.size > 0) {
-    const category = judgedPrices.length > 0 ? packageCategory(pkg, judgeDates, excludedUnits, judgedPrices) : null;
+    const activityPrices = activityDates === dates ? nadacPrices : shownPrices(pkg, activityDates, excludedUnits);
+    const category = activityPrices.length > 0 ? packageCategory(pkg, activityDates, excludedUnits, activityPrices) : null;
     if (category !== null && excludedActivities.has(category)) return null;
   }
   return nadacPrices === pkg.nadacPrices ? pkg : { ...pkg, nadacPrices };
@@ -533,16 +501,16 @@ export const fdaShownDates = (result: FdaProductSearchResult, dates: DateWindow)
  * packages are all hidden is hidden too.
  *
  * @param dates - the dates the applied criteria asked for (the requested load's)
- * @param judgeDates - the dates packages are judged by (whether they have prices, their Price
- *   activity and brand/generic class), when they aren't `dates`: the page's, when this refines
- *   over every loaded date (`loadedPrices`), so that keeps the packages the page shows
+ * @param activityDates - the dates Price activity judges packages by, when they aren't `dates`:
+ *   the page's, when this refines over every loaded date (`loadedPrices`), so that keeps the
+ *   packages the page shows
  */
 export function refineFda(
-  result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow, judgeDates: DateWindow = dates,
+  result: FdaProductSearchResult, criteria: FdaCriteria, dates: DateWindow, activityDates: DateWindow = dates,
 ): FdaProductSearchResult {
   const narrowed = narrowToLabelers(result, criteria.labelers);
   const shownDates = fdaShownDates(narrowed, dates);
-  const shownJudgeDates = judgeDates === dates ? shownDates : fdaShownDates(narrowed, judgeDates);
+  const shownActivityDates = activityDates === dates ? shownDates : fdaShownDates(narrowed, activityDates);
   const excludedUnits = new Set(criteria.excludedUnits);
   const excludedActivities = new Set(criteria.excludedActivities);
   const showsProduct = (p: FdaProductDetail) =>
@@ -558,7 +526,7 @@ export function refineFda(
   for (const product of narrowed.products) {
     if (!showsProduct(product)) continue;
     const packages = product.fdaPackageDetails
-      .map(pkg => refinePackage(pkg, criteria, shownDates, shownJudgeDates, excludedUnits, excludedActivities))
+      .map(pkg => refinePackage(pkg, criteria, shownDates, shownActivityDates, excludedUnits, excludedActivities))
       .filter(pkg => pkg !== null);
     // A product with no packages at all has no prices either.
     const shown = product.fdaPackageDetails.length === 0 ? criteria.includeResultsWithoutPrices : packages.length > 0;
@@ -607,7 +575,6 @@ export const showAllFda = (criteria: FdaCriteria): FdaCriteria => ({
   includeOtc: true,
   includeSamplePackages: true,
   includeResultsWithoutPrices: true,
-  brandGeneric: "all",
   ...clearedExclusions(FDA_LIST_KEYS),
 });
 
@@ -655,7 +622,6 @@ export function fdaActiveFilterCount(criteria: FdaCriteria): number {
   return Number(criteria.includeOtc !== FDA_DEFAULTS.includeOtc)
     + Number(criteria.includeSamplePackages !== FDA_DEFAULTS.includeSamplePackages)
     + Number(criteria.includeResultsWithoutPrices !== FDA_DEFAULTS.includeResultsWithoutPrices)
-    + Number(criteria.brandGeneric !== FDA_DEFAULTS.brandGeneric)
     + FDA_LIST_KEYS.filter(key => criteria[key].length > 0).length;
 }
 

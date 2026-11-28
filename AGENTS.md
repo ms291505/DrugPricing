@@ -234,13 +234,9 @@ depend on write availability read it. The action checks storage's read-only flag
   always lists all five categories, so an exclusion carried to a result without that category
   stays visible. `refinePackage` skips the activity work while nothing is excluded and caches
   each loaded package's category by dates and excluded units (`packageCategory`), since the page
-  refines several times per change. Brand / generic (`BrandGenericField`, in the panel's
-  `refine` slot on both pages) is also a fixed refine field: an NDC's class is NADAC's
-  `classificationForRateSetting` of its latest price in the shown dates (`matchesBrandGeneric`),
-  and it shows or hides the NDC, on FDA the package, whole; FDA's leaves packages without prices
-  to their Include box, and a product shows while any package does. Packages are judged (prices,
-  activity, class) over the shown dates even when refining over every loaded date (`refineFda`'s
-  `judgeDates`, for `loadedPrices`), so charts get the packages the table shows. Tabs hold criteria
+  refines several times per change. Activity is judged over the shown dates even when
+  refining over every loaded date (`refineFda`'s `activityDates`, for `loadedPrices`), so charts
+  get the packages the table shows. Tabs hold criteria
   through `useSearchLoad`. FDA always loads sample and no-price packages and hides them by
   default, and both pages hide OTC by default (Include boxes, each with a "(N hidden)" count).
   When the filters hide every result, the table says why and offers the fix
