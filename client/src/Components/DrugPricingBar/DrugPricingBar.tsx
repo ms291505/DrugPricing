@@ -67,7 +67,7 @@ export default function DrugPricingBar() {
                 onClick={closeDrawer}
                 aria-label="DrugPricing home"
                 color="inherit"
-                sx={{ width: 44, height: 44 }}
+                sx={{ width: 44, height: 44, "&.active": { borderRadius: 1 } }}
               >
                 <HomeIcon />
               </IconButton>
