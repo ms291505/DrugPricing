@@ -20,6 +20,8 @@ export default function Welcome() {
             <Button variant="contained" size="large" component={RouterLink} to="/search" sx={{ px: 4 }}>Find a drug</Button>
             <Button variant="outlined" size="large" component={RouterLink} to="/workspace" sx={{ px: 4 }}>Open workspace</Button>
           </Box>
+          {/* Secondary, under the two ways in, for visitors who want to know who made this and how. */}
+          <Button component={RouterLink} to="/about" sx={{ minHeight: 44 }}>About this project</Button>
         </Stack>
       </Paper>
 

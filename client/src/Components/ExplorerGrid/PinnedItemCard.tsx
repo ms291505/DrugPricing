@@ -13,6 +13,7 @@ import {
   canDrillDownToPackages, formatItemSource, fromChartSeries, isScaleMatched, itemTitle, packageLevelView, type ExplorerItem,
 } from "../../library/explorerItems";
 import { dateBounds, formatWindow } from "../../library/dates";
+import { barValueLabel, chartKindLabel, unitTitleEnd } from "../../library/chartTitles";
 import ExplorerGridItem from "./ExplorerGridItem";
 import ChartItemBody from "./ChartItemBody";
 import PinnedChartDates from "./PinnedChartDates";
@@ -76,6 +77,12 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
   );
   const visibleItem = packageView ?? item;
   const title = itemTitle(visibleItem);
+  // A chart of one unit whose title ends with it (generated titles) keeps that end in view.
+  const units = visibleItem.kind === "chart" ? new Set(visibleItem.series.map(series => series.unit)) : new Set<string>();
+  const titleEnd = units.size === 1 ? unitTitleEnd(title, [...units][0]) : "";
+  // A line and a bar chart of the same rows share a title; their names say which is which.
+  const kind = item.kind === "chart" ? chartKindLabel(item.chartType, item.barValue ?? "latest") : "";
+  const name = kind ? `${title}, ${kind}` : title;
   const source = sourceBadge(item.source);
   const canSwitchLevel = item.kind === "chart" && canDrillDownToPackages(item);
 
@@ -87,7 +94,7 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
       <Tooltip title="Item actions">
         <IconButton
           size="small"
-          aria-label={`Actions for ${title}`}
+          aria-label={`Actions for ${name}`}
           aria-haspopup="menu"
           aria-controls={menuAnchor ? menuId : undefined}
           aria-expanded={menuAnchor ? true : undefined}
@@ -143,16 +150,14 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
     <Grid size={isFull ? 12 : HALF_WIDTH_GRID_SIZE} ref={cardRef} data-pinned-item={item.id}>
       <ExplorerGridItem
         title={title}
+        titleEnd={titleEnd}
+        nameSuffix={kind}
         headingLevel={3}
         highlighted={highlighted}
-        badges={<>
-          <Tooltip title={source.detail}>
-            <Chip size="small" variant="outlined" label={source.label} />
-          </Tooltip>
-          <Chip size="small" variant="outlined" label={formatItemSource(visibleItem.source)} />
-          {canSwitchLevel && <Button size="small" sx={{ minHeight: { xs: 44, sm: 24 } }} onClick={() => setShowPackages(value => !value)}>
-            {showPackages ? "Show product averages" : "Show packages"}
-          </Button>}
+        // As on an added chart: the bar value and the dates, here the Dates control, which a
+        // chart's dates change through. The stored title, generated or the user's, stays as is.
+        details={<>
+          {item.kind === "chart" && item.chartType === "bar" ? <span>{barValueLabel(item.barValue ?? "latest")} </span> : null}
           {item.kind === "chart"
             ? <PinnedChartDates
               item={item}
@@ -164,9 +169,22 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
             // A list's dates are fixed: it lists the changes in the dates it was pinned with.
             : <Chip size="small" variant="outlined" label={formatWindow(item.dateWindow, dateBounds(fromChartSeries(item.histories)))} />
           }
+        </>}
+        // describeChild on these Tooltips: without it, MUI names each chip by its tooltip text in
+        // place of its visible label. With it the text describes the chip while the tooltip is
+        // open. These chips aren't controls, so `title` is cleared too: closed, MUI would put the
+        // text there, and a browser names a plain element by its title.
+        badges={<>
+          <Tooltip title={source.detail} describeChild>
+            <Chip size="small" variant="outlined" label={source.label} title={undefined} />
+          </Tooltip>
+          <Chip size="small" variant="outlined" label={formatItemSource(visibleItem.source)} />
+          {canSwitchLevel && <Button size="small" sx={{ minHeight: { xs: 44, sm: 24 } }} onClick={() => setShowPackages(value => !value)}>
+            {showPackages ? "Show product averages" : "Show packages"}
+          </Button>}
           {matched
-            ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit">
-              <Chip size="small" variant="outlined" label="Matched scale" />
+            ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit" describeChild>
+              <Chip size="small" variant="outlined" label="Matched scale" title={undefined} />
             </Tooltip>
             : null
           }

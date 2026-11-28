@@ -107,8 +107,8 @@ describe("event groups and callouts", () => {
       ...series([10, 10]).map(p => ({ ...p, packageNdc: "P2" }))];
     const [callout] = lineChangeCallouts(prices, "product");
     expect(callout).toMatchObject({ label: "1 of 2 packages changed", spans: [], markers: [{ ndc: "A", price: 7.5 }] });
-    const [item] = createChartItems({ chartType: "line", defaultTitle: "Test", prices,
-      origin: { searchLabel: "test", seriesKind: "product", resultPrices: prices }, dateWindow: FULL_WINDOW });
+    const [item] = createChartItems({ chartType: "line", prices,
+      origin: { searchLabel: "test", seriesKind: "product", resultPrices: prices }, dateWindow: FULL_WINDOW }, () => "Test");
     expect(lineChangeCallouts(fromChartSeries(item.series), "product")).toEqual([callout]);
   });
   it("formats a gap as a span in both event labels and callouts", () => {

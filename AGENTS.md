@@ -177,13 +177,14 @@ shared ones under `drugpricing.v<VERSION>.search-pins`), moved there from `local
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action is a borderless button at the right of the
-More filters and Clear filters row, once a search has been run; narrow panels give it its own
-wrapped row. No caption beside it: Help's "Workspace tabs and what they save" explains that
-Search state stays in the browser tab (removed 2026-11-27). The action renders
-inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
-shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
-dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
+Standalone Search's Add search to workspace action is an outlined button, like Clear search, at
+the right of the More filters and Clear filters row, once a search has been run; narrow panels
+give it its own wrapped row, where it is touch-sized. No caption beside it: Help's "Workspace
+tabs and what they save" explains that Search state stays in the browser tab (removed
+2026-11-27). The action renders inside the source provider and copies applied criteria with
+fixed dates, FDA detail level and all shared pins. Workspace tabs omit the action.
+`addSearchTab` writes initial tab state before dispatching an add with `show`, so the provider's
+first read restores it; a failed save opens no tab.
 `WorkspaceReadOnlyContext` is separate from tabs, panes and stable actions. Only controls that
 depend on write availability read it. The action checks storage's read-only flag again at click.
 
@@ -210,7 +211,9 @@ depend on write availability read it. The action checks storage's read-only flag
   fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
   picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
   (heading, description, full-height fields) and `compact` below (no heading, small fields).
-  In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force
+  In both, the filter groups share a row and wrap when they don't fit. More filters groups its
+  lists by concept (`FilterGroup`: Drug details, then Pricing), and its columns follow the
+  fields and the panel's tier (`moreFiltersLayout`). Workspace tabs force
   `compact` (`panelLayout`). A new arrangement is a new `SearchPanelLayout`, not a prop that
   changes wording. *Load* fields (text terms, FDA's Labeler picks, Dates) go to the server
   unless what's loaded holds them (`nextLoad`); *refine* fields narrow the loaded result in

@@ -51,11 +51,10 @@ export default function ChartControl({ source, chartPrices, selectedCount, chart
     const items = createChartItems({
       chartType,
       prices: withLoadedDates(chartPrices, loadedPrices()),
-      defaultTitle: chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(chartPrices)),
       origin,
       dateWindow,
       colors,
-    }, unitPrices => chartTitle(chartType, origin.searchLabel, origin.seriesKind, seriesLabels(unitPrices)));
+    }, unitPrices => chartTitle(origin.searchLabel, seriesLabels(unitPrices), unitPrices[0].pricingUnit));
     addItems(items);
     if (items.length > 1) toast.success(`Pinned ${items.length} ${chartType} charts, one per pricing unit (${items.map(item => item.series[0].unit).join(", ")}).`);
     else if (items.length === 1) toast.success(`Pinned a ${chartType} chart.`);

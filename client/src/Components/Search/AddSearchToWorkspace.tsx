@@ -38,7 +38,7 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
       <span id={descriptionId} hidden>{reason || SAVES}</span>
       <Tooltip title={reason || SAVES} describeChild>
         <span>
-          <Button type="button" color="inherit" size="small" disabled={status !== "ready" || readOnly}
+          <Button type="button" variant="outlined" size="small" disabled={status !== "ready" || readOnly}
             aria-describedby={descriptionId}
             onClick={event => {
               if (event.detail > 1 || !dates || isStorageReadOnly()) return;

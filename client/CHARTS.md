@@ -103,11 +103,22 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   `packageNdcs` uses `null` for unknown point identities and keeps the array aligned with points.
 - Each pinned card has a separate search source badge (`NADAC Search`, `FDA Search`, or unknown).
   Its tooltip states that every plotted price is NADAC; FDA reference data only finds and groups
-  products. The dates chip is the actual date window, and Match scale shares axes only by pricing
-  unit.
+  products. The dates chip, in the header's details under the title, is the actual date window,
+  and Match scale shares axes only by pricing unit.
 - Every card uses `ExplorerGridItem`: a `<section>` labelled by its heading (`h2` on the page,
   `h3` inside Pinned and for Price changes), with a collapse toggle wired with
-  `aria-expanded`/`aria-controls`.
+  `aria-expanded`/`aria-controls`. On a phone (below `sm` by window width, as for the dialogs,
+  never the card's width) every card's header is compact: the toggle and actions, at 44px, on a
+  row of their own; then the title across the card on one line, its name cut with an ellipsis
+  and a chart's unit end ("· USD per mL") kept in view; then one smaller row with the details
+  and the subtitle. The full title stays the heading's text and the truncation tooltip. Desktop
+  cards, half width included, keep a title of at most two lines, the details line and the
+  subtitle: a chart's unit end always shows, and when the name and the end don't fit two lines
+  together (a hidden copy of the title, measured with a ResizeObserver, says so), the name takes
+  one cut line and the end the second. Both layouts render the same elements in one DOM order
+  (toggle, actions, title, details, subtitle) and change only their placement, so crossing
+  `sm`, a rotation say, remounts nothing: a pinned chart's open Dates popover keeps its anchor.
+  The heading is out of the tab order, so Tab goes toggle, then actions, in both.
 - FDA table row ids are the NDC that level's chart data uses (product or package NDC), which is
   what Line and Bar filter on (`selectedChartPrices`). `setFdaResultDetailLevel` clears the
   selection on every level change.
@@ -118,8 +129,10 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   level that is the *product* NDC, so several packages share a series and can disagree on a date:
   `seriesByDate` (`library/prices.ts`) averages them per date, and `createLineVizData` draws that
   average and keeps the packages' min–max as `rangeKey(ndc)`.
-- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
-  chart with its unit. Unit charts share one date axis.
+- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit`. Unit charts share
+  one date axis. A card's title gives its currency and unit ("USD per mL", below); where it
+  doesn't (older pins, mixed-unit ones among them, and titles the user chose), `UnitSplit` puts
+  that heading above each unit's chart instead (`titleNamesUnit`).
 - New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
 - Added charts (`AddedChartCard`): each press of Line or Bar in the results toolbar adds a chart
@@ -132,8 +145,23 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and names hidden ones. An add past `CHART_SERIES_WARNING` (8) toasts a warning (`ChartControl`).
   A new card neither scrolls nor takes focus: the status line reports it (`ResultsReport`), and
   its Show scrolls to the card (`data-added-chart`) and focuses its heading only from the keyboard.
-- Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
-  time"), the subtitle the count and dates. The change chart dialog's title names the event date, package and unit.
+- A chart card's header has three parts (`chartTitles.ts`, `ExplorerGridItem`). The title
+  names the search, or the one series by its own label, and the currency and unit ("Humira · USD
+  per mL"), so the cards a search splits into by unit differ by their headings; it is what a pin
+  stores, and a title the user chose is kept as typed. Under it, on its own line, the details:
+  a bar chart's bar value ("Latest price", `barValueLabel`) and every chart's dates
+  (`chartDates`; on a pinned card, its Dates control, the dates chip). They are read live, so
+  they follow the bar value toggle and the dates, and are never stored in the title. Bar charts
+  show their dates there too, since the bar value and range are over those dates. The subtitle
+  gives the series count and hidden note on added cards; a pinned card's count is in its
+  provenance chip. Line and bar charts of the same rows share a title, so their names add what
+  the title doesn't show (`chartKindLabel`: "line chart", "bar chart of latest price", live with
+  the toggle): the heading carries it as visually hidden text, and the collapse toggle, Pin,
+  Close and a pin's Actions add it to their labels. The change chart dialog's
+  title names the event date, package and unit, and its context line under it gives the list and
+  dates. On a phone the details move down beside the subtitle (the compact header, above), the
+  bar value included: the one title line keeps what the chart is, and the second row says how
+  it's drawn.
 
 ## Axes and labels
 
@@ -231,10 +259,11 @@ re-renders only the readout, not the chart.
 ## Accessibility
 
 - Each unit chart's SVG keeps recharts' `role="application"` (never `role="img"`, which broke its
-  name and arrow keys), with `aria-label` "<title>, USD per <unit>" and `aria-describedby` to a
-  hidden summary (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts'
-  store. Keys are recharts' ←/→/Enter (reversed on the vertical bar charts); Enter or Space also
-  lock the readout and Esc unlocks it.
+  name and arrow keys), with `aria-label` "<title>, USD per <unit>", or just the title when it
+  gives the unit (`unitChartLabel`), and `aria-describedby` to a hidden summary
+  (`chartSummary.ts`). Don't turn off `accessibilityLayer` or reach into recharts' store. Keys
+  are recharts' ←/→/Enter (reversed on the vertical bar charts); Enter or Space also lock the
+  readout and Esc unlocks it.
 - `useChartReadout`: a hidden `role="status"` region, present and empty from the first render,
   speaks the active point 300ms after the last key while the SVG has focus; pointer movement
   silences it. Keep only a primitive key of `useActiveTooltipDataPoints` in state (the rows are
@@ -247,7 +276,8 @@ re-renders only the readout, not the chart.
 dates: line rows are the drawn per-date values, bar rows the `summarizePrices` rows. The table
 shows a range only when its ends print differently. The CSV (`chartCsv.ts`) keeps every range,
 uses ISO UTC dates, plain rounded numbers, a BOM and CRLF, and guards text fields against
-formula injection.
+formula injection. Its file name (`csvFileName`) is the title's slug, the chart type and the
+dates, so a search's unit cards, and its line and bar charts, save under different names.
 
 ## Animations
 

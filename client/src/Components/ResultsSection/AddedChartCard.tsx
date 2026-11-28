@@ -6,10 +6,10 @@ import LineViz from "../Charts/LineViz";
 import ExplorerGridItem from "../ExplorerGrid/ExplorerGridItem";
 import PinButton from "../ExplorerGrid/PinButton";
 import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
-import { chartSubtitle, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels } from "../../library/chartTitles";
+import { barValueLabel, chartCardName, chartDates, chartKindLabel, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels, unitTitleEnd } from "../../library/chartTitles";
 import { countSeries, openPricingUnits, selectedChartPrices } from "../../library/chartSeries";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
-import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
+import { splitByPricingUnit } from "../../library/prices";
 import type { AddedChart, AddedCharts } from "../../hooks/useAddedCharts";
 import { moveFocusFromClosingCard } from "./closeCard";
 
@@ -43,7 +43,7 @@ export default function AddedChartCard({ source, chart, onClose }: {
 
   // The dates or filters hide every open unit: the card stays, so it can be closed, and says why it's empty.
   if (!openGroups.length) {
-    const title = chartTitle(chart.chartType, source.origin.searchLabel, chart.seriesKind, chart.labels);
+    const title = chartTitle(source.origin.searchLabel, chart.labels);
     return (
       <UnitCard chart={chart} title={title} subtitle={hiddenSeriesNote(hiddenCount)} onClose={close(undefined)}>
         <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
@@ -57,7 +57,7 @@ export default function AddedChartCard({ source, chart, onClose }: {
   return openGroups.map(group => (
     <UnitChart key={group.pricingUnit} chart={chart}
       source={{ ...source, prices: group.nadacPrices }}
-      unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
+      pricingUnit={group.pricingUnit}
       hiddenCount={hiddenCount}
       onClose={close(group.pricingUnit)}
     />
@@ -67,19 +67,23 @@ export default function AddedChartCard({ source, chart, onClose }: {
 type CloseHandler = (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => void;
 
 /** One pricing unit's card of an added chart. */
-function UnitChart({ chart, source, unitSuffix, hiddenCount, onClose }: {
-  chart: AddedChart, source: ChartSource, unitSuffix: string, hiddenCount: number, onClose: CloseHandler,
+function UnitChart({ chart, source, pricingUnit, hiddenCount, onClose }: {
+  chart: AddedChart, source: ChartSource, pricingUnit: string, hiddenCount: number, onClose: CloseHandler,
 }) {
   const { prices, loadedPrices, origin, colors, dateWindow } = source;
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
-  const title = chartTitle(chart.chartType, origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
-  const subtitle = [chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices), hiddenSeriesNote(hiddenCount)]
+  const title = chartTitle(origin.searchLabel, labels, pricingUnit);
+  // The header's details follow the bar value and dates as they change; the title (and a pin's) doesn't.
+  const details = [chart.chartType === "bar" ? barValueLabel(barValue) : "", chartDates(dateWindow, prices)]
+    .filter(Boolean).join(" · ");
+  const subtitle = [seriesCountLabel(labels.length, origin.seriesKind), hiddenSeriesNote(hiddenCount)]
     .filter(Boolean).join(" · ");
   return (
-    <UnitCard chart={chart} title={title} subtitle={subtitle} onClose={onClose}
+    <UnitCard chart={chart} title={title} titleEnd={unitTitleEnd(title, pricingUnit)} barValue={barValue} details={details}
+      subtitle={subtitle} onClose={onClose}
       pin={<PinButton
-        title={title} chartType={chart.chartType} prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
+        title={title} label={chartCardName(title, chart.chartType, chart.chartType === "bar" ? barValue : undefined)} chartType={chart.chartType} prices={prices} loadedPrices={loadedPrices} origin={origin} dateWindow={dateWindow}
         colors={colors} barValue={chart.chartType === "bar" ? barValue : undefined}
       />}>
       {chart.chartType === "line"
@@ -91,17 +95,20 @@ function UnitChart({ chart, source, unitSuffix, hiddenCount, onClose }: {
 }
 
 /** The grid item and card frame, with Pin (when there is something to pin) and Close. */
-function UnitCard({ chart, title, subtitle, pin, onClose, children }: {
-  chart: AddedChart, title: string, subtitle: string, pin?: ReactNode, onClose: CloseHandler, children: ReactNode,
+function UnitCard({ chart, title, titleEnd, barValue, details, subtitle, pin, onClose, children }: {
+  chart: AddedChart, title: string, titleEnd?: string, barValue?: BarValue, details?: string, subtitle: string, pin?: ReactNode,
+  onClose: CloseHandler, children: ReactNode,
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // A line and a bar chart of the same rows share a title; their names say which is which.
+  const kind = chartKindLabel(chart.chartType, chart.chartType === "bar" ? barValue : undefined);
   return (
     <Grid ref={ref} size={HALF_WIDTH_GRID_SIZE} sx={gridItemSx} data-added-chart={chart.id}>
-      <ExplorerGridItem title={title} subtitle={subtitle} headingLevel={3}
+      <ExplorerGridItem title={title} titleEnd={titleEnd} nameSuffix={kind} details={details} subtitle={subtitle} headingLevel={3}
         actions={<>
           {pin}
           <Tooltip title="Close">
-            <IconButton size="small" aria-label={`Close ${title}`} onClick={event => onClose(event, ref.current)}>
+            <IconButton size="small" aria-label={`Close ${title}, ${kind}`} onClick={event => onClose(event, ref.current)}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Tooltip>

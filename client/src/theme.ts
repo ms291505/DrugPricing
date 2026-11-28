@@ -12,7 +12,7 @@ import type { ColorMode } from './library/settings';
  *
  * There are two themes, picked in Settings (`colorMode`): the app's own dark theme, and MUI's
  * default light theme with grey surfaces, a teal primary, flat bordered cards, and the custom
- * roles (`chart`, `inverse`).
+ * roles (`chart`, `inverse`, `chartDialogBackdrop`).
  *
  * Pinned charts store their series colors. A stored color from either palette is drawn in the
  * same slot of the current one (`themedSeriesColor`), so a pin follows the mode; a color from an
@@ -33,10 +33,18 @@ declare module '@mui/material/styles' {
   interface Palette {
     chart: ChartPalette;
     inverse: InversePalette;
+    /**
+     * The backdrop behind the price change chart dialog (`PriceChangeChartDialog`). The dialog
+     * drops MUI's dark-theme elevation overlay, so its paper is the cards' `background.paper`,
+     * which the chart's colors are checked against (`chartPalette.test.ts`); being no lighter
+     * than the cards behind it, it needs a deeper backdrop than MUI's in the dark theme.
+     */
+    chartDialogBackdrop: string;
   }
   interface PaletteOptions {
     chart?: ChartPalette;
     inverse?: InversePalette;
+    chartDialogBackdrop?: string;
   }
 }
 
@@ -69,6 +77,7 @@ const COLORS = {
   paleLilac: "#f5f5f9",
   lilacGrey: "#dadde9",
   inkOnLight: "rgba(0, 0, 0, 0.87)",
+  deepShade: "rgba(0, 0, 0, 0.7)",
   // Light mode. The greys, red and green are MUI's own (`grey[50]`, `grey[200]`, `grey[600]`,
   // `grey[800]`, and its default light `error` and `success`), kept so it still looks like MUI.
   offWhite: "#fafafa",
@@ -79,6 +88,8 @@ const COLORS = {
   forestGreen: "#2e7d32",
   // MUI's `orange[900]` (its default light `warning.dark`): its `warning.main` is under 3:1 on the cards.
   burntOrange: "#e65100",
+  // MUI's default backdrop.
+  shade: "rgba(0, 0, 0, 0.5)",
 };
 
 /**
@@ -191,6 +202,7 @@ export const darkTheme = createTheme({
       "contrastText": COLORS.inkOnLight
     },
     "chart": { "series": CHART_SERIES_COLORS, "rise": COLORS.orange, "drop": COLORS.green },
+    "chartDialogBackdrop": COLORS.deepShade,
   },
 });
 
@@ -226,6 +238,8 @@ export const lightTheme = createTheme({
     },
     // Rises and drops in the theme's error and success colors, as in the dark theme.
     "chart": { "series": LIGHT_CHART_SERIES_COLORS, "rise": COLORS.red, "drop": COLORS.forestGreen },
+    // MUI's own: a light dialog has no overlay to drop, so it looks as any other.
+    "chartDialogBackdrop": COLORS.shade,
   },
   // Flat surfaces: cards and the app bar get a thin border in place of a drop shadow. Menus,
   // popovers and dialogs (elevation 8 and up) keep their shadow, since they float over the page.

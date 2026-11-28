@@ -8,6 +8,7 @@ import DatesField from "./DatesField";
 import LabelerField from "./LabelerField";
 import type { LabelerChoice } from "../../library/labelers";
 import IncludeCheckbox from "./IncludeCheckbox";
+import { moreFiltersLayout } from "../../library/moreFilters";
 
 /**
  * How the panel is arranged. `desktop` has the heading and description and full-height fields;
@@ -45,6 +46,16 @@ export type IncludeField = {
   /** Rows of the table that ticking the box would add. */
   hiddenCount: number,
 };
+
+/** A "More filters" group: the from-results lists of one concept, under a heading. */
+export type FilterGroup = {
+  label: string,
+  /** One element per list, each with its own `key`. */
+  fields: ReactNode[],
+};
+
+/** The most columns "More filters" may use at each panel width; it uses fewer for fewer fields. */
+const MORE_FILTER_COLUMNS = { narrow: 1, medium: 2, wide: 4 } as const;
 
 /** A filter group's left padding, in theme spacing units. */
 const GROUP_PADDING = 2;
@@ -89,8 +100,8 @@ type Props = {
   includes: IncludeField[],
   /** The default view's other refine fields, each a labelled group (brand/generic). */
   refine?: ReactNode,
-  /** The fields under "More filters": the from-results lists. */
-  moreFilters: ReactNode,
+  /** The fields under "More filters": the from-results lists, in groups by concept. */
+  moreFilters: FilterGroup[],
   /** How many of the "More filters" fields exclude something, shown on the toggle when closed. */
   moreFilterCount: number,
   /** Some refine field is away from its default, so "Clear filters" has something to do. */
@@ -124,6 +135,7 @@ export default function SearchPanel({
   const desktop = (forcedLayout ?? (tier === "wide" ? "desktop" : "compact")) === "desktop";
   // Too narrow for Search beside the terms.
   const stacked = tier === "narrow";
+  const moreLayout = moreFiltersLayout(moreFilters.map(group => group.fields.length), MORE_FILTER_COLUMNS[tier]);
 
   // Compact, not stacked, with a Labeler: the names' row, then Labeler beside the buttons.
   const labelerTerms = terms.filter(term => term.kind === "labelers");
@@ -170,12 +182,14 @@ export default function SearchPanel({
         variant="contained"
         disabled={!canSearch || busy}
         // As tall as the fields beside it.
-        sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : 40, flexShrink: 0 }}
+        // Touch-sized when stacked, on a phone-wide panel.
+        sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : stacked ? 44 : 40, flexShrink: 0 }}
       >
         {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
       </Button>
       <Button
         type="button"
+        variant="outlined"
         disabled={!canClearSearch}
         onClick={event => {
           onClearSearch();
@@ -184,7 +198,7 @@ export default function SearchPanel({
           // starts. Not after a tap, where focusing a text field opens the phone keyboard.
           if (fromKeyboard(event)) firstTermRef.current?.focus();
         }}
-        sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
+        sx={{ height: desktop ? 56 : stacked ? 44 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
       >
         Clear search
       </Button>
@@ -265,18 +279,30 @@ export default function SearchPanel({
           >
             Clear filters
           </Button>
-          {standaloneAction && <Box sx={{ display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", ml: "auto", minWidth: 0 }}>
+          {/* Its button is touch-sized on a narrow panel, like Search and Clear search. */}
+          {standaloneAction && <Box sx={{
+            display: "flex", flex: stacked ? "1 0 100%" : "0 1 auto", ml: "auto", minWidth: 0,
+            ...stacked && { "& .MuiButton-root": { minHeight: 44 } },
+          }}>
             {standaloneAction}
           </Box>}
         </Box>
         <Collapse in={moreOpen} id={moreId}>
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: tier === "wide" ? "1fr 1fr" : "1fr",
-            gap: 2,
-            pt: 2,
-          }}>
-            {moreFilters}
+          {/* Groups share a row when they fit, in the panel's columns, and their lists line up
+              in those columns: a group's own grid uses the same gap. A rule divides the groups
+              of a row, as it does the filters above. */}
+          <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${moreLayout.columns}, minmax(0, 1fr))`, columnGap: 2, rowGap: 2, pt: 2 }}>
+            {moreFilters.map(({ label, fields }, i) => (
+              <FormControl key={label} component="fieldset" sx={{
+                gridColumn: `span ${moreLayout.spans[i]}`, minWidth: 0,
+                ...i > 0 && moreLayout.spans[i] < moreLayout.columns && groupSx,
+              }}>
+                <FormLabel component="legend" sx={{ typography: "subtitle2", color: "text.primary", mb: 1 }}>{label}</FormLabel>
+                <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${moreLayout.spans[i]}, minmax(0, 1fr))`, columnGap: 2, rowGap: 2 }}>
+                  {fields}
+                </Box>
+              </FormControl>
+            ))}
           </Box>
         </Collapse>
       </Box>

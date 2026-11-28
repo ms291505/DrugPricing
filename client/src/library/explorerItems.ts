@@ -1,5 +1,5 @@
 import type { SearchSource } from "./types";
-import { pricingUnitLabel, splitByPricingUnit } from "./prices";
+import { splitByPricingUnit } from "./prices";
 import type { ChartPrice } from "./types";
 import { quoted } from "./searchCriteria";
 import { clipToWindow, inWindow, type DateBounds, type DateWindow } from "./dates";
@@ -356,14 +356,15 @@ export function fitsPinLimit(item: PriceChangeListItem): boolean {
   return JSON.stringify(item).length <= PRICE_CHANGE_LIST_PIN_LIMIT;
 }
 
-/** New cards contain one pricing unit; legacy mixed-unit snapshots still render with UnitSplit. */
-export function createChartItems(options: NewChartItem, titleForPrices?: (prices: ChartPrice[]) => string): ChartItem[] {
-  const groups = splitByPricingUnit(options.prices);
-  return groups.map(({ pricingUnit, nadacPrices }) => createChartItem({
+/**
+ * New cards contain one pricing unit, each titled from its own prices (`chartTitle` names the
+ * unit); legacy mixed-unit snapshots still render with UnitSplit.
+ */
+export function createChartItems(options: Omit<NewChartItem, "defaultTitle">, titleForPrices: (prices: ChartPrice[]) => string): ChartItem[] {
+  return splitByPricingUnit(options.prices).map(({ nadacPrices }) => createChartItem({
     ...options,
     prices: nadacPrices,
-    defaultTitle: groups.length > 1
-      ? `${titleForPrices?.(nadacPrices) ?? options.defaultTitle} · per ${pricingUnitLabel(pricingUnit)}` : options.defaultTitle,
+    defaultTitle: titleForPrices(nadacPrices),
   }));
 }
 

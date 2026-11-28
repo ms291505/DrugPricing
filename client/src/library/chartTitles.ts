@@ -1,11 +1,14 @@
-import { SERIES_KIND_LABELS, type ChartType, type SeriesKind } from "./explorerItems";
+import { SERIES_KIND_LABELS, type BarValue, type ChartType, type SeriesKind } from "./explorerItems";
 import { clipToWindow, dateBounds, formatDate, formatWindow, type DateWindow } from "./dates";
 import { pricingUnitLabel } from "./prices";
 import type { ChartPrice } from "./types";
 
 /*
- * Chart titles are generated from the data: the title says what is common to the series (the
- * search, how many, what kind), the legend says what differs.
+ * A chart card's header, from the data. The title says what is common to the series (the search,
+ * and the pricing unit that sets its card apart) and is what a pin stores. Under it, the details
+ * (`ExplorerGridItem`'s `details`) say what is drawn and when: a bar chart's bar value and the
+ * chart's dates, read live, never stored in the title. The subtitle says how many series, and the
+ * legend what differs.
  */
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -16,16 +19,38 @@ export function seriesCountLabel(count: number, seriesKind: SeriesKind): string 
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+/** "USD per mL": the currency and pricing unit of a chart's prices. */
+export const unitHeading = (pricingUnit: string) => `USD per ${pricingUnitLabel(pricingUnit)}`;
+
 /**
- * "Humira: 7 products over time" (line) or "Humira: 7 products compared" (bar). One series is
- * named by its own label instead: "HUMIRA KIT 40 mg over time".
+ * "Humira · USD per mL", for a card of one pricing unit's series, so that the cards a search
+ * splits into by unit differ by their headings. One series is named by its own label instead:
+ * "HUMIRA KIT 40 mg · USD per each". Without a unit (a card whose units are all hidden), just
+ * the name.
  */
-export function chartTitle(chartType: ChartType, searchLabel: string, seriesKind: SeriesKind, seriesLabels: string[]): string {
-  const subject = seriesLabels.length === 1
-    ? seriesLabels[0]
-    : `${capitalize(searchLabel)}: ${seriesCountLabel(seriesLabels.length, seriesKind)}`;
-  return chartType === "line" ? `${subject} over time` : `${subject} compared`;
+export function chartTitle(searchLabel: string, seriesLabels: string[], pricingUnit?: string): string {
+  const subject = seriesLabels.length === 1 ? seriesLabels[0] : capitalize(searchLabel);
+  return pricingUnit === undefined ? subject : `${subject} · ${unitHeading(pricingUnit)}`;
 }
+
+/**
+ * "USD per mL" when a chart's title ends with " · " and its currency and unit, as generated titles
+ * do, else "". A card's header keeps this end in view when it cuts a long title to two lines.
+ */
+export function unitTitleEnd(title: string, pricingUnit: string | undefined): string {
+  const end = pricingUnit === undefined ? "" : unitHeading(pricingUnit);
+  return end && title.endsWith(` · ${end}`) ? end : "";
+}
+
+/**
+ * Whether a chart's title already gives its currency and unit, as generated titles do. Older pins
+ * and titles the user chose may not; their charts say it themselves (`UnitSplit`).
+ */
+export const titleNamesUnit = (title: string, pricingUnit: string) => title.includes(unitHeading(pricingUnit));
+
+/** A unit chart's accessible name: its title, with the currency and unit unless the title gives them. */
+export const unitChartLabel = (title: string, pricingUnit: string) =>
+  titleNamesUnit(title, pricingUnit) ? title : `${title}, ${unitHeading(pricingUnit)}`;
 
 /** One label per series (NDC), in order of appearance. */
 export function seriesLabels(prices: ChartPrice[]): string[] {
@@ -34,11 +59,24 @@ export function seriesLabels(prices: ChartPrice[]): string[] {
   return [...labels.values()];
 }
 
-/** "7 products · Jan 5, 2022 – Oct 7, 2026": how many series, and the dates shown (open ends from the data). */
-export function chartSubtitle(seriesCount: number, seriesKind: SeriesKind, dateWindow: DateWindow, prices: ChartPrice[]): string {
-  const dates = formatWindow(dateWindow, dateBounds(clipToWindow(prices, dateWindow)) ?? dateBounds(prices));
-  return [seriesCountLabel(seriesCount, seriesKind), dates].filter(Boolean).join(" · ");
-}
+/** "Jan 5, 2022 – Oct 7, 2026": an added chart's dates shown, open ends from the data. */
+export const chartDates = (dateWindow: DateWindow, prices: ChartPrice[]) =>
+  formatWindow(dateWindow, dateBounds(clipToWindow(prices, dateWindow)) ?? dateBounds(prices));
+
+/** "Latest price" or "Average price": what a bar chart's rows show, for its header. */
+export const barValueLabel = (barValue: BarValue) => barValue === "latest" ? "Latest price" : "Average price";
+
+/**
+ * "line chart", or "bar chart of latest price" (just "bar chart" without a bar value): what kind of
+ * chart a card holds, which its accessible names add to the title, since a line and a bar chart of
+ * the same rows share one. Read live, like the header's details; never stored.
+ */
+export const chartKindLabel = (chartType: ChartType, barValue?: BarValue) =>
+  chartType === "line" ? "line chart" : barValue ? `bar chart of ${barValueLabel(barValue).toLowerCase()}` : "bar chart";
+
+/** "Humira · USD per mL, bar chart of latest price": a chart card's name for its buttons' labels. */
+export const chartCardName = (title: string, chartType: ChartType, barValue?: BarValue) =>
+  `${title}, ${chartKindLabel(chartType, barValue)}`;
 
 /** "Price changes of 25% or more": a scan card's title. */
 export const priceChangeListTitle = (thresholdPercent: number) => `Price changes of ${thresholdPercent}% or more`;
@@ -71,6 +109,6 @@ export const hiddenSeriesNote = (hiddenCount: number) => hiddenCount > 0 ? `${hi
 export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
   `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
 
-/** "Price change · Oct 21, 2026 · 3089321 · per each": a package's Chart this change card. */
+/** "Price change · Oct 21, 2026 · 3089321 · USD per each": a package's Chart this change card. */
 export const eventChartTitle = (date: number, packageNdc: string, pricingUnit: string) =>
-  `Price change · ${formatDate(date)} · ${packageNdc} · per ${pricingUnitLabel(pricingUnit)}`;
+  `Price change · ${formatDate(date)} · ${packageNdc} · ${unitHeading(pricingUnit)}`;

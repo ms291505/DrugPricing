@@ -122,22 +122,34 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
           onChange={brandGeneric => setCriteria(prev => ({ ...prev, brandGeneric }))}
         />
       }
-      moreFilters={<>
-        <ExclusionSelect
-          label="Drug"
-          noun="drugs"
-          options={view.options.excludedNdcDescriptions}
-          excluded={criteria.excludedNdcDescriptions}
-          onChange={excludedNdcDescriptions => setCriteria(prev => ({ ...prev, excludedNdcDescriptions }))}
-        />
-        <ExclusionSelect
-          label="Pricing unit"
-          noun="units"
-          options={view.options.excludedUnits}
-          excluded={criteria.excludedUnits}
-          onChange={excludedUnits => setCriteria(prev => ({ ...prev, excludedUnits }))}
-        />
-      </>}
+      moreFilters={[
+        {
+          label: "Drug details",
+          fields: [
+            <ExclusionSelect
+              key="drug"
+              label="Drug"
+              noun="drugs"
+              options={view.options.excludedNdcDescriptions}
+              excluded={criteria.excludedNdcDescriptions}
+              onChange={excludedNdcDescriptions => setCriteria(prev => ({ ...prev, excludedNdcDescriptions }))}
+            />,
+          ],
+        },
+        {
+          label: "Pricing",
+          fields: [
+            <ExclusionSelect
+              key="unit"
+              label="Pricing unit"
+              noun="units"
+              options={view.options.excludedUnits}
+              excluded={criteria.excludedUnits}
+              onChange={excludedUnits => setCriteria(prev => ({ ...prev, excludedUnits }))}
+            />,
+          ],
+        },
+      ]}
       moreFilterCount={exclusionCount(criteria, NADAC_EXCLUSION_KEYS)}
       canClear={nadacActiveFilterCount(criteria) > 0}
       onClear={() => setCriteria(clearNadacRefine)}
