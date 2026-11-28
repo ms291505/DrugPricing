@@ -255,3 +255,6 @@ secrets.json
 *.pem
 *.key
 *.cert
+
+# Claude Code worktree port slots (symlinks to the worktree holding each slot)
+.claude/slots/

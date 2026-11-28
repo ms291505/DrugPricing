@@ -9,6 +9,7 @@
     },
     {
       "name": "worktree1-server",
+      "cwd": ".claude/slots/worktree1",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "ASPNETCORE_ENVIRONMENT=Development",
@@ -19,6 +20,7 @@
     },
     {
       "name": "worktree1-client",
+      "cwd": ".claude/slots/worktree1",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "VITE_API_URL=http://localhost:5251/api",
@@ -28,6 +30,7 @@
     },
     {
       "name": "worktree2-server",
+      "cwd": ".claude/slots/worktree2",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "ASPNETCORE_ENVIRONMENT=Development",
@@ -38,6 +41,7 @@
     },
     {
       "name": "worktree2-client",
+      "cwd": ".claude/slots/worktree2",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "VITE_API_URL=http://localhost:5252/api",
@@ -47,6 +51,7 @@
     },
     {
       "name": "worktree3-server",
+      "cwd": ".claude/slots/worktree3",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "ASPNETCORE_ENVIRONMENT=Development",
@@ -57,6 +62,7 @@
     },
     {
       "name": "worktree3-client",
+      "cwd": ".claude/slots/worktree3",
       "runtimeExecutable": "env",
       "runtimeArgs": [
         "VITE_API_URL=http://localhost:5253/api",
