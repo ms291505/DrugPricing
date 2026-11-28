@@ -170,17 +170,21 @@ export default memo(function PinnedItemCard({ item, isFirst, isLast, highlight, 
             : <Chip size="small" variant="outlined" label={formatWindow(item.dateWindow, dateBounds(fromChartSeries(item.histories)))} />
           }
         </>}
+        // describeChild on these Tooltips: without it, MUI names each chip by its tooltip text in
+        // place of its visible label. With it the text describes the chip while the tooltip is
+        // open. These chips aren't controls, so `title` is cleared too: closed, MUI would put the
+        // text there, and a browser names a plain element by its title.
         badges={<>
-          <Tooltip title={source.detail}>
-            <Chip size="small" variant="outlined" label={source.label} />
+          <Tooltip title={source.detail} describeChild>
+            <Chip size="small" variant="outlined" label={source.label} title={undefined} />
           </Tooltip>
           <Chip size="small" variant="outlined" label={formatItemSource(visibleItem.source)} />
           {canSwitchLevel && <Button size="small" sx={{ minHeight: { xs: 44, sm: 24 } }} onClick={() => setShowPackages(value => !value)}>
             {showPackages ? "Show product averages" : "Show packages"}
           </Button>}
           {matched
-            ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit">
-              <Chip size="small" variant="outlined" label="Matched scale" />
+            ? <Tooltip title="Shares its price axis with the other matched line charts in the same unit" describeChild>
+              <Chip size="small" variant="outlined" label="Matched scale" title={undefined} />
             </Tooltip>
             : null
           }

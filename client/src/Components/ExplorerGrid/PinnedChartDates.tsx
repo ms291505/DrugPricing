@@ -33,7 +33,10 @@ export default function PinnedChartDates({ item, title, anchor, onOpen, onClose 
   return (
     <>
       {label
-        ? <Tooltip title="Change dates">
+        // describeChild: without it, MUI names the chip "Change dates" in place of the dates it
+        // shows (WCAG 2.5.3, Label in Name). With it the dates are its name, and "Change dates"
+        // describes it while the tooltip is open.
+        ? <Tooltip title="Change dates" describeChild>
           <Chip
             size="small"
             variant="outlined"
