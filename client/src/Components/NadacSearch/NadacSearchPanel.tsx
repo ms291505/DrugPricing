@@ -122,7 +122,7 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
           onChange={brandGeneric => setCriteria(prev => ({ ...prev, brandGeneric }))}
         />
       }
-      moreFilters={<>
+      moreFilters={[{ label: "Drug details", fields: (
         <ExclusionSelect
           label="Drug"
           noun="drugs"
@@ -130,6 +130,7 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
           excluded={criteria.excludedNdcDescriptions}
           onChange={excludedNdcDescriptions => setCriteria(prev => ({ ...prev, excludedNdcDescriptions }))}
         />
+      ) }, { label: "Pricing", fields: (
         <ExclusionSelect
           label="Pricing unit"
           noun="units"
@@ -137,7 +138,7 @@ export default function NadacSearchPanel({ view, layout, navigation, standaloneA
           excluded={criteria.excludedUnits}
           onChange={excludedUnits => setCriteria(prev => ({ ...prev, excludedUnits }))}
         />
-      </>}
+      ) }]}
       moreFilterCount={exclusionCount(criteria, NADAC_EXCLUSION_KEYS)}
       canClear={nadacActiveFilterCount(criteria) > 0}
       onClear={() => setCriteria(clearNadacRefine)}

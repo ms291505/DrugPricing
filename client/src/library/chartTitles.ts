@@ -1,11 +1,10 @@
 import { SERIES_KIND_LABELS, type ChartType, type SeriesKind } from "./explorerItems";
 import { clipToWindow, dateBounds, formatDate, formatWindow, type DateWindow } from "./dates";
-import { pricingUnitLabel } from "./prices";
 import type { ChartPrice } from "./types";
 
 /*
  * Chart titles are generated from the data: the title says what is common to the series (the
- * search, how many, what kind), the legend says what differs.
+ * search or the individual series), the legend says what differs.
  */
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -16,15 +15,9 @@ export function seriesCountLabel(count: number, seriesKind: SeriesKind): string 
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-/**
- * "Humira: 7 products over time" (line) or "Humira: 7 products compared" (bar). One series is
- * named by its own label instead: "HUMIRA KIT 40 mg over time".
- */
-export function chartTitle(chartType: ChartType, searchLabel: string, seriesKind: SeriesKind, seriesLabels: string[]): string {
-  const subject = seriesLabels.length === 1
-    ? seriesLabels[0]
-    : `${capitalize(searchLabel)}: ${seriesCountLabel(seriesLabels.length, seriesKind)}`;
-  return chartType === "line" ? `${subject} over time` : `${subject} compared`;
+/** Use the series name for a single series and the search name for a comparison. */
+export function chartTitle(searchLabel: string, seriesLabels: string[]): string {
+  return seriesLabels.length === 1 ? seriesLabels[0] : capitalize(searchLabel);
 }
 
 /** One label per series (NDC), in order of appearance. */
@@ -71,6 +64,6 @@ export const hiddenSeriesNote = (hiddenCount: number) => hiddenCount > 0 ? `${hi
 export const pinnedPriceChangeListTitle = (searchLabel: string, thresholdPercent: number) =>
   `${capitalize(searchLabel)}: price changes of ${thresholdPercent}% or more`;
 
-/** "Price change · Oct 21, 2026 · 3089321 · per each": a package's Chart this change card. */
-export const eventChartTitle = (date: number, packageNdc: string, pricingUnit: string) =>
-  `Price change · ${formatDate(date)} · ${packageNdc} · per ${pricingUnitLabel(pricingUnit)}`;
+/** "Price change · Oct 21, 2026 · 3089321": a package's Chart this change card. */
+export const eventChartTitle = (date: number, packageNdc: string) =>
+  `Price change · ${formatDate(date)} · ${packageNdc}`;

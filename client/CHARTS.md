@@ -114,7 +114,7 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   level that is the *product* NDC, so several packages share a series and can disagree on a date:
   `seriesByDate` (`library/prices.ts`) averages them per date, and `createLineVizData` draws that
   average and keeps the packages' min–max as `rangeKey(ndc)`.
-- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and captions each
+- `LineViz`/`BarViz` render through `UnitSplit`, which splits by `pricingUnit` and prominently labels each
   chart with its unit. Unit charts share one date axis.
 - New pinned cards contain one pricing unit (`createChartItems`); mixed-unit pins are added in
   one update, highlighting the first, with no scroll. Older mixed-unit pins still use `UnitSplit`.
@@ -127,8 +127,9 @@ helpers in `src/library/`. `AGENTS.md` keeps a short list of the rules that matt
   and names hidden ones. An add past `CHART_SERIES_WARNING` (8) toasts a warning (`ChartControl`).
   A new card neither scrolls nor takes focus: the status line reports it (`ResultsReport`), and
   its Show scrolls to the card (`data-added-chart`) and focuses its heading only from the keyboard.
-- Titles come from `chartTitles.ts`: the title says what is common ("Humira: 7 products over
-  time"), the subtitle the count and dates. The change chart dialog's title names the event date, package and unit.
+- Titles come from `chartTitles.ts`: the title names the search or individual series.
+  The subtitle gives the series count and dates. The change chart dialog names the event date
+  and package. The figure heading shows the currency and unit.
 
 ## Axes and labels
 

@@ -9,7 +9,7 @@ import { HALF_WIDTH_GRID_SIZE } from "../../library/constants";
 import { chartSubtitle, chartTitle, hiddenSeriesNote, seriesCountLabel, seriesLabels } from "../../library/chartTitles";
 import { countSeries, openPricingUnits, selectedChartPrices } from "../../library/chartSeries";
 import type { BarValue, ChartSource } from "../../library/explorerItems";
-import { pricingUnitLabel, splitByPricingUnit } from "../../library/prices";
+import { splitByPricingUnit } from "../../library/prices";
 import type { AddedChart, AddedCharts } from "../../hooks/useAddedCharts";
 import { moveFocusFromClosingCard } from "./closeCard";
 
@@ -51,7 +51,7 @@ function AddedChartCard({ source, chart, onClose }: {
 
   // The dates or filters hide every open unit: the card stays, so it can be closed, and says why it's empty.
   if (!openGroups.length) {
-    const title = chartTitle(chart.chartType, source.origin.searchLabel, chart.seriesKind, chart.labels);
+    const title = chartTitle(source.origin.searchLabel, chart.labels);
     return (
       <UnitCard chart={chart} title={title} subtitle={hiddenSeriesNote(hiddenCount)} onClose={close(undefined)}>
         <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
@@ -65,7 +65,6 @@ function AddedChartCard({ source, chart, onClose }: {
   return openGroups.map(group => (
     <UnitChart key={group.pricingUnit} chart={chart}
       source={{ ...source, prices: group.nadacPrices }}
-      unitSuffix={groups.length > 1 ? ` · per ${pricingUnitLabel(group.pricingUnit)}` : ""}
       hiddenCount={hiddenCount}
       onClose={close(group.pricingUnit)}
     />
@@ -75,13 +74,13 @@ function AddedChartCard({ source, chart, onClose }: {
 type CloseHandler = (event: MouseEvent<HTMLElement>, card: HTMLElement | null) => void;
 
 /** One pricing unit's card of an added chart. */
-function UnitChart({ chart, source, unitSuffix, hiddenCount, onClose }: {
-  chart: AddedChart, source: ChartSource, unitSuffix: string, hiddenCount: number, onClose: CloseHandler,
+function UnitChart({ chart, source, hiddenCount, onClose }: {
+  chart: AddedChart, source: ChartSource, hiddenCount: number, onClose: CloseHandler,
 }) {
   const { prices, loadedPrices, origin, colors, dateWindow } = source;
   const [barValue, setBarValue] = useState<BarValue>("latest");
   const labels = seriesLabels(prices);
-  const title = chartTitle(chart.chartType, origin.searchLabel, origin.seriesKind, labels) + unitSuffix;
+  const title = chartTitle(origin.searchLabel, labels);
   const subtitle = [chartSubtitle(labels.length, origin.seriesKind, dateWindow, prices), hiddenSeriesNote(hiddenCount)]
     .filter(Boolean).join(" · ");
   return (

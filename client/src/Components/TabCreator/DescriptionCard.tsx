@@ -1,45 +1,27 @@
-import { Card, CardActionArea, CardContent, Typography, type SxProps, Box, Divider } from "@mui/material";
-import type { ReactNode } from "react";
-import type { TabType } from "../../library/tabType.ts";
-import SearchTypeChip from "../ui/SearchTypeChip";
+import { Box, Card, CardActionArea, CardContent, Typography } from "@mui/material";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
-export type DescriptionCardProps = {
-  tabType: TabType,
+type Props = {
   onClick: () => void,
-  header: string | ReactNode,
-  body: string | ReactNode,
-  isMobile?: boolean,
-}
+  header: string,
+  body: string,
+};
 
-export default function DescriptionCard({ onClick, header, body, isMobile = false, tabType }: DescriptionCardProps) {
-  const cardSx: SxProps = isMobile
-    ? { flex: "0 0 80%", scrollSnapAlign: "center" }
-    : { height: "100%", width: 320 }
-
+export default function DescriptionCard({ onClick, header, body }: Props) {
   return (
-
-    <Card sx={cardSx}>
-      <CardActionArea
-        onClick={onClick}
-        sx={{ display: "flex", flexDirection: "column", height: "100%", alignItems: "start" }}
-      >
-        <CardContent sx={{ height: "100%" }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1
-            }}
-          >
-            <SearchTypeChip tabType={tabType} />
-            <Typography variant="h5" component="div">{header}</Typography>
+    <Card variant="outlined">
+      <CardActionArea onClick={onClick} sx={{
+        display: "flex", height: "100%", alignItems: "stretch", justifyContent: "flex-start",
+        "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -3 },
+      }}>
+        <CardContent sx={{ width: "100%" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 1 }}>
+            <Typography variant="h6" component="span">{header}</Typography>
+            <ArrowForwardIcon sx={{ color: "primary.main" }} />
           </Box>
-          <Divider />
-          <Typography variant="body2">
-            {body}
-          </Typography>
+          <Typography variant="body2" color="text.secondary">{body}</Typography>
         </CardContent>
       </CardActionArea>
     </Card>
-  )
+  );
 }

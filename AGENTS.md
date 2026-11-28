@@ -177,11 +177,9 @@ shared ones under `drugpricing.v<VERSION>.search-pins`), moved there from `local
 `TabProviders` still give each tab its own pins. Never lift the standalone pin provider around
 the workspace.
 
-Standalone Search's Add search to workspace action is a borderless button at the right of the
-More filters and Clear filters row, once a search has been run; narrow panels give it its own
-wrapped row. A right-aligned caption before it in the same row says Search state is saved for
-this browser tab only; it shows with a search, or alone with pins-only wording after Clear
-search keeps pins, and wraps above the button when the row is narrow. The action renders
+Standalone Search's Add search to workspace action is an outlined button beside More filters
+and Clear filters once a search has been run. Narrow panels give it its own wrapped row.
+The action renders
 inside the source provider and copies applied criteria with fixed dates, FDA detail level and all
 shared pins. Workspace tabs omit the action. `addSearchTab` writes initial tab state before
 dispatching an add with `show`, so the provider's first read restores it; a failed save opens no tab.
@@ -211,7 +209,8 @@ depend on write availability read it. The action checks storage's read-only flag
   fields as data and it owns the arrangement, so the two can't drift apart. It has two layouts,
   picked by the panel's own width (`useWidthTier`), never the window's: `desktop` from `md` up
   (heading, description, full-height fields) and `compact` below (no heading, small fields).
-  In both, the filter groups share a row and wrap when they don't fit. Workspace tabs force
+  In both, the filter groups share a row and wrap when they don't fit. More filters groups
+  fields under Drug details and Pricing, with columns based on panel width. Workspace tabs force
   `compact` (`panelLayout`). A new arrangement is a new `SearchPanelLayout`, not a prop that
   changes wording. *Load* fields (text terms, FDA's Labeler picks, Dates) go to the server
   unless what's loaded holds them (`nextLoad`); *refine* fields narrow the loaded result in

@@ -14,13 +14,15 @@ import SearchPanel, { ExclusionSelect, type SearchPanelLayout } from "../SearchP
 
 /** The "More filters" lists, in order. */
 const LISTS: { key: FdaListKey, label: string, noun: string, optionLabel?: (value: string) => string }[] = [
-  { key: "excludedActivities", label: "Price activity", noun: "activity types", optionLabel: activityCategoryLabel },
   { key: "excludedProductNdcs", label: "Product NDC", noun: "products" },
   { key: "excludedDosageForms", label: "Dosage form", noun: "dosage forms" },
   { key: "excludedStrengths", label: "Strength", noun: "strengths" },
   { key: "excludedRoutes", label: "Route", noun: "routes" },
   // Not "Labeler": that's the search field's name, and two controls shouldn't share one.
   { key: "excludedLabelers", label: "Labeler in results", noun: "labelers" },
+];
+const PRICING_LISTS: typeof LISTS = [
+  { key: "excludedActivities", label: "Price activity", noun: "activity types", optionLabel: activityCategoryLabel },
   { key: "excludedUnits", label: "Pricing unit", noun: "units" },
 ];
 
@@ -113,7 +115,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
         onChange: checked => setCriteria(prev => ({ ...prev, [key]: checked })),
         hiddenCount: view.hidden.byInclude[key] ?? 0,
       }))}
-      moreFilters={LISTS.map(({ key, label, noun, optionLabel }) => (
+      moreFilters={[{ label: "Drug details", lists: LISTS }, { label: "Pricing", lists: PRICING_LISTS }].map(({ label, lists }) => ({ label, fields: lists.map(({ key, label, noun, optionLabel }) => (
         <ExclusionSelect
           key={key}
           label={label}
@@ -123,7 +125,7 @@ export default function FdaSearchPanel({ view, layout, navigation, standaloneAct
           excluded={criteria[key]}
           onChange={excluded => setCriteria(prev => withExcluded(prev, key, excluded))}
         />
-      ))}
+      )) }))}
       moreFilterCount={exclusionCount(criteria, FDA_LIST_KEYS)}
       canClear={fdaActiveFilterCount(criteria) > 0}
       onClear={() => setCriteria(clearFdaRefine)}

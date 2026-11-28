@@ -42,7 +42,7 @@ export default function UnitSplit({ nadacPrices, dateWindow = FULL_WINDOW, rende
       }
       {groups.map(({ pricingUnit, nadacPrices: unitPrices }) => (
         <Box key={pricingUnit}>
-          <Typography variant="caption" color="text.secondary" component="p">
+          <Typography variant="subtitle1" color="text.primary" component="p" sx={{ fontWeight: 700, mb: 0.5 }}>
             USD per {pricingUnitLabel(pricingUnit)}
           </Typography>
           {renderChart(unitPrices, pricingUnit)}

@@ -90,7 +90,7 @@ type Props = {
   /** The default view's other refine fields, each a labelled group (brand/generic). */
   refine?: ReactNode,
   /** The fields under "More filters": the from-results lists. */
-  moreFilters: ReactNode,
+  moreFilters: { label: string, fields: ReactNode }[],
   /** How many of the "More filters" fields exclude something, shown on the toggle when closed. */
   moreFilterCount: number,
   /** Some refine field is away from its default, so "Clear filters" has something to do. */
@@ -170,12 +170,13 @@ export default function SearchPanel({
         variant="contained"
         disabled={!canSearch || busy}
         // As tall as the fields beside it.
-        sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : 40, flexShrink: 0 }}
+        sx={{ width: stacked ? "100%" : 100, height: desktop ? 56 : stacked ? 44 : 40, flexShrink: 0 }}
       >
         {busy ? <CircularProgress aria-label="Loading..." size={20} /> : "Search"}
       </Button>
       <Button
         type="button"
+        variant="outlined"
         disabled={!canClearSearch}
         onClick={event => {
           onClearSearch();
@@ -184,7 +185,7 @@ export default function SearchPanel({
           // starts. Not after a tap, where focusing a text field opens the phone keyboard.
           if (fromKeyboard(event)) firstTermRef.current?.focus();
         }}
-        sx={{ height: desktop ? 56 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
+        sx={{ height: desktop ? 56 : stacked ? 44 : 40, flexShrink: 0, whiteSpace: "nowrap" }}
       >
         Clear search
       </Button>
@@ -276,7 +277,14 @@ export default function SearchPanel({
             gap: 2,
             pt: 2,
           }}>
-            {moreFilters}
+            {moreFilters.map(({ label, fields }) => (
+              <FormControl key={label} component="fieldset" sx={{ minWidth: 0, m: 0, p: 1.5, border: 1, borderColor: "divider", borderRadius: 1 }}>
+                <FormLabel component="legend" sx={{ px: 0.5, typography: "subtitle2", color: "text.primary" }}>{label}</FormLabel>
+                <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: tier === "narrow" ? "1fr" : "repeat(2, minmax(0, 1fr))" }}>
+                  {fields}
+                </Box>
+              </FormControl>
+            ))}
           </Box>
         </Collapse>
       </Box>

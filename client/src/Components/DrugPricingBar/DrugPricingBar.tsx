@@ -52,7 +52,7 @@ export default function DrugPricingBar() {
           gridTemplateColumns: { xs: "auto minmax(0, 1fr) auto", md: "1fr auto 1fr" },
           alignItems: "center",
           px: { xs: 0.5, sm: 2 },
-          "& .active": {
+          "& .MuiButton-root.active": {
             color: "primary.main",
             fontWeight: "bold",
             borderBottom: 2,
@@ -67,7 +67,7 @@ export default function DrugPricingBar() {
                 onClick={closeDrawer}
                 aria-label="DrugPricing home"
                 color="inherit"
-                sx={{ width: 44, height: 44, "&.active": { borderRadius: 1 } }}
+                sx={{ width: 44, height: 44, "&.active": { color: "primary.main" } }}
               >
                 <HomeIcon />
               </IconButton>

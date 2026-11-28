@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { useId } from "react";
-import { Box, Button, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
 import { usePageVisible } from "../../Context/pageVisibility";
 import { useWorkspaceActions, useWorkspaceReadOnly } from "../../Context/workspaceContexts";
@@ -16,14 +16,6 @@ import { isStorageReadOnly, type PersistedSearchTab } from "../../library/persis
 
 const SAVES = "Saves this search and its pins in this browser, in a new workspace tab.";
 
-/**
- * The action is rendered in its standalone source's search panel, inside the source providers,
- * with a caption saying that Search state lasts only for this browser tab (it is in
- * sessionStorage), so nobody who relied on Search restoring after a restart loses work without
- * warning. The caption shows once there is something to lose: a search, or pins (which Clear
- * search keeps, with their own wording, since there is then no search to add). The button shows
- * once a search has been run. Nothing renders while the page is hidden.
- */
 function AddSearchToWorkspace({ state, dates, title, status }: {
   state: PersistedSearchTab, dates: DateWindow | undefined, title: string, status: "idle" | "pending" | "ready",
 }) {
@@ -34,20 +26,15 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
   const navigate = useNavigate();
   const reason = readOnly ? "Reload to use the workspace changed in another window."
     : status !== "ready" ? "Load a search successfully before adding it to Workspace." : "";
-  if (!visible || (status === "idle" && state.pinnedItems.length === 0)) return null;
+  if (!visible || status === "idle") return null;
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", columnGap: 1, minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ flex: "1 1 16em", minWidth: 0, textAlign: "right" }}>
-        {status === "idle"
-          ? "These pins are saved for this browser tab only."
-          : "This search and its pins are saved for this browser tab only, unless you add the search to your workspace."}
-      </Typography>
       {/* `hidden` text is still read through aria-describedby, and only there. The tooltip
           describes its wrapper only while open (`describeChild`), so nothing is read twice. */}
-      {status !== "idle" && <span id={descriptionId} hidden>{reason || SAVES}</span>}
-      {status !== "idle" && <Tooltip title={reason || SAVES} describeChild>
+      <span id={descriptionId} hidden>{reason || SAVES}</span>
+      <Tooltip title={reason || SAVES} describeChild>
         <span>
-          <Button type="button" color="inherit" size="small" disabled={status !== "ready" || readOnly}
+          <Button type="button" variant="outlined" size="small" sx={{ minHeight: { xs: 44, sm: 32 } }} disabled={status !== "ready" || readOnly}
             aria-describedby={descriptionId}
             onClick={event => {
               if (event.detail > 1 || !dates || isStorageReadOnly()) return;
@@ -58,7 +45,7 @@ function AddSearchToWorkspace({ state, dates, title, status }: {
             Add search to workspace
           </Button>
         </span>
-      </Tooltip>}
+      </Tooltip>
     </Box>
   );
 }

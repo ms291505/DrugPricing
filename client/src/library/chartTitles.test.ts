@@ -8,12 +8,12 @@ const price = (ndc: string, iso: string): ChartPrice =>
 
 describe("chart titles", () => {
   it("names the search and how many series", () => {
-    expect(chartTitle("line", "humira", "product", ["a", "b"])).toBe("Humira: 2 products over time");
-    expect(chartTitle("bar", "NDC 3089321", "ndc", ["a", "b", "c"])).toBe("NDC 3089321: 3 NDCs compared");
+    expect(chartTitle("humira", ["a", "b"])).toBe("Humira");
+    expect(chartTitle("NDC 3089321", ["a", "b", "c"])).toBe("NDC 3089321");
   });
 
   it("names a single series by its own label", () => {
-    expect(chartTitle("line", "humira", "package", ["HUMIRA KIT 40 mg"])).toBe("HUMIRA KIT 40 mg over time");
+    expect(chartTitle("humira", ["HUMIRA KIT 40 mg"])).toBe("HUMIRA KIT 40 mg");
   });
 
   it("subtitles with the count and the dates shown", () => {

@@ -164,7 +164,7 @@ describe("createChartItems", () => {
       colors: new Map([["A", "series-a"], ["B", "series-b"]]) });
     expect(items).toHaveLength(2);
     expect(items.map(item => new Set(item.series.map(s => s.unit)).size)).toEqual([1, 1]);
-    expect(items.map(item => item.defaultTitle)).toEqual(["Compare · per each", "Compare · per mL"]);
+    expect(items.map(item => item.defaultTitle)).toEqual(["Compare", "Compare"]);
     expect(items.map(item => item.source)).toEqual([
       { searchLabel: "humira", seriesKind: "product",
         seriesCount: 2, resultSeriesCount: 3, filtered: false },
@@ -185,8 +185,8 @@ describe("createChartItems", () => {
   it("generates titles from each unit's series rather than the whole selection", () => {
     const items = createChartItems({ chartType: "line", prices: [...productB, ...packageA1, ...series("C", 20, "milliliter"), ...series("D", 10, "milliliter"), ...series("E", 5, "milliliter")],
       defaultTitle: "5 products", origin, dateWindow: FULL_WINDOW },
-    prices => chartTitle("line", "test", "product", seriesLabels(prices)));
-    expect(items.map(item => item.defaultTitle)).toEqual(["Test: 2 products over time · per each", "Test: 3 products over time · per mL"]);
+    prices => chartTitle("test", seriesLabels(prices)));
+    expect(items.map(item => item.defaultTitle)).toEqual(["Test", "Test"]);
   });
 
   it("does not create empty cards", () => {

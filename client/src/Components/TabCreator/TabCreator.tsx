@@ -1,87 +1,27 @@
-import { Box, Typography, type SxProps, } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useWorkspaceActions } from "../../Context/workspaceContexts";
 import { useTabInstanceContext } from "../../Context/TabInstanceContext";
-import useMobile from "../../hooks/useMobile";
-import type { DescriptionCardProps } from "../TabCreator/DescriptionCard";
-import DescriptionCard from "../TabCreator/DescriptionCard";
-import { FreshWorkspaceNote } from "../StorageNotes";
+import DescriptionCard from "./DescriptionCard";
 
 export default function TabCreator() {
-
-  const question = "What type of search would you like to perform?";
-
   const { changeTabType } = useWorkspaceActions();
-
   const { id } = useTabInstanceContext();
 
-  const isMobile = useMobile();
-
-  const searchCards: Array<DescriptionCardProps> = [
-    {
-      tabType: "fda",
-      onClick: () => changeTabType(id, "fda"),
-      header: "FDA + NADAC",
-      body: "The FDA's database of drug products currently on the market, including National Average Drug Acquisition Cost data when available.",
-      isMobile: isMobile,
-    },
-    {
-      tabType: "nadac",
-      onClick: () => changeTabType(id, "nadac"),
-      header: "NADAC Only",
-      body: "National Average Drug Acquisition Cost data going back to 2022.",
-      isMobile: isMobile,
-    }
-  ]
-
-  const boxSx: SxProps =
-    isMobile
-      ? {
-
-        display: "flex",
-        gap: 2,
-        width: "100%",
-        overflowX: "auto",
-        scrollSnapType: "x mandatory",
-        WebkitOverflowScrolling: "touch",
-        px: "10%", // creates the "peek" of adjacent cards at rest
-        py: 1,
-        // hide scrollbar (still scrollable)
-        scrollbarWidth: "none",
-        "&::-webkit-scrollbar": { display: "none" },
-      }
-      : {
-        display: "flex",
-        gap: 1
-      }
-
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 1,
-        alignItems: "center",
-        minWidth: 0,
-        width: "100%",
-        mt: "10%",
-      }}
-    >
-      <Typography
-        variant="h6"
-      >
-        {question}
-      </Typography>
-      <FreshWorkspaceNote sx={{ maxWidth: "36em", px: 2 }} />
-      <Box
-        sx={boxSx}
-      >
-        {searchCards.map(card => (
-          <DescriptionCard
-            key={card.tabType}
-            {...card}
-          />
-        ))}
+    <Box sx={{ mx: "auto", maxWidth: 720, px: 2, py: { xs: 3, sm: 6 } }}>
+      <Typography variant="h5" component="h2" sx={{ mb: 2 }}>Choose a search</Typography>
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))", gap: 2 }}>
+        <DescriptionCard
+          onClick={() => changeTabType(id, "fda")}
+          header="Search drug products"
+          body="Find products by brand or generic name. Explore package details and price histories when available."
+        />
+        <DescriptionCard
+          onClick={() => changeTabType(id, "nadac")}
+          header="Search drug prices"
+          body="Look up pharmacy acquisition costs by drug description or package code (NDC)."
+        />
       </Box>
     </Box>
-  )
+  );
 }
